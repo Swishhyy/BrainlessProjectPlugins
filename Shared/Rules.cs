@@ -48,8 +48,13 @@ namespace Brainless.Internal
 
         internal bool CanIssue(string key, int itemCap, int count = 1) => count > 0 && Total + count <= Capacity && Count(key) + count <= itemCap;
         internal int Count(string key) => issued.TryGetValue(key, out int value) ? value : 0;
-        internal bool TryIssue(string key, int itemCap, int count = 1)
+        internal bool TryIssue(string key, int itemCap, int count = 1, bool ignoreLimits = false)
         {
+            if (count <= 0)
+                return false;
+            // Explicit admin testing never spends or refunds the natural round budget.
+            if (ignoreLimits)
+                return true;
             if (!CanIssue(key, itemCap, count))
                 return false;
             issued[key] = Count(key) + count;
@@ -63,6 +68,34 @@ namespace Brainless.Internal
             Total = 0;
             Capacity = Math.Max(0, capacity);
         }
+
+        internal bool RevokeIssue(string key, int count = 1)
+        {
+            if (count <= 0 || Count(key) < count)
+                return false;
+            issued[key] = Count(key) - count;
+            Total -= count;
+            return true;
+        }
+    }
+
+    internal sealed class GrantReport
+    {
+        private readonly List<string> failures = new List<string>();
+        internal int Succeeded { get; private set; }
+        internal int Attempted { get; private set; }
+        internal bool AnySucceeded => Succeeded > 0;
+
+        internal void Record(string target, string failure)
+        {
+            Attempted++;
+            if (failure == null)
+                Succeeded++;
+            else
+                failures.Add(target + ": " + failure);
+        }
+
+        internal string Describe(string name, bool forced) => name + ": given to " + Succeeded + "/" + Attempted + " players." + (forced ? (AnySucceeded ? " Admin supply override used." : " Admin supply override requested.") : "") + (failures.Count > 0 ? "\nBlocked:\n" + string.Join("\n", failures) : "");
     }
 
     internal sealed class ShotLedger
@@ -85,5 +118,6 @@ namespace Brainless.Internal
         }
 
         internal void Clear() => remaining.Clear();
+        internal void Forget(int serial) => remaining.Remove(serial);
     }
 }

@@ -33,7 +33,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 0);
+        public override Version Version => new Version(0, 1, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -52,9 +52,11 @@ namespace Brainless.Roles
         private float waveStart;
         private int waveCount;
         private Harmony harmony;
+        private RoleHud roleHud;
         public override void OnEnabled()
         {
             Instance = this;
+            roleHud = new RoleHud(Config, player => active.TryGetValue(player, out var state) ? state.Definition : null);
             harmony = new Harmony("brainless.roles.0.1");
             harmony.PatchAll();
             P.ChangingRole += ChangingRole;
@@ -88,6 +90,8 @@ namespace Brainless.Roles
             foreach (var player in active.Keys.ToArray())
                 Remove(player);
             lifetime.Clear();
+            roleHud?.Clear();
+            roleHud = null;
             harmony?.UnpatchAll(harmony.Id);
             Instance = null;
             base.OnDisabled();
@@ -96,6 +100,7 @@ namespace Brainless.Roles
         private void Ended(Exiled.Events.EventArgs.Server.RoundEndedEventArgs ev) => Reset();
         private void Reset()
         {
+            roleHud?.Clear();
             foreach (var player in active.Keys.ToArray())
                 Remove(player);
             lifetime.Clear();
@@ -115,6 +120,7 @@ namespace Brainless.Roles
 
         private void Left(LeftEventArgs ev)
         {
+            roleHud?.Forget(ev.Player);
             Remove(ev.Player);
             generations.Remove(ev.Player);
             reasons.Remove(ev.Player);
@@ -124,6 +130,7 @@ namespace Brainless.Roles
         {
             if (!ev.IsAllowed)
                 return;
+            roleHud?.Forget(ev.Player);
             Remove(ev.Player);
             generations[ev.Player] = Generation(ev.Player) + 1;
             reasons[ev.Player] = ev.Reason;
@@ -436,6 +443,7 @@ namespace Brainless.Roles
                 yield return Timing.WaitForSeconds(.2f);
                 foreach (var pair in active.ToArray())
                     Safe.Run(() => Update(pair.Key, pair.Value));
+                Safe.Run(() => roleHud?.Update());
             }
         }
 

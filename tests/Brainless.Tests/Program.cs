@@ -32,6 +32,27 @@ Check(budget.Total == 2, "failed issuance does not spend supply");
 budget.Reset(6);
 Check(budget.Total == 0 && budget.Count("gas") == 0, "a new round resets supply");
 Check(!budget.TryIssue("invalid", 2, -1), "negative counts cannot refund supply");
+budget.Reset(0);
+Check(!budget.TryIssue("cluster", 0), "a small-lobby cluster is blocked by normal issuance");
+Check(budget.TryIssue("cluster", 0, ignoreLimits: true), "an explicit admin override permits a blocked cluster");
+Check(budget.Total == 0 && budget.Count("cluster") == 0, "forced testing does not spend the normal round supply");
+Check(!budget.TryIssue("cluster", 0, -1, ignoreLimits: true), "admin override cannot mint negative quantities");
+budget.Reset(1);
+Check(budget.TryIssue("rifle", 1), "normal firearm issuance spends the available slot");
+Check(budget.TryIssue("rifle", 1, ignoreLimits: true), "admin override still works after the natural firearm supply is exhausted");
+Check(budget.Total == 1 && !budget.TryIssue("rifle", 1), "a forced firearm does not unlock or refill natural supply");
+Check(budget.RevokeIssue("rifle") && budget.Total == 0, "a failed native delivery refunds the uncreated firearm's supply");
+Check(!budget.RevokeIssue("rifle") && budget.Total == 0, "a duplicate rollback cannot create extra supply");
+Check(!budget.RevokeIssue("rifle", -1), "a negative rollback cannot mint supply");
+var deniedGrant = new GrantReport();
+deniedGrant.Record("Player 1", "Clusters require at least 12 players.");
+Check(!deniedGrant.AnySucceeded, "a rejected custom give returns command failure");
+Check(deniedGrant.Describe("Cluster Grenade", false).Contains("given to 0/1") && deniedGrant.Describe("Cluster Grenade", false).Contains("12 players"), "a rejected custom give reports zero deliveries and the actual reason");
+var mixedGrant = new GrantReport();
+mixedGrant.Record("Player 1", null);
+mixedGrant.Record("Player 2", "Inventory is full.");
+Check(mixedGrant.AnySucceeded && mixedGrant.Succeeded == 1 && mixedGrant.Attempted == 2, "bulk custom gives count only confirmed deliveries");
+Check(mixedGrant.Describe("Nullifier", true).Contains("1/2") && mixedGrant.Describe("Nullifier", true).Contains("Inventory is full."), "partial grants retain both override status and per-player failures");
 Check(Rules.ClusterCap(11) == 0 && Rules.ClusterCap(12) == 1 && Rules.ClusterCap(24) == 2, "small lobbies receive no clusters");
 Check(Rules.WeaponCap(23) == 1 && Rules.WeaponCap(24) == 2, "weapon supply scales at the correct boundary");
 var ledger = new ShotLedger();
@@ -75,6 +96,23 @@ if (args.Length > 0)
         var references = reader.AssemblyReferences.Select(h => reader.GetString(reader.GetAssemblyReference(h).Name)).ToArray();
         Check(!references.Intersect(ownAssemblies).Any(), relative + " has no dependency on another suite DLL");
         Check(references.Contains("Exiled.API"), relative + " references the real EXILED API");
+    }
+
+    using var nativeCommands = File.OpenRead(Path.Combine(root, ".build", "references", "Exiled.CustomItems.dll"));
+    using var nativePe = new PEReader(nativeCommands);
+    var nativeReader = nativePe.GetMetadataReader();
+    foreach (string command in new[]
+    {
+        "Give",
+        "Spawn"
+    }
+
+    )
+    {
+        var type = nativeReader.TypeDefinitions.Select(h => nativeReader.GetTypeDefinition(h)).Single(t => nativeReader.GetString(t.Namespace) == "Exiled.CustomItems.Commands" && nativeReader.GetString(t.Name) == command);
+        var execute = type.GetMethods().Select(h => nativeReader.GetMethodDefinition(h)).Single(m => nativeReader.GetString(m.Name) == "Execute");
+        var parameters = execute.GetParameters().Select(h => nativeReader.GetParameter(h)).Where(p => p.SequenceNumber > 0).OrderBy(p => p.SequenceNumber).Select(p => nativeReader.GetString(p.Name)).ToArray();
+        Check(parameters.SequenceEqual(new[] { "arguments", "sender", "response" }), command + " command patch matches the official EXILED 9.15.2 target");
     }
 }
 

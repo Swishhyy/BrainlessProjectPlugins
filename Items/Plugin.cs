@@ -22,7 +22,6 @@ using S = Exiled.Events.Handlers.Server;
 using M = Exiled.Events.Handlers.Map;
 using U = Exiled.Events.Handlers.Scp914;
 using C = Exiled.Events.Handlers.Scp079;
-using I = Exiled.Events.Handlers.Item;
 using FxAudio = Brainless.Internal.Audio;
 
 namespace Brainless.Items
@@ -32,7 +31,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 0);
+        public override Version Version => new Version(0, 1, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
 
@@ -85,7 +84,6 @@ namespace Brainless.Items
             M.ChangedIntoGrenade += ChangedIntoGrenade;
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
-            I.KeycardInteracting += KeycardHit;
             C.TriggeringDoor += ComputerDoor;
             C.RoomBlackout += Blackout;
             C.LockingDown += Lockdown;
@@ -94,6 +92,7 @@ namespace Brainless.Items
             S.RoundStarted += RoundStarted;
             S.RoundEnded += Ended;
             Reset();
+            AdminItems.Enable("brainless.items.commands", "brainless.items.bypasslimits");
             base.OnEnabled();
         }
 
@@ -113,7 +112,6 @@ namespace Brainless.Items
             M.ChangedIntoGrenade -= ChangedIntoGrenade;
             U.UpgradingPickup -= UpgradePickup;
             U.UpgradingInventoryItem -= UpgradeInventory;
-            I.KeycardInteracting -= KeycardHit;
             C.TriggeringDoor -= ComputerDoor;
             C.RoomBlackout -= Blackout;
             C.LockingDown -= Lockdown;
@@ -122,6 +120,7 @@ namespace Brainless.Items
             S.RoundStarted -= RoundStarted;
             S.RoundEnded -= Ended;
             SettingBase.Unregister(settings: new[] { toolKey }).ToArray();
+            AdminItems.Disable();
             foreach (var item in registered.Values)
                 item.Unregister();
             registered.Clear();
@@ -173,15 +172,34 @@ namespace Brainless.Items
             budget.Capacity = Rules.UtilityCap(Player.List.Count(p => p.IsConnected && !p.IsHost));
         }
 
-        internal bool CanIssue(ItemSpec spec, int count)
+        private int Population => Player.List.Count(p => p.IsConnected && !p.IsHost);
+
+        internal bool CanIssue(ItemSpec spec, int count) => IssueFailure(spec, count, false) == null;
+        internal string IssueFailure(ItemSpec spec, int count, bool ignoreLimits)
         {
+            if (count < 1)
+                return "The requested quantity must be positive.";
+            if (spec.Id == 7101 && !registered.ContainsKey(7111))
+                return "Gas requires the Filter Inhaler to be enabled.";
+            if (ignoreLimits)
+                return null;
             EnsureCapacity();
-            int cap = spec.Id == 7102 ? Math.Min(spec.RoundCap, Rules.ClusterCap(Player.List.Count)) : spec.RoundCap;
-            if (!budget.CanIssue(spec.Id.ToString(), cap, count))
-                return false;
+            int cap = spec.Id == 7102 ? Math.Min(spec.RoundCap, Rules.ClusterCap(Population)) : spec.RoundCap;
+            if (spec.Id == 7102 && Population < 12)
+                return $"Clusters require at least 12 players for normal supply; currently {Population}. Admin testing can use --force.";
+            if (budget.Count(spec.Id.ToString()) + count > cap)
+                return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{cap}). Admin testing can use --force.";
+            int slots = spec.Id == 7101 ? count * 2 : count;
+            if (budget.Total + slots > budget.Capacity)
+                return $"Utility supply exhausted ({budget.Total}/{budget.Capacity}); this kit needs {slots} slot(s). Admin testing can use --force.";
             if (spec.Id == 7101)
-                return registered.TryGetValue(7111, out var filter) && budget.Total + count * 2 <= budget.Capacity && budget.CanIssue("7111", filter.Spec.RoundCap, count);
-            return true;
+            {
+                var filter = registered[7111];
+                if (!budget.CanIssue("7111", filter.Spec.RoundCap, count))
+                    return "The paired Filter Inhaler round limit has been reached. Admin testing can use --force.";
+            }
+
+            return null;
         }
 
         internal bool CanIssueBatch(uint[] ids)
@@ -194,12 +212,12 @@ namespace Brainless.Items
             return ours.GroupBy(id => id).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));
         }
 
-        internal bool Mint(RegisteredItem item, int serial)
+        internal bool Mint(RegisteredItem item, int serial, bool ignoreLimits = false)
         {
-            if (!CanIssue(item.Spec, 1))
+            if (IssueFailure(item.Spec, 1, ignoreLimits) != null)
                 return false;
-            int cap = item.Id == 7102 ? Rules.ClusterCap(Player.List.Count) : item.Spec.RoundCap;
-            if (!budget.TryIssue(item.Id.ToString(), Math.Min(item.Spec.RoundCap, cap)))
+            int cap = item.Id == 7102 ? Rules.ClusterCap(Population) : item.Spec.RoundCap;
+            if (!budget.TryIssue(item.Id.ToString(), Math.Min(item.Spec.RoundCap, cap), ignoreLimits: ignoreLimits))
                 return false;
             charges[serial] = Math.Max(1, item.Spec.Charges);
             return true;
@@ -214,16 +232,25 @@ namespace Brainless.Items
             }
         }
 
-        internal void GiveFilter(Player player)
+        internal void Unmint(RegisteredItem item, int serial, bool ignoreLimits)
         {
-            if (registered.TryGetValue(7111, out var item))
-                item.Give(player, false);
+            if (charges.Remove(serial) && !ignoreLimits)
+                budget.RevokeIssue(item.Id.ToString());
+            item.TrackedSerials.Remove(serial);
         }
 
-        internal void SpawnFilter(Vector3 position)
+        internal string GiveFilter(Player player, bool ignoreLimits)
         {
             if (registered.TryGetValue(7111, out var item))
-                item.Spawn(position);
+                return item.TryGive(player, ignoreLimits, false);
+            return "The paired Filter Inhaler is disabled.";
+        }
+
+        internal string SpawnFilter(Vector3 position, bool ignoreLimits)
+        {
+            if (registered.TryGetValue(7111, out var item))
+                return item.TrySpawn(position, ignoreLimits, out _);
+            return "The paired Filter Inhaler is disabled.";
         }
 
         private RegisteredItem Find(int serial) => registered.Values.FirstOrDefault(i => i.TrackedSerials.Contains(serial));
@@ -404,7 +431,6 @@ namespace Brainless.Items
             switch (item.Id)
             {
                 case 7105:
-                case 7110:
                     var door = LookDoor(player);
                     if (door == null)
                         return;
@@ -503,7 +529,7 @@ namespace Brainless.Items
             }
 
             var item = ev.Player.CurrentItem == null ? null : Find(ev.Player.CurrentItem.Serial);
-            if (item?.Id != 7105 && item?.Id != 7110)
+            if (item?.Id != 7105)
                 return;
             ev.IsAllowed = false;
             UseDoorItem(ev.Player, ev.Player.CurrentItem, item, ev.Door, false);
@@ -514,34 +540,21 @@ namespace Brainless.Items
                 return;
             if (item.Id == 7105 && !World.OrdinaryDoor(door))
                 return;
-            if (item.Id == 7110 && !(door.Type == DoorType.Scp914Gate || door.Type == DoorType.Scp330))
-                return;
-            Begin(player, item.Id == 7105 ? 2 : 4, held, hold, () =>
+            Begin(player, 2, held, hold, () =>
             {
                 if (door.IsLocked || door.IsOpen || Vector3.Distance(player.Position, door.Position) > 3 || !Spend(player, held))
                     return;
-                if (item.Id == 7110)
-                    door.IsOpen = true;
-                else
+                var device = new Device
                 {
-                    var device = new Device
-                    {
-                        Id = 7105,
-                        Door = door,
-                        Position = door.Position,
-                        Expires = Time.time + 8
-                    };
-                    device.Marker = World.Marker(lifetime, door.Position + Vector3.up, Color.yellow, new Vector3(.65f, .08f, .08f), PrimitiveType.Cube);
-                    devices.Add(device);
-                }
+                    Id = 7105,
+                    Door = door,
+                    Position = door.Position,
+                    Expires = Time.time + 8
+                };
+                device.Marker = World.Marker(lifetime, door.Position + Vector3.up, Color.yellow, new Vector3(.65f, .08f, .08f), PrimitiveType.Cube);
+                devices.Add(device);
             });
-            FxAudio.Play(lifetime, door.Position, item.Id == 7105 ? 2 : 4, "beep");
-        }
-
-        private void KeycardHit(Exiled.Events.EventArgs.Item.KeycardInteractingEventArgs ev)
-        {
-            if (Find(ev.Pickup.Serial)?.Id == 7110)
-                ev.IsAllowed = false;
+            FxAudio.Play(lifetime, door.Position, 2, "beep");
         }
 
         private void Deploy(Player player, Item held, RegisteredItem item)
@@ -780,7 +793,7 @@ namespace Brainless.Items
             }
         }
 
-        private ItemType Conversion(uint id, ItemType type) => id == 7105 || id == 7108 || id == 7110 || id == 7112 ? ItemType.Coin : type;
+        private ItemType Conversion(uint id, ItemType type) => id == 7110 ? ItemType.KeycardJanitor : id == 7105 || id == 7108 || id == 7112 ? ItemType.Coin : type;
         private void UpgradePickup(UpgradingPickupEventArgs ev) => Safe.Run(() =>
         {
             var item = Find(ev.Pickup.Serial);

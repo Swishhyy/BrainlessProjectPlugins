@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Brainless.Internal;
 using Exiled.API.Features;
 using Exiled.API.Features.Items;
 using Exiled.API.Features.Pickups;
@@ -97,7 +99,7 @@ namespace Brainless.Weapons
         };
     }
 
-    public sealed class RegisteredWeapon : CustomItem
+    public sealed class RegisteredWeapon : CustomItem, IAdminItem
     {
         internal WeaponSpec Spec { get; }
 
@@ -130,26 +132,62 @@ namespace Brainless.Weapons
         public bool CanIssueBatch(uint[] ids) => owner.CanIssueBatch(ids);
         public override void Give(Player player, bool displayMessage = true)
         {
-            if (!CanIssue(1) || player.Items.Count >= 8)
-                return;
+            string failure = TryGive(player, false, displayMessage);
+            if (failure != null && displayMessage)
+                player?.ShowHint("Cannot give " + Name + ": " + failure, 6);
+        }
+
+        string IAdminItem.TryGive(Player player, bool ignoreLimits, bool displayMessage) => TryGive(player, ignoreLimits, displayMessage);
+        internal string TryGive(Player player, bool ignoreLimits, bool displayMessage)
+        {
+            if (player == null || !player.IsConnected)
+                return "Player is disconnected.";
+            if (!player.IsAlive)
+                return "Player must be alive.";
+            if (player.IsCuffed)
+                return "Player is restrained.";
+            if (player.Items.Count >= 8)
+                return "Inventory is full.";
+            string failure = owner.IssueFailure(Spec, 1, ignoreLimits);
+            if (failure != null)
+                return failure;
             Firearm firearm = Item.Create<Firearm>(Type);
-            if (!owner.Mint(this, firearm))
-                return;
+            if (!owner.Mint(this, firearm, ignoreLimits))
+                return "Supply changed before the grant could complete; retry.";
             base.Give(player, firearm, false);
+            if (!player.Items.Any(i => i.Serial == firearm.Serial))
+            {
+                owner.Unmint(this, firearm.Serial, ignoreLimits);
+                return "The server did not add the weapon to the inventory; check the server log.";
+            }
+
             player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);
+            return null;
         }
 
         public override Pickup Spawn(Vector3 position, Player previousOwner = null)
         {
-            if (!CanIssue(1))
-                return null;
+            TrySpawn(position, false, out var pickup, previousOwner);
+            return pickup;
+        }
+
+        string IAdminItem.TrySpawn(Vector3 position, bool ignoreLimits) => TrySpawn(position, ignoreLimits, out _);
+        private string TrySpawn(Vector3 position, bool ignoreLimits, out Pickup pickup, Player previousOwner = null)
+        {
+            pickup = null;
+            string failure = owner.IssueFailure(Spec, 1, ignoreLimits);
+            if (failure != null)
+                return failure;
             Firearm firearm = Item.Create<Firearm>(Type);
-            if (!owner.Mint(this, firearm))
-                return null;
+            if (!owner.Mint(this, firearm, ignoreLimits))
+                return "Supply changed before the spawn could complete; retry.";
             // World pickups have their loaded rounds only; reserve ammo is never recreated on pickup.
-            return base.Spawn(position, firearm, previousOwner);
+            pickup = base.Spawn(position, firearm, previousOwner);
+            if (pickup == null)
+                owner.Unmint(this, firearm.Serial, ignoreLimits);
+            return pickup == null ? "The server did not create the pickup; check the server log." : null;
         }
     }
 }

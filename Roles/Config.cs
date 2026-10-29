@@ -9,6 +9,13 @@ namespace Brainless.Roles
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
+
+        [Description("Show the current custom or native role near the bottom of the screen. Temporarily yields to other hints.")]
+        public bool ShowRoleHud { get; set; } = true;
+        public bool RoleHudShowDescription { get; set; } = true;
+
+        [Description("Vertical offset in text em units; negative values move the role display down.")]
+        public float RoleHudVerticalOffset { get; set; } = -11;
         public bool AllowExperimentalRoles { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
         public bool CaptainGateAccess { get; set; }

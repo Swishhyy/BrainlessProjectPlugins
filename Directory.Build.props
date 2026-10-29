@@ -35,6 +35,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Rules.cs" Link="Internal/Rules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Runtime.cs" Link="Internal/Runtime.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'">
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/AdminItems.cs" Link="Internal/AdminItems.cs" />
+  </ItemGroup>
   <Target Name="CheckPluginReferences" BeforeTargets="ResolveReferences" Condition="'$(TargetFramework)' == 'net48'">
     <Error Condition="!Exists('$(ReferencesPath)/Exiled.API.dll')" Text="Run python3 scripts/fetch_references.py first, or set ReferencesPath to your matching EXILED and game assemblies." />
   </Target>

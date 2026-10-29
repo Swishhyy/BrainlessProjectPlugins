@@ -10,4 +10,6 @@ Keep `captain_gate_access` false for restricted initial Guard access. Candy uses
 
 Optional items and weapons are found through the framework registry. If an entire kit cannot be issued, the player remains ordinary. Inventory changes and stat restoration stay in this project. `bproles` in Remote Admin lists the configured roster; it requires `brainless.roles` permission.
 
+The role HUD is enabled by default for living players, showing their custom role name and specialty, or their ordinary role if no custom profile was assigned. It appears near the bottom center and returns after item instructions, warnings or CedMod hints expire. It never clears another plugin's active hint. In `brainless_roles`, use `show_role_hud`, `role_hud_show_description` and `role_hud_vertical_offset` to configure it; the default offset is -11 em. Role changes, death, leaving, round reset and unloading clear only HUD text this plugin owns. No HUD permission or extra plugin is required.
+
 Build: `dotnet build Roles/Brainless.Roles.csproj -c Release` after preparing references. See the repository playtest checklist before installation on the main server.

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Brainless.Internal;
 using Exiled.API.Features;
 using Exiled.API.Features.Items;
 using Exiled.API.Features.Pickups;
@@ -97,7 +99,7 @@ namespace Brainless.Items
             {
                 Id = 7110,
                 Name = "Maintenance Pass",
-                Description = "Four-second, one-use LCZ access. No checkpoints, gates, or armories.",
+                Description = "Reusable maintenance keycard. Containment level 1 with normal door interactions.",
                 BaseType = ItemType.KeycardCustomSite02
             },
             new ItemSpec
@@ -119,7 +121,7 @@ namespace Brainless.Items
     }
 
     // No base event subscriptions: this plugin owns and cleans up its own handlers.
-    public sealed class RegisteredItem : CustomItem
+    public sealed class RegisteredItem : CustomItem, IAdminItem
     {
         private readonly Plugin owner;
         internal ItemSpec Spec { get; }
@@ -127,6 +129,9 @@ namespace Brainless.Items
         public RegisteredItem(Plugin owner, ItemSpec spec)
         {
             this.owner = owner;
+            // Existing generated configs retain their old descriptions across DLL updates.
+            if (spec.Id == 7110 && spec.Description == "Four-second, one-use LCZ access. No checkpoints, gates, or armories.")
+                spec.Description = "Reusable maintenance keycard. Containment level 1 with normal door interactions.";
             Spec = spec;
             Id = spec.Id;
             Name = spec.Name;
@@ -152,31 +157,90 @@ namespace Brainless.Items
 
         public override void Give(Player player, bool displayMessage = true)
         {
-            if (!CanIssue(1) || player.Items.Count >= (Id == 7101 ? 7 : 8))
-                return;
+            string failure = TryGive(player, false, displayMessage);
+            if (failure != null && displayMessage)
+                player?.ShowHint("Cannot give " + Name + ": " + failure, 6);
+        }
+
+        string IAdminItem.TryGive(Player player, bool ignoreLimits, bool displayMessage) => TryGive(player, ignoreLimits, displayMessage);
+        internal string TryGive(Player player, bool ignoreLimits, bool displayMessage)
+        {
+            if (player == null || !player.IsConnected)
+                return "Player is disconnected.";
+            if (!player.IsAlive)
+                return "Player must be alive.";
+            if (player.IsCuffed)
+                return "Player is restrained.";
+            int slots = Id == 7101 ? 2 : 1;
+            if (player.Items.Count + slots > 8)
+                return $"Inventory needs {slots} free slot(s).";
+            string failure = owner.IssueFailure(Spec, 1, ignoreLimits);
+            if (failure != null)
+                return failure;
             Item item = Item.Create(Type);
-            if (!owner.Mint(this, item.Serial))
-                return;
+            if (!owner.Mint(this, item.Serial, ignoreLimits))
+                return "Supply changed before the grant could complete; retry.";
             base.Give(player, item, false);
+            if (!player.Items.Any(i => i.Serial == item.Serial))
+            {
+                owner.Unmint(this, item.Serial, ignoreLimits);
+                return "The server did not add the item to the inventory; check the server log.";
+            }
+
             owner.Setup(item, this);
             if (Id == 7101)
-                owner.GiveFilter(player);
+            {
+                failure = owner.GiveFilter(player, ignoreLimits);
+                if (failure != null)
+                {
+                    player.RemoveItem(item);
+                    owner.Unmint(this, item.Serial, ignoreLimits);
+                    return "Gas kit cancelled because its paired filter could not be given: " + failure;
+                }
+            }
+
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);
+            return null;
         }
 
         public override Pickup Spawn(Vector3 position, Player previousOwner = null)
         {
-            if (!CanIssue(1))
-                return null;
-            Item item = Item.Create(Type);
-            if (!owner.Mint(this, item.Serial))
-                return null;
-            owner.Setup(item, this);
-            Pickup pickup = base.Spawn(position, item, previousOwner);
-            if (Id == 7101)
-                owner.SpawnFilter(position + Vector3.right * .3f);
+            TrySpawn(position, false, out var pickup, previousOwner);
             return pickup;
+        }
+
+        string IAdminItem.TrySpawn(Vector3 position, bool ignoreLimits) => TrySpawn(position, ignoreLimits, out _);
+        internal string TrySpawn(Vector3 position, bool ignoreLimits, out Pickup pickup, Player previousOwner = null)
+        {
+            pickup = null;
+            string failure = owner.IssueFailure(Spec, 1, ignoreLimits);
+            if (failure != null)
+                return failure;
+            Item item = Item.Create(Type);
+            if (!owner.Mint(this, item.Serial, ignoreLimits))
+                return "Supply changed before the spawn could complete; retry.";
+            owner.Setup(item, this);
+            pickup = base.Spawn(position, item, previousOwner);
+            if (pickup == null)
+            {
+                owner.Unmint(this, item.Serial, ignoreLimits);
+                return "The server did not create the pickup; check the server log.";
+            }
+
+            if (Id == 7101)
+            {
+                failure = owner.SpawnFilter(position + Vector3.right * .3f, ignoreLimits);
+                if (failure != null)
+                {
+                    pickup.Destroy();
+                    pickup = null;
+                    owner.Unmint(this, item.Serial, ignoreLimits);
+                    return "Gas kit cancelled because its paired filter could not spawn: " + failure;
+                }
+            }
+
+            return null;
         }
     }
 }

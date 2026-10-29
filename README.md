@@ -11,7 +11,9 @@ Independent SCP: Secret Laboratory plugins for the Brainless Project server.
 | [Weapons](Weapons) | `Brainless.Weapons.dll` | Four normal weapon variants and two disabled experimental prototypes |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Imported BetterCoinflips, updated to 5.1.0 for EXILED 9.15.2 |
 
-Read the [content catalog](docs/CATALOG.md), [architecture](docs/ARCHITECTURE.md), and [server playtest checklist](docs/PLAYTEST.md).
+Read the [commands and permissions](docs/COMMANDS.md), [content catalog](docs/CATALOG.md), [architecture](docs/ARCHITECTURE.md), and [server playtest checklist](docs/PLAYTEST.md).
+
+Roles, Items and Weapons are version **0.1.1**. This update adds a role HUD, makes the Maintenance Pass a reusable native keycard, and fixes misleading custom-item grant replies. An explicit admin `--force` option permits controlled testing beyond supply limits; natural loadouts and loot keep their caps.
 
 ## Install
 

@@ -26,7 +26,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 0);
+        public override Version Version => new Version(0, 1, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
 
@@ -68,6 +68,7 @@ namespace Brainless.Weapons
             S.RoundEnded += Ended;
             S.RoundStarted += RoundStarted;
             Reset();
+            AdminItems.Enable("brainless.weapons.commands", "brainless.weapons.bypasslimits");
             base.OnEnabled();
         }
 
@@ -86,6 +87,7 @@ namespace Brainless.Weapons
             S.WaitingForPlayers -= Reset;
             S.RoundEnded -= Ended;
             S.RoundStarted -= RoundStarted;
+            AdminItems.Disable();
             lifetime.Clear();
             foreach (var weapon in registered.Values)
                 weapon.Unregister();
@@ -131,10 +133,19 @@ namespace Brainless.Weapons
             });
         }
 
-        internal bool CanIssue(WeaponSpec spec, int count)
+        internal bool CanIssue(WeaponSpec spec, int count) => IssueFailure(spec, count, false) == null;
+        internal string IssueFailure(WeaponSpec spec, int count, bool ignoreLimits)
         {
+            if (count < 1)
+                return "The requested quantity must be positive.";
+            if (ignoreLimits)
+                return null;
             EnsureCapacity();
-            return budget.CanIssue(spec.Id.ToString(), spec.RoundCap, count);
+            if (budget.Count(spec.Id.ToString()) + count > spec.RoundCap)
+                return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{spec.RoundCap}). Admin testing can use --force.";
+            if (budget.Total + count > budget.Capacity)
+                return $"Custom firearm supply exhausted ({budget.Total}/{budget.Capacity} this round). Admin testing can use --force.";
+            return null;
         }
 
         internal bool CanIssueBatch(uint[] ids)
@@ -146,9 +157,9 @@ namespace Brainless.Weapons
             return ours.GroupBy(i => i).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));
         }
 
-        internal bool Mint(RegisteredWeapon definition, Firearm firearm)
+        internal bool Mint(RegisteredWeapon definition, Firearm firearm, bool ignoreLimits = false)
         {
-            if (!CanIssue(definition.Spec, 1) || !budget.TryIssue(definition.Id.ToString(), definition.Spec.RoundCap))
+            if (IssueFailure(definition.Spec, 1, ignoreLimits) != null || !budget.TryIssue(definition.Id.ToString(), definition.Spec.RoundCap, ignoreLimits: ignoreLimits))
                 return false;
             states[firearm.Serial] = new WeaponState
             {
@@ -168,6 +179,14 @@ namespace Brainless.Weapons
         }
 
         private WeaponState Find(Item item) => item != null && states.TryGetValue(item.Serial, out var state) ? state : null;
+        internal void Unmint(RegisteredWeapon item, int serial, bool ignoreLimits)
+        {
+            if (states.Remove(serial) && !ignoreLimits)
+                budget.RevokeIssue(item.Id.ToString());
+            shots.Forget(serial);
+            item.TrackedSerials.Remove(serial);
+        }
+
         private WeaponState Find(int serial) => states.TryGetValue(serial, out var state) ? state : null;
         private void Added(ItemAddedEventArgs ev)
         {
