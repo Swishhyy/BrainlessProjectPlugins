@@ -1,0 +1,44 @@
+name: Independent plugin builds
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Build ${{ matrix.plugin }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [Roles, Items, Weapons, BetterCoinflips]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Fetch pinned game and framework build inputs
+        run: python scripts/fetch_references.py
+      - name: Build this plugin only
+        run: python scripts/build.py --plugin ${{ matrix.plugin }}
+      - name: Upload this plugin DLL and instructions
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.plugin }}-EXILED-9.15.2
+          path: artifacts/${{ matrix.plugin }}/
+          if-no-files-found: error
+          retention-days: 90
+  regression:
+    name: Regression checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Run supply ammo and damage regression checks
+        run: dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release

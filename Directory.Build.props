@@ -1,0 +1,41 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net48</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <ExiledVersion>9.15.2</ExiledVersion>
+    <ReferencesPath Condition="'$(ReferencesPath)' == ''">$(MSBuildThisFileDirectory).build/references</ReferencesPath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'Brainless.Tests'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="Assembly-CSharp" HintPath="$(ReferencesPath)/Assembly-CSharp-Publicized.dll" Private="false" />
+    <Reference Include="Assembly-CSharp-firstpass" HintPath="$(ReferencesPath)/Assembly-CSharp-firstpass.dll" Private="false" />
+    <Reference Include="CommandSystem.Core" HintPath="$(ReferencesPath)/CommandSystem.Core.dll" Private="false" />
+    <Reference Include="Mirror" HintPath="$(ReferencesPath)/Mirror.dll" Private="false" />
+    <Reference Include="LabApi" HintPath="$(ReferencesPath)/LabApi.dll" Private="false" />
+    <Reference Include="Pooling" HintPath="$(ReferencesPath)/Pooling.dll" Private="false" />
+    <Reference Include="NorthwoodLib" HintPath="$(ReferencesPath)/NorthwoodLib.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ReferencesPath)/UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ReferencesPath)/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(ReferencesPath)/UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AudioModule" HintPath="$(ReferencesPath)/UnityEngine.AudioModule.dll" Private="false" />
+    <Reference Include="UnityEngine.InputLegacyModule" HintPath="$(ReferencesPath)/UnityEngine.InputLegacyModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(ReferencesPath)/UnityEngine.ParticleSystemModule.dll" Private="false" />
+    <Reference Include="Exiled.API" HintPath="$(ReferencesPath)/Exiled.API.dll" Private="false" />
+    <Reference Include="Exiled.Events" HintPath="$(ReferencesPath)/Exiled.Events.dll" Private="false" />
+    <Reference Include="Exiled.Loader" HintPath="$(ReferencesPath)/Exiled.Loader.dll" Private="false" />
+    <Reference Include="Exiled.Permissions" HintPath="$(ReferencesPath)/Exiled.Permissions.dll" Private="false" />
+    <Reference Include="Exiled.CustomItems" HintPath="$(ReferencesPath)/Exiled.CustomItems.dll" Private="false" />
+    <Reference Include="YamlDotNet" HintPath="$(ReferencesPath)/YamlDotNet.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(ReferencesPath)/0Harmony.dll" Private="false" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Rules.cs" Link="Internal/Rules.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Runtime.cs" Link="Internal/Runtime.cs" />
+  </ItemGroup>
+  <Target Name="CheckPluginReferences" BeforeTargets="ResolveReferences" Condition="'$(TargetFramework)' == 'net48'">
+    <Error Condition="!Exists('$(ReferencesPath)/Exiled.API.dll')" Text="Run python3 scripts/fetch_references.py first, or set ReferencesPath to your matching EXILED and game assemblies." />
+  </Target>
+</Project>
