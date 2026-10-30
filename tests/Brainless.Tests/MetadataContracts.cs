@@ -19,7 +19,11 @@ internal static class MetadataContracts
         }
 
         var fog = Method("InventorySystem.Items.Usables.Scp244", "Scp244DeployablePickup", "FogPercentForPoint");
-        check(fog.GetParameters().Count == 1 && fog.RelativeVirtualAddress != 0, "native smoke exposure patch targets the real per-object SCP-244 method");
+        check(fog.GetParameters().Count == 1 && fog.RelativeVirtualAddress != 0, "native smoke can measure ordinary SCP-244 exposure without suppressing fog signalling");
+        var subEffect = Method("InventorySystem.Items.Usables.Scp244.Hypothermia", "Hypothermia", "UpdateSubEffect");
+        check(subEffect.GetParameters().Count == 2 && subEffect.RelativeVirtualAddress != 0, "the cold guard targets the actual per-player subeffect/exposure boundary");
+        var fuse = Method("InventorySystem.Items.ThrowableProjectiles", "TimeGrenade", "ServerFuseEnd");
+        check(fuse.GetParameters().Count == 0 && fuse.RelativeVirtualAddress != 0, "impact detonation reaches the native validated zero-argument fuse method");
         var range = Method("InventorySystem.Items.Usables.Scp244", "Scp244DeployablePickup", "UpdateRange");
         check(range.GetParameters().Count == 0 && range.RelativeVirtualAddress != 0, "native smoke fixed-radius patch targets the actual SCP-244 update");
         var sync = Method("InventorySystem.Items.Usables.Scp244", "Scp244DeployablePickup", "set_Network_syncSizePercent");

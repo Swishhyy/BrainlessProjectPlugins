@@ -133,11 +133,18 @@ namespace Brainless.Internal
     internal sealed class BlastBudget
     {
         private readonly Dictionary<string, float> spent = new Dictionary<string, float>();
+        private readonly float humanCap, scpCap;
+        internal BlastBudget(float humanCap = 75, float scpCap = 200)
+        {
+            this.humanCap = Math.Max(0, humanCap);
+            this.scpCap = Math.Max(0, scpCap);
+        }
+
         internal float Take(string target, bool scp, float requested)
         {
             string key = target ?? "";
             float before = spent.TryGetValue(key, out float value) ? value : 0;
-            float amount = Math.Max(0, Math.Min(requested, (scp ? 200 : 75) - before));
+            float amount = Math.Max(0, Math.Min(requested, (scp ? scpCap : humanCap) - before));
             spent[key] = before + amount;
             return amount;
         }

@@ -1,6 +1,6 @@
 # Automatic plugin updates
 
-Roles 0.1.5, Items 0.1.4, Weapons 0.1.3, BetterCoinflips 5.1.1 and ScpProximityChat 0.1.0 include their own updater. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
+Roles 0.2.0, Items 0.2.0, Weapons 0.2.0, BetterCoinflips 5.1.2 and ScpProximityChat 0.1.0 include their own updater. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
 
 ## Server setup
 
@@ -35,7 +35,7 @@ Once these workflows are on `main`, a push/merge to `main` automatically builds 
 
 1. Bump the changed project's `.csproj` version and its `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`.
 2. Commit and merge/push to `main`, or open **Actions → Release plugins → Run workflow** and select the desired plugin or All. Prerelease is optional for manual runs.
-3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.1.5`, `items-v0.1.4`, `weapons-v0.1.3` `bettercoinflips-v5.1.1` and `scpproximitychat-v0.1.0`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
+3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.2.0`, `items-v0.2.0`, `weapons-v0.2.0` `bettercoinflips-v5.1.2` and `scpproximitychat-v0.1.0`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
 
 You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all five. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
 
@@ -58,3 +58,5 @@ Recent release lists use ETags, manifests are cached, and an already-downloaded 
 For the Locksmith rework, update both Roles and Items to 0.1.4 and fully restart. Roles removes retired item 7110 from configured kits and supplies the innate ability; Items removes the retired definition even from old generated lists. Weapons and BetterCoinflips retain their existing versions.
 
 Roles 0.1.5 changes only the role HUD layout: left-side placement by default, optional Right placement, fixed line spacing, a single-line name and wrapped description. The former stock -11 offset is migrated automatically. Update only Roles for this layout change and fully restart after download.
+
+Roles/Items/Weapons 0.2.0 add gameplay tuning and admin reload commands, confirmed-death zombie blasts, native gas initialization/cold filtering, Impact Grenade 7113 and a modest cluster buff. See [TUNING.md](TUNING.md). BetterCoinflips 5.1.2 synchronizes the rebuilt shared helper source; its coin effect settings and probabilities are unchanged. ScpProximityChat remains 0.1.0 with its independent updater.

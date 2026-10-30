@@ -36,11 +36,15 @@
     <Reference Include="System.Runtime.Serialization" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Rules.cs" Link="Internal/Rules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Runtime.cs" Link="Internal/Runtime.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Tuning.cs" Link="Internal/Tuning.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Updates/*.cs" Link="Internal/Updates/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/AdminItems.cs" Link="Internal/AdminItems.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/FragProjectiles.cs" Link="Internal/FragProjectiles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />
   </ItemGroup>
   <Target Name="CheckPluginReferences" BeforeTargets="ResolveReferences" Condition="'$(TargetFramework)' == 'net48'">
     <Error Condition="!Exists('$(ReferencesPath)/Exiled.API.dll')" Text="Run python3 scripts/fetch_references.py first, or set ReferencesPath to your matching EXILED and game assemblies." />

@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 5);
+        public override Version Version => new Version(0, 2, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -45,10 +45,12 @@ namespace Brainless.Roles
         private readonly Dictionary<string, RoleDefinition> zombieHistory = new Dictionary<string, RoleDefinition>();
         private readonly Dictionary<string, int> issued = new Dictionary<string, int>();
         private readonly Dictionary<Player, string> assignmentNotes = new Dictionary<Player, string>();
-        private readonly HashSet<string> burstSpent = new HashSet<string>();
+        private readonly Dictionary<string, int> burstSpent = new Dictionary<string, int>();
+        private readonly DeathCapture<Player, PendingBurst> pendingBursts = new DeathCapture<Player, PendingBurst>();
+        private readonly FragProjectiles bursts = new FragProjectiles();
         private readonly HashSet<string> doctorSpent = new HashSet<string>();
         private readonly Dictionary<int, int> badges = new Dictionary<int, int>();
-        private bool burstArmed, doctorRolled;
+        private bool doctorRolled;
         private float waveStart;
         private int waveCount;
         private Harmony harmony;
@@ -57,9 +59,7 @@ namespace Brainless.Roles
         private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
-            Config.UpgradeHudLayout();
-            if (Config.Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name)) || Config.Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Config.Roles.Count)
-                throw new InvalidOperationException("Role profiles need unique IDs and nonempty names.");
+            Config.Prepare();
             foreach (var role in Config.Roles)
             {
                 role.Id = role.Id.ToUpperInvariant();
@@ -67,6 +67,8 @@ namespace Brainless.Roles
                 role.CustomItems.RemoveAll(id => id == 7110);
                 if (role.Id == "D06" && role.Hint == "One Maintenance Pass; 90 HP.")
                     role.Hint = "90 HP. Interact to lockpick: 15 seconds, 120-second cooldown. Level 3 excluded.";
+                if (role.Id == "Z04" && role.Hint == "75% HP. One enemy combat death arms a two-second warning burst.")
+                    role.Hint = "75% HP. Explodes after a confirmed death; warning and blast are configurable.";
                 if (role.Id == "Z05" && role.HealthMultiplier == 1 && role.ShieldMultiplier == 1)
                 {
                     role.HealthMultiplier = .4f;
@@ -75,10 +77,6 @@ namespace Brainless.Roles
             }
 
             Instance = this;
-            if (float.IsNaN(Config.LockpickDurationSeconds) || float.IsInfinity(Config.LockpickDurationSeconds) || Config.LockpickDurationSeconds <= 0)
-                Config.LockpickDurationSeconds = LockpickRules.DefaultDuration;
-            if (float.IsNaN(Config.LockpickCooldownSeconds) || float.IsInfinity(Config.LockpickCooldownSeconds) || Config.LockpickCooldownSeconds < 0)
-                Config.LockpickCooldownSeconds = LockpickRules.DefaultCooldown;
             lockpicking = new Lockpicking(Config, lifetime, RoleId);
             roleHud = new RoleHud(Config, player => active.TryGetValue(player, out var state) ? state.Definition : null);
             harmony = new Harmony("brainless.roles.0.1");
@@ -86,6 +84,8 @@ namespace Brainless.Roles
             P.ChangingRole += ChangingRole;
             P.Spawned += Spawned;
             P.Dying += Dying;
+            P.Died += Died;
+            Exiled.Events.Handlers.Map.ExplodingGrenade += BurstExploding;
             P.Hurting += Hurting;
             P.InteractingDoor += LockpickDoor;
             P.Left += Left;
@@ -107,6 +107,8 @@ namespace Brainless.Roles
             P.ChangingRole -= ChangingRole;
             P.Spawned -= Spawned;
             P.Dying -= Dying;
+            P.Died -= Died;
+            Exiled.Events.Handlers.Map.ExplodingGrenade -= BurstExploding;
             P.Hurting -= Hurting;
             P.InteractingDoor -= LockpickDoor;
             P.Left -= Left;
@@ -118,6 +120,8 @@ namespace Brainless.Roles
             U.UpgradingInventoryItem -= UpgradeInventory;
             foreach (var player in active.Keys.ToArray())
                 Remove(player);
+            bursts.Clear();
+            pendingBursts.Clear();
             lifetime.Clear();
             lockpicking?.Clear();
             lockpicking = null;
@@ -137,6 +141,8 @@ namespace Brainless.Roles
                 Remove(player);
             lifetime.Clear();
             generations.Clear();
+            bursts.Clear();
+            pendingBursts.Clear();
             reasons.Clear();
             zombieHistory.Clear();
             issued.Clear();
@@ -144,7 +150,6 @@ namespace Brainless.Roles
             burstSpent.Clear();
             doctorSpent.Clear();
             badges.Clear();
-            burstArmed = false;
             doctorRolled = false;
             waveCount = 0;
             if (Config.IsEnabled)
@@ -158,6 +163,7 @@ namespace Brainless.Roles
             generations.Remove(ev.Player);
             reasons.Remove(ev.Player);
             assignmentNotes.Remove(ev.Player);
+            pendingBursts.Forget(ev.Player);
         }
 
         private void ChangingRole(ChangingRoleEventArgs ev) => Safe.Run(() =>
@@ -595,6 +601,7 @@ namespace Brainless.Roles
                     Safe.Run(() => Update(pair.Key, pair.Value));
                 Safe.Run(() => lockpicking?.Update());
                 Safe.Run(() => roleHud?.Update());
+                Safe.Run(() => bursts.Prune());
             }
         }
 
@@ -638,34 +645,83 @@ namespace Brainless.Roles
         }
 
         private void LockpickDoor(InteractingDoorEventArgs ev) => Safe.Run(() => lockpicking?.DoorInteraction(ev));
+        internal bool ReloadTuning(out string response)
+        {
+            try
+            {
+                var next = ConfigReload.Read(this);
+                next.Prepare();
+                if (!next.IsEnabled)
+                    throw new InvalidOperationException("Disable the plugin through a full server restart.");
+                ConfigReload.Apply(Config, next);
+                updates?.Dispose();
+                updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Roles", Config.AutoUpdate);
+                response = "Role settings reloaded. Existing assigned stats/queued explosions keep their state; new spawns/deaths use the updated configuration.";
+                return true;
+            }
+            catch (Exception exception)
+            {
+                response = "Role reload rejected; active settings retained. " + exception.Message;
+                return false;
+            }
+        }
+
         private void Dying(DyingEventArgs ev) => Safe.Run(() =>
         {
-            if (!ev.IsAllowed || RoleId(ev.Player) != "Z04" || ev.Attacker == null || !HitboxIdentity.IsEnemy(ev.Attacker.Role.Type, ev.Player.Role.Type) || burstSpent.Contains(ev.Player.UserId) || burstArmed || ev.DamageHandler.Type == DamageType.Explosion)
+            pendingBursts.Forget(ev.Player);
+            if (!ev.IsAllowed || RoleId(ev.Player) != "Z04")
                 return;
-            string userId = ev.Player.UserId;
-            Vector3 position = ev.Player.Position;
-            var source = new DamageSource(ev.Player);
-            // Wait for all death handlers and the native death operation before arming.
+            var pending = new PendingBurst
+            {
+                Event = ev,
+                UserId = ev.Player.UserId,
+                Position = ev.Player.Position,
+                Source = new DamageSource(ev.Player),
+                Tuning = Config.ExplosiveZombie,
+                HasAttacker = ev.Attacker != null && ev.Attacker != ev.Player,
+                Enemy = ev.Attacker != null && ev.Attacker != ev.Player && HitboxIdentity.IsEnemy(ev.Attacker.Role.Type, ev.Player.Role.Type)
+            };
+            pendingBursts.Capture(ev.Player, pending);
+            // A canceled death never reaches Died. Retire that capture next tick.
             lifetime.Later(0, () =>
             {
-                if (!ev.IsAllowed || ev.Player.IsAlive || burstSpent.Contains(userId) || burstArmed)
-                    return;
-                burstSpent.Add(userId);
-                burstArmed = true;
-                World.Cue(position, "Explosive corpse - move away!", 10);
-                FxAudio.Play(lifetime, position, 2, "beep");
-                lifetime.Later(2, () =>
-                {
-                    burstArmed = false;
-                    foreach (var target in Player.List.Where(p => p.IsHuman && source.CanAffect(p)).ToArray())
-                    {
-                        float amount = Rules.Falloff(Vector3.Distance(target.Position, position), 3, 80);
-                        if (amount > 0 && World.ClearLine(position + Vector3.up * .2f, target.Position))
-                            source.Blast(target, position, amount);
-                    }
-                });
+                pendingBursts.ForgetIfSame(ev.Player, pending);
             });
         });
+        private void Died(DiedEventArgs ev) => Safe.Run(() =>
+        {
+            if (!pendingBursts.Confirm(ev.Player, p => p.Event.IsAllowed && ev.TargetOldRole == RoleTypeId.Scp0492, out var pending))
+                return;
+            var tuning = pending.Tuning;
+            if (!tuning.Allows(pending.HasAttacker, pending.Enemy, pending.Event.DamageHandler.Type == DamageType.Explosion))
+                return;
+            bursts.Prune();
+            int used = burstSpent.TryGetValue(pending.UserId, out int before) ? before : 0;
+            if ((tuning.MaxPerPlayerPerRound > 0 && used >= tuning.MaxPerPlayerPerRound) || (tuning.MaxConcurrentBursts > 0 && bursts.Count >= tuning.MaxConcurrentBursts))
+                return;
+            var grenade = bursts.Launch(pending.Position + Vector3.up * .15f, Vector3.zero, Math.Max(.05f, tuning.WarningSeconds), pending.Source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: false);
+            grenade.Scale = Vector3.one * .001f;
+            if (grenade.Rigidbody != null)
+                grenade.Rigidbody.isKinematic = true;
+            burstSpent[pending.UserId] = used + 1;
+            if (tuning.ShowWarning)
+                World.Cue(pending.Position, "Explosive corpse - move away!", tuning.WarningRange);
+            if (tuning.PlayWarningSound)
+                FxAudio.Play(lifetime, pending.Position, tuning.WarningSeconds, "beep", range: tuning.WarningRange);
+            if (Config.Debug)
+                Log.Info("[Z04] Confirmed death armed a native explosion.");
+        });
+        private void BurstExploding(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev) => Safe.Run(() => bursts.Exploding(ev));
+        private sealed class PendingBurst
+        {
+            internal DyingEventArgs Event;
+            internal string UserId;
+            internal Vector3 Position;
+            internal DamageSource Source;
+            internal ExplosiveZombieTuning Tuning;
+            internal bool HasAttacker, Enemy;
+        }
+
         private void ConvertDoctor(Player player)
         {
             var definition = Config.Roles.FirstOrDefault(r => r.Id == "Z05");

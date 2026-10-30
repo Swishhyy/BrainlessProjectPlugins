@@ -24,6 +24,7 @@ namespace Brainless.Weapons
         public float HumanDamage { get; set; } = 1;
         public float ScpDamage { get; set; } = 1;
         public int RoundCap { get; set; } = 2;
+        public float Weight { get; set; } = 2;
     }
 
     public sealed class Config : Exiled.API.Interfaces.IConfig
@@ -33,12 +34,27 @@ namespace Brainless.Weapons
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
         public bool AllowExperimentalWeapons { get; set; }
         public bool WorldLoot { get; set; }
+        public WeaponTuning Tuning { get; set; } = new WeaponTuning();
+
+        [Tune(.05, 30)]
         public float LauncherShotInterval { get; set; } = .65f;
+
+        [Tune(0, 100)]
         public float LauncherSpeed { get; set; } = 18;
+
+        [Tune(.05, 120)]
         public float LauncherFuse { get; set; } = 1.8f;
+
+        [Tune(.1, 60)]
         public float LauncherBlastRadius { get; set; } = 2.5f;
+
+        [Tune(0, 100000)]
         public float LauncherHumanDamage { get; set; } = 45;
+
+        [Tune(0, 100000)]
         public float LauncherScpDamage { get; set; } = 90;
+        public bool LauncherRequireLineOfSight { get; set; } = true;
+        public bool LauncherAffectOwner { get; set; } = true;
         public List<WeaponSpec> Weapons { get; set; } = new List<WeaponSpec>
         {
             new WeaponSpec
@@ -128,11 +144,27 @@ namespace Brainless.Weapons
                 Weapons.Add(CreateLauncher());
             CatalogRevision = 1;
         }
+
+        internal void Prepare()
+        {
+            if (Weapons == null || Weapons.Any(w => w == null))
+                throw new InvalidOperationException("Weapons cannot contain null entries.");
+            UpgradeCatalog();
+            Brainless.Internal.Tuning.Validate(this, "brainless_weapons");
+            if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
+                throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
+            foreach (var w in Weapons)
+                if (w.Id < 7201 || w.Id > 7207 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7205 || w.Id == 7207) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
+                    throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
+            foreach (var w in Weapons)
+                if (w.Id == 7207 && w.BaseType != ItemType.GunLogicer)
+                    throw new InvalidOperationException("The launcher must use the Logicer body.");
+        }
     }
 
     public sealed class RegisteredWeapon : CustomItem, IAdminItem
     {
-        internal WeaponSpec Spec { get; }
+        internal WeaponSpec Spec { get; private set; }
 
         private readonly Plugin owner;
         public RegisteredWeapon(Plugin owner, WeaponSpec spec)
@@ -143,6 +175,15 @@ namespace Brainless.Weapons
             Name = spec.Name;
             Description = spec.Description;
             Type = spec.BaseType;
+            Weight = spec.Weight;
+        }
+
+        internal void Retune(WeaponSpec spec)
+        {
+            Spec = spec;
+            Name = spec.Name;
+            Description = spec.Description;
+            Weight = spec.Weight;
         }
 
         public override uint Id { get; set; }

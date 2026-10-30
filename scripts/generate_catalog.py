@@ -14,8 +14,13 @@ for role_id, name, base, hint in roles:
 lines += ['', 'Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy falls back to painkillers until a seasonal allowlist is approved.', '']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     source = (root/folder/'Definition.cs').read_text()
-    entries = re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{\s*Id\s*=\s*(\d+),\s*Name\s*=\s*"([^"]+)",\s*Description\s*=\s*"([^"]+)"', source)
-    assert len(entries) == (11 if folder == 'Items' else 7), f'Incomplete {label} catalog: {len(entries)} entries'
+    blocks = re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{([^{}]+)\}', source)
+    entries = []
+    for block in blocks:
+        fields = [re.search(pattern, block) for pattern in (r'\bId\s*=\s*(\d+)', r'\bName\s*=\s*"([^"]+)"', r'\bDescription\s*=\s*"([^"]+)"')]
+        if all(fields): entries.append(tuple(field.group(1) for field in fields))
+    entries.sort(key=lambda entry: int(entry[0]))
+    assert len(entries) == (12 if folder == 'Items' else 7), f'Incomplete {label} catalog: {len(entries)} entries'
     lines += [f'## {label}', '', '| Design ID | Registry ID | Name | Behavior |', '| --- | --- | --- | --- |']
     prefix = 'I' if folder == 'Items' else 'W'
     for index, (item_id, name, description) in enumerate(entries, 1):
@@ -28,7 +33,7 @@ lines += ['## Initial supply', '', '| Population | Utility items including kits 
           'Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget excludes that role from the draw; another eligible profile can still be selected. Redline and Ricochet require the experimental weapon switch. Admin give/spawn ignores supply caps. The Grenade Launcher uses 16 grenades total and cannot reload from ordinary ammo.', '']
 assert len(roles) == 35, f'Expected 35 roles; got {len(roles)}'
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Catalog written with 35 roles, 11 items and 7 weapon definitions.')
+print('Catalog written with 35 roles, 12 items and 7 weapon definitions.')
 
 # A separate operator-facing audit records why a correctly installed profile may
 # not appear. Runtime bproles remains the authority for edited server configs.

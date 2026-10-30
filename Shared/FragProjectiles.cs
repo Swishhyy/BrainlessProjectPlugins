@@ -9,12 +9,14 @@ using UnityEngine;
 
 namespace Brainless.Internal
 {
-    // Compiled separately into Items and Weapons. Real native grenades provide
+    // Compiled separately into Roles, Items and Weapons. Real native grenades provide
     // physics, fuse, sound and explosion VFX; only our damage is replaced.
     internal sealed class FragProjectiles
     {
         private readonly Dictionary<int, Frag> active = new Dictionary<int, Frag>();
-        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null)
+        internal int Count => active.Count;
+
+        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true)
         {
             var grenade = Projectile.Create<ExplosionGrenadeProjectile>(ProjectileType.FragGrenade);
             grenade.FuseTime = fuse;
@@ -22,7 +24,7 @@ namespace Brainless.Internal
             grenade.BurnDuration = 0;
             grenade.DeafenDuration = 0;
             grenade.ConcussDuration = 0;
-            active.Add(grenade.Serial, new Frag(grenade, source, radius, humanPeak, scpPeak, budget));
+            Track(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner);
             try
             {
                 grenade.Spawn(position, shouldBeActive: false, previousOwner: source.Owner ?? Server.Host);
@@ -46,9 +48,16 @@ namespace Brainless.Internal
             }
         }
 
+        internal void Track(ExplosionGrenadeProjectile grenade, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true)
+        {
+            grenade.MaxRadius = radius;
+            grenade.BurnDuration = grenade.DeafenDuration = grenade.ConcussDuration = 0;
+            active[grenade.Serial] = new Frag(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner);
+        }
+
         internal bool Exploding(ExplodingGrenadeEventArgs ev)
         {
-            if (!active.TryGetValue(ev.Projectile.Serial, out var frag))
+            if (ev.Projectile == null || !active.TryGetValue(ev.Projectile.Serial, out var frag))
                 return false;
             active.Remove(ev.Projectile.Serial);
             bool allowed = ev.IsAllowed;
@@ -60,7 +69,7 @@ namespace Brainless.Internal
             foreach (var target in ev.TargetsToAffect.Where(frag.Source.CanAffect).ToArray())
             {
                 float amount = Rules.Falloff(Vector3.Distance(ev.Position, target.Position), frag.Radius, target.IsScp ? frag.ScpPeak : frag.HumanPeak);
-                if (amount <= 0 || !World.ClearLine(ev.Position + Vector3.up * .12f, target.Position))
+                if (amount <= 0 || (!frag.AffectOwner && target == frag.Source.Owner) || (frag.RequireLineOfSight && !World.ClearLine(ev.Position + Vector3.up * .12f, target.Position)))
                     continue;
                 if (frag.Budget != null)
                     amount = frag.Budget.Take(target.UserId, target.IsScp, amount);
@@ -68,6 +77,16 @@ namespace Brainless.Internal
             }
 
             return true;
+        }
+
+        internal void Prune()
+        {
+            foreach (var pair in active.Where(p => p.Value.Projectile.Base == null || Time.time >= p.Value.Expires).ToArray())
+            {
+                active.Remove(pair.Key);
+                if (pair.Value.Projectile.Base != null)
+                    Safe.Run(() => pair.Value.Projectile.Destroy());
+            }
         }
 
         internal void Clear()
@@ -84,7 +103,9 @@ namespace Brainless.Internal
             internal readonly DamageSource Source;
             internal readonly float Radius, HumanPeak, ScpPeak;
             internal readonly BlastBudget Budget;
-            internal Frag(ExplosionGrenadeProjectile projectile, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget)
+            internal readonly bool RequireLineOfSight, AffectOwner;
+            internal readonly float Expires;
+            internal Frag(ExplosionGrenadeProjectile projectile, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget, bool requireLineOfSight, bool affectOwner)
             {
                 Projectile = projectile;
                 Source = source;
@@ -92,6 +113,9 @@ namespace Brainless.Internal
                 HumanPeak = humanPeak;
                 ScpPeak = scpPeak;
                 Budget = budget;
+                RequireLineOfSight = requireLineOfSight;
+                AffectOwner = affectOwner;
+                Expires = Time.time + Math.Max(.05f, projectile.FuseTime) + 5;
             }
         }
     }

@@ -1,20 +1,20 @@
-# Brainless Project Plugins
+# Project Brainless Plugins
 
-Independent SCP: Secret Laboratory plugins for the Brainless Project server.
+Independent SCP: Secret Laboratory plugins for the Project Brainless server.
 
 **Target: EXILED 9.15.2 and SCP: SL 14.2.8.** These are five separate C# projects, configuration sections and DLLs. There are no project references or runtime dependencies between the plugins.
 
 | Folder | Compiled file | Purpose |
 | --- | --- | --- |
 | [Roles](Roles) | `Brainless.Roles.dll` | 35 configurable role profiles, spawn selection, guard badges and SCP variants |
-| [Items](Items) | `Brainless.Items.dll` | 11 custom throwables, tools, devices and supplies |
+| [Items](Items) | `Brainless.Items.dll` | 12 custom throwables, tools, devices and supplies |
 | [Weapons](Weapons) | `Brainless.Weapons.dll` | Five normal weapons including a 16-shot grenade launcher, plus two disabled experimental prototypes |
-| [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Imported BetterCoinflips, updated to 5.1.1 for EXILED 9.15.2 |
+| [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Imported BetterCoinflips, updated to 5.1.2 for EXILED 9.15.2 |
 | [ScpProximityChat](ScpProximityChat) | `Brainless.ScpProximityChat.dll` | Nearby SCP voice with native spatial audio and toggle/hold controls; no external audio/settings library |
 
-Read the [automatic updates guide](docs/UPDATES.md), [commands and permissions](docs/COMMANDS.md), [content catalog](docs/CATALOG.md), [architecture](docs/ARCHITECTURE.md), [role availability](docs/ROLE_STATUS.md), and [server playtest checklist](docs/PLAYTEST.md).
+Read the [automatic updates guide](docs/UPDATES.md), [commands and permissions](docs/COMMANDS.md), [content catalog](docs/CATALOG.md), [balance/config reference](docs/TUNING.md), [architecture](docs/ARCHITECTURE.md), [role availability](docs/ROLE_STATUS.md), and [server playtest checklist](docs/PLAYTEST.md).
 
-Roles is version **0.1.5**, Items **0.1.4**, Weapons **0.1.3**, BetterCoinflips **5.1.1** and ScpProximityChat **0.1.0**. All five independently check GitHub Releases for their own updates. Admin `ci give`/`ci spawn` commands issue available content without population/supply caps or extra bypass permissions. Natural loadouts and loot keep their normal supply limits. The role HUD appears in a compact column at the left side by default, with optional right-side placement. Locksmith now picks eligible doors in 15 seconds with a 120-second cooldown after success; containment/armory level 3 is excluded. The Maintenance Pass has been removed. Gas uses native SCP-244 smoke with no damage and a 20% human slow. Clusters launch four native grenades. Admins can inspect roles with `bprole`, audit availability with `bproles`, and test a profile with `bprole set <ID> [playerID]`.
+Roles, Items and Weapons are version **0.2.0**, BetterCoinflips **5.1.2** and ScpProximityChat **0.1.0**. All five independently check GitHub Releases for their own updates. Admin `ci give`/`ci spawn` commands issue available content without population/supply caps or extra bypass permissions. Natural loadouts and loot keep their normal supply limits. The role HUD appears in a compact column at the left side by default, with optional right-side placement. Locksmith now picks eligible doors in 15 seconds with a 120-second cooldown after success; containment/armory level 3 is excluded. The Maintenance Pass has been removed. Gas uses native SCP-244 smoke with no damage and a 20% human slow. Clusters launch four native grenades with a modest damage/radius increase. Impact Grenade 7113 detonates on surface contact after a short arming delay. Explosive zombies now arm a native blast after a confirmed death, including environmental/explosion deaths by default. Admins can inspect roles with `bprole`, audit availability with `bproles`, and test a profile with `bprole set <ID> [playerID]`.
 
 ## Install
 
@@ -22,7 +22,7 @@ Roles is version **0.1.5**, Items **0.1.4**, Weapons **0.1.3**, BetterCoinflips 
 2. Download the desired plugin artifacts from this repository's [Releases](https://github.com/Swishhyy/BrainlessProjectPlugins/releases), **Actions** tab, or build them below. Each artifact contains one DLL and its own instructions. SCP proximity chat needs only its own DLL on an existing EXILED installation; see [controls and mute settings](ScpProximityChat/README.md).
 3. Put the selected DLLs in your server's `EXILED/Plugins` folder. Install any combination of the five.
 4. Replace the old `BetterCoinflips.dll`; do not leave two versions installed. Keep a copy of your existing configuration before updating it.
-5. Start the server. Edit the generated `brainless_roles`, `brainless_items`, `brainless_weapons`, `better_coinflips`, and `brainless_scp_proximity_chat` settings as needed. Restart to apply a new content setup.
+5. Start the server. Edit the generated `brainless_roles`, `brainless_items`, `brainless_weapons`, `better_coinflips`, and `brainless_scp_proximity_chat` settings as needed. Use `bpitems reload`, `bpweapons reload` or `bprole reload` to apply balance edits; restart for registration/native-body changes.
 
 Automatic release checks default to every 60 minutes, starting 20 seconds after each plugin enables. Verified DLLs replace their own on-disk files with a `.previous` backup and load after a full server restart. This repository is private, so configure `BRAINLESS_GITHUB_TOKEN` in the server process environment with a fine-grained token restricted to this repository and Contents: read. The token value is never stored in the plugin YAML. See [UPDATES.md](docs/UPDATES.md) for setup and release publication.
 
@@ -62,7 +62,7 @@ The packaging script writes separate folders and ZIPs to `artifacts`. It continu
 dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- .
 ```
 
-This checks supply limits, Last Word and launcher shot budgets, eligible role draws, Locksmith timing/cooldowns/access policy, shared cluster damage caps, weighted effects, blast falloff, Nullifier shield spillover, SCP voice toggle/hold input and recipient filtering, and the actual built DLLs' dependency tables. It does not simulate the Unity server. Follow `docs/PLAYTEST.md` on a test server before normal rotation.
+This checks nested tuning validation, impact arming/one-shot collision policy, confirmed/canceled zombie death capture, configurable cluster caps, supply limits, Last Word and launcher shot budgets, eligible role draws, Locksmith timing/cooldowns/access policy, shared cluster damage caps, weighted effects, blast falloff, Nullifier shield spillover, SCP voice toggle/hold input and recipient filtering, and the actual built DLLs' dependency tables. It does not simulate the Unity server. Follow `docs/PLAYTEST.md` on a test server before normal rotation.
 
 ## Prototype status
 

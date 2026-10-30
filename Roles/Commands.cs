@@ -31,13 +31,15 @@ namespace Brainless.Roles
         {
             "myrole"
         };
-        public string Description => "Inspect your role, a player's role, or all roles. Admin test: bprole set <roleID> [playerID].";
+        public string Description => "Inspect roles, test with bprole set <roleID> [playerID], or reload tuning with bprole reload.";
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
             if (!RoleCommands.Ready(sender, out var plugin, out response))
                 return false;
             string[] args = arguments.ToArray();
+            if (args.Length == 1 && args[0].Equals("reload", StringComparison.OrdinalIgnoreCase))
+                return plugin.ReloadTuning(out response);
             if (args.Length == 1 && (args[0] == "*" || args[0].Equals("all", StringComparison.OrdinalIgnoreCase)))
             {
                 response = string.Join("\n\n", Player.List.Where(RoleCommands.Valid).OrderBy(p => p.Id).Select(plugin.Inspect));
@@ -49,7 +51,7 @@ namespace Brainless.Roles
             bool set = args.Length > 0 && args[0].Equals("set", StringComparison.OrdinalIgnoreCase);
             if ((set && (args.Length < 2 || args.Length > 3)) || (!set && args.Length > 1))
             {
-                response = "Usage: bprole [playerID|all], or bprole set <roleID> [playerID].";
+                response = "Usage: bprole [playerID|all|reload], or bprole set <roleID> [playerID].";
                 return false;
             }
 

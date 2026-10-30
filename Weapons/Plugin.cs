@@ -28,9 +28,10 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 3);
+        public override Version Version => new Version(0, 2, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
+        public static Plugin Instance { get; private set; }
 
         private readonly Lifetime lifetime = new Lifetime();
         private readonly LimitedBudget budget = new LimitedBudget();
@@ -44,7 +45,7 @@ namespace Brainless.Weapons
         private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
-            Config.UpgradeCatalog();
+            Config.Prepare();
             var enabled = Config.Weapons.Where(w => w.Enabled && (!w.Experimental || Config.AllowExperimentalWeapons)).ToArray();
             if (enabled.Select(s => s.Id).Distinct().Count() != enabled.Length || enabled.Select(s => s.Name).Distinct().Count() != enabled.Length)
                 throw new InvalidOperationException("Weapon IDs and names must be unique.");
@@ -73,6 +74,7 @@ namespace Brainless.Weapons
             S.WaitingForPlayers += Reset;
             S.RoundEnded += Ended;
             S.RoundStarted += RoundStarted;
+            Instance = this;
             Reset();
             AdminItems.Enable("brainless.weapons.commands");
             base.OnEnabled();
@@ -81,6 +83,7 @@ namespace Brainless.Weapons
 
         public override void OnDisabled()
         {
+            Instance = null;
             updates?.Dispose();
             updates = null;
             P.Shooting -= Shooting;
@@ -119,6 +122,16 @@ namespace Brainless.Weapons
             budget.Reset(0);
             capacitySet = false;
             reflected = false;
+            lifetime.Run(CleanupProjectiles());
+        }
+
+        private IEnumerator<float> CleanupProjectiles()
+        {
+            while (true)
+            {
+                yield return Timing.WaitForSeconds(1);
+                Safe.Run(grenades.Prune);
+            }
         }
 
         private void Ended(Exiled.Events.EventArgs.Server.RoundEndedEventArgs ev) => Reset();
@@ -127,7 +140,7 @@ namespace Brainless.Weapons
             if (!capacitySet)
             {
                 capacitySet = true;
-                budget.Capacity = Rules.WeaponCap(Player.List.Count(p => p.IsConnected && !p.IsHost));
+                budget.Capacity = Config.Tuning.Supply.Capacity(Player.List.Count(p => p.IsConnected && !p.IsHost));
             }
         }
 
@@ -139,9 +152,15 @@ namespace Brainless.Weapons
             lifetime.Later(1, () =>
             {
                 var room = Room.List.FirstOrDefault(r => r.Zone == ZoneType.HeavyContainment && r.Type.ToString().IndexOf("Armory", StringComparison.OrdinalIgnoreCase) >= 0);
-                var available = registered.Values.Where(w => w.Id != 7205 && CanIssue(w.Spec, 1)).ToArray();
-                if (room != null && available.Length > 0)
-                    available[UnityEngine.Random.Range(0, available.Length)].Spawn(room.Position + Vector3.up);
+                if (room == null)
+                    return;
+                for (int i = 0; i < Config.Tuning.Supply.WorldLootCount; i++)
+                {
+                    var available = registered.Values.Where(w => w.Id != 7205 && CanIssue(w.Spec, 1)).ToArray();
+                    if (available.Length == 0)
+                        break;
+                    available[UnityEngine.Random.Range(0, available.Length)].Spawn(room.Position + Vector3.up + Vector3.right * .5f * i);
+                }
             });
         }
 
@@ -176,9 +195,10 @@ namespace Brainless.Weapons
             states[firearm.Serial] = new WeaponState
             {
                 Definition = definition,
+                InitialCapacity = definition.Spec.Magazine,
                 LastHeat = Time.time
             };
-            int magazine = definition.Id == 7207 ? 16 : definition.Spec.Magazine;
+            int magazine = definition.Spec.Magazine;
             if (magazine > 0)
             {
                 firearm.MaxMagazineAmmo = magazine;
@@ -187,9 +207,9 @@ namespace Brainless.Weapons
             }
 
             if (definition.Id == 7205)
-                shots.Register(firearm.Serial, 6);
+                shots.Register(firearm.Serial, magazine);
             else if (definition.Id == 7207)
-                shots.Register(firearm.Serial, 16);
+                shots.Register(firearm.Serial, magazine);
             return true;
         }
 
@@ -224,7 +244,7 @@ namespace Brainless.Weapons
             var state = Find(firearm);
             if (state == null)
                 return;
-            int capacity = state.Definition.Id == 7207 ? 16 : state.Definition.Spec.Magazine;
+            int capacity = FixedAmmo(state) ? state.InitialCapacity : state.Definition.Spec.Magazine;
             if (capacity > 0)
                 firearm.MaxMagazineAmmo = capacity;
             if (FixedAmmo(state))
@@ -261,6 +281,7 @@ namespace Brainless.Weapons
 
         private void Shooting(ShootingEventArgs ev) => Safe.Run(() =>
         {
+            grenades.Prune();
             var state = Find(ev.Item);
             if (state == null || !ev.IsAllowed)
                 return;
@@ -288,11 +309,11 @@ namespace Brainless.Weapons
                     return;
                 }
 
-                state.Heat = Math.Min(100, state.Heat + 9);
+                state.Heat = Math.Min(Config.Tuning.Redline.MaxHeat, state.Heat + Config.Tuning.Redline.HeatPerShot);
                 state.LastFire = Time.time;
-                if (state.Heat >= 100)
+                if (state.Heat >= Config.Tuning.Redline.MaxHeat)
                 {
-                    state.VentUntil = Time.time + 3;
+                    state.VentUntil = Time.time + Config.Tuning.Redline.VentSeconds;
                     state.Heat = 0;
                     FxAudio.Play(lifetime, ev.Player.Position, 1, "beep");
                 }
@@ -310,7 +331,7 @@ namespace Brainless.Weapons
                 Vector3 direction = ev.Direction.normalized;
                 var source = new DamageSource(ev.Player);
                 if (launcher)
-                    state.NextLaunch = Time.time + Mathf.Clamp(Config.LauncherShotInterval, .2f, 5);
+                    state.NextLaunch = Time.time + Config.LauncherShotInterval;
                 lifetime.Later(0, () =>
                 {
                     if (!ev.IsAllowed || state.ConsumedToken == token)
@@ -325,7 +346,7 @@ namespace Brainless.Weapons
                         Vector3 muzzle = origin + direction * .55f;
                         if (Physics.Raycast(origin, direction, out var hit, .6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                             muzzle = hit.point - direction * .1f;
-                        grenades.Launch(muzzle, direction * Mathf.Clamp(Config.LauncherSpeed, 5, 35), Mathf.Clamp(Config.LauncherFuse, .5f, 5), source, Mathf.Clamp(Config.LauncherBlastRadius, .5f, 4), Mathf.Clamp(Config.LauncherHumanDamage, 0, 75), Mathf.Clamp(Config.LauncherScpDamage, 0, 150));
+                        grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner);
                     }
                 });
             }
@@ -334,8 +355,8 @@ namespace Brainless.Weapons
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Cool(WeaponState state)
         {
-            float start = Math.Max(state.LastHeat, state.LastFire + .6f);
-            state.Heat = Math.Max(0, state.Heat - Math.Max(0, Time.time - start) * 25);
+            float start = Math.Max(state.LastHeat, state.LastFire + Config.Tuning.Redline.CoolingDelaySeconds);
+            state.Heat = Math.Max(0, state.Heat - Math.Max(0, Time.time - start) * Config.Tuning.Redline.CoolingPerSecond);
             state.LastHeat = Time.time;
         }
 
@@ -354,14 +375,14 @@ namespace Brainless.Weapons
             }
 
             if (state.Definition.Id == 7201 && ev.Player.IsScp)
-                ev.Amount = Rules.ShieldDamage(ev.Amount, ev.Player.HumeShield, 1.2f, state.Definition.Spec.ScpDamage);
+                ev.Amount = Rules.ShieldDamage(ev.Amount, ev.Player.HumeShield, Config.Tuning.Nullifier.ShieldDamageMultiplier, state.Definition.Spec.ScpDamage);
             else
                 ev.Amount *= ev.Player.IsScp ? state.Definition.Spec.ScpDamage : state.Definition.Spec.HumanDamage;
             if (state.Definition.Id != 7202 || ev.Attacker == null || !HitboxIdentity.IsEnemy(ev.Attacker.Role.Type, ev.Player.Role.Type))
                 return;
             if (tagImmunity.TryGetValue(ev.Player, out float immune) && immune > Time.time)
                 return;
-            if (!state.Tags.TryGetValue(ev.Player, out var hits) || Time.time - hits.Start > 2)
+            if (!state.Tags.TryGetValue(ev.Player, out var hits) || Time.time - hits.Start > Config.Tuning.Rattler.HitWindowSeconds)
                 state.Tags[ev.Player] = hits = new Tag
                 {
                     Start = Time.time
@@ -370,20 +391,20 @@ namespace Brainless.Weapons
                 return;
             hits.Token = state.Token;
             hits.Hits++;
-            if (hits.Hits < 3)
+            if (hits.Hits < Config.Tuning.Rattler.HitsToTag)
                 return;
             state.Tags.Remove(ev.Player);
-            tagImmunity[ev.Player] = Time.time + 11;
+            tagImmunity[ev.Player] = Time.time + Config.Tuning.Rattler.ImmunitySeconds;
             var target = ev.Player;
             var role = target.Role.Base;
             Vector3 position = target.Position;
-            target.ShowHint("Rattler tag - nearby players can hear you for three seconds", 3);
-            FxAudio.Play(lifetime, position, 3, "beep", () =>
+            target.ShowHint($"Rattler tag - nearby players can hear you for {Config.Tuning.Rattler.TagDurationSeconds:0.#} seconds", Config.Tuning.Rattler.TagDurationSeconds);
+            FxAudio.Play(lifetime, position, Config.Tuning.Rattler.TagDurationSeconds, "beep", () =>
             {
                 if (target.IsConnected && target.IsAlive && target.Role.Base == role)
                     position = target.Position;
                 return position;
-            });
+            }, Config.Tuning.Rattler.AudioVolume, Config.Tuning.Rattler.AudioRange);
         });
         private void Shot(ShotEventArgs ev) => Safe.Run(() =>
         {
@@ -407,7 +428,8 @@ namespace Brainless.Weapons
         private void Breach(ShotEventArgs ev, WeaponState state)
         {
             var door = ev.RaycastHit.collider == null ? null : Door.Get(ev.RaycastHit.collider.gameObject);
-            if (!World.OrdinaryDoor(door) || Vector3.Distance(ev.Player.Position, door.Position) > 2 || state.DoorToken == state.Token || state.AmmoBefore < 2)
+            var tuning = Config.Tuning.BreachShotgun;
+            if (!World.OrdinaryDoor(door) || Vector3.Distance(ev.Player.Position, door.Position) > tuning.Reach || state.DoorToken == state.Token || state.AmmoBefore < tuning.ShellsPerCycle)
                 return;
             state.DoorToken = state.Token;
             int ammoBefore = state.AmmoBefore;
@@ -418,18 +440,18 @@ namespace Brainless.Weapons
                 if (!player.Items.Contains(gun) || !World.OrdinaryDoor(door))
                     return;
                 int spent = Math.Max(0, ammoBefore - gun.MagazineAmmo - gun.BarrelAmmo);
-                int extra = Math.Max(0, 2 - spent);
+                int extra = Math.Max(0, tuning.ShellsPerCycle - spent);
                 if (gun.MagazineAmmo + gun.BarrelAmmo < extra)
                     return;
                 int fromMagazine = Math.Min(extra, gun.MagazineAmmo);
                 gun.MagazineAmmo -= fromMagazine;
                 gun.BarrelAmmo -= extra - fromMagazine;
-                if (!doors.TryGetValue(door, out var progress) || Time.time - progress.Last > 6)
+                if (!doors.TryGetValue(door, out var progress) || Time.time - progress.Last > tuning.ProgressResetSeconds)
                     doors[door] = progress = new DoorProgress();
                 progress.Hits++;
                 progress.Last = Time.time;
-                World.Cue(door.Position, $"Door breach {progress.Hits}/3", 10);
-                if (progress.Hits >= 3 && door is IDamageableDoor damageable)
+                World.Cue(door.Position, $"Door breach {progress.Hits}/{tuning.CyclesToBreach}", 10);
+                if (progress.Hits >= tuning.CyclesToBreach && door is IDamageableDoor damageable)
                 {
                     damageable.Break();
                     doors.Remove(door);
@@ -440,12 +462,13 @@ namespace Brainless.Weapons
         private void Bounce(ShotEventArgs ev)
         {
             var hit = ev.RaycastHit;
-            if (hit.collider == null || !(hit.collider is MeshCollider) || hit.collider.attachedRigidbody != null || Door.Get(hit.collider.gameObject) != null || hit.distance >= 20)
+            var tuning = Config.Tuning.Ricochet;
+            if (hit.collider == null || !(hit.collider is MeshCollider) || hit.collider.attachedRigidbody != null || Door.Get(hit.collider.gameObject) != null || hit.distance >= tuning.Range)
                 return;
             ev.CanHurt = false;
             Vector3 origin = hit.point + hit.normal * .03f;
             Vector3 direction = Vector3.Reflect(ev.Player.CameraTransform.forward, hit.normal).normalized;
-            foreach (var bounce in Physics.RaycastAll(origin, direction, 20 - hit.distance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+            foreach (var bounce in Physics.RaycastAll(origin, direction, tuning.Range - hit.distance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
             {
                 var identity = bounce.collider.GetComponentInParent<HitboxIdentity>();
                 if (identity == null)
@@ -458,7 +481,7 @@ namespace Brainless.Weapons
                 Trace(origin, bounce.point);
                 if (target == null || target == ev.Player || !World.CanDamage(ev.Player, target))
                     return;
-                var handler = new PlayerStatsSystem.FirearmDamageHandler(ev.Firearm.Base, ev.Damage * .5f, ev.Firearm.Penetration, true)
+                var handler = new PlayerStatsSystem.FirearmDamageHandler(ev.Firearm.Base, ev.Damage * tuning.BounceDamageMultiplier, ev.Firearm.Penetration, true)
                 {
                     Hitbox = HitboxType.Body
                 };
@@ -475,7 +498,7 @@ namespace Brainless.Weapons
                 return;
             }
 
-            Trace(origin, origin + direction * (20 - hit.distance));
+            Trace(origin, origin + direction * (tuning.Range - hit.distance));
         }
 
         private void Trace(Vector3 from, Vector3 to)
@@ -485,8 +508,35 @@ namespace Brainless.Weapons
                 return;
             var marker = World.Marker(lifetime, (from + to) * .5f, Color.yellow, new Vector3(.018f, .018f, delta.magnitude), PrimitiveType.Cube);
             marker.Rotation = Quaternion.LookRotation(delta);
-            lifetime.Later(.12f, () => lifetime.Release(marker));
-            FxAudio.Play(lifetime, from, .12f, "beep");
+            lifetime.Later(Config.Tuning.Ricochet.TracerSeconds, () => lifetime.Release(marker));
+            FxAudio.Play(lifetime, from, Config.Tuning.Ricochet.TracerSeconds, "beep");
+        }
+
+        internal bool ReloadTuning(out string response)
+        {
+            try
+            {
+                var next = ConfigReload.Read(this);
+                next.Prepare();
+                if (!next.IsEnabled || next.AllowExperimentalWeapons != Config.AllowExperimentalWeapons || next.Weapons.Count != Config.Weapons.Count || next.Weapons.Any(w => !Config.Weapons.Any(old => old.Id == w.Id && old.BaseType == w.BaseType && old.Enabled == w.Enabled && old.Experimental == w.Experimental)))
+                    throw new InvalidOperationException("Enabled/experimental registration, IDs and native-body changes require a server restart. Tuning was not changed.");
+                if (next.Weapons.Where(w => registered.ContainsKey(w.Id)).Any(w => Exiled.CustomItems.API.Features.CustomItem.Registered.Any(other => !registered.Values.Contains(other) && other.Name == w.Name)))
+                    throw new InvalidOperationException("A weapon name conflicts with another plugin.");
+                ConfigReload.Apply(Config, next);
+                foreach (var weapon in registered.Values)
+                    weapon.Retune(Config.Weapons.Single(w => w.Id == weapon.Id));
+                if (capacitySet)
+                    budget.Capacity = Config.Tuning.Supply.Capacity(Player.List.Count(p => p.IsConnected && !p.IsHost));
+                updates?.Dispose();
+                updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Weapons", Config.AutoUpdate);
+                response = "Weapon tuning reloaded. Existing finite weapons retain their original shot budgets; new grants use configured magazine counts. Supply was not reset.";
+                return true;
+            }
+            catch (Exception exception)
+            {
+                response = "Weapon reload rejected; active settings retained. " + exception.Message;
+                return false;
+            }
         }
 
         private void UpgradePickup(UpgradingPickupEventArgs ev) => Safe.Run(() =>
@@ -541,6 +591,7 @@ namespace Brainless.Weapons
         });
         private sealed class WeaponState
         {
+            internal int InitialCapacity;
             internal RegisteredWeapon Definition;
             internal float Heat, LastFire, LastHeat, VentUntil, NextLaunch;
             internal int Token, ConsumedToken, DoorToken, AmmoBefore;

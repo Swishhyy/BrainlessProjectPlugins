@@ -15,3 +15,5 @@ Independent release updates are enabled under `auto_update`, checking every 60 m
 Redline is a disabled heat/vent prototype at the native firing cadence. The design's proposed 20% faster cadence is not implemented pending client prediction validation. Ricochet reflects once from approved solid mesh geometry; it needs focused in-game collision checks.
 
 Build: `dotnet build Weapons/Brainless.Weapons.csproj -c Release` after preparing references.
+
+Version 0.2.0 exposes Nullifier, Rattler, Breach Shotgun, Redline and Ricochet mechanics under `tuning`. Existing `launcher_*` fields remain compatible and now use validated operator values without the former balance clamps. Set the launcher definition's `magazine` to change the total grenade count (16 by default); Last Word uses its own configured magazine as its finite shot budget. Run `bpweapons reload` with `brainless.weapons.configure`. New grants use the new count; already-issued finite weapons keep their original remaining shots. See the packaged `TUNING.md`.

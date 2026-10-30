@@ -39,7 +39,7 @@ Stable IDs map the design document into independent plugins. All values are play
 | Z01 | Giant | Scp0492 | 50% more HP; 10% slower. |
 | Z02 | Muncher | Scp0492 | 18% faster; half health and melee damage. |
 | Z03 | Armored | Scp0492 | 75% more HP; 15% slower; normal melee damage. |
-| Z04 | Explosive | Scp0492 | 75% HP. One enemy combat death arms a two-second warning burst. |
+| Z04 | Explosive | Scp0492 | 75% HP. Explodes after a confirmed death; warning and blast are configurable. |
 | Z05 | Doctor | Scp0492 | Event-only SCP-049 conversion; one eligible zombie revive. |
 
 Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy falls back to painkillers until a seasonal allowlist is approved.
@@ -59,6 +59,7 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | I09 | 7109 | Field Dressing | Four seconds to heal 35 HP. Sprinting or damage interrupts. |
 | I11 | 7111 | Filter Inhaler | Two seconds to gain 12 seconds of custom gas protection. |
 | I12 | 7112 | Preserved Specimen | Not SCP-500. Offer it to a zombie; hold tool key to eat it for 80 HP. |
+| I13 | 7113 | Impact Grenade | Detonates on surface contact after a short arming delay. Configurable blast and safety fuse. |
 
 ## Weapons
 

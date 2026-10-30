@@ -20,6 +20,7 @@ namespace Brainless.Items
         public bool Enabled { get; set; } = true;
         public int RoundCap { get; set; } = 2;
         public int Charges { get; set; } = 1;
+        public float Weight { get; set; } = 1;
     }
 
     public sealed class Config : Exiled.API.Interfaces.IConfig
@@ -29,6 +30,8 @@ namespace Brainless.Items
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
         public bool WorldLoot { get; set; } = true;
         public int ToolKeybindId { get; set; } = 7100;
+        public ItemTuning Tuning { get; set; } = new ItemTuning();
+        public int CatalogRevision { get; set; }
         public List<ItemSpec> Items { get; set; } = new List<ItemSpec>
         {
             new ItemSpec
@@ -111,16 +114,45 @@ namespace Brainless.Items
                 Description = "Not SCP-500. Offer it to a zombie; hold tool key to eat it for 80 HP.",
                 BaseType = ItemType.SCP500
             },
+            CreateImpact(),
         };
 
-        internal void RetireRemovedItems() => Items.RemoveAll(item => item.Id == 7110);
+        private static ItemSpec CreateImpact() => new ItemSpec
+        {
+            Id = 7113,
+            Name = "Impact Grenade",
+            BaseType = ItemType.GrenadeHE,
+            Description = "Detonates on surface contact after a short arming delay. Configurable blast and safety fuse."
+        };
+        internal void Prepare()
+        {
+            if (Items == null || Items.Any(i => i == null))
+                throw new InvalidOperationException("Items cannot contain null entries.");
+            Items.RemoveAll(item => item.Id == 7110);
+            if (CatalogRevision < 1 && !Items.Any(i => i.Id == 7113))
+                Items.Add(CreateImpact());
+            CatalogRevision = 1;
+            Brainless.Internal.Tuning.Validate(Tuning, "tuning");
+            if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
+                throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
+            if (Items.Any(i => i.Id < 7101 || i.Id > 7113 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
+                throw new InvalidOperationException("Item IDs must be 7101-7113 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
+            if (Items.Select(i => i.Id).Distinct().Count() != Items.Count || Items.Any(i => string.IsNullOrWhiteSpace(i.Name)) || Items.Select(i => i.Name).Distinct().Count() != Items.Count)
+                throw new InvalidOperationException("Item IDs/names must be nonempty and unique.");
+            foreach (var i in Items)
+            {
+                bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7104 || i.Id == 7113;
+                if (throwable && i.BaseType != (i.Id == 7103 || i.Id == 7104 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
+                    throw new InvalidOperationException("Throwable " + i.Id + " must keep its native grenade body.");
+            }
+        }
     }
 
     // No base event subscriptions: this plugin owns and cleans up its own handlers.
     public sealed class RegisteredItem : CustomItem, IAdminItem
     {
         private readonly Plugin owner;
-        internal ItemSpec Spec { get; }
+        internal ItemSpec Spec { get; private set; }
 
         public RegisteredItem(Plugin owner, ItemSpec spec)
         {
@@ -134,6 +166,15 @@ namespace Brainless.Items
             Name = spec.Name;
             Description = spec.Description;
             Type = spec.BaseType;
+            Weight = spec.Weight;
+        }
+
+        internal void Retune(ItemSpec spec)
+        {
+            Spec = spec;
+            Name = spec.Name;
+            Description = spec.Description;
+            Weight = spec.Weight;
         }
 
         public override uint Id { get; set; }
@@ -169,7 +210,8 @@ namespace Brainless.Items
                 return "Player must be alive.";
             if (player.IsCuffed)
                 return "Player is restrained.";
-            int slots = Id == 7101 ? 2 : 1;
+            bool paired = Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter;
+            int slots = paired ? 2 : 1;
             if (player.Items.Count + slots > 8)
                 return $"Inventory needs {slots} free slot(s).";
             string failure = owner.IssueFailure(Spec, 1, ignoreLimits);
@@ -185,7 +227,7 @@ namespace Brainless.Items
                 return "The server did not add the item to the inventory; check the server log.";
             }
 
-            if (Id == 7101)
+            if (paired)
             {
                 failure = owner.GiveFilter(player, ignoreLimits);
                 if (failure != null)
@@ -224,7 +266,7 @@ namespace Brainless.Items
                 return "The server did not create the pickup; check the server log.";
             }
 
-            if (Id == 7101)
+            if (Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter)
             {
                 failure = owner.SpawnFilter(position + Vector3.right * .3f, ignoreLimits);
                 if (failure != null)

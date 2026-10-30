@@ -31,9 +31,10 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 4);
+        public override Version Version => new Version(0, 2, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
+        public static Plugin Instance { get; private set; }
 
         private readonly Lifetime lifetime = new Lifetime();
         private readonly LimitedBudget budget = new LimitedBudget();
@@ -52,10 +53,11 @@ namespace Brainless.Items
         private KeybindSetting toolKey;
         private int chalkNumber;
         private bool capacitySet;
+        private float lastFieldTick;
         private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
-            Config.RetireRemovedItems();
+            Config.Prepare();
             var enabled = Config.Items.Where(s => s.Enabled).ToArray();
             if (enabled.Select(s => s.Id).Distinct().Count() != enabled.Length || enabled.Select(s => s.Name).Distinct().Count() != enabled.Length)
                 throw new InvalidOperationException("Item IDs and names must be unique.");
@@ -96,12 +98,14 @@ namespace Brainless.Items
             Reset();
             AdminItems.Enable("brainless.items.commands");
             NativeSmoke.Enable();
+            Instance = this;
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Items", Config.AutoUpdate);
         }
 
         public override void OnDisabled()
         {
+            Instance = null;
             updates?.Dispose();
             updates = null;
             P.UsingItem -= Using;
@@ -181,7 +185,7 @@ namespace Brainless.Items
             if (capacitySet)
                 return;
             capacitySet = true;
-            budget.Capacity = Rules.UtilityCap(Player.List.Count(p => p.IsConnected && !p.IsHost));
+            budget.Capacity = Config.Tuning.Supply.Capacity(Population);
         }
 
         private int Population => Player.List.Count(p => p.IsConnected && !p.IsHost);
@@ -191,20 +195,21 @@ namespace Brainless.Items
         {
             if (count < 1)
                 return "The requested quantity must be positive.";
-            if (spec.Id == 7101 && !registered.ContainsKey(7111))
+            bool paired = spec.Id == 7101 && Config.Tuning.Supply.PairGasWithFilter;
+            if (paired && !registered.ContainsKey(7111))
                 return "Gas requires the Filter Inhaler to be enabled.";
             if (ignoreLimits)
                 return null;
             EnsureCapacity();
-            int cap = spec.Id == 7102 ? Math.Min(spec.RoundCap, Rules.ClusterCap(Population)) : spec.RoundCap;
-            if (spec.Id == 7102 && Population < 12)
-                return $"Clusters require at least 12 players for normal supply; currently {Population}.";
+            int cap = spec.Id == 7102 ? Math.Min(spec.RoundCap, Config.Tuning.Supply.Clusters(Population)) : spec.RoundCap;
+            if (spec.Id == 7102 && Population < Config.Tuning.Supply.ClusterMinPlayers)
+                return $"Clusters require at least {Config.Tuning.Supply.ClusterMinPlayers} players for normal supply; currently {Population}.";
             if (budget.Count(spec.Id.ToString()) + count > cap)
                 return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{cap}).";
-            int slots = spec.Id == 7101 ? count * 2 : count;
+            int slots = paired ? count * 2 : count;
             if (budget.Total + slots > budget.Capacity)
                 return $"Utility supply exhausted ({budget.Total}/{budget.Capacity}); this kit needs {slots} slot(s).";
-            if (spec.Id == 7101)
+            if (paired)
             {
                 var filter = registered[7111];
                 if (!budget.CanIssue("7111", filter.Spec.RoundCap, count))
@@ -217,8 +222,8 @@ namespace Brainless.Items
         internal bool CanIssueBatch(uint[] ids)
         {
             EnsureCapacity();
-            var ours = ids.Where(id => id >= 7101 && id <= 7112).ToArray();
-            int extra = ours.Count(id => id == 7101);
+            var ours = ids.Where(id => id >= 7101 && id <= 7113).ToArray();
+            int extra = Config.Tuning.Supply.PairGasWithFilter ? ours.Count(id => id == 7101) : 0;
             if (budget.Total + ours.Length + extra > budget.Capacity)
                 return false;
             return ours.GroupBy(id => id).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));
@@ -228,7 +233,7 @@ namespace Brainless.Items
         {
             if (IssueFailure(item.Spec, 1, ignoreLimits) != null)
                 return false;
-            int cap = item.Id == 7102 ? Rules.ClusterCap(Population) : item.Spec.RoundCap;
+            int cap = item.Id == 7102 ? Config.Tuning.Supply.Clusters(Population) : item.Spec.RoundCap;
             if (!budget.TryIssue(item.Id.ToString(), Math.Min(item.Spec.RoundCap, cap), ignoreLimits: ignoreLimits))
                 return false;
             charges[serial] = Math.Max(1, item.Spec.Charges);
@@ -262,15 +267,15 @@ namespace Brainless.Items
             var room = Room.List.Where(r => r.Zone == ZoneType.HeavyContainment && r.Type.ToString().IndexOf("Armory", StringComparison.OrdinalIgnoreCase) >= 0).FirstOrDefault();
             if (room == null)
                 return;
-            var options = registered.Values.Where(i => CanIssue(i.Spec, 1)).ToArray();
-            if (options.Length == 0)
-                return;
-            var choice = options[UnityEngine.Random.Range(0, options.Length)];
-            choice.Spawn(room.Position + Vector3.up);
-            if (choice.Id != 7101)
+            for (int i = 0; i < Config.Tuning.Supply.WorldLootCount; i++)
             {
-                var other = options.FirstOrDefault(i => i != choice && CanIssue(i.Spec, 1));
-                other?.Spawn(room.Position + Vector3.up + Vector3.right * .5f);
+                var options = registered.Values.Where(item => CanIssue(item.Spec, 1)).ToArray();
+                if (options.Length == 0)
+                    break;
+                var choice = options[UnityEngine.Random.Range(0, options.Length)];
+                choice.Spawn(room.Position + Vector3.up + Vector3.right * .5f * i);
+                if (choice.Id == 7101 && Config.Tuning.Supply.PairGasWithFilter)
+                    i++;
             }
         }
 
@@ -360,7 +365,7 @@ namespace Brainless.Items
 
         private void Hurting(HurtingEventArgs ev)
         {
-            if (ev.IsAllowed && ev.Amount > 0)
+            if (Config.Tuning.Interaction.CancelOnDamage && ev.IsAllowed && ev.Amount > 0)
                 channels.Remove(ev.Player);
         }
 
@@ -386,14 +391,14 @@ namespace Brainless.Items
         {
             if (!player.IsAlive || player.IsCuffed || channels.ContainsKey(player))
                 return;
-            var nearby = devices.FirstOrDefault(d => Vector3.Distance(player.Position, d.Position) <= 3 && Vector3.Dot(player.CameraTransform.forward, (d.Position - player.CameraTransform.position).normalized) > .75f && World.ClearLine(player.CameraTransform.position, d.Position + Vector3.up * .1f));
+            var nearby = devices.FirstOrDefault(d => Vector3.Distance(player.Position, d.Position) <= Config.Tuning.Interaction.DeviceReach && Vector3.Dot(player.CameraTransform.forward, (d.Position - player.CameraTransform.position).normalized) > .75f && World.ClearLine(player.CameraTransform.position, d.Position + Vector3.up * .1f));
             if (nearby != null)
             {
                 if (nearby.Id == 7107 && player.IsHuman)
                 {
                     if (nearby.Scans < 1)
                         return;
-                    Begin(player, 3, null, hold, () =>
+                    Begin(player, Config.Tuning.SurveyBeacon.ScanSeconds, null, hold, () =>
                     {
                         if (!devices.Contains(nearby) || nearby.Scans < 1)
                             return;
@@ -403,26 +408,26 @@ namespace Brainless.Items
                         player.ShowHint($"Survey: other humans {(humans ? "YES" : "NO")}; physical SCPs {(scps ? "YES" : "NO")}", 6);
                         World.Cue(nearby.Position, "Survey scan complete");
                     });
-                    FxAudio.Play(lifetime, nearby.Position, 3, "beep");
+                    FxAudio.Play(lifetime, nearby.Position, Config.Tuning.SurveyBeacon.ScanSeconds, "beep");
                     return;
                 }
 
-                Begin(player, nearby.Id == 7105 ? 3 : 2, null, hold, () => RemoveDevice(nearby));
+                Begin(player, nearby.Id == 7105 ? Config.Tuning.DoorBrace.RemoveSeconds : nearby.Id == 7106 ? Config.Tuning.SignalJammer.RemoveSeconds : Config.Tuning.SurveyBeacon.RemoveSeconds, null, hold, () => RemoveDevice(nearby));
                 return;
             }
 
             if (player.Role.Type == RoleTypeId.Scp0492)
             {
-                var specimen = Pickup.List.FirstOrDefault(p => Find(p.Serial)?.Id == 7112 && Vector3.Distance(p.Position, player.Position) < 2 && World.ClearLine(player.CameraTransform.position, p.Position));
-                if (specimen == null || specimenUsed.Contains(player.UserId))
+                var specimen = Pickup.List.FirstOrDefault(p => Find(p.Serial)?.Id == 7112 && Vector3.Distance(p.Position, player.Position) < Config.Tuning.PreservedSpecimen.Reach && World.ClearLine(player.CameraTransform.position, p.Position));
+                if (specimen == null || (Config.Tuning.PreservedSpecimen.OncePerPlayerPerRound && specimenUsed.Contains(player.UserId)))
                     return;
-                Begin(player, 4, null, hold, () =>
+                Begin(player, Config.Tuning.PreservedSpecimen.UseSeconds, null, hold, () =>
                 {
-                    if (!Pickup.List.Contains(specimen) || specimenUsed.Contains(player.UserId))
+                    if (!Pickup.List.Contains(specimen) || (Config.Tuning.PreservedSpecimen.OncePerPlayerPerRound && specimenUsed.Contains(player.UserId)) || Vector3.Distance(specimen.Position, player.Position) > Config.Tuning.PreservedSpecimen.Reach || !World.ClearLine(player.CameraTransform.position, specimen.Position))
                         return;
                     specimenUsed.Add(player.UserId);
                     specimen.Destroy();
-                    player.Heal(80);
+                    player.Heal(Config.Tuning.PreservedSpecimen.HealAmount);
                 });
                 return;
             }
@@ -441,7 +446,7 @@ namespace Brainless.Items
                     break;
                 case 7106:
                 case 7107:
-                    Begin(player, 2, held, hold, () => Deploy(player, held, item));
+                    Begin(player, item.Id == 7106 ? Config.Tuning.SignalJammer.DeploySeconds : Config.Tuning.SurveyBeacon.DeploySeconds, held, hold, () => Deploy(player, held, item));
                     break;
                 case 7108:
                     if (Spend(player, held))
@@ -453,30 +458,30 @@ namespace Brainless.Items
                         {
                             Id = 7108,
                             Position = position,
-                            Expires = Time.time + 45,
+                            Expires = Time.time + Config.Tuning.TraceChalk.DurationSeconds,
                             Marker = marker,
                             Text = text
                         };
                         devices.Add(chalk);
-                        while (devices.Count(d => d.Id == 7108) > 9)
+                        while (devices.Count(d => d.Id == 7108) > Config.Tuning.TraceChalk.MaxMarkers)
                             RemoveDevice(devices.First(d => d.Id == 7108));
                     }
 
                     break;
                 case 7109:
-                    Begin(player, 4, held, hold, () =>
+                    Begin(player, Config.Tuning.FieldDressing.UseSeconds, held, hold, () =>
                     {
                         if (Spend(player, held))
-                            player.Heal(35);
+                            player.Heal(Config.Tuning.FieldDressing.HealAmount);
                     });
                     break;
                 case 7111:
-                    Begin(player, 2, held, hold, () =>
+                    Begin(player, Config.Tuning.FilterInhaler.UseSeconds, held, hold, () =>
                     {
                         if (Spend(player, held))
                         {
-                            filters[player] = Time.time + 12;
-                            player.ShowHint("Custom gas filter active for 12 seconds", 3);
+                            filters[player] = Time.time + Config.Tuning.FilterInhaler.DurationSeconds;
+                            player.ShowHint($"Custom gas filter active for {Config.Tuning.FilterInhaler.DurationSeconds:0.#} seconds", 3);
                         }
                     });
                     break;
@@ -503,7 +508,7 @@ namespace Brainless.Items
 
         private Door LookDoor(Player player)
         {
-            foreach (var hit in Physics.RaycastAll(player.CameraTransform.position, player.CameraTransform.forward, 3, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+            foreach (var hit in Physics.RaycastAll(player.CameraTransform.position, player.CameraTransform.forward, Config.Tuning.DoorBrace.Reach, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
             {
                 if (hit.collider.GetComponentInParent<ReferenceHub>() != null)
                     continue;
@@ -527,7 +532,7 @@ namespace Brainless.Items
                     return;
                 }
 
-                Begin(ev.Player, 3, null, false, () => RemoveDevice(brace));
+                Begin(ev.Player, Config.Tuning.DoorBrace.RemoveSeconds, null, false, () => RemoveDevice(brace));
                 return;
             }
 
@@ -539,25 +544,25 @@ namespace Brainless.Items
         });
         private void UseDoorItem(Player player, Item held, RegisteredItem item, Door door, bool hold)
         {
-            if (door.IsOpen || door.IsLocked || Vector3.Distance(player.Position, door.Position) > 3)
+            if (door.IsOpen || door.IsLocked || Vector3.Distance(player.Position, door.Position) > Config.Tuning.DoorBrace.Reach)
                 return;
             if (item.Id == 7105 && !World.OrdinaryDoor(door))
                 return;
-            Begin(player, 2, held, hold, () =>
+            Begin(player, Config.Tuning.DoorBrace.DeploySeconds, held, hold, () =>
             {
-                if (door.IsLocked || door.IsOpen || Vector3.Distance(player.Position, door.Position) > 3 || !Spend(player, held))
+                if (door.IsLocked || door.IsOpen || Vector3.Distance(player.Position, door.Position) > Config.Tuning.DoorBrace.Reach || !Spend(player, held))
                     return;
                 var device = new Device
                 {
                     Id = 7105,
                     Door = door,
                     Position = door.Position,
-                    Expires = Time.time + 8
+                    Expires = Time.time + Config.Tuning.DoorBrace.DurationSeconds
                 };
                 device.Marker = World.Marker(lifetime, door.Position + Vector3.up, Color.yellow, new Vector3(.65f, .08f, .08f), PrimitiveType.Cube);
                 devices.Add(device);
             });
-            FxAudio.Play(lifetime, door.Position, 2, "beep");
+            FxAudio.Play(lifetime, door.Position, Config.Tuning.DoorBrace.DeploySeconds, "beep");
         }
 
         private void Deploy(Player player, Item held, RegisteredItem item)
@@ -565,7 +570,7 @@ namespace Brainless.Items
             Room room = player.CurrentRoom;
             if (room == null || room.Zone == ZoneType.Surface || room.Type == RoomType.Pocket)
                 return;
-            if (item.Id == 7106 && (devices.Any(d => d.Id == 7106) || (jamCooldown.TryGetValue(room, out float cooldown) && cooldown > Time.time)))
+            if (item.Id == 7106 && (devices.Count(d => d.Id == 7106) >= Config.Tuning.SignalJammer.MaxActive || (jamCooldown.TryGetValue(room, out float cooldown) && cooldown > Time.time)))
             {
                 player.ShowHint("Jammer unavailable in this room yet", 3);
                 return;
@@ -579,18 +584,18 @@ namespace Brainless.Items
                 Id = item.Id,
                 Position = point,
                 Room = room,
-                ActiveAt = Time.time + 2,
-                Expires = Time.time + (item.Id == 7106 ? 8 : 45),
-                Scans = 2
+                ActiveAt = Time.time + (item.Id == 7106 ? Config.Tuning.SignalJammer.ArmingSeconds : 0),
+                Expires = Time.time + (item.Id == 7106 ? Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds : Config.Tuning.SurveyBeacon.DurationSeconds),
+                Scans = Config.Tuning.SurveyBeacon.Scans
             };
             d.Marker = World.Marker(lifetime, point + Vector3.up * .15f, item.Id == 7106 ? Color.red : Color.green, new Vector3(.3f, .3f, .3f), PrimitiveType.Cube);
             d.Text = lifetime.Own(Text.Create(point + Vector3.up * .55f, item.Name));
             devices.Add(d);
             if (item.Id == 7106)
             {
-                jamCooldown[room] = d.Expires + 30;
+                jamCooldown[room] = d.Expires + Config.Tuning.SignalJammer.RoomCooldownSeconds;
                 World.Cue(point, "Jammer arming - hold tool key to deactivate");
-                FxAudio.Play(lifetime, point, 8, "beep");
+                FxAudio.Play(lifetime, point, Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds, "beep");
             }
         }
 
@@ -645,25 +650,42 @@ namespace Brainless.Items
 
         private void Arm(RegisteredItem item, Projectile projectile, Player owner)
         {
+            if (item.Id == 7113 && projectile is ExplosionGrenadeProjectile impact)
+            {
+                var tuning = Config.Tuning.ImpactGrenade;
+                impact.FuseTime = tuning.SafetyFuseSeconds;
+                fragments.Track(impact, new DamageSource(owner), tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: tuning.AffectOwner);
+                impact.GameObject.AddComponent<ImpactGrenade>().Initialize(impact, owner?.ReferenceHub, tuning);
+                return;
+            }
+
             thrown[projectile.Serial] = new Payload
             {
                 Item = item,
                 Projectile = projectile,
-                Source = new DamageSource(owner)
+                Source = new DamageSource(owner),
+                Field = item.Id == 7101 ? Config.Tuning.GasGrenade : Config.Tuning.ContainmentFoam,
+                Cluster = Config.Tuning.ClusterGrenade,
+                Echo = Config.Tuning.EchoCanister
             };
             if (projectile is TimeGrenadeProjectile timed)
-                timed.FuseTime = item.Id == 7101 ? 2.5f : item.Id == 7102 ? 3 : item.Id == 7104 ? 1 : 2;
+                timed.FuseTime = item.Id == 7101 ? Config.Tuning.GasGrenade.FuseSeconds : item.Id == 7102 ? Config.Tuning.ClusterGrenade.FuseSeconds : item.Id == 7104 ? Config.Tuning.EchoCanister.FuseSeconds : Config.Tuning.ContainmentFoam.FuseSeconds;
         }
 
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() =>
         {
             if (fragments.Exploding(ev))
+            {
+                RetireSerial(ev.Projectile.Serial);
                 return;
-            if (!thrown.TryGetValue(ev.Projectile.Serial, out var payload))
+            }
+
+            if (ev.Projectile == null || !thrown.TryGetValue(ev.Projectile.Serial, out var payload))
                 return;
             bool allowed = ev.IsAllowed;
             ev.IsAllowed = false;
             thrown.Remove(ev.Projectile.Serial);
+            RetireSerial(ev.Projectile.Serial);
             Vector3 position = ev.Position;
             // Native EffectGrenade.ServerFuseEnd already destroys the projectile.
             if (!allowed)
@@ -673,62 +695,89 @@ namespace Brainless.Items
                 case 7101:
                 case 7103:
                     bool gas = payload.Item.Id == 7101;
-                    float radius = gas ? 4 : 3;
+                    float radius = payload.Field.Radius;
                     var field = new Field
                     {
                         Gas = gas,
                         Position = position,
                         Room = Room.Get(position),
                         Source = payload.Source,
-                        Expires = Time.time + (gas ? 8 : 6),
-                        Radius = radius
+                        Expires = Time.time + payload.Field.DurationSeconds,
+                        Radius = radius,
+                        Tuning = payload.Field
                     };
+                    // Gameplay must still work if a native renderer fails to initialize.
+                    fields.Add(field);
                     if (gas)
-                        field.Smoke = NativeSmoke.Spawn(Ground(position), radius);
+                    {
+                        for (int i = 0; i < ((GasTuning)payload.Field).SmokeEmitters; i++)
+                        {
+                            int emitter = i;
+                            Safe.Run(() => field.Smoke.Add(NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f + Vector3.right * (emitter % 2 == 0 ? .08f : -.08f), radius)));
+                        }
+
+                        if (Config.Debug)
+                            Log.Info($"[Gas 7101] Serial {ev.Projectile.Serial}: {field.Smoke.Count} native emitters, radius {radius}, duration {payload.Field.DurationSeconds}s.");
+                    }
                     else
                         field.Marker = World.Marker(lifetime, position + Vector3.up * .025f, new Color(.1f, .65f, .15f, .35f), new Vector3(radius * 2, .02f, radius * 2));
-                    fields.Add(field);
                     World.Cue(position, gas ? "Irritant gas - leave the cloud or use a filter" : "Containment foam - slow floor", 10);
                     break;
                 case 7102:
-                    Cluster(position, payload.Source);
+                    Cluster(position, payload.Source, payload.Cluster);
                     break;
                 case 7104:
-                    FxAudio.Play(lifetime, position, 6, "steps");
+                    FxAudio.Play(lifetime, position, payload.Echo.DurationSeconds, "steps", volume: payload.Echo.AudioVolume, range: payload.Echo.AudioRange);
                     break;
             }
         });
-        private void Cluster(Vector3 position, DamageSource source)
+        private void Cluster(Vector3 position, DamageSource source, ClusterTuning tuning)
         {
-            var blastBudget = new BlastBudget();
+            var blastBudget = new BlastBudget(tuning.SharedHumanDamageCap, tuning.SharedScpDamageCap);
             float rotation = UnityEngine.Random.Range(0, Mathf.PI * 2);
-            // All four leave the first detonation together. Each has native
+            // All configured children leave the first detonation together. Each has native
             // rigidbody bounce, gravity, ticking fuse and explosion effects.
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < tuning.GrenadeCount; i++)
             {
-                float angle = rotation + i * Mathf.PI * .5f;
+                float angle = rotation + i * Mathf.PI * 2 / tuning.GrenadeCount;
                 Vector3 outward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
-                fragments.Launch(position + Vector3.up * .15f, outward * 4.5f + Vector3.up * 4, 1.5f + i * .08f, source, 2.5f, 35, 90, blastBudget);
+                fragments.Launch(position + Vector3.up * .15f, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner);
             }
         }
 
-        private Vector3 Ground(Vector3 point) => Physics.Raycast(point + Vector3.up, Vector3.down, out var hit, 3, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.point : point - Vector3.up * .8f;
+        private void RetireSerial(int serial)
+        {
+            Find(serial)?.TrackedSerials.Remove(serial);
+            charges.Remove(serial);
+        }
+
+        private Vector3 Ground(Vector3 point)
+        {
+            foreach (var hit in Physics.RaycastAll(point + Vector3.up, Vector3.down, 4, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+                if (hit.collider.GetComponentInParent<ReferenceHub>() == null && hit.collider.GetComponentInParent<InventorySystem.Items.Pickups.ItemPickupBase>() == null && hit.collider.GetComponentInParent<AdminToys.AdminToyBase>() == null)
+                    return hit.point;
+            return point;
+        }
+
         private IEnumerator<float> Tick()
         {
             while (true)
             {
-                yield return Timing.WaitForSeconds(.1f);
+                yield return Timing.WaitForSeconds(Config.Tuning.Interaction.TickSeconds);
                 Safe.Run(Update);
             }
         }
 
         private void Update()
         {
+            fragments.Prune();
+            float elapsed = Mathf.Clamp(Time.time - lastFieldTick, 0, 1);
+            lastFieldTick = Time.time;
             foreach (var pair in channels.ToArray())
             {
                 var p = pair.Key;
                 var c = pair.Value;
-                if (!p.IsConnected || !p.IsAlive || p.Role.Base != c.Role || p.IsCuffed || (c.Hold && !keyHeld.Contains(p)) || (c.Item != null && p.CurrentItem != c.Item) || Vector3.Distance(p.Position, c.Position) > .6f)
+                if (!p.IsConnected || !p.IsAlive || p.Role.Base != c.Role || p.IsCuffed || (c.Hold && !keyHeld.Contains(p)) || (c.Item != null && p.CurrentItem != c.Item) || Vector3.Distance(p.Position, c.Position) > Config.Tuning.Interaction.MoveTolerance)
                 {
                     channels.Remove(p);
                     continue;
@@ -747,7 +796,8 @@ namespace Brainless.Items
             {
                 fields.Remove(field);
                 lifetime.Release(field.Marker);
-                NativeSmoke.Release(field.Smoke);
+                foreach (var smoke in field.Smoke)
+                    NativeSmoke.Release(smoke);
             }
 
             foreach (var player in Player.List.Where(p => p.IsAlive).ToArray())
@@ -755,22 +805,47 @@ namespace Brainless.Items
                 float slow = 1;
                 foreach (var field in fields)
                 {
-                    if (!field.Source.CanAffect(player) || player.CurrentRoom != field.Room || Vector3.Distance(player.Position, field.Position) > field.Radius || !World.ClearLine(field.Position + Vector3.up * .2f, player.Position))
+                    var tuning = field.Tuning;
+                    if (player.IsGodModeEnabled || (!tuning.AffectOwner && player == field.Source.Owner) || (!tuning.AffectAllies && !field.Source.CanAffect(player)) || (tuning.SameRoomOnly && player.CurrentRoom != field.Room) || Vector3.Distance(player.Position, field.Position) > field.Radius || (tuning.RequireLineOfSight && !World.ClearLine(field.Position + Vector3.up * .2f, player.Position)))
                         continue;
-                    if (!field.Gas)
-                    {
-                        slow = Math.Min(slow, player.IsScp ? .92f : .9f);
-                        continue;
-                    }
-
-                    if (!player.IsHuman || (filters.TryGetValue(player, out float until) && until > Time.time))
-                        continue;
-                    slow = Math.Min(slow, .8f);
+                    bool filtered = field.Gas && filters.TryGetValue(player, out float until) && until > Time.time;
+                    if (!filtered || !Config.Tuning.FilterInhaler.BlocksSlow)
+                        slow = Math.Min(slow, 1 - (player.IsScp ? tuning.ScpSlowPercent : tuning.HumanSlowPercent) / 100);
+                    float damage = player.IsScp ? tuning.ScpDamagePerSecond : tuning.HumanDamagePerSecond;
+                    if (damage > 0 && (!filtered || !Config.Tuning.FilterInhaler.BlocksDamage))
+                        field.Source.Hurt(player, damage * elapsed, field.Gas ? "Irritant gas" : "Containment foam");
                 }
 
                 if (!movement.TryGetValue(player, out var layer))
                     movement[player] = layer = new MovementLayer();
                 layer.Set(player, slow);
+            }
+        }
+
+        internal bool ReloadTuning(out string response)
+        {
+            try
+            {
+                var next = ConfigReload.Read(this);
+                next.Prepare();
+                if (!next.IsEnabled || next.ToolKeybindId != Config.ToolKeybindId || next.Items.Count != Config.Items.Count || next.Items.Any(i => !Config.Items.Any(old => old.Id == i.Id && old.BaseType == i.BaseType && old.Enabled == i.Enabled)))
+                    throw new InvalidOperationException("Enabled state, keybind IDs, item IDs, native bodies and registration changes require a server restart. Tuning was not changed.");
+                if (next.Items.Where(i => registered.ContainsKey(i.Id)).Any(i => Exiled.CustomItems.API.Features.CustomItem.Registered.Any(other => !registered.Values.Contains(other) && other.Name == i.Name)))
+                    throw new InvalidOperationException("An item name conflicts with another plugin.");
+                ConfigReload.Apply(Config, next);
+                foreach (var item in registered.Values)
+                    item.Retune(Config.Items.Single(i => i.Id == item.Id));
+                if (capacitySet)
+                    budget.Capacity = Config.Tuning.Supply.Capacity(Population);
+                updates?.Dispose();
+                updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Items", Config.AutoUpdate);
+                response = "Item tuning reloaded. New throws/deployments use it; existing fields and charges keep their state. No DLL or supply reset.";
+                return true;
+            }
+            catch (Exception exception)
+            {
+                response = "Item reload rejected; active settings retained. " + exception.Message;
+                return false;
             }
         }
 
@@ -810,6 +885,9 @@ namespace Brainless.Items
             internal RegisteredItem Item;
             internal Projectile Projectile;
             internal DamageSource Source;
+            internal FieldTuning Field;
+            internal ClusterTuning Cluster;
+            internal EchoTuning Echo;
         }
 
         private sealed class Channel
@@ -843,7 +921,8 @@ namespace Brainless.Items
             internal DamageSource Source;
             internal float Expires, Radius;
             internal Primitive Marker;
-            internal Scp244Pickup Smoke;
+            internal FieldTuning Tuning;
+            internal readonly List<Scp244Pickup> Smoke = new List<Scp244Pickup>();
         }
     }
 }

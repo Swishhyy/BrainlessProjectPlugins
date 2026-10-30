@@ -9,6 +9,9 @@ Use Remote Admin's text command box without a leading slash. `ci` is EXILED's al
 | `bprole all` | `brainless.roles` | Inspect all connected players. |
 | `bproles [playerID]` | `brainless.roles` | Audit every profile and why it can/cannot roll now; optionally evaluate for a specific player. |
 | `bprole set <roleID> [playerID]` | `brainless.roles` | Admin playtest: reset a native kit and apply a profile, ignoring natural chance/population/supply caps. Disabled profiles and missing providers are still reported. |
+| `bprole reload` | `brainless.roles` | Read and validate Roles YAML, then apply new settings without resetting assignments/cooldowns. |
+| `bpitems reload` | `brainless.items.configure` | Read and validate item tuning; preserve existing charges, fields and spent supply. |
+| `bpweapons reload` | `brainless.weapons.configure` | Read and validate weapon tuning; preserve already-issued finite shot budgets. |
 | `ci list registered` | `customitems.list.registered` | List available items and weapons with their IDs. |
 | `ci info <ID>` | `customitems.info` | Inspect an item or weapon. |
 | `ci give <ID> [playerID]` | `customitems.give` | Give to yourself or specified players. `all`/`*` and the framework's player selector syntax are supported. |
@@ -22,7 +25,7 @@ Use Remote Admin's text command box without a leading slash. `ci` is EXILED's al
 | `coinuses set player <playerID> <uses>` | `bc.coinuses.set` | Set uses on another player's held coin. |
 | `coinuses set serial <serial> <uses>` | `bc.coinuses.set` | Set uses by serial. |
 
-Items use IDs 7101-7109 and 7111-7112 (7110 is retired); weapons use 7201-7207. See [CATALOG.md](CATALOG.md). Disabled/experimental entries are not registered until enabled.
+Items use IDs 7101-7109 and 7111-7113 (7110 is retired); weapons use 7201-7207. See [CATALOG.md](CATALOG.md). Disabled/experimental entries are not registered until enabled.
 
 ## Admin grants
 
@@ -70,3 +73,9 @@ These are **F1 player-console** commands with a leading dot. No admin or CedMod 
 | `.scpchat mute <playerID>` / `.scpchat unmute <playerID>` | Block/unblock one connected player's nearby SCP audio for your session. |
 
 Nearby mode replaces team chat for that speech. It excludes distant receivers and spectators. Standard scoreboard individual mutes do not cover speaker-toy audio; use these receive controls. Server administrative voice mutes still apply. See [ScpProximityChat](../ScpProximityChat/README.md) for configuration and native-channel exclusions.
+
+## Balance reloads
+
+Edit the generated YAML first, then run the matching Remote Admin reload command. Add `brainless.items.configure` and `brainless.weapons.configure` to the appropriate CedMod staff group; give/spawn permissions alone do not grant config control. A rejected file leaves active settings intact. IDs, native bodies, item/weapon enabled state, keybind IDs and experimental weapon registration require a full restart. Changes affect new throws/deployments and new kit grants; no command refunds supply, refills finite weapons or resets successful lockpick cooldowns. See [TUNING.md](TUNING.md).
+
+Quick impact test: `ci give 7113 [playerID]`. Quick explosive zombie test: `bprole set Z04 [playerID]`, then confirm with `bprole <playerID>`. Native force-class alone does not assign a custom profile.

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Brainless.Internal;
 using PlayerRoles;
 
 namespace Brainless.Roles
@@ -11,15 +12,35 @@ namespace Brainless.Roles
         public string Hint { get; set; }
         public bool Enabled { get; set; } = true;
         public bool Experimental { get; set; }
+
+        [Tune(0, int.MaxValue)]
         public int Weight { get; set; } = 10;
+
+        [Tune(0, 1000)]
         public int MinPlayers { get; set; }
+
+        [Tune(0, int.MaxValue)]
         public int MaxPerRound { get; set; } = 99;
+
+        [Tune(0, 100000)]
         public float Health { get; set; }
+
+        [Tune(.01, 100)]
         public float HealthMultiplier { get; set; } = 1;
+
+        [Tune(0, 100)]
         public float ShieldMultiplier { get; set; } = 1;
+
+        [Tune(.01, 10)]
         public float SpeedMultiplier { get; set; } = 1;
+
+        [Tune(.01, 100)]
         public float SprintDurationMultiplier { get; set; } = 1;
+
+        [Tune(0, 100)]
         public float ReserveMultiplier { get; set; } = 1;
+
+        [Tune(.1, 10)]
         public float Scale { get; set; } = 1;
         public List<ItemType> Remove { get; set; } = new List<ItemType>();
         public List<ItemType> Add { get; set; } = new List<ItemType>();
@@ -188,7 +209,7 @@ namespace Brainless.Roles
             r.HealthMultiplier = 1.75f;
             r.SpeedMultiplier = .85f;
             list.Add(r);
-            r = R("Z04", "Explosive", RoleTypeId.Scp0492, "75% HP. One enemy combat death arms a two-second warning burst.");
+            r = R("Z04", "Explosive", RoleTypeId.Scp0492, "75% HP. Explodes after a confirmed death; warning and blast are configurable.");
             r.HealthMultiplier = .75f;
             list.Add(r);
             r = R("Z05", "Doctor", RoleTypeId.Scp0492, "Event-only SCP-049 conversion; one eligible zombie revive.");

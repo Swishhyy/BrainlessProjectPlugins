@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using Brainless.Internal;
 using Exiled.API.Interfaces;
 using InventorySystem.Items.Usables.Scp330;
 
@@ -49,23 +52,54 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
+        [Description("Z04 bursts on confirmed deaths. Zero limits mean unlimited; separate death/LOS/damage controls are available.")]
+        public ExplosiveZombieTuning ExplosiveZombie { get; set; } = new ExplosiveZombieTuning();
+
         [Description("Seconds a Locksmith must stay at the door control to complete a lockpick.")]
+        [Tune(.05, 3600)]
         public float LockpickDurationSeconds { get; set; } = LockpickRules.DefaultDuration;
 
         [Description("Cooldown after a successful lockpick. Interrupted attempts do not spend it.")]
+        [Tune(0, 86400)]
         public float LockpickCooldownSeconds { get; set; } = LockpickRules.DefaultCooldown;
         public bool CaptainGateAccess { get; set; }
         public bool EnableDoctorEvent { get; set; }
         public bool ExtremeMuncherEventPreset { get; set; }
+
+        [Tune(0, 100)]
         public float ClassDChance { get; set; } = 45;
+
+        [Tune(0, 100)]
         public float ScientistChance { get; set; } = 45;
+
+        [Tune(0, 100)]
         public float GuardChance { get; set; } = 50;
+
+        [Tune(0, 100)]
         public float ReinforcementChance { get; set; } = 30;
+
+        [Tune(0, 100)]
         public float DoctorVariantChance { get; set; } = 50;
+
+        [Tune(0, 100)]
         public float ZombieChance { get; set; } = 45;
 
         [Description("Empty by default because seasonal candy colors can change effects. Approve effects for your installed build first.")]
         public List<CandyKindID> ApprovedCandy { get; set; } = new List<CandyKindID>();
         public List<RoleDefinition> Roles { get; set; } = Catalog.Create();
+
+        internal void Prepare()
+        {
+            UpgradeHudLayout();
+            Tuning.Validate(this, "brainless_roles");
+            if (ApprovedCandy == null || Roles == null || Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name) || r.CustomItems == null || r.Add == null || r.Remove == null) || Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Roles.Count)
+                throw new InvalidOperationException("Role profiles need unique IDs, nonempty names and non-null equipment/candy lists.");
+            foreach (var role in Roles)
+            {
+                Tuning.Validate(role, "roles." + role.Id);
+                role.Id = role.Id.ToUpperInvariant();
+                role.CustomItems.RemoveAll(id => id == 7110);
+            }
+        }
     }
 }
