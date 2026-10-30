@@ -11,7 +11,7 @@ for role_id, name, base, hint in roles:
     if role_id.startswith('M'): base = 'MTF with original rank'
     elif role_id.startswith('C'): base = 'Chaos with original subtype'
     lines.append(f'| {role_id} | {name} | {base} | {hint} |')
-lines += ['', 'Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy falls back to painkillers until a seasonal allowlist is approved.', '']
+lines += ['', 'Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy roles use real SCP-330 candy; an empty allowlist selects registered standard colors.', '']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     source = (root/folder/'Definition.cs').read_text()
     blocks = re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{([^{}]+)\}', source)
@@ -63,7 +63,7 @@ status += ['', '## Why a role can be absent', '',
            '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. The selector now filters these before choosing among valid profiles.',
            '- Chief Scientist and Demolitionist require 12 players. Interceptor needs a Chaos subtype with an AK. MTF/Chaos profiles preserve their matching native rank/subtype.',
            '- Child, Tickler and Muncher require the experimental role switch. Doctor also needs its disabled profile enabled and enable_doctor_event; its separate one-percent event roll never enters ordinary zombie draws. Redline and Ricochet are weapon prototypes and do not gate the normal role roster.',
-           '- Candy roles use painkillers until approved_candy is configured. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.',
+           '- Candy roles use real SCP-330 candy; approved_candy can select colors and candy_man_candy_count controls the Candy Man count. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.',
            '- Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.', '',
            'All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.', '']
 (root/'docs/ROLE_STATUS.md').write_text('\n'.join(status))

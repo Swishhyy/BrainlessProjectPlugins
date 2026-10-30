@@ -1,4 +1,4 @@
-# Brainless SCP Proximity Chat 0.1.1
+# Brainless SCP Proximity Chat 0.1.2
 
 Standalone **EXILED 9.15.2 / SCP: SL 14.2.8** plugin. Install **one DLL**, `Brainless.ScpProximityChat.dll`, in `EXILED/Plugins`. No SecretAPI, SecretLabNAudio, AudioPlayer, or separate settings/HUD library is required. EXILED already supplies the framework, Harmony and MEC; the game supplies speakers, Opus playback and Server Specific Settings.
 
@@ -6,10 +6,9 @@ Stop the server, remove any other SCP proximity-chat plugin, install this DLL, a
 
 ## Controls
 
-Open **Settings → Server Specific → Brainless SCP voice**. Bind **Nearby SCP voice** (suggested default **N**). Select **Toggle** or **Hold** mode. Your ordinary voice key (normally Q) must also be held to transmit; N selects the route, not the microphone.
+Open **Settings → Server Specific → Project Brainless SCP voice**. Bind **Toggle SCP proximity chat** (suggested default **N**). Tap once to enable nearby chat, release it, and use your ordinary voice key (normally Q) to speak. Tap N again to restore team chat. The route key is always a toggle; the normal microphone control stays unchanged.
 
 - **Toggle:** press N to choose nearby chat; press again to return to global SCP team chat.
-- **Hold:** N + your normal voice key speaks nearby. Release N to return to team chat.
 - Nearby mode **replaces** team chat for that speech. Only eligible nearby living receivers hear the spatial audio, including nearby SCP teammates. Distant SCPs and spectators do not hear it. Team mode keeps normal native SCP voice.
 - Modes reset to team on death, role changes and round resets. SCP-079 and SCP-3114 keep their native voice behavior. SCP-939's mimicry channel is not rerouted.
 
@@ -28,7 +27,7 @@ Type these in the **F1 player console**, including the dot. Everyone can use the
 | `.scpchat mute all` / `.scpchat unmute all` | Disable/enable receipt of all custom nearby SCP voice. |
 | `.scpchat mute <playerID>` / `.scpchat unmute <playerID>` | Mute/unmute one connected player's custom nearby voice. |
 
-You can also turn **Hear nearby SCP voice** off in Server Specific Settings. Personal mutes follow user identity for your connection and survive role/round changes; reconnecting resets them. `unmute all` enables reception without clearing individual mutes. Console receive changes last until you change the matching SSS setting or disconnect. In Hold mode, an explicit console route remains selected until the next key update or reset.
+You can also turn **Hear nearby SCP voice** off in Server Specific Settings. Personal mutes follow user identity for your connection and survive role/round changes; reconnecting resets them. `unmute all` enables reception without clearing individual mutes. Console receive changes last until you change the matching SSS setting or disconnect. Explicit console routes remain selected until another toggle/command or a normal role/round reset.
 
 Server administrative/global voice mutes and native sender identity/rate validation remain upstream. Voice packets pass through EXILED/LabAPI sending and per-recipient receiving events before the final send. Local audio uses a native speaker, so the ordinary scoreboard's individual voice mute and voice-volume slider are not sufficient controls for this custom stream: use the provided SSS receive switch or `.scpchat mute`. The game's speaker/master audio settings apply. The plugin's personal mute commands affect only its nearby audio, never team chat, human voice or other audio plugins.
 
@@ -40,7 +39,6 @@ brainless_scp_proximity_chat:
   debug: false
   settings_id_base: 58000
   suggested_key: N
-  default_hold_mode: false
   show_hints: true
   hint_duration_seconds: 2
   enabled_hint: Proximity chat enabled
@@ -65,6 +63,10 @@ brainless_scp_proximity_chat:
 
 `voice_range` is bounded to 5–30 metres; native receiver visibility checks still apply. Full-volume distance is bounded to the voice radius; volume to 0–2. Four native SSS IDs, base through base+3, are reserved. An existing collision stops only this plugin's enable with an explanatory error; change the base and restart. Other plugins' settings and join filters are not replaced. Disabling this plugin removes only its own settings, speakers and Harmony patch.
 
-Build with `python3 scripts/build.py --plugin ScpProximityChat`. The release tag is `scpproximitychat-v0.1.1`. This is a new Brainless implementation using the game/EXILED APIs, not copied from the unlicensed BoltonDev repository. It has been compiled against the pinned real assemblies and checked headlessly; live microphone playback, CedMod interaction and client rendering still require the [playtest](../docs/PLAYTEST.md).
+Build with `python3 scripts/build.py --plugin ScpProximityChat`. The release tag is `scpproximitychat-v0.1.2`. This is a new Brainless implementation using the game/EXILED APIs, not copied from the unlicensed BoltonDev repository. It has been compiled against the pinned real assemblies and checked headlessly; live microphone playback, CedMod interaction and client rendering still require the [playtest](../docs/PLAYTEST.md).
 
-Version 0.1.1 shows **Proximity chat enabled** after nearby mode successfully acquires a native speaker, and **Proximity chat disabled** when returning to team voice. Key toggles, Hold press/release and F1 route commands use this feedback. It briefly replaces the current hint so a persistent role HUD cannot suppress it; that HUD can resume afterward. A failed speaker allocation displays its failure instead of an enabled message. Configure the text/duration above, or disable these messages with `show_hints: false`.
+Version 0.1.1 shows **Proximity chat enabled** after nearby mode successfully acquires a native speaker, and **Proximity chat disabled** when returning to team voice. Key toggles and F1 route commands use this feedback. It briefly replaces the current hint so a persistent role HUD cannot suppress it; that HUD can resume afterward. A failed speaker allocation displays its failure instead of an enabled message. Configure the text/duration above, or disable these messages with `show_hints: false`.
+
+Version 0.1.2 removes Hold mode completely. Old `default_hold_mode` YAML and reports for the retired base+2 setting cannot re-enable it or reset the route. Releasing N never turns nearby chat off. Speaker allocation completes before the enabled state is committed; failures stay on team chat and show an error. `.scpchat status` includes route-check and nearby-audio-send counts for troubleshooting.
+
+Test with two connected living players within the configured range. You do not hear your own stream, and spectators do not receive nearby chat. After enabling, speak using the normal voice key, then check `.scpchat status`: zero route checks means no local voice messages reached the receiving hook; checks with zero audio sends indicate no permitted nearby recipient; a positive send count confirms server transmission but does not confirm client playback. Verify the receiver has nearby audio enabled and no personal/server mute. Live microphone/client playback still requires an in-game check.

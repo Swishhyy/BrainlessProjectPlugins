@@ -1,6 +1,6 @@
 # Balance and configuration
 
-Project Brainless Roles 0.2.1 and Items/Weapons 0.3.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
+Project Brainless Roles 0.2.2 and Items/Weapons 0.3.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
 
 ## Where to edit and apply
 
@@ -172,3 +172,7 @@ Items/Weapons 0.3.0 add `distribution` for weighted native pickup/locker replace
 This game build's native explosion constructor returns before setting damage/attacker when armor penetration is zero. Custom explosions now use valid penetration, default 50 to match native HE. Configure `armor_penetration` for Impact/Cluster and `explosive_zombie`, or root `launcher_armor_penetration` for the launcher. Valid range is 1-100; set the damage fields to zero when disabling damage. The force passed to the handler is now zero rather than world coordinates. Additional blast cover checks use the native HE blocker mask, allowing its normal wall/door cover behavior without treating loose pickup/ragdoll bodies as walls.
 
 Under Items/Weapons, `grenade_balance_revision: 0` (including a missing marker) upgrades individual fields that still exactly equal the former stock damage/radius/cap/timing values. Edited values and grenade counts survive. Runtime upgrade sets revision 1 without overwriting the YAML file. When intentionally retaining/restoring old numeric values, save `grenade_balance_revision: 1` in that provider's root section. New cluster parent-blast fields default to the values above; set parent damage to zero to disable that stage. Queued projectiles keep captured tuning. Normal native armor, friendly-fire, god mode, spawn protection and damage-event rules remain.
+
+## Candy roles
+
+Under `brainless_roles`, `candy_man_candy_count: 3` controls the number of actual SCP-330 candies (1-6). `approved_candy: []` uses registered Rainbow/Yellow/Purple/Red/Green/Blue candies. An explicit list selects only those registered colors, including special colors if deliberately listed. No pill fallback is used; unavailable explicit colors do not silently become medicine. Native random seed candy is cleared before filling the bag, preserving the configured count. Save and run `bprole reload`; new assignments use the new count/pool.

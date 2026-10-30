@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 1, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public static Plugin Instance { get; private set; }
 
@@ -52,9 +52,9 @@ namespace Brainless.ScpProximityChat
                 harmony.PatchAll(typeof(Plugin).Assembly);
                 settings = new ServerSpecificSettingBase[]
                 {
-                    new SSGroupHeader(Config.SettingsIdBase, "Brainless SCP voice", false, "Hold your normal voice key to speak. Nearby chat replaces team chat while selected."),
-                    new SSKeybindSetting(Config.SettingsIdBase + 1, "Nearby SCP voice", Config.SuggestedKey, true, false, "Toggle nearby/team chat, or hold for nearby chat in Hold mode.", byte.MaxValue),
-                    new SSTwoButtonsSetting(Config.SettingsIdBase + 2, "Nearby voice key mode", "Toggle", "Hold", Config.DefaultHoldMode, "Your normal voice key must also be held.", byte.MaxValue, false),
+                    new SSGroupHeader(Config.SettingsIdBase, "Project Brainless SCP voice", false, "Tap the nearby key once to enable proximity, again for team voice. Use your normal voice key to speak."),
+                    new SSKeybindSetting(Config.SettingsIdBase + 1, "Toggle SCP proximity chat", Config.SuggestedKey, true, false, "Press once for nearby chat, again for team chat. Releasing this key never turns nearby chat off.", byte.MaxValue),
+                    // base+2 is retired; preserve the existing receive-control ID.
                     new SSTwoButtonsSetting(Config.SettingsIdBase + 3, "Hear nearby SCP voice", "Off", "On", true, "For individual mutes use .scpchat mute <playerID> in the F1 console.", byte.MaxValue, false),
                 };
                 ServerSpecificSettingsSync.DefinedSettings = existing.Concat(settings).ToArray();
@@ -114,7 +114,7 @@ namespace Brainless.ScpProximityChat
         {
             if (!states.TryGetValue(player, out var state))
             {
-                state = new VoiceState(Config.DefaultHoldMode);
+                state = new VoiceState();
                 states.Add(player, state);
             }
 
@@ -131,15 +131,30 @@ namespace Brainless.ScpProximityChat
                 return false;
             }
 
-            State(player).Select(local);
-            if (local && !EnsureSpeaker(player))
+            bool ready = true;
+            if (local)
             {
-                State(player).ResetInput();
+                try
+                {
+                    ready = EnsureSpeaker(player);
+                }
+                catch (Exception exception)
+                {
+                    ready = false;
+                    Log.Error("[Brainless SCP voice] Speaker allocation failed: " + exception);
+                }
+            }
+
+            if (!ready)
+            {
+                State(player).Select(false);
+                DestroySpeaker(player);
                 response = "No native speaker channel is available. Team chat is still selected.";
                 Notify(player, response);
                 return false;
             }
 
+            State(player).Select(local);
             if (!local)
                 DestroySpeaker(player);
             response = "SCP voice: " + (local ? "NEARBY" : "TEAM") + ". Hold your normal voice key to speak.";
@@ -163,15 +178,7 @@ namespace Brainless.ScpProximityChat
             if (player == null || !player.IsConnected || player.IsHost)
                 return;
             var state = State(player);
-            if (setting.SettingId == Config.SettingsIdBase + 2 && setting is SSTwoButtonsSetting mode)
-            {
-                bool wasLocal = state.Local;
-                state.SetMode(mode.SyncIsB);
-                DestroySpeaker(player);
-                if (wasLocal)
-                    Notify(player, Config.DisabledHint ?? "Proximity chat disabled");
-            }
-            else if (setting.SettingId == Config.SettingsIdBase + 3 && setting is SSTwoButtonsSetting hear)
+            if (setting.SettingId == Config.SettingsIdBase + 3 && setting is SSTwoButtonsSetting hear)
                 state.HearNearby = hear.SyncIsB;
             else if (setting.SettingId == Config.SettingsIdBase + 1 && setting is SSKeybindSetting key)
             {
@@ -181,12 +188,8 @@ namespace Brainless.ScpProximityChat
                     return;
                 }
 
-                bool before = state.Local;
-                state.Input(key.SyncIsPressed);
-                if (before != state.Local)
-                {
-                    Select(player, state.Local, out _);
-                }
+                if (state.KeyPressed(key.SyncIsPressed))
+                    Select(player, !state.Local, out _);
             }
         });
         private void Verified(VerifiedEventArgs ev) => Sync(ev.Player);
@@ -207,7 +210,12 @@ namespace Brainless.ScpProximityChat
             states.Remove(ev.Player);
         }
 
-        private void ChangingRole(ChangingRoleEventArgs ev) => ForgetSpeaker(ev.Player);
+        private void ChangingRole(ChangingRoleEventArgs ev)
+        {
+            if (ev.IsAllowed)
+                ForgetSpeaker(ev.Player);
+        }
+
         private void Died(DiedEventArgs ev) => ForgetSpeaker(ev.Player);
         private void ForgetSpeaker(Player player)
         {
@@ -228,6 +236,7 @@ namespace Brainless.ScpProximityChat
         {
             if (!ev.IsAllowed || !IsLocal(ev.Sender))
                 return;
+            State(ev.Sender).RouteChecks++;
             // Only the normal SCP team channel is rerouted, never SCP-939 mimicry,
             // intercom/global admin voice, or SCP-079's speaker ability.
             if (ev.VoiceModule.CurrentChannel != VoiceChatChannel.ScpChat)
@@ -254,6 +263,7 @@ namespace Brainless.ScpProximityChat
                     return;
                 speaker.Position = sender.CameraTransform.position;
                 connection.Send(new AudioMessage(speaker.ControllerId, message.Data, message.DataLength), channelId);
+                State(sender).AudioSends++;
             });
             // Fail closed for a handled local packet, never fall back to global SCP audio.
             return true;

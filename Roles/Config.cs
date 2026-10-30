@@ -84,7 +84,10 @@ namespace Brainless.Roles
         [Tune(0, 100)]
         public float ZombieChance { get; set; } = 45;
 
-        [Description("Empty by default because seasonal candy colors can change effects. Approve effects for your installed build first.")]
+        [Tune(1, 6)]
+        public int CandyManCandyCount { get; set; } = 3;
+
+        [Description("Candy colors for candy roles. Empty uses registered Rainbow/Yellow/Purple/Red/Green/Blue candies; no painkiller fallback. Seasonal/explosive colors require explicit entries.")]
         public List<CandyKindID> ApprovedCandy { get; set; } = new List<CandyKindID>();
         public List<RoleDefinition> Roles { get; set; } = Catalog.Create();
 
@@ -98,6 +101,8 @@ namespace Brainless.Roles
             {
                 Tuning.Validate(role, "roles." + role.Id);
                 role.Id = role.Id.ToUpperInvariant();
+                if (role.Id == "S04" && role.Hint == "Three approved candies; painkillers if the allowlist is empty.")
+                    role.Hint = "A bag of real SCP-330 candy; candy count and colors are configurable.";
                 role.CustomItems.RemoveAll(id => id == 7110);
             }
         }

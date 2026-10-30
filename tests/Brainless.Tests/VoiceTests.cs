@@ -5,26 +5,36 @@ internal static class VoiceTests
 {
     internal static void Run(Action<bool, string> check)
     {
-        var state = new VoiceState(false);
+        var state = new VoiceState();
+        void Input(bool down)
+        {
+            if (state.KeyPressed(down))
+                state.Select(!state.Local);
+        }
+
         check(!state.Local, "SCP voice begins on ordinary team chat");
-        state.Input(true);
-        state.Input(true);
+        Input(true);
+        Input(true);
         check(state.Local, "one key press selects local voice without repeat-report toggling");
-        state.Input(false);
+        Input(false);
         check(state.Local, "toggle mode keeps local voice after key release");
-        state.Input(true);
+        Input(true);
         check(!state.Local, "the next press returns to team chat");
-        state.SetMode(true);
-        state.Input(true);
-        check(state.Local, "hold mode selects local while held");
-        state.Input(false);
-        check(!state.Local, "releasing hold immediately restores team chat");
+        Input(false);
+        Input(true);
+        Input(false);
+        check(state.Local, "tap and release keeps nearby chat enabled without a hold mode");
         state.Select(true);
-        state.SetMode(false);
-        check(!state.Local, "a mode change clears any active local route");
-        state.Input(true);
+        Input(false);
+        check(state.Local, "a console-selected route survives release reports");
+        Input(true);
         state.ResetInput();
         check(!state.Local, "a role or round reset cannot leave local voice active");
+        check(state.KeyPressed(true) && !state.Local, "a press requests a toggle without committing a route before speaker allocation");
+        check(!state.KeyPressed(true) && !state.Local, "failed allocation does not retry or claim enabled on duplicate press reports");
+        state.KeyPressed(false);
+        check(state.KeyPressed(true), "a new press can retry after an allocation failure");
+        state.ResetInput();
         bool Hear(bool alive = true, bool self = false, bool nativeAllowed = true, bool groupMuted = false, float d2 = 9) => state.CanHear("speaker@steam", alive, self, nativeAllowed, groupMuted, d2, 16);
         check(Hear(), "a nearby living native-approved listener can hear local SCP voice");
         check(!Hear(alive: false), "spectators cannot hear the local channel");

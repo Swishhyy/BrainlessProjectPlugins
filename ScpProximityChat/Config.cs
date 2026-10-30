@@ -16,7 +16,6 @@ namespace Brainless.ScpProximityChat
         [Description("IDs base through base+3 are reserved for this plugin's native Server Specific Settings. Change if another plugin uses them.")]
         public int SettingsIdBase { get; set; } = 58000;
         public KeyCode SuggestedKey { get; set; } = KeyCode.N;
-        public bool DefaultHoldMode { get; set; }
         public bool ShowHints { get; set; } = true;
         public float HintDurationSeconds { get; set; } = 2;
         public string EnabledHint { get; set; } = "Proximity chat enabled";

@@ -48,7 +48,7 @@ All 35 profiles have an implementation and compile against the pinned EXILED/gam
 - Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. The selector now filters these before choosing among valid profiles.
 - Chief Scientist and Demolitionist require 12 players. Interceptor needs a Chaos subtype with an AK. MTF/Chaos profiles preserve their matching native rank/subtype.
 - Child, Tickler and Muncher require the experimental role switch. Doctor also needs its disabled profile enabled and enable_doctor_event; its separate one-percent event roll never enters ordinary zombie draws. Redline and Ricochet are weapon prototypes and do not gate the normal role roster.
-- Candy roles use painkillers until approved_candy is configured. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.
+- Candy roles use real SCP-330 candy; approved_candy can select colors and candy_man_candy_count controls the Candy Man count. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.
 - Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.
 
 All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.

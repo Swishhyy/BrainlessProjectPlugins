@@ -10,11 +10,11 @@ Independent SCP: Secret Laboratory plugins for the Project Brainless server.
 | [Items](Items) | `Brainless.Items.dll` | 12 custom throwables, tools, devices and supplies |
 | [Weapons](Weapons) | `Brainless.Weapons.dll` | Five normal weapons including a 16-shot grenade launcher, plus two disabled experimental prototypes |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Imported BetterCoinflips, updated to 5.1.3 for EXILED 9.15.2 |
-| [ScpProximityChat](ScpProximityChat) | `Brainless.ScpProximityChat.dll` | Nearby SCP voice with native spatial audio and toggle/hold controls; toggle feedback hints; no external audio/settings library |
+| [ScpProximityChat](ScpProximityChat) | `Brainless.ScpProximityChat.dll` | Nearby SCP voice with native spatial audio and toggle-only controls; toggle feedback hints; no external audio/settings library |
 
 Read the [automatic updates guide](docs/UPDATES.md), [commands and permissions](docs/COMMANDS.md), [content catalog](docs/CATALOG.md), [balance/config reference](docs/TUNING.md), [natural loot and starting gear](docs/NATURAL_LOOT.md), [architecture](docs/ARCHITECTURE.md), [role availability](docs/ROLE_STATUS.md), and [server playtest checklist](docs/PLAYTEST.md).
 
-Roles is **0.2.1**, Items and Weapons are **0.3.0**, BetterCoinflips **5.1.3** and ScpProximityChat **0.1.1**. All five independently check GitHub Releases for their own updates. Admin `ci give`/`ci spawn` commands issue available content without population/supply caps or extra bypass permissions. Native pickups throughout the facility and in lockers can now become custom items, and occasional human spawns receive extra/replacement gear after role kits finish. Chances, pools and map/player/room caps are configurable under `distribution`; natural loadouts and loot share their normal supply limits. The role HUD appears in a compact column at the left side by default, with optional right-side placement. Locksmith now picks eligible doors in 15 seconds with a 120-second cooldown after success; containment/armory level 3 is excluded. The Maintenance Pass has been removed. Gas uses native SCP-244 smoke with no damage and a 20% human slow. Custom blast damage now uses valid native armor penetration. Clusters have a damaging parent plus four native grenades with larger blasts. Impact Grenade 7113 detonates on surface contact after a short arming delay. Explosive zombies now arm a native blast after a confirmed death, including environmental/explosion deaths by default. Admins can inspect roles with `bprole`, audit availability with `bproles`, and test a profile with `bprole set <ID> [playerID]`.
+Roles is **0.2.2**, Items and Weapons are **0.3.0**, BetterCoinflips **5.1.3** and ScpProximityChat **0.1.2**. All five independently check GitHub Releases for their own updates. Admin `ci give`/`ci spawn` commands issue available content without population/supply caps or extra bypass permissions. Native pickups throughout the facility and in lockers can now become custom items, and occasional human spawns receive extra/replacement gear after role kits finish. Chances, pools and map/player/room caps are configurable under `distribution`; natural loadouts and loot share their normal supply limits. The role HUD appears in a compact column at the left side by default, with optional right-side placement. Locksmith now picks eligible doors in 15 seconds with a 120-second cooldown after success; containment/armory level 3 is excluded. The Maintenance Pass has been removed. Gas uses native SCP-244 smoke with no damage and a 20% human slow. Custom blast damage now uses valid native armor penetration. Clusters have a damaging parent plus four native grenades with larger blasts. Impact Grenade 7113 detonates on surface contact after a short arming delay. Explosive zombies now arm a native blast after a confirmed death, including environmental/explosion deaths by default. Admins can inspect roles with `bprole`, audit availability with `bproles`, and test a profile with `bprole set <ID> [playerID]`.
 
 ## Install
 
@@ -62,7 +62,7 @@ The packaging script writes separate folders and ZIPs to `artifacts`. It continu
 dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- .
 ```
 
-This checks nested tuning validation, impact arming/one-shot collision policy, confirmed/canceled zombie death capture, configurable cluster caps, supply limits, Last Word and launcher shot budgets, eligible role draws, Locksmith timing/cooldowns/access policy, shared cluster damage caps, weighted effects, blast falloff, Nullifier shield spillover, SCP voice toggle/hold input and recipient filtering, and the actual built DLLs' dependency tables. It does not simulate the Unity server. Follow `docs/PLAYTEST.md` on a test server before normal rotation.
+This checks nested tuning validation, impact arming/one-shot collision policy, confirmed/canceled zombie death capture, configurable cluster caps, supply limits, Last Word and launcher shot budgets, eligible role draws, Locksmith timing/cooldowns/access policy, shared cluster damage caps, weighted effects, blast falloff, Nullifier shield spillover, SCP voice toggle input and recipient filtering, and the actual built DLLs' dependency tables. It does not simulate the Unity server. Follow `docs/PLAYTEST.md` on a test server before normal rotation.
 
 ## Prototype status
 
@@ -71,7 +71,7 @@ This checks nested tuning validation, impact arming/one-shot collision policy, c
 - Ricochet implements one server-side reflection from solid mesh colliders and remains disabled pending in-game collision testing.
 - The jammer blocks ordinary door requests, room blackout, room lockdown and speaker actions. It does not cancel a zone-wide blackout; blocking the entire zone would also jam adjacent rooms.
 - Echo uses generated footstep-like audio through the game's spatial speakers. It does not create a fake player or an SCP-939 perception marker.
-- Candy defaults to a painkiller fallback until an operator approves a native candy allowlist for the installed seasonal build.
+- Candy Man receives a real SCP-330 bag with three candies by default. The count and candy pool are configurable; an empty pool uses registered standard non-explosive colors.
 
 ## Provenance
 

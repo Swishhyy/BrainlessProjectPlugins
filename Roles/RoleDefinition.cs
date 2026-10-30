@@ -102,7 +102,7 @@ namespace Brainless.Roles
             r.Remove.AddRange(new[] { ItemType.KeycardScientist, ItemType.Medkit });
             r.Add.Add(ItemType.KeycardResearchCoordinator);
             list.Add(r);
-            r = R("S04", "Candy Man", RoleTypeId.Scientist, "Three approved candies; painkillers if the allowlist is empty.");
+            r = R("S04", "Candy Man", RoleTypeId.Scientist, "A bag of real SCP-330 candy; candy count and colors are configurable.");
             r.Remove.Add(ItemType.Medkit);
             list.Add(r);
             r = R("S05", "Auditor", RoleTypeId.Scientist, "Survey Beacon checks one room; no medkit.");
