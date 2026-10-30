@@ -1,6 +1,6 @@
 # Balance and configuration
 
-Project Brainless Roles, Items and Weapons 0.2.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
+Project Brainless Roles 0.2.1 and Items/Weapons 0.3.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
 
 ## Where to edit and apply
 
@@ -26,6 +26,7 @@ Merge this into the existing `brainless_items` section; do not add a second sect
 
 ```yaml
 brainless_items:
+  grenade_balance_revision: 1
   tuning:
     gas_grenade:
       fuse_seconds: 2.5
@@ -43,29 +44,34 @@ brainless_items:
     cluster_grenade:
       fuse_seconds: 3
       grenade_count: 4
-      child_fuse_seconds: 1.5
+      parent_radius: 4.5
+      parent_human_damage: 90
+      parent_scp_damage: 250
+      child_fuse_seconds: 1.2
       child_fuse_stagger_seconds: 0.08
-      horizontal_speed: 4.5
-      upward_speed: 4
-      radius: 2.75
-      human_damage: 40
-      scp_damage: 100
-      shared_human_damage_cap: 85
-      shared_scp_damage_cap: 225
+      horizontal_speed: 3
+      upward_speed: 3
+      radius: 4
+      human_damage: 70
+      scp_damage: 180
+      shared_human_damage_cap: 150
+      shared_scp_damage_cap: 500
+      armor_penetration: 50
       require_line_of_sight: true
       affect_owner: true
     impact_grenade:
       arming_delay_seconds: 0.1
       safety_fuse_seconds: 10
       detonate_on_players: false
-      radius: 3.5
-      human_damage: 80
-      scp_damage: 180
+      radius: 5
+      human_damage: 140
+      scp_damage: 350
+      armor_penetration: 50
       require_line_of_sight: true
       affect_owner: true
 ```
 
-Cluster's parent releases the configured children without HE damage. All children are real physical grenades; none becomes another cluster. Each target has its own aggregate damage allowance across the children. A zero shared cap disables that damage; it does not mean unlimited. The new default raises child damage from 35/90 to 40/100, radius from 2.5m to 2.75m and total caps from 75/200 to 85/225. Counts support 1-32; child fuses/stagger and launch speeds are independently editable.
+Cluster has a controlled parent blast and launches the configured real child grenades; none becomes another cluster. Parent and children share each target's configured raw damage allowance. Zero caps disable damage. Default parent is 90/250 over 4.5m, with four children at 70/180 over 4m and 150/500 total caps. Children launch at 3m/s outward/up and explode after 1.2s plus stagger. Counts support 1-32; all parent/child damage, fuses, spread, radius, caps and penetration are independently editable.
 
 Impact (7113) ignores the thrower's collider and detonates once on a qualifying physical contact after arming. Continued contact with the ground also qualifies after the delay. Player contacts are optional. The safety fuse prevents an airborne projectile from lasting forever; setting it shorter than the arming delay makes it expire by timer first. Native grenade validation/events still apply.
 
@@ -91,13 +97,13 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 | `filter_inhaler` / 7111 | `use_seconds: 2`, `duration_seconds: 12`, `blocks_slow: true`, `blocks_damage: true` |
 | `preserved_specimen` / 7112 | `use_seconds: 4`, `heal_amount: 80`, `reach: 2`, `once_per_player_per_round: true` |
 | `interaction` | `device_reach: 3`, `move_tolerance: 0.6`, `cancel_on_damage: true`, `tick_seconds: 0.1` |
-| `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2`, `pair_gas_with_filter: true` |
+| `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2` (extra bundles), `pair_gas_with_filter: true` |
 
 The item list (`brainless_items.items`) controls each entry's `name`, `description`, `enabled`, `round_cap`, `charges` and `weight`; retain its `id` and native `base_type`. Charges support 1-1000. Throwable behavior is per grenade; multiple tool charges apply to reusable tools, not extra thrown projectiles. Text descriptions/hints are operator-editable strings and do not automatically recalculate when you change numeric tuning.
 
 The old Maintenance Pass (7110) is removed even from existing lists. Impact 7113 is appended when `catalog_revision` is missing/0. Set `catalog_revision: 1` when deliberately removing it, or keep an entry with `enabled: false`. A reload does not save migrations back to disk; use EXILED's normal config save or edit the list/revision yourself when making permanent catalog changes.
 
-Round caps and supply apply to natural role kits/world loot. Administrative `ci give`/`ci spawn` grants bypass these limits without an extra force permission. Gas pairs with a filter by default and uses two utility slots; disabling pairing makes it one. Existing spent counts are never refunded by changing capacities. The normal cluster allowance is the smaller of its item cap and the current lobby's configured cluster cap, with the additional minimum-player gate. World-loot count is an upper bound; valid locations, pairing and remaining supply may produce fewer items.
+Round caps and supply apply to natural role kits/world loot. Administrative `ci give`/`ci spawn` grants bypass these limits without an extra force permission. Gas pairs with a filter by default and uses two utility slots; disabling pairing makes it one. Existing spent counts are never refunded by changing capacities. The normal cluster allowance is the smaller of its item cap and the current lobby's configured cluster cap, with the additional minimum-player gate. World-loot count is an upper bound on additional bundles; a paired filter still spends its own supply slot. Valid loose-loot anchors, room caps and remaining supply may produce fewer items. See [NATURAL_LOOT.md](NATURAL_LOOT.md) for replacement and starting-gear settings.
 
 ## Explosive zombie (Z04)
 
@@ -108,6 +114,7 @@ brainless_roles:
     radius: 3
     human_damage: 80
     scp_damage: 0
+    armor_penetration: 50
     require_line_of_sight: true
     require_enemy_kill: false
     trigger_on_environmental_deaths: true
@@ -134,8 +141,9 @@ To make the launcher fire 24 grenades, change only its existing 7207 entry's `ma
 | `launcher_shot_interval` | 0.65 |
 | `launcher_speed` | 18 |
 | `launcher_fuse` | 1.8 |
-| `launcher_blast_radius` | 2.5 |
-| `launcher_human_damage` / `launcher_scp_damage` | 45 / 90 |
+| `launcher_blast_radius` | 3.5 |
+| `launcher_human_damage` / `launcher_scp_damage` | 70 / 150 |
+| `launcher_armor_penetration` | 50 |
 | `launcher_require_line_of_sight` / `launcher_affect_owner` | true / true |
 
 The Logicer body remains mandatory for 7207. These legacy launcher field names remain at the root for compatibility. Validated values are applied directly rather than silently clamped to the old balance defaults. Native shooting cadence may still limit how quickly a shot can be accepted.
@@ -154,3 +162,13 @@ Redline/Ricochet remain experimental and disabled by default. Native shotgun fir
 ## Practical bounds
 
 The validator rejects NaN/infinity and places broad safety bounds on simulation values: cluster children 1-32, gas emitters 1-6, slow percentages 0-100, most durations up to 120s or 3600s for persistent fields/devices, blast radii up to 60m, and blast peaks/caps up to 100000. These are validation limits, not recommended balance values. Rejected settings include their property path and permitted range in the command response. Use a test server for physics, native smoke, audio and balance; the repository's headless checks do not simulate Unity clients.
+
+## Natural distribution
+
+Items/Weapons 0.3.0 add `distribution` for weighted native pickup/locker replacements and occasional human starting gear. The existing `world_loot` switch controls additional scattered bundles only. `distribution.enabled: false` disables all automatic routes for that provider. Config reload changes future spawn decisions but does not rerun initial map distribution, reset per-user awards or refund supply. Full defaults, examples and caps are in [NATURAL_LOOT.md](NATURAL_LOOT.md).
+
+## Explosion fix and older configs
+
+This game build's native explosion constructor returns before setting damage/attacker when armor penetration is zero. Custom explosions now use valid penetration, default 50 to match native HE. Configure `armor_penetration` for Impact/Cluster and `explosive_zombie`, or root `launcher_armor_penetration` for the launcher. Valid range is 1-100; set the damage fields to zero when disabling damage. The force passed to the handler is now zero rather than world coordinates. Additional blast cover checks use the native HE blocker mask, allowing its normal wall/door cover behavior without treating loose pickup/ragdoll bodies as walls.
+
+Under Items/Weapons, `grenade_balance_revision: 0` (including a missing marker) upgrades individual fields that still exactly equal the former stock damage/radius/cap/timing values. Edited values and grenade counts survive. Runtime upgrade sets revision 1 without overwriting the YAML file. When intentionally retaining/restoring old numeric values, save `grenade_balance_revision: 1` in that provider's root section. New cluster parent-blast fields default to the values above; set parent damage to zero to disable that stage. Queued projectiles keep captured tuning. Normal native armor, friendly-fire, god mode, spawn protection and damage-event rules remain.

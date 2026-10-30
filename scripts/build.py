@@ -48,6 +48,7 @@ for name, (project, assembly) in PROJECTS.items():
     shutil.copy2(ROOT/'docs/COMMANDS.md', folder/'COMMANDS.md')
     if name in ('Roles', 'Items', 'Weapons'):
         shutil.copy2(ROOT/'docs/TUNING.md', folder/'TUNING.md')
+        shutil.copy2(ROOT/'docs/NATURAL_LOOT.md', folder/'NATURAL_LOOT.md')
     with zipfile.ZipFile(output/(name+'.zip'), 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for file in folder.iterdir():
             archive.write(file, file.name)

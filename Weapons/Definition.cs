@@ -4,6 +4,7 @@ using System.Linq;
 using Brainless.Internal;
 using Exiled.API.Features;
 using Exiled.API.Features.Items;
+using Exiled.API.Features.Lockers;
 using Exiled.API.Features.Pickups;
 using Exiled.API.Features.Spawn;
 using Exiled.CustomItems.API.Features;
@@ -35,6 +36,7 @@ namespace Brainless.Weapons
         public bool AllowExperimentalWeapons { get; set; }
         public bool WorldLoot { get; set; }
         public WeaponTuning Tuning { get; set; } = new WeaponTuning();
+        public WeaponDistributionConfig Distribution { get; set; } = new WeaponDistributionConfig();
 
         [Tune(.05, 30)]
         public float LauncherShotInterval { get; set; } = .65f;
@@ -46,13 +48,17 @@ namespace Brainless.Weapons
         public float LauncherFuse { get; set; } = 1.8f;
 
         [Tune(.1, 60)]
-        public float LauncherBlastRadius { get; set; } = 2.5f;
+        public float LauncherBlastRadius { get; set; } = 3.5f;
 
         [Tune(0, 100000)]
-        public float LauncherHumanDamage { get; set; } = 45;
+        public float LauncherHumanDamage { get; set; } = 70;
 
         [Tune(0, 100000)]
-        public float LauncherScpDamage { get; set; } = 90;
+        public float LauncherScpDamage { get; set; } = 150;
+
+        [Tune(1, 100)]
+        public int LauncherArmorPenetration { get; set; } = ExplosionRules.DefaultPenetration;
+        public int GrenadeBalanceRevision { get; set; }
         public bool LauncherRequireLineOfSight { get; set; } = true;
         public bool LauncherAffectOwner { get; set; } = true;
         public List<WeaponSpec> Weapons { get; set; } = new List<WeaponSpec>
@@ -126,7 +132,7 @@ namespace Brainless.Weapons
         {
             Id = 7207,
             Name = "Grenade Launcher",
-            Description = "Logicer body; 16 grenades total, no reload. Small 2.5m blast: up to 45 human / 90 SCP damage. Tap fire every 0.65s.",
+            Description = "Logicer body; 16 grenades total, no reload. Small 3.5m blast: up to 70 human / 150 SCP damage. Tap fire every 0.65s.",
             BaseType = ItemType.GunLogicer,
             Magazine = 16,
             Reserve = 0,
@@ -150,7 +156,14 @@ namespace Brainless.Weapons
             if (Weapons == null || Weapons.Any(w => w == null))
                 throw new InvalidOperationException("Weapons cannot contain null entries.");
             UpgradeCatalog();
+            LauncherBlastRadius = ExplosionRules.UpgradeStock(LauncherBlastRadius, 2.5f, 3.5f, GrenadeBalanceRevision);
+            LauncherHumanDamage = ExplosionRules.UpgradeStock(LauncherHumanDamage, 45, 70, GrenadeBalanceRevision);
+            LauncherScpDamage = ExplosionRules.UpgradeStock(LauncherScpDamage, 90, 150, GrenadeBalanceRevision);
+            GrenadeBalanceRevision = Math.Max(1, GrenadeBalanceRevision);
             Brainless.Internal.Tuning.Validate(this, "brainless_weapons");
+            if (Distribution == null)
+                throw new InvalidOperationException("distribution cannot be null.");
+            Distribution.Validate(id => id >= 7201 && id <= 7207);
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
             foreach (var w in Weapons)
@@ -170,6 +183,8 @@ namespace Brainless.Weapons
         public RegisteredWeapon(Plugin owner, WeaponSpec spec)
         {
             this.owner = owner;
+            if (spec.Id == 7207 && spec.Description == "Logicer body; 16 grenades total, no reload. Small 2.5m blast: up to 45 human / 90 SCP damage. Tap fire every 0.65s.")
+                spec.Description = "Logicer body; 16 grenades total, no reload. Small 3.5m blast: up to 70 human / 150 SCP damage. Tap fire every 0.65s.";
             Spec = spec;
             Id = spec.Id;
             Name = spec.Name;
@@ -184,6 +199,38 @@ namespace Brainless.Weapons
             Name = spec.Name;
             Description = spec.Description;
             Weight = spec.Weight;
+        }
+
+        internal string AdoptItem(Player player, Item item)
+        {
+            if (!(item is Firearm firearm) || item.Type != Type || !player.Items.Contains(item))
+                return "The native firearm changed.";
+            string failure = owner.IssueFailure(Spec, 1, false);
+            if (failure != null)
+                return failure;
+            if (!owner.Mint(this, firearm))
+                return "Natural firearm supply was exhausted.";
+            TrackedSerials.Add(item.Serial);
+            // Replacement keeps the native loadout's reserve; it grants no new reserve ammo.
+            return null;
+        }
+
+        internal string AdoptPickup(Pickup pickup, Chamber chamber)
+        {
+            if (!(pickup is FirearmPickup firearm) || pickup.Base == null || pickup.Type != Type)
+                return "The native map firearm changed.";
+            if (Spec.Magazine > firearm.MaxAmmo)
+                return "The configured magazine exceeds this native pickup's capacity; use an additional item grant instead.";
+            string failure = owner.IssueFailure(Spec, 1, false);
+            if (failure != null)
+                return failure;
+            if (!owner.MintSerial(this, pickup.Serial))
+                return "Natural firearm supply was exhausted.";
+            if (Spec.Magazine > 0)
+                firearm.Ammo = Spec.Magazine;
+            TrackedSerials.Add(pickup.Serial);
+            pickup.Weight = Weight;
+            return null;
         }
 
         public override uint Id { get; set; }

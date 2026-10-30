@@ -7,6 +7,7 @@ using Exiled.API.Features;
 using Exiled.API.Features.Core.UserSettings;
 using Exiled.API.Features.Doors;
 using Exiled.API.Features.Items;
+using Exiled.API.Features.Lockers;
 using Exiled.API.Features.Pickups;
 using Exiled.API.Features.Pickups.Projectiles;
 using Exiled.API.Features.Toys;
@@ -31,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 0);
+        public override Version Version => new Version(0, 3, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -55,6 +56,7 @@ namespace Brainless.Items
         private bool capacitySet;
         private float lastFieldTick;
         private Brainless.Internal.Updates.PluginUpdates updates;
+        private NaturalDistribution distribution;
         public override void OnEnabled()
         {
             Config.Prepare();
@@ -98,6 +100,7 @@ namespace Brainless.Items
             Reset();
             AdminItems.Enable("brainless.items.commands");
             NativeSmoke.Enable();
+            distribution = new NaturalDistribution("Items", lifetime, () => Config.Distribution, NaturalContent, () => Config.WorldLoot ? Config.Tuning.Supply.WorldLootCount : 0, () => Config.Debug);
             Instance = this;
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Items", Config.AutoUpdate);
@@ -106,6 +109,8 @@ namespace Brainless.Items
         public override void OnDisabled()
         {
             Instance = null;
+            distribution?.Dispose();
+            distribution = null;
             updates?.Dispose();
             updates = null;
             P.UsingItem -= Using;
@@ -160,6 +165,7 @@ namespace Brainless.Items
 
         private void Reset()
         {
+            distribution?.Reset();
             Cleanup();
             charges.Clear();
             foreach (var item in registered.Values)
@@ -176,8 +182,7 @@ namespace Brainless.Items
         private void RoundStarted()
         {
             EnsureCapacity();
-            if (Config.WorldLoot)
-                lifetime.Later(1, SpawnWorldLoot);
+            distribution?.RoundStarted();
         }
 
         private void EnsureCapacity()
@@ -261,22 +266,30 @@ namespace Brainless.Items
             return "The paired Filter Inhaler is disabled.";
         }
 
-        private RegisteredItem Find(int serial) => registered.Values.FirstOrDefault(i => i.TrackedSerials.Contains(serial));
-        private void SpawnWorldLoot()
+        internal string SpawnMapFilter(Pickup original, Chamber chamber)
         {
-            var room = Room.List.Where(r => r.Zone == ZoneType.HeavyContainment && r.Type.ToString().IndexOf("Armory", StringComparison.OrdinalIgnoreCase) >= 0).FirstOrDefault();
-            if (room == null)
-                return;
-            for (int i = 0; i < Config.Tuning.Supply.WorldLootCount; i++)
+            if (!registered.TryGetValue(7111, out var filter))
+                return "The paired filter is disabled.";
+            string failure = filter.TrySpawn(original.Position + Vector3.right * .12f, false, out var companion);
+            if (failure != null)
+                return failure;
+            try
             {
-                var options = registered.Values.Where(item => CanIssue(item.Spec, 1)).ToArray();
-                if (options.Length == 0)
-                    break;
-                var choice = options[UnityEngine.Random.Range(0, options.Length)];
-                choice.Spawn(room.Position + Vector3.up + Vector3.right * .5f * i);
-                if (choice.Id == 7101 && Config.Tuning.Supply.PairGasWithFilter)
-                    i++;
+                NaturalDistribution.PlaceCompanion(companion, original, chamber);
+                return null;
             }
+            catch (Exception exception)
+            {
+                Unmint(filter, companion.Serial, false);
+                NaturalDistribution.RemoveCompanion(companion, chamber);
+                return "The paired filter could not be placed: " + exception.GetType().Name;
+            }
+        }
+
+        private RegisteredItem Find(int serial) => registered.Values.FirstOrDefault(i => i.TrackedSerials.Contains(serial));
+        private IEnumerable<NaturalContent> NaturalContent()
+        {
+            return registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, RequiredSlots = item.Id == 7101 && Config.Tuning.Supply.PairGasWithFilter ? 2 : 1, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
         }
 
         private void KeyChanged(Player player, SettingBase setting) => Safe.Run(() =>
@@ -654,11 +667,13 @@ namespace Brainless.Items
             {
                 var tuning = Config.Tuning.ImpactGrenade;
                 impact.FuseTime = tuning.SafetyFuseSeconds;
-                fragments.Track(impact, new DamageSource(owner), tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: tuning.AffectOwner);
+                fragments.Track(impact, new DamageSource(owner), tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: tuning.AffectOwner, armorPenetration: tuning.ArmorPenetration);
                 impact.GameObject.AddComponent<ImpactGrenade>().Initialize(impact, owner?.ReferenceHub, tuning);
                 return;
             }
 
+            if (item.Id == 7102 && projectile is ExplosionGrenadeProjectile parent)
+                parent.MaxRadius = Config.Tuning.ClusterGrenade.ParentRadius;
             thrown[projectile.Serial] = new Payload
             {
                 Item = item,
@@ -724,16 +739,24 @@ namespace Brainless.Items
                     World.Cue(position, gas ? "Irritant gas - leave the cloud or use a filter" : "Containment foam - slow floor", 10);
                     break;
                 case 7102:
-                    Cluster(position, payload.Source, payload.Cluster);
+                    Cluster(position, payload.Source, payload.Cluster, ev.TargetsToAffect);
                     break;
                 case 7104:
                     FxAudio.Play(lifetime, position, payload.Echo.DurationSeconds, "steps", volume: payload.Echo.AudioVolume, range: payload.Echo.AudioRange);
                     break;
             }
         });
-        private void Cluster(Vector3 position, DamageSource source, ClusterTuning tuning)
+        private void Cluster(Vector3 position, DamageSource source, ClusterTuning tuning, IEnumerable<Player> targets)
         {
             var blastBudget = new BlastBudget(tuning.SharedHumanDamageCap, tuning.SharedScpDamageCap);
+            foreach (var target in targets.Where(source.CanAffect).ToArray())
+            {
+                if ((!tuning.AffectOwner && target == source.Owner) || (tuning.RequireLineOfSight && !FragProjectiles.ClearBlast(position, target)))
+                    continue;
+                float amount = Rules.Falloff(Vector3.Distance(position, target.Position), tuning.ParentRadius, target.IsScp ? tuning.ParentScpDamage : tuning.ParentHumanDamage);
+                source.Blast(target, position, blastBudget.Take(target.UserId, target.IsScp, amount), tuning.ArmorPenetration);
+            }
+
             float rotation = UnityEngine.Random.Range(0, Mathf.PI * 2);
             // All configured children leave the first detonation together. Each has native
             // rigidbody bounce, gravity, ticking fuse and explosion effects.
@@ -741,7 +764,7 @@ namespace Brainless.Items
             {
                 float angle = rotation + i * Mathf.PI * 2 / tuning.GrenadeCount;
                 Vector3 outward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
-                fragments.Launch(position + Vector3.up * .15f, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner);
+                fragments.Launch(position + Vector3.up * .15f, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration);
             }
         }
 

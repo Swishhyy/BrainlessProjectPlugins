@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 0);
+        public override Version Version => new Version(0, 2, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -699,7 +699,7 @@ namespace Brainless.Roles
             int used = burstSpent.TryGetValue(pending.UserId, out int before) ? before : 0;
             if ((tuning.MaxPerPlayerPerRound > 0 && used >= tuning.MaxPerPlayerPerRound) || (tuning.MaxConcurrentBursts > 0 && bursts.Count >= tuning.MaxConcurrentBursts))
                 return;
-            var grenade = bursts.Launch(pending.Position + Vector3.up * .15f, Vector3.zero, Math.Max(.05f, tuning.WarningSeconds), pending.Source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: false);
+            var grenade = bursts.Launch(pending.Position + Vector3.up * .15f, Vector3.zero, Math.Max(.05f, tuning.WarningSeconds), pending.Source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: false, armorPenetration: tuning.ArmorPenetration);
             grenade.Scale = Vector3.one * .001f;
             if (grenade.Rigidbody != null)
                 grenade.Rigidbody.isKinematic = true;

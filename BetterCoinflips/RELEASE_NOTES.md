@@ -1,6 +1,4 @@
-- Synchronizes the rebuilt shared helpers with the maintained suite.
-- Coin effects, configured weights, custom coin exclusions and independent release updates are retained.
+- Synchronizes the corrected shared explosion helper with the maintained suite.
+- Existing coin effects, probabilities, custom-coin exclusions and independent updater remain unchanged.
 
-Validation: independent builds against EXILED 9.15.2 / SCP: SL 14.2.8, headless gameplay/updater checks and native API contracts. Unity client physics, smoke rendering and live audio still require a server playtest.
-
-See [configuration](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/TUNING.md), [commands](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/COMMANDS.md) and [updates](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/UPDATES.md).
+Built independently against EXILED 9.15.2 / SCP:SL 14.2.8, with gameplay/updater and native API regression checks.
