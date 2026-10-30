@@ -16,7 +16,7 @@ Stable IDs map the design document into independent plugins. All values are play
 | S01 | Mad Scientist | Scientist | Six shots in Last Word; one specimen; no medkit. |
 | S02 | Pharmacist | Scientist | Two medkits and painkillers to share. |
 | S03 | Chief Scientist | Scientist | Research Supervisor access; no medical supply. |
-| S04 | Candy Man | Scientist | Three approved candies; painkillers if the allowlist is empty. |
+| S04 | Candy Man | Scientist | A bag of real SCP-330 candy; candy count and colors are configurable. |
 | S05 | Auditor | Scientist | Survey Beacon checks one room; no medkit. |
 | S06 | Anomaly Handler | Scientist | Filter and specimen; no medkit or passive SCP resistance. |
 | G01 | Guard Captain | FacilityGuard | Crossvec, heavy armor, stronger badge; less reserve ammo. |
@@ -42,7 +42,7 @@ Stable IDs map the design document into independent plugins. All values are play
 | Z04 | Explosive | Scp0492 | 75% HP. Explodes after a confirmed death; warning and blast are configurable. |
 | Z05 | Doctor | Scp0492 | Event-only SCP-049 conversion; one eligible zombie revive. |
 
-Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy falls back to painkillers until a seasonal allowlist is approved.
+Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy roles use real SCP-330 candy; an empty allowlist selects registered standard colors.
 
 ## Items
 

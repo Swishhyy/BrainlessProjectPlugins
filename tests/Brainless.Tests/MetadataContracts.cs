@@ -50,5 +50,27 @@ internal static class MetadataContracts
         int containment = Flag("ContainmentLevelThree"), armory = Flag("ArmoryLevelThree");
         check(Brainless.Roles.LockpickRules.IsLevelThree(containment, containment, armory) && Brainless.Roles.LockpickRules.IsLevelThree(armory, containment, armory), "Locksmith excludes both level-three categories from the actual EXILED enum");
         check(!Brainless.Roles.LockpickRules.IsLevelThree(Flag("Checkpoints") | Flag("ExitGates") | Flag("ContainmentLevelTwo") | Flag("ArmoryLevelTwo"), containment, armory), "native checkpoint, gate and level-two permissions remain eligible for Locksmith");
+        string rolePath = Path.Combine(root, "Roles/bin/Release/Brainless.Roles.dll");
+        if (File.Exists(rolePath))
+        {
+            using var roleStream = File.OpenRead(rolePath);
+            using var rolePe = new PEReader(roleStream);
+            var roles = rolePe.GetMetadataReader();
+            var plugin = roles.TypeDefinitions.Select(roles.GetTypeDefinition).Single(t => roles.GetString(t.Namespace) == "Brainless.Roles" && roles.GetString(t.Name) == "Plugin");
+            var candy = plugin.GetMethods().Select(roles.GetMethodDefinition).Single(m => roles.GetString(m.Name) == "Candy");
+            var calls = VoiceNativeContracts.Calls(rolePe.GetMethodBody(candy.RelativeVirtualAddress).GetILBytes(), roles).ToArray();
+            check(System.Linq.Enumerable.Contains(calls, "Resolve") && Array.IndexOf(calls, "Clear") < Array.IndexOf(calls, "AddCandy") && Array.IndexOf(calls, "Clear") >= 0, "the compiled role candy path selects registered candies and clears native seed candy before filling the bag");
+        }
+
+        string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
+        if (File.Exists(voicePath))
+        {
+            using var voiceStream = File.OpenRead(voicePath);
+            using var voicePe = new PEReader(voiceStream);
+            var voice = voicePe.GetMetadataReader();
+            var state = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceState");
+            var names = state.GetMethods().Select(voice.GetMethodDefinition).Select(m => voice.GetString(m.Name)).ToArray();
+            check(System.Linq.Enumerable.Contains(names, "KeyPressed") && !System.Linq.Enumerable.Contains(names, "SetMode") && !System.Linq.Enumerable.Contains(names, "get_HoldMode"), "the compiled voice state has toggle input and no hold-mode transition");
+        }
     }
 }

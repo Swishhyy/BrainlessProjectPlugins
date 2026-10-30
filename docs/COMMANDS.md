@@ -62,7 +62,7 @@ D06 uses the ordinary interact key at a denied closed door; no item, new command
 
 ## SCP nearby voice
 
-These are **F1 player-console** commands with a leading dot. No admin or CedMod permission is needed. The native Server Specific Settings menu also supplies a rebindable key (suggested N), Toggle/Hold mode and a receive switch. Always hold your normal voice key to transmit.
+These are **F1 player-console** commands with a leading dot. No admin or CedMod permission is needed. The native Server Specific Settings menu also supplies a rebindable key (suggested N), a toggle-only nearby route and a receive switch. Always hold your normal voice key to transmit.
 
 | Command | Purpose |
 | --- | --- |
@@ -81,3 +81,5 @@ Edit the generated YAML first, then run the matching Remote Admin reload command
 Quick impact test: `ci give 7113 [playerID]`. Quick explosive zombie test: `bprole set Z04 [playerID]`, then confirm with `bprole <playerID>`. Native force-class alone does not assign a custom profile.
 
 Natural map loot and occasional spawn gear need no player command or permission. Staff tune the `distribution` section and use the existing provider reload command. Reload preserves issued counts and does not replay the map pass. See [NATURAL_LOOT.md](NATURAL_LOOT.md). SCP voice route controls now display enabled/disabled hints even while the role HUD is present.
+
+SCP proximity chat 0.1.2 uses a tap-to-toggle key only: N enables nearby, release N, then speak with your normal voice key; the next N press restores team. `.scpchat status` displays route checks/audio sends to help diagnose a live test. Candy Man can be tested with `bprole set S04 [playerID]` and inspected with `bprole <playerID>`.

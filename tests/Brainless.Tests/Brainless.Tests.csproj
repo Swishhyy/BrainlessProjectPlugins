@@ -10,6 +10,7 @@
     <Compile Include="../../Weapons/Tuning.cs" Link="WeaponTuning.cs" />
     <Compile Include="../../Roles/ExplosiveZombieTuning.cs" Link="ExplosiveZombieTuning.cs" />
     <Compile Include="../../Roles/DeathCapture.cs" Link="DeathCapture.cs" />
+    <Compile Include="../../Roles/CandyPool.cs" Link="CandyPool.cs" />
     <Compile Include="../../Roles/LockpickRules.cs" Link="LockpickRules.cs" />
     <Compile Include="../../ScpProximityChat/VoiceState.cs" Link="VoiceState.cs" />
     <Compile Include="../../Shared/Updates/UpdateModels.cs" Link="Updates/UpdateModels.cs" />

@@ -12,6 +12,7 @@ using Exiled.Events.EventArgs.Player;
 using Exiled.Events.EventArgs.Scp049;
 using Exiled.Events.EventArgs.Scp914;
 using HarmonyLib;
+using InventorySystem.Items.Usables.Scp330;
 using MEC;
 using PlayerRoles;
 using PlayerRoles.PlayableScps.HumeShield;
@@ -32,7 +33,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 1);
+        public override Version Version => new Version(0, 2, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -432,7 +433,7 @@ namespace Brainless.Roles
                     if (definition.Id == "D03")
                         Candy(player, 1);
                     if (definition.Id == "S04")
-                        Candy(player, 3);
+                        Candy(player, Config.CandyManCandyCount);
                     if (definition.Id == "G02")
                     {
                         player.ClearAmmo();
@@ -495,16 +496,27 @@ namespace Brainless.Roles
 
         private void Candy(Player player, int count)
         {
-            if (Config.ApprovedCandy.Count == 0)
+            var standard = new[]
             {
-                for (int i = 0; i < count; i++)
-                    player.AddItem(ItemType.Painkillers);
-                return;
-            }
-
-            var bag = player.Items.OfType<Scp330>().FirstOrDefault() ?? (Scp330)player.AddItem(ItemType.SCP330);
+                CandyKindID.Rainbow,
+                CandyKindID.Yellow,
+                CandyKindID.Purple,
+                CandyKindID.Red,
+                CandyKindID.Green,
+                CandyKindID.Blue
+            };
+            var pool = CandyPool.Resolve(Config.ApprovedCandy, Scp330.AvailableCandies.Keys.Where(c => c != CandyKindID.None), standard);
+            if (pool.Length == 0)
+                throw new InvalidOperationException("No configured SCP-330 candy is registered in this game build.");
+            var bag = player.Items.OfType<Scp330>().FirstOrDefault() ?? player.AddItem(ItemType.SCP330) as Scp330;
+            if (bag == null)
+                throw new InvalidOperationException("The server could not give the SCP-330 bag.");
+            // Native creation can seed a random candy. Replace that seed so the
+            // role receives exactly its configured count, with no extra color.
+            bag.Base.Candies.Clear();
             for (int i = 0; i < count; i++)
-                bag.AddCandy(Config.ApprovedCandy[random.Next(Config.ApprovedCandy.Count)]);
+                if (!bag.AddCandy(pool[random.Next(pool.Length)]))
+                    throw new InvalidOperationException("The native candy bag rejected a role candy.");
         }
 
         private void Thief(Player player)
