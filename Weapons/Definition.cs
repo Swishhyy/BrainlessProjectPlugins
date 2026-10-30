@@ -30,8 +30,15 @@ namespace Brainless.Weapons
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
+        public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
         public bool AllowExperimentalWeapons { get; set; }
         public bool WorldLoot { get; set; }
+        public float LauncherShotInterval { get; set; } = .65f;
+        public float LauncherSpeed { get; set; } = 18;
+        public float LauncherFuse { get; set; } = 1.8f;
+        public float LauncherBlastRadius { get; set; } = 2.5f;
+        public float LauncherHumanDamage { get; set; } = 45;
+        public float LauncherScpDamage { get; set; } = 90;
         public List<WeaponSpec> Weapons { get; set; } = new List<WeaponSpec>
         {
             new WeaponSpec
@@ -96,7 +103,31 @@ namespace Brainless.Weapons
                 Experimental = true,
                 RoundCap = 1
             },
+            CreateLauncher(),
         };
+
+        private static WeaponSpec CreateLauncher() => new WeaponSpec
+        {
+            Id = 7207,
+            Name = "Grenade Launcher",
+            Description = "Logicer body; 16 grenades total, no reload. Small 2.5m blast: up to 45 human / 90 SCP damage. Tap fire every 0.65s.",
+            BaseType = ItemType.GunLogicer,
+            Magazine = 16,
+            Reserve = 0,
+            RoundCap = 1
+        };
+        // EXILED preserves existing YAML lists rather than appending new defaults.
+        // Add this newly introduced weapon once; later deletions/edits are respected.
+        public int CatalogRevision { get; set; }
+
+        internal void UpgradeCatalog()
+        {
+            if (CatalogRevision >= 1)
+                return;
+            if (!Weapons.Any(w => w.Id == 7207))
+                Weapons.Add(CreateLauncher());
+            CatalogRevision = 1;
+        }
     }
 
     public sealed class RegisteredWeapon : CustomItem, IAdminItem
@@ -130,6 +161,7 @@ namespace Brainless.Weapons
 
         public bool CanIssue(int count) => owner.CanIssue(Spec, count);
         public bool CanIssueBatch(uint[] ids) => owner.CanIssueBatch(ids);
+        public string GiveForRole(Player player, bool admin) => TryGive(player, admin, false);
         public override void Give(Player player, bool displayMessage = true)
         {
             string failure = TryGive(player, false, displayMessage);
@@ -161,7 +193,8 @@ namespace Brainless.Weapons
                 return "The server did not add the weapon to the inventory; check the server log.";
             }
 
-            player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
+            if (Id != 7207 && Id != 7205)
+                player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);
             return null;

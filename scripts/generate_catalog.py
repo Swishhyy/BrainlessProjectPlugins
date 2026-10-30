@@ -15,7 +15,7 @@ lines += ['', 'Child, Tickler, Muncher and Doctor are experimental. Doctor is ex
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     source = (root/folder/'Definition.cs').read_text()
     entries = re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{\s*Id\s*=\s*(\d+),\s*Name\s*=\s*"([^"]+)",\s*Description\s*=\s*"([^"]+)"', source)
-    assert len(entries) == (12 if folder == 'Items' else 6), f'Incomplete {label} catalog: {len(entries)} entries'
+    assert len(entries) == (12 if folder == 'Items' else 7), f'Incomplete {label} catalog: {len(entries)} entries'
     lines += [f'## {label}', '', '| Design ID | Registry ID | Name | Behavior |', '| --- | --- | --- | --- |']
     prefix = 'I' if folder == 'Items' else 'W'
     for index, (item_id, name, description) in enumerate(entries, 1):
@@ -24,7 +24,41 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
 lines += ['## Initial supply', '', '| Population | Utility items including kits and loot | Custom firearms | Cluster maximum |',
           '| --- | --- | --- | --- |', '| Below 12 | 6 | 1 | 0 |', '| 12 through 23 | 10 | 1 | 1 |', '| 24 or more | 14 | 2 | 2 |', '',
           'A gas grenade also creates a filter and consumes two utility slots. Guard badges and ordinary coins are outside these utility counts. Limits apply across a whole round, not per wave or per pickup.', '',
-          'Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget causes a role to keep its ordinary kit. Redline and Ricochet require the experimental weapon switch.', '']
+          'Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget excludes that role from the draw; another eligible profile can still be selected. Redline and Ricochet require the experimental weapon switch. Admin give/spawn ignores supply caps. The Grenade Launcher uses 16 grenades total and cannot reload from ordinary ammo.', '']
 assert len(roles) == 35, f'Expected 35 roles; got {len(roles)}'
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Catalog written with 35 roles, 12 items and 6 weapon definitions.')
+print('Catalog written with 35 roles, 12 items and 7 weapon definitions.')
+
+# A separate operator-facing audit records why a correctly installed profile may
+# not appear. Runtime bproles remains the authority for edited server configs.
+source = (root/'Roles/RoleDefinition.cs').read_text()
+blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
+status = ['# Role availability audit', '',
+          'All 35 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
+          '## Shipped defaults', '',
+          '| ID | Role | Default status | Required custom equipment | Minimum players |',
+          '| --- | --- | --- | --- | --- |']
+assert len(blocks) == 35
+known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
+for block in blocks:
+    match = re.search(r'R\("([A-Z]\d\d)",\s*"([^"]+)"', block)
+    role_id, name = match.groups()
+    equipment = re.findall(r'\b(7[12]\d\d)\b', block)
+    assert set(equipment) <= known_ids, f'{role_id} references unknown equipment'
+    gate = 'Enabled; normal spawn roll'
+    if 'r.Experimental = true' in block:
+        gate = 'Opt-in: allow_experimental_roles'
+    if role_id == 'Z05':
+        gate = 'Disabled; event only; enable profile + both event/experimental switches'
+    minimum = re.search(r'r.MinPlayers = (\d+)', block)
+    status.append(f'| {role_id} | {name} | {gate} | {", ".join(equipment) or "None"} | {minimum.group(1) if minimum else "0"} |')
+status += ['', '## Why a role can be absent', '',
+           '- Chance rolls do not assign a profile to every spawn. Defaults are 45% for Class-D/scientists/zombies, 50% for Guards/SCP-049 and 30% for reinforcements.',
+           '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. The selector now filters these before choosing among valid profiles.',
+           '- Chief Scientist and Demolitionist require 12 players. Interceptor needs a Chaos subtype with an AK. MTF/Chaos profiles preserve their matching native rank/subtype.',
+           '- Child, Tickler and Muncher require the experimental role switch. Doctor also needs its disabled profile enabled and enable_doctor_event; its separate one-percent event roll never enters ordinary zombie draws. Redline and Ricochet are weapon prototypes and do not gate the normal role roster.',
+           '- Candy roles use painkillers until approved_candy is configured. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.',
+           '- Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.', '',
+           'All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.', '']
+(root/'docs/ROLE_STATUS.md').write_text('\n'.join(status))
+print('Role availability audit written with all 35 profiles and validated equipment IDs.')

@@ -198,6 +198,8 @@ namespace Brainless.Roles
             r.Weight = 1;
             r.MinPlayers = 12;
             r.MaxPerRound = 1;
+            r.HealthMultiplier = .4f;
+            r.ShieldMultiplier = .5f;
             list.Add(r);
             return list;
         }

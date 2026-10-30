@@ -25,10 +25,8 @@ namespace Brainless.Internal
     internal static class AdminItems
     {
         private static Harmony harmony;
-        private static string bypassPermission;
-        internal static void Enable(string id, string permission)
+        internal static void Enable(string id)
         {
-            bypassPermission = permission;
             harmony = new Harmony(id);
             try
             {
@@ -65,19 +63,17 @@ namespace Brainless.Internal
             return item != null;
         }
 
-        private static bool Authorize(ICommandSender sender, string permission, bool force, out string response)
+        private static bool Authorize(ICommandSender sender, string permission, out string response)
         {
             response = null;
             if (!sender.CheckPermission(permission))
                 response = "Permission denied: " + permission;
-            else if (force && !sender.CheckPermission(bypassPermission))
-                response = "The --force option requires " + bypassPermission;
             return response == null;
         }
 
-        private static string[] Arguments(ArraySegment<string> arguments, out bool force)
+        private static string[] Arguments(ArraySegment<string> arguments)
         {
-            force = arguments.Any(a => string.Equals(a, "--force", StringComparison.OrdinalIgnoreCase));
+            // Accept the old flag for existing admin macros, but it is no longer needed.
             return arguments.Where(a => !string.Equals(a, "--force", StringComparison.OrdinalIgnoreCase)).ToArray();
         }
 
@@ -88,8 +84,8 @@ namespace Brainless.Internal
             __result = false;
             try
             {
-                string[] args = Arguments(arguments, out bool force);
-                if (!Authorize(sender, "customitems.give", force, out response))
+                string[] args = Arguments(arguments);
+                if (!Authorize(sender, "customitems.give", out response))
                     return false;
                 Player[] targets;
                 if (args.Length == 1)
@@ -97,7 +93,7 @@ namespace Brainless.Internal
                     Player self = Player.Get(sender);
                     if (self == null || self.IsHost)
                     {
-                        response = "Specify a player: ci give <itemID> <playerID> [--force]";
+                        response = "Specify a player: ci give <itemID> <playerID>";
                         return false;
                     }
 
@@ -119,11 +115,11 @@ namespace Brainless.Internal
                 var report = new GrantReport();
                 foreach (Player target in targets)
                 {
-                    string failure = item.TryGive(target, force, true);
+                    string failure = item.TryGive(target, true, true);
                     report.Record(target.Nickname + " (" + target.Id + ")", failure);
                 }
 
-                response = report.Describe(definition.Name, force);
+                response = report.Describe(definition.Name);
                 __result = report.AnySucceeded;
             }
             catch (Exception exception)
@@ -142,15 +138,15 @@ namespace Brainless.Internal
             __result = false;
             try
             {
-                string[] args = Arguments(arguments, out bool force);
-                if (!Authorize(sender, "customitems.spawn", force, out response))
+                string[] args = Arguments(arguments);
+                if (!Authorize(sender, "customitems.spawn", out response))
                     return false;
                 Vector3 position;
                 if (args.Length == 4)
                 {
                     if (!TryCoordinate(args[1], out float x) || !TryCoordinate(args[2], out float y) || !TryCoordinate(args[3], out float z))
                     {
-                        response = "Coordinates must be finite numbers: ci spawn <itemID> <x> <y> <z> [--force]";
+                        response = "Coordinates must be finite numbers: ci spawn <itemID> <x> <y> <z>";
                         return false;
                     }
 
@@ -170,13 +166,13 @@ namespace Brainless.Internal
                     position = location.GetPosition();
                 else
                 {
-                    response = "Usage: ci spawn <itemID> <playerID/location> [--force], or ci spawn <itemID> <x> <y> <z> [--force]";
+                    response = "Usage: ci spawn <itemID> <playerID/location>, or ci spawn <itemID> <x> <y> <z>";
                     return false;
                 }
 
-                string failure = item.TrySpawn(position, force);
+                string failure = item.TrySpawn(position, true);
                 __result = failure == null;
-                response = failure ?? (definition.Name + " spawned." + (force ? " Admin supply override used." : ""));
+                response = failure ?? (definition.Name + " spawned.");
             }
             catch (Exception exception)
             {

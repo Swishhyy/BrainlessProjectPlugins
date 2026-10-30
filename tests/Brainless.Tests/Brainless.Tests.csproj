@@ -1,4 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework><OutputType>Exe</OutputType><PlatformTarget>AnyCPU</PlatformTarget></PropertyGroup>
-  <ItemGroup><Compile Include="../../Shared/Rules.cs" Link="Rules.cs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
+    <Compile Include="../../Shared/Updates/UpdateModels.cs" Link="Updates/UpdateModels.cs" />
+    <Compile Include="../../Shared/Updates/UpdateFiles.cs" Link="Updates/UpdateFiles.cs" />
+    <Compile Include="../../Shared/Updates/ReleaseClient.cs" Link="Updates/ReleaseClient.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Fixtures/Old/UpdateFixture.Old.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../Fixtures/New/UpdateFixture.New.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyUpdateFixtures" AfterTargets="Build">
+    <Copy SourceFiles="../Fixtures/Old/bin/$(Configuration)/net8.0/Brainless.UpdateFixture.dll" DestinationFolder="$(OutDir)Fixtures/Old" />
+    <Copy SourceFiles="../Fixtures/New/bin/$(Configuration)/net8.0/Brainless.UpdateFixture.dll" DestinationFolder="$(OutDir)Fixtures/New" />
+  </Target>
 </Project>

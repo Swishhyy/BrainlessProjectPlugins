@@ -9,23 +9,27 @@ namespace BetterCoinflips
     public class Plugin : Plugin<Config, Configs.Translations>
     {
         public override Version RequiredExiledVersion => new(9, 15, 2);
-        public override Version Version => new(5, 1, 0);
+        public override Version Version => new(5, 1, 1);
         public override string Author => "Miki_hero";
         public override string Name => "BetterCoinflips";
 
         public static Plugin Instance;
         private EventHandlers _eventHandler;
         private readonly Brainless.Internal.Lifetime _lifetime = new();
+        private Brainless.Internal.Updates.PluginUpdates updates;
         public void Later(float delay, Action action) => _lifetime.Later(delay, action);
         public override void OnEnabled()
         {
             Instance = this;
             RegisterEvents();
             base.OnEnabled();
+            updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "BetterCoinflips", Config.AutoUpdate);
         }
 
         public override void OnDisabled()
         {
+            updates?.Dispose();
+            updates = null;
             UnRegisterEvents();
             _lifetime.Clear();
             Instance = null;

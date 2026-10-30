@@ -43,6 +43,8 @@ for name, (project, assembly) in PROJECTS.items():
     folder.mkdir(exist_ok=True)
     shutil.copy2(source, folder/assembly)
     shutil.copy2(ROOT/name/'README.md', folder/'README.md')
+    shutil.copy2(ROOT/'docs/UPDATES.md', folder/'UPDATES.md')
+    shutil.copy2(ROOT/'docs/COMMANDS.md', folder/'COMMANDS.md')
     with zipfile.ZipFile(output/(name+'.zip'), 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for file in folder.iterdir():
             archive.write(file, file.name)

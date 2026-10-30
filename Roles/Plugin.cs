@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Brainless.Internal;
-using CommandSystem;
 using Exiled.API.Enums;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
@@ -33,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 1, 3);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -45,6 +44,7 @@ namespace Brainless.Roles
         private readonly Dictionary<Player, SpawnReason> reasons = new Dictionary<Player, SpawnReason>();
         private readonly Dictionary<string, RoleDefinition> zombieHistory = new Dictionary<string, RoleDefinition>();
         private readonly Dictionary<string, int> issued = new Dictionary<string, int>();
+        private readonly Dictionary<Player, string> assignmentNotes = new Dictionary<Player, string>();
         private readonly HashSet<string> burstSpent = new HashSet<string>();
         private readonly HashSet<string> doctorSpent = new HashSet<string>();
         private readonly Dictionary<int, int> badges = new Dictionary<int, int>();
@@ -53,8 +53,21 @@ namespace Brainless.Roles
         private int waveCount;
         private Harmony harmony;
         private RoleHud roleHud;
+        private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
+            if (Config.Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name)) || Config.Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Config.Roles.Count)
+                throw new InvalidOperationException("Role profiles need unique IDs and nonempty names.");
+            foreach (var role in Config.Roles)
+            {
+                role.Id = role.Id.ToUpperInvariant();
+                if (role.Id == "Z05" && role.HealthMultiplier == 1 && role.ShieldMultiplier == 1)
+                {
+                    role.HealthMultiplier = .4f;
+                    role.ShieldMultiplier = .5f;
+                }
+            }
+
             Instance = this;
             roleHud = new RoleHud(Config, player => active.TryGetValue(player, out var state) ? state.Definition : null);
             harmony = new Harmony("brainless.roles.0.1");
@@ -72,10 +85,13 @@ namespace Brainless.Roles
             U.UpgradingInventoryItem += UpgradeInventory;
             lifetime.Run(Tick());
             base.OnEnabled();
+            updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Roles", Config.AutoUpdate);
         }
 
         public override void OnDisabled()
         {
+            updates?.Dispose();
+            updates = null;
             P.ChangingRole -= ChangingRole;
             P.Spawned -= Spawned;
             P.Dying -= Dying;
@@ -108,6 +124,7 @@ namespace Brainless.Roles
             reasons.Clear();
             zombieHistory.Clear();
             issued.Clear();
+            assignmentNotes.Clear();
             burstSpent.Clear();
             doctorSpent.Clear();
             badges.Clear();
@@ -124,6 +141,7 @@ namespace Brainless.Roles
             Remove(ev.Player);
             generations.Remove(ev.Player);
             reasons.Remove(ev.Player);
+            assignmentNotes.Remove(ev.Player);
         }
 
         private void ChangingRole(ChangingRoleEventArgs ev) => Safe.Run(() =>
@@ -134,6 +152,7 @@ namespace Brainless.Roles
             Remove(ev.Player);
             generations[ev.Player] = Generation(ev.Player) + 1;
             reasons[ev.Player] = ev.Reason;
+            assignmentNotes[ev.Player] = "Waiting for spawn assignment (" + ev.Reason + ").";
             if (ev.NewRole != RoleTypeId.Scp0492 && ev.NewRole != RoleTypeId.Spectator)
                 zombieHistory.Remove(ev.Player.UserId);
         });
@@ -164,16 +183,23 @@ namespace Brainless.Roles
             if (active.ContainsKey(player) || !Round.IsStarted)
                 return;
             if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived))
+            {
+                assignmentNotes[player] = "Native role kept for spawn reason " + reason + "; use bprole set for an explicit admin test.";
                 return;
+            }
+
             if (player.Role.Type == RoleTypeId.ClassD && Config.GiveClassDCoins && !player.Items.Any(i => i.Type == ItemType.Coin))
                 player.AddItem(ItemType.Coin);
             if (player.Role.Type == RoleTypeId.Scp0492 && zombieHistory.TryGetValue(player.UserId, out var previous))
             {
-                Apply(player, previous, true);
-                return;
+                if (previous.Enabled && (!previous.Experimental || Config.AllowExperimentalRoles))
+                {
+                    Apply(player, previous, true);
+                    return;
+                }
             }
 
-            if (player.Role.Type == RoleTypeId.Scp0492 && Config.EnableDoctorEvent && Config.AllowExperimentalRoles && !doctorRolled && Player.List.Count >= 12 && Player.List.Any(p => p.Role.Type == RoleTypeId.Scp049))
+            if (player.Role.Type == RoleTypeId.Scp0492 && Config.EnableDoctorEvent && Config.AllowExperimentalRoles && Config.Roles.Any(r => r.Id == "Z05" && r.Enabled) && !doctorRolled && Player.List.Count >= 12 && Player.List.Any(p => p.Role.Type == RoleTypeId.Scp049))
             {
                 doctorRolled = true;
                 if (random.NextDouble() < .01)
@@ -184,70 +210,157 @@ namespace Brainless.Roles
             }
 
             if (random.NextDouble() * 100 >= Chance(player))
+            {
+                assignmentNotes[player] = "Normal role: custom-role chance roll did not pass (" + Chance(player) + "%).";
                 return;
-            var pool = Config.Roles.Where(r => r.Enabled && r.Id != "Z05" && (!r.Experimental || Config.AllowExperimentalRoles) && Matches(r, player)).ToList();
-            int index = Rules.WeightedIndex(pool.Select(r => r.Weight).ToArray(), random);
-            if (index < 0)
+            }
+
+            var selected = Rules.ChooseEligible(Config.Roles.Where(r => Matches(r, player)), r => Availability(r, player) == null, r => r.Weight, random);
+            if (selected == null)
+            {
+                assignmentNotes[player] = "No eligible role profile. Run bproles " + player.Id + " to inspect requirements.";
                 return;
-            var selected = pool[index];
-            if (!CanApply(player, selected))
-                return;
+            }
+
             Apply(player, selected, false);
         }
 
-        private bool CanApply(Player player, RoleDefinition definition)
+        internal string Availability(RoleDefinition definition, Player player = null, bool admin = false)
         {
+            if (!definition.Enabled)
+                return "disabled in roles config";
+            if (definition.Experimental && !Config.AllowExperimentalRoles)
+                return "requires allow_experimental_roles";
+            if (definition.Id == "Z05" && !Config.EnableDoctorEvent)
+                return "requires enable_doctor_event";
+            if (!admin && definition.Id == "Z05")
+                return "event only: excluded from normal role draws";
+            if (!admin && definition.Weight <= 0)
+                return "zero spawn weight";
             int population = Player.List.Count(p => p.IsConnected && !p.IsHost);
-            if (population < definition.MinPlayers || Count(definition.Id) >= definition.MaxPerRound)
-                return false;
-            if (definition.Id == "C03" && !player.Items.Any(i => i.Type == ItemType.GunAK))
-                return false;
-            if (player.IsHuman)
+            if (!admin && population < definition.MinPlayers)
+                return "requires " + definition.MinPlayers + " players; currently " + population;
+            if (!admin && Count(definition.Id) >= definition.MaxPerRound)
+                return "per-round role cap reached";
+            if (player != null && !Matches(definition, player))
+                return "requires " + definition.BaseRole + " or matching faction";
+            if (player != null && definition.Id == "C03" && !player.Items.Any(i => i.Type == ItemType.GunAK))
+                return "requires a Chaos subtype with an AK";
+            if (!admin && player != null && player.IsHuman)
             {
                 int living = Player.List.Count(p => p.IsHuman && p.IsAlive);
                 if (active.Count(p => p.Key.IsHuman && p.Key.IsAlive) >= Math.Max(1, living / 2))
-                    return false;
+                    return "living-human specialist cap reached";
                 if (population < 12 && player.Role.Type == RoleTypeId.FacilityGuard && active.Any(p => p.Key.Role.Type == RoleTypeId.FacilityGuard))
-                    return false;
+                    return "small-lobby Guard specialist cap reached";
                 if (definition.Id.StartsWith("M") || definition.Id.StartsWith("C"))
                 {
-                    if (Time.time - waveStart > 8)
-                    {
-                        waveStart = Time.time;
-                        waveCount = 0;
-                    }
-
-                    if (waveCount >= Rules.WaveCap(population) || active.Any(p => p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
-                        return false;
+                    int currentWaveCount = Time.time - waveStart > 8 ? 0 : waveCount;
+                    if (currentWaveCount >= Rules.WaveCap(population) || active.Any(p => p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
+                        return "reinforcement wave cap or duplicate-specialist limit reached";
                 }
             }
 
             var custom = definition.CustomItems.Select(FindCustom).ToArray();
             if (custom.Any(i => i == null))
-                return false;
+                return "missing/disabled custom item or weapon: " + string.Join(", ", definition.CustomItems.Where(id => FindCustom(id) == null));
             foreach (var group in custom.GroupBy(i => i.GetType().Assembly))
             {
                 var item = group.First();
                 var method = item.GetType().GetMethod("CanIssueBatch", new[] { typeof(uint[]) });
-                if (method == null || !(bool)method.Invoke(item, new object[] { definition.CustomItems.ToArray() }))
-                    return false;
+                if (method == null)
+                    return "item provider lacks CanIssueBatch support";
+                if (admin && item.GetType().GetMethod("GiveForRole", new[] { typeof(Player), typeof(bool) }) == null)
+                    return "update Items/Weapons DLLs before using the admin role test";
+                try
+                {
+                    if (!admin && Round.IsStarted && !(bool)method.Invoke(item, new object[] { definition.CustomItems.ToArray() }))
+                        return "item/weapon supply exhausted or kit unavailable in " + item.GetType().Assembly.GetName().Name;
+                }
+                catch (Exception exception)
+                {
+                    return "item provider check failed in " + item.GetType().Assembly.GetName().Name + " (" + exception.GetBaseException().GetType().Name + ")";
+                }
             }
 
-            return true;
+            if (player != null)
+            {
+                int removed = player.Items.Count(i => definition.Remove.Contains(i.Type));
+                int added = definition.Add.Count + definition.CustomItems.Count + definition.CustomItems.Count(id => id == 7101);
+                if (definition.Id == "D03")
+                    added++;
+                if (definition.Id == "S04")
+                    added += Config.ApprovedCandy.Count == 0 ? 3 : 1;
+                if (player.Items.Count - removed + added > 8)
+                    return "insufficient inventory space for the complete role kit";
+            }
+
+            return null;
         }
 
         private CustomItem FindCustom(uint id) => CustomItem.Registered.FirstOrDefault(i => i.Id == id);
-        private bool CanGive(CustomItem item, int count)
-        {
-            if (item == null)
-                return false;
-            var method = item.GetType().GetMethod("CanIssue", new[] { typeof(int) });
-            return method != null && (bool)method.Invoke(item, new object[] { count });
-        }
-
         private int Count(string id) => issued.TryGetValue(id, out int count) ? count : 0;
         internal string RoleId(Player player) => player != null && active.TryGetValue(player, out var a) ? a.Definition.Id : null;
-        private void Apply(Player player, RoleDefinition definition, bool revived)
+        internal string Inspect(Player player)
+        {
+            string profile = active.TryGetValue(player, out var state) && player.Role == state.Role ? state.Definition.Id + " - " + state.Definition.Name + "\n" + state.Definition.Hint : "No Brainless custom role; native " + player.Role.Type;
+            string note = assignmentNotes.TryGetValue(player, out var value) ? value : "No spawn assignment recorded.";
+            return player.Nickname + " (" + player.Id + "): " + profile + "\nBase: " + player.Role.Type + "; HP: " + player.Health.ToString("0") + "/" + player.MaxHealth.ToString("0") + "; shield: " + player.HumeShield.ToString("0") + "/" + player.MaxHumeShield.ToString("0") + "\n" + note;
+        }
+
+        internal bool SetForAdmin(Player player, string id, out string response)
+        {
+            var definition = Config.Roles.FirstOrDefault(r => r.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+            if (definition == null)
+            {
+                response = "Unknown role ID. Use bproles.";
+                return false;
+            }
+
+            string blocked = Availability(definition, admin: true);
+            if (blocked != null)
+            {
+                response = definition.Id + " cannot be tested: " + blocked;
+                return false;
+            }
+
+            if (player == null || !player.IsConnected || player.IsHost)
+            {
+                response = "Choose a connected player.";
+                return false;
+            }
+
+            // A fresh native inventory makes repeated admin tests reproducible.
+            // Preserve a matching MTF/Chaos rank; Doctor explicitly uses SCP-049.
+            RoleTypeId baseRole = definition.Id == "Z05" ? RoleTypeId.Scp049 : Matches(definition, player) ? player.Role.Type : definition.BaseRole;
+            var previousRole = player.Role.Base;
+            player.Role.Set(baseRole, SpawnReason.ForceClass, RoleSpawnFlags.AssignInventory);
+            if (player.Role.Type != baseRole || player.Role.Base == previousRole)
+            {
+                response = "The base role change was blocked by the server or another plugin.";
+                return false;
+            }
+
+            int generation = Generation(player);
+            lifetime.Later(.3f, () =>
+            {
+                if (!player.IsConnected || !player.IsAlive || Generation(player) != generation || player.Role.Type != baseRole)
+                    return;
+                string failure = definition.Id == "Z05" ? null : Availability(definition, player, true);
+                if (failure != null)
+                {
+                    assignmentNotes[player] = "Admin role test blocked: " + failure;
+                    player.ShowHint(assignmentNotes[player], 7);
+                    return;
+                }
+
+                Apply(player, definition, false, true);
+            });
+            response = "Queued " + definition.Id + " - " + definition.Name + " for " + player.Nickname + ". Check with bprole " + player.Id + " after the spawn finishes.";
+            return true;
+        }
+
+        private void Apply(Player player, RoleDefinition definition, bool revived, bool admin = false)
         {
             var state = new ActiveRole(player, definition);
             active[player] = state;
@@ -277,7 +390,17 @@ namespace Brainless.Roles
                         if (custom == null)
                             throw new InvalidOperationException($"Optional item {id} was removed during loadout assignment.");
                         int before = custom.TrackedSerials.Count;
-                        custom.Give(player, false);
+                        if (admin)
+                        {
+                            var method = custom.GetType().GetMethod("GiveForRole", new[] { typeof(Player), typeof(bool) });
+                            if (method == null)
+                                throw new InvalidOperationException("Update the item/weapon provider before testing this role.");
+                            string failure = (string)method.Invoke(custom, new object[] { player, true });
+                            if (failure != null)
+                                throw new InvalidOperationException(failure);
+                        }
+                        else
+                            custom.Give(player, false);
                         if (custom.TrackedSerials.Count <= before)
                             throw new InvalidOperationException($"Item {id} supply was exhausted.");
                     }
@@ -298,9 +421,18 @@ namespace Brainless.Roles
 
                     if (player.Role.Type == RoleTypeId.FacilityGuard)
                         GiveBadge(player, definition.Id);
-                    issued[definition.Id] = Count(definition.Id) + 1;
-                    if (definition.Id.StartsWith("M") || definition.Id.StartsWith("C"))
+                    if (!admin)
+                        issued[definition.Id] = Count(definition.Id) + 1;
+                    if (!admin && (definition.Id.StartsWith("M") || definition.Id.StartsWith("C")))
+                    {
+                        if (Time.time - waveStart > 8)
+                        {
+                            waveStart = Time.time;
+                            waveCount = 0;
+                        }
+
                         waveCount++;
+                    }
                 }
 
                 player.MaxHealth = definition.Health > 0 ? definition.Health : state.MaxHealth * definition.HealthMultiplier;
@@ -325,6 +457,7 @@ namespace Brainless.Roles
                 if (player.Role.Type == RoleTypeId.Scp0492)
                     zombieHistory[player.UserId] = definition;
                 player.CustomInfo = $"{definition.Name} [{definition.Id}]";
+                assignmentNotes[player] = admin ? "Assigned by admin test command." : revived ? "Restored after resurrection." : "Assigned by normal spawn roll.";
                 player.ShowHint($"<b>{definition.Name}</b>\n{definition.Hint}", 10);
             }
             catch
@@ -515,12 +648,15 @@ namespace Brainless.Roles
         private void ConvertDoctor(Player player)
         {
             var definition = Config.Roles.FirstOrDefault(r => r.Id == "Z05");
-            if (definition == null)
+            if (definition == null || !definition.Enabled)
                 return;
             player.Role.Set(RoleTypeId.Scp049, RoleSpawnFlags.None);
-            definition.HealthMultiplier = .4f;
-            definition.ShieldMultiplier = .5f;
-            lifetime.Later(.1f, () => Apply(player, definition, false));
+            int generation = Generation(player);
+            lifetime.Later(.1f, () =>
+            {
+                if (player.IsConnected && player.IsAlive && player.Role.Type == RoleTypeId.Scp049 && Generation(player) == generation)
+                    Apply(player, definition, false);
+            });
         }
 
         private void StartingRecall(StartingRecallEventArgs ev)
@@ -582,26 +718,6 @@ namespace Brainless.Roles
             var player = Player.Get(__instance.Owner);
             if (Plugin.Instance?.RoleId(player) == "P03" && player.Role is Scp049Role doctor && doctor.RemainingAttackCooldown > Scp049AttackAbility.CooldownTime - .1f)
                 doctor.RemainingAttackCooldown = Scp049AttackAbility.CooldownTime * .9f;
-        }
-    }
-
-    [CommandHandler(typeof(RemoteAdminCommandHandler))]
-    public sealed class RolesCommand : ICommand
-    {
-        public string Command => "bproles";
-        public string[] Aliases => Array.Empty<string>();
-        public string Description => "List configured Brainless role IDs and enabled status.";
-
-        public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
-        {
-            if (!Exiled.Permissions.Extensions.Permissions.CheckPermission(sender, "brainless.roles"))
-            {
-                response = "Missing brainless.roles permission.";
-                return false;
-            }
-
-            response = string.Join("\n", Plugin.Instance.Config.Roles.Select(r => $"{r.Id}: {r.Name} enabled={r.Enabled} experimental={r.Experimental}"));
-            return true;
         }
     }
 }

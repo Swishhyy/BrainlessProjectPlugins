@@ -1,11 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Brainless.Internal
 {
     // Compiled into each DLL. This is source reuse, not a shared runtime plugin.
     internal static class Rules
     {
+        internal static T ChooseEligible<T>(IEnumerable<T> candidates, Func<T, bool> eligible, Func<T, int> weight, Random random)
+            where T : class
+        {
+            var pool = candidates.Where(c => weight(c) > 0 && eligible(c)).ToArray();
+            int index = WeightedIndex(pool.Select(weight).ToArray(), random);
+            return index < 0 ? null : pool[index];
+        }
+
         internal static int WeightedIndex(IReadOnlyList<int> weights, Random random)
         {
             long total = 0;
@@ -95,7 +104,7 @@ namespace Brainless.Internal
                 failures.Add(target + ": " + failure);
         }
 
-        internal string Describe(string name, bool forced) => name + ": given to " + Succeeded + "/" + Attempted + " players." + (forced ? (AnySucceeded ? " Admin supply override used." : " Admin supply override requested.") : "") + (failures.Count > 0 ? "\nBlocked:\n" + string.Join("\n", failures) : "");
+        internal string Describe(string name) => name + ": given to " + Succeeded + "/" + Attempted + " players." + (failures.Count > 0 ? "\nBlocked:\n" + string.Join("\n", failures) : "");
     }
 
     internal sealed class ShotLedger
@@ -119,5 +128,18 @@ namespace Brainless.Internal
 
         internal void Clear() => remaining.Clear();
         internal void Forget(int serial) => remaining.Remove(serial);
+    }
+
+    internal sealed class BlastBudget
+    {
+        private readonly Dictionary<string, float> spent = new Dictionary<string, float>();
+        internal float Take(string target, bool scp, float requested)
+        {
+            string key = target ?? "";
+            float before = spent.TryGetValue(key, out float value) ? value : 0;
+            float amount = Math.Max(0, Math.Min(requested, (scp ? 200 : 75) - before));
+            spent[key] = before + amount;
+            return amount;
+        }
     }
 }

@@ -1,0 +1,33 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+
+internal static class MetadataContracts
+{
+    internal static void Run(string root, Action<bool, string> check)
+    {
+        using var stream = File.OpenRead(Path.Combine(root, ".build", "references", "Assembly-CSharp-Publicized.dll"));
+        using var pe = new PEReader(stream);
+        var md = pe.GetMetadataReader();
+        MethodDefinition Method(string ns, string name, string method)
+        {
+            var type = md.TypeDefinitions.Select(h => md.GetTypeDefinition(h)).Single(t => md.GetString(t.Namespace) == ns && md.GetString(t.Name) == name);
+            return type.GetMethods().Select(h => md.GetMethodDefinition(h)).Single(m => md.GetString(m.Name) == method);
+        }
+
+        var fog = Method("InventorySystem.Items.Usables.Scp244", "Scp244DeployablePickup", "FogPercentForPoint");
+        check(fog.GetParameters().Count == 1 && fog.RelativeVirtualAddress != 0, "native smoke exposure patch targets the real per-object SCP-244 method");
+        var range = Method("InventorySystem.Items.Usables.Scp244", "Scp244DeployablePickup", "UpdateRange");
+        check(range.GetParameters().Count == 0 && range.RelativeVirtualAddress != 0, "native smoke fixed-radius patch targets the actual SCP-244 update");
+        var sync = Method("InventorySystem.Items.Usables.Scp244", "Scp244DeployablePickup", "set_Network_syncSizePercent");
+        check(sync.GetParameters().Count == 1, "native smoke uses the actual network size setter");
+        var revive = Method("PlayerRoles.PlayableScps.Scp049", "Scp049ResurrectAbility", "get_Duration");
+        check(revive.GetParameters().Count == 0 && revive.RelativeVirtualAddress != 0, "Surgeon resurrection patch has an actual native duration getter");
+        var attack = Method("PlayerRoles.PlayableScps.Scp049", "Scp049AttackAbility", "ServerProcessCmd");
+        check(attack.GetParameters().Count == 1 && attack.RelativeVirtualAddress != 0, "Tickler cooldown patch matches the actual native attack method");
+        var resync = Method("InventorySystem.Items.Firearms.Modules", "AutomaticActionModule", "ServerResync");
+        check(resync.GetParameters().Count == 0, "launcher rejected shots can resynchronize the native LMG ammo");
+    }
+}

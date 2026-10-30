@@ -25,6 +25,17 @@ jobs:
         run: python scripts/fetch_references.py
       - name: Build this plugin only
         run: python scripts/build.py --plugin ${{ matrix.plugin }}
+      - name: Prepare updater release assets without publishing
+        id: prepare
+        run: python scripts/prepare_release.py --plugin ${{ matrix.plugin }}
+      - name: Validate release DLL identity and version
+        env:
+          RELEASE_DLL: ${{ steps.prepare.outputs.dll }}
+          ASSEMBLY_NAME: ${{ steps.prepare.outputs.assembly }}
+          PLUGIN_VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- --verify-assembly "$RELEASE_DLL" "$ASSEMBLY_NAME" "$PLUGIN_VERSION"
+          dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- --verify-native .
       - name: Upload this plugin DLL and instructions
         uses: actions/upload-artifact@v4
         with:
@@ -42,3 +53,5 @@ jobs:
           dotnet-version: 8.0.x
       - name: Run supply ammo and damage regression checks
         run: dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release
+      - name: Validate release publication policy
+        run: python -m unittest discover -s tests -p 'test_release_*.py'

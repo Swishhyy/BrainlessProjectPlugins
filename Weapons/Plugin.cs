@@ -11,12 +11,14 @@ using Exiled.API.Enums;
 using Exiled.CustomItems.API;
 using Exiled.Events.EventArgs.Player;
 using Exiled.Events.EventArgs.Scp914;
+using Exiled.Events.EventArgs.Map;
 using MEC;
 using UnityEngine;
 using P = Exiled.Events.Handlers.Player;
 using S = Exiled.Events.Handlers.Server;
 using I = Exiled.Events.Handlers.Item;
 using U = Exiled.Events.Handlers.Scp914;
+using M = Exiled.Events.Handlers.Map;
 using FxAudio = Brainless.Internal.Audio;
 
 namespace Brainless.Weapons
@@ -26,20 +28,23 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 1, 3);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
 
         private readonly Lifetime lifetime = new Lifetime();
         private readonly LimitedBudget budget = new LimitedBudget();
         private readonly ShotLedger shots = new ShotLedger();
+        private readonly FragProjectiles grenades = new FragProjectiles();
         private readonly Dictionary<uint, RegisteredWeapon> registered = new Dictionary<uint, RegisteredWeapon>();
         private readonly Dictionary<int, WeaponState> states = new Dictionary<int, WeaponState>();
         private readonly Dictionary<Player, float> tagImmunity = new Dictionary<Player, float>();
         private readonly Dictionary<Door, DoorProgress> doors = new Dictionary<Door, DoorProgress>();
         private bool capacitySet, reflected;
+        private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
+            Config.UpgradeCatalog();
             var enabled = Config.Weapons.Where(w => w.Enabled && (!w.Experimental || Config.AllowExperimentalWeapons)).ToArray();
             if (enabled.Select(s => s.Id).Distinct().Count() != enabled.Length || enabled.Select(s => s.Name).Distinct().Count() != enabled.Length)
                 throw new InvalidOperationException("Weapon IDs and names must be unique.");
@@ -61,6 +66,7 @@ namespace Brainless.Weapons
             P.UnloadingWeapon += Unload;
             P.ItemAdded += Added;
             P.ChangedItem += Changed;
+            M.ExplodingGrenade += Exploding;
             I.ChangingAttachments += Attachments;
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
@@ -68,12 +74,15 @@ namespace Brainless.Weapons
             S.RoundEnded += Ended;
             S.RoundStarted += RoundStarted;
             Reset();
-            AdminItems.Enable("brainless.weapons.commands", "brainless.weapons.bypasslimits");
+            AdminItems.Enable("brainless.weapons.commands");
             base.OnEnabled();
+            updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Weapons", Config.AutoUpdate);
         }
 
         public override void OnDisabled()
         {
+            updates?.Dispose();
+            updates = null;
             P.Shooting -= Shooting;
             P.Shot -= Shot;
             P.Hurting -= Hurting;
@@ -81,6 +90,7 @@ namespace Brainless.Weapons
             P.UnloadingWeapon -= Unload;
             P.ItemAdded -= Added;
             P.ChangedItem -= Changed;
+            M.ExplodingGrenade -= Exploding;
             I.ChangingAttachments -= Attachments;
             U.UpgradingPickup -= UpgradePickup;
             U.UpgradingInventoryItem -= UpgradeInventory;
@@ -89,6 +99,7 @@ namespace Brainless.Weapons
             S.RoundStarted -= RoundStarted;
             AdminItems.Disable();
             lifetime.Clear();
+            grenades.Clear();
             foreach (var weapon in registered.Values)
                 weapon.Unregister();
             registered.Clear();
@@ -98,6 +109,7 @@ namespace Brainless.Weapons
         private void Reset()
         {
             lifetime.Clear();
+            grenades.Clear();
             states.Clear();
             shots.Clear();
             tagImmunity.Clear();
@@ -142,16 +154,16 @@ namespace Brainless.Weapons
                 return null;
             EnsureCapacity();
             if (budget.Count(spec.Id.ToString()) + count > spec.RoundCap)
-                return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{spec.RoundCap}). Admin testing can use --force.";
+                return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{spec.RoundCap}).";
             if (budget.Total + count > budget.Capacity)
-                return $"Custom firearm supply exhausted ({budget.Total}/{budget.Capacity} this round). Admin testing can use --force.";
+                return $"Custom firearm supply exhausted ({budget.Total}/{budget.Capacity} this round).";
             return null;
         }
 
         internal bool CanIssueBatch(uint[] ids)
         {
             EnsureCapacity();
-            var ours = ids.Where(i => i >= 7201 && i <= 7206).ToArray();
+            var ours = ids.Where(i => registered.ContainsKey(i)).ToArray();
             if (budget.Total + ours.Length > budget.Capacity)
                 return false;
             return ours.GroupBy(i => i).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));
@@ -166,15 +178,18 @@ namespace Brainless.Weapons
                 Definition = definition,
                 LastHeat = Time.time
             };
-            if (definition.Spec.Magazine > 0)
+            int magazine = definition.Id == 7207 ? 16 : definition.Spec.Magazine;
+            if (magazine > 0)
             {
-                firearm.MaxMagazineAmmo = definition.Spec.Magazine;
-                firearm.MagazineAmmo = definition.Spec.Magazine;
+                firearm.MaxMagazineAmmo = magazine;
+                firearm.MagazineAmmo = magazine;
                 firearm.BarrelAmmo = 0;
             }
 
             if (definition.Id == 7205)
                 shots.Register(firearm.Serial, 6);
+            else if (definition.Id == 7207)
+                shots.Register(firearm.Serial, 16);
             return true;
         }
 
@@ -209,10 +224,10 @@ namespace Brainless.Weapons
             var state = Find(firearm);
             if (state == null)
                 return;
-            int capacity = state.Definition.Spec.Magazine;
+            int capacity = state.Definition.Id == 7207 ? 16 : state.Definition.Spec.Magazine;
             if (capacity > 0)
                 firearm.MaxMagazineAmmo = capacity;
-            if (state.Definition.Id == 7205)
+            if (FixedAmmo(state))
             {
                 int left = shots.Remaining(firearm.Serial);
                 int barrel = Math.Min(firearm.BarrelAmmo, left);
@@ -226,7 +241,7 @@ namespace Brainless.Weapons
             var s = Find(ev.Item);
             if (s == null)
                 return;
-            if (s.Definition.Id == 7205)
+            if (FixedAmmo(s))
                 ev.IsAllowed = false;
             else
                 Clamp(ev.Firearm);
@@ -234,13 +249,13 @@ namespace Brainless.Weapons
 
         private void Unload(UnloadingWeaponEventArgs ev)
         {
-            if (Find(ev.Item)?.Definition.Id == 7205)
+            if (FixedAmmo(Find(ev.Item)))
                 ev.IsAllowed = false;
         }
 
         private void Attachments(Exiled.Events.EventArgs.Item.ChangingAttachmentsEventArgs ev)
         {
-            if (Find(ev.Item)?.Definition.Id == 7205)
+            if (FixedAmmo(Find(ev.Item)))
                 ev.IsAllowed = false;
         }
 
@@ -250,9 +265,16 @@ namespace Brainless.Weapons
             if (state == null || !ev.IsAllowed)
                 return;
             Clamp(ev.Firearm);
-            if (state.Definition.Id == 7205 && shots.Remaining(ev.Item.Serial) < 1)
+            if (FixedAmmo(state) && shots.Remaining(ev.Item.Serial) < 1)
             {
                 ev.IsAllowed = false;
+                return;
+            }
+
+            if (state.Definition.Id == 7207 && Time.time < state.NextLaunch)
+            {
+                ev.IsAllowed = false;
+                ev.Firearm.AutomaticActionModule?.ServerResync();
                 return;
             }
 
@@ -278,11 +300,17 @@ namespace Brainless.Weapons
 
             state.Token++;
             state.AmmoBefore = ev.Firearm.MagazineAmmo + ev.Firearm.BarrelAmmo;
-            if (state.Definition.Id == 7205)
+            if (FixedAmmo(state))
             {
                 // Consume after the native shooting event has finished dispatching.
                 int token = state.Token;
                 var gun = ev.Firearm;
+                bool launcher = state.Definition.Id == 7207;
+                Vector3 origin = ev.Player.CameraTransform.position;
+                Vector3 direction = ev.Direction.normalized;
+                var source = new DamageSource(ev.Player);
+                if (launcher)
+                    state.NextLaunch = Time.time + Mathf.Clamp(Config.LauncherShotInterval, .2f, 5);
                 lifetime.Later(0, () =>
                 {
                     if (!ev.IsAllowed || state.ConsumedToken == token)
@@ -290,9 +318,20 @@ namespace Brainless.Weapons
                     state.ConsumedToken = token;
                     shots.Consume(gun.Serial);
                     Clamp(gun);
+                    if (launcher)
+                    {
+                        // Keep the muzzle on the near side of a wall. The grenade
+                        // collides/bounces normally after leaving the weapon.
+                        Vector3 muzzle = origin + direction * .55f;
+                        if (Physics.Raycast(origin, direction, out var hit, .6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                            muzzle = hit.point - direction * .1f;
+                        grenades.Launch(muzzle, direction * Mathf.Clamp(Config.LauncherSpeed, 5, 35), Mathf.Clamp(Config.LauncherFuse, .5f, 5), source, Mathf.Clamp(Config.LauncherBlastRadius, .5f, 4), Mathf.Clamp(Config.LauncherHumanDamage, 0, 75), Mathf.Clamp(Config.LauncherScpDamage, 0, 150));
+                    }
                 });
             }
         });
+        private static bool FixedAmmo(WeaponState state) => state != null && (state.Definition.Id == 7205 || state.Definition.Id == 7207);
+        private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Cool(WeaponState state)
         {
             float start = Math.Max(state.LastHeat, state.LastFire + .6f);
@@ -307,6 +346,13 @@ namespace Brainless.Weapons
             var state = Find(damage.Item);
             if (state == null)
                 return;
+            if (state.Definition.Id == 7207)
+            {
+                ev.IsAllowed = false;
+                ev.Amount = 0;
+                return;
+            }
+
             if (state.Definition.Id == 7201 && ev.Player.IsScp)
                 ev.Amount = Rules.ShieldDamage(ev.Amount, ev.Player.HumeShield, 1.2f, state.Definition.Spec.ScpDamage);
             else
@@ -342,7 +388,16 @@ namespace Brainless.Weapons
         private void Shot(ShotEventArgs ev) => Safe.Run(() =>
         {
             var state = Find(ev.Item);
-            if (state == null || !ev.CanHurt)
+            if (state == null)
+                return;
+            if (state.Definition.Id == 7207)
+            {
+                ev.CanHurt = false;
+                ev.CanSpawnImpactEffects = false;
+                return;
+            }
+
+            if (!ev.CanHurt)
                 return;
             if (state.Definition.Id == 7203)
                 Breach(ev, state);
@@ -442,7 +497,7 @@ namespace Brainless.Weapons
             ev.IsAllowed = false;
             state.Definition.TrackedSerials.Remove(ev.Pickup.Serial);
             states.Remove(ev.Pickup.Serial);
-            if (state.Definition.Id == 7205)
+            if (FixedAmmo(state))
             {
                 var pickup = Pickup.CreateAndSpawn(ItemType.Coin, ev.Pickup.Position);
                 ev.Pickup.Destroy();
@@ -465,7 +520,7 @@ namespace Brainless.Weapons
             Item replacement;
             state.Definition.TrackedSerials.Remove(ev.Item.Serial);
             states.Remove(ev.Item.Serial);
-            if (state.Definition.Id == 7205)
+            if (FixedAmmo(state))
             {
                 replacement = Item.Create(ItemType.Coin);
                 ev.Player.RemoveItem(ev.Item);
@@ -487,7 +542,7 @@ namespace Brainless.Weapons
         private sealed class WeaponState
         {
             internal RegisteredWeapon Definition;
-            internal float Heat, LastFire, LastHeat, VentUntil;
+            internal float Heat, LastFire, LastHeat, VentUntil, NextLaunch;
             internal int Token, ConsumedToken, DoorToken, AmmoBefore;
             internal Dictionary<Player, Tag> Tags = new Dictionary<Player, Tag>();
         }

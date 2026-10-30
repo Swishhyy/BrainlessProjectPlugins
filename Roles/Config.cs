@@ -9,6 +9,7 @@ namespace Brainless.Roles
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
+        public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
         [Description("Show the current custom or native role near the bottom of the screen. Temporarily yields to other hints.")]
         public bool ShowRoleHud { get; set; } = true;

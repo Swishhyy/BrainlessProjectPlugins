@@ -48,8 +48,8 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 
 | Design ID | Registry ID | Name | Behavior |
 | --- | --- | --- | --- |
-| I01 | 7101 | Irritant Gas Grenade | Eight-second cloud. Filter or leave it. SCPs are unaffected. |
-| I02 | 7102 | Cluster Grenade | Three smaller blasts, shared damage cap; keep clear of the beeps. |
+| I01 | 7101 | Irritant Gas Grenade | Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow. |
+| I02 | 7102 | Cluster Grenade | First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters. |
 | I03 | 7103 | Containment Foam Canister | Six-second floor patch slows humans 10% and SCPs 8%. |
 | I04 | 7104 | Echo Canister | Six seconds of synthetic footsteps; no damage or flash. |
 | I05 | 7105 | Door Brace | Hold tool key at an ordinary closed door. Others can remove it. |
@@ -71,6 +71,7 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | W04 | 7204 | Redline SMG | Heat prototype: short bursts; 12 shots overheat for three seconds. Native cadence pending client validation. |
 | W05 | 7205 | Last Word | Six shots total. Cannot reload, unload or expand its magazine. |
 | W06 | 7206 | Ricochet Pistol | One bounce from approved static mesh geometry. 85% direct damage; 50% body damage after bouncing. |
+| W07 | 7207 | Grenade Launcher | Logicer body; 16 grenades total, no reload. Small 2.5m blast: up to 45 human / 90 SCP damage. Tap fire every 0.65s. |
 
 ## Initial supply
 
@@ -82,4 +83,4 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 
 A gas grenade also creates a filter and consumes two utility slots. Guard badges and ordinary coins are outside these utility counts. Limits apply across a whole round, not per wave or per pickup.
 
-Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget causes a role to keep its ordinary kit. Redline and Ricochet require the experimental weapon switch.
+Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget excludes that role from the draw; another eligible profile can still be selected. Redline and Ricochet require the experimental weapon switch. Admin give/spawn ignores supply caps. The Grenade Launcher uses 16 grenades total and cannot reload from ordinary ammo.

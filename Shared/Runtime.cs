@@ -23,7 +23,7 @@ namespace Brainless.Internal
             Footprint = new Footprinting.Footprint((owner ?? Server.Host).ReferenceHub);
         }
 
-        internal bool CanAffect(Player target) => target != null && target.IsAlive && !target.IsGodModeEnabled && (Owner == null || Owner == target || Server.FriendlyFire || HitboxIdentity.IsEnemy(Role, target.Role.Type));
+        internal bool CanAffect(Player target) => target != null && target.IsAlive && !target.IsGodModeEnabled && (Owner == null || Owner == target || Server.FriendlyFire || Owner.IsFriendlyFireEnabled || HitboxIdentity.IsEnemy(Role, target.Role.Type));
         internal void Hurt(Player target, float amount, string reason)
         {
             if (amount <= 0 || !CanAffect(target))

@@ -13,6 +13,7 @@ namespace BetterCoinflips.Configs
 
         [Description("Whether or not debug logs should be shown. Default: false")]
         public bool Debug { get; set; } = false;
+        public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
         [Description("The amount of base game spawned coins that should be removed. Default: 4")]
         public int DefaultCoinsAmount { get; set; } = 4;

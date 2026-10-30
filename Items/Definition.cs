@@ -26,6 +26,7 @@ namespace Brainless.Items
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
+        public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
         public bool WorldLoot { get; set; } = true;
         public int ToolKeybindId { get; set; } = 7100;
         public List<ItemSpec> Items { get; set; } = new List<ItemSpec>
@@ -34,14 +35,14 @@ namespace Brainless.Items
             {
                 Id = 7101,
                 Name = "Irritant Gas Grenade",
-                Description = "Eight-second cloud. Filter or leave it. SCPs are unaffected.",
+                Description = "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow.",
                 BaseType = ItemType.GrenadeHE
             },
             new ItemSpec
             {
                 Id = 7102,
                 Name = "Cluster Grenade",
-                Description = "Three smaller blasts, shared damage cap; keep clear of the beeps.",
+                Description = "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.",
                 BaseType = ItemType.GrenadeHE
             },
             new ItemSpec
@@ -129,6 +130,10 @@ namespace Brainless.Items
         public RegisteredItem(Plugin owner, ItemSpec spec)
         {
             this.owner = owner;
+            if (spec.Id == 7101 && spec.Description == "Eight-second cloud. Filter or leave it. SCPs are unaffected.")
+                spec.Description = "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow.";
+            if (spec.Id == 7102 && spec.Description == "Three smaller blasts, shared damage cap; keep clear of the beeps.")
+                spec.Description = "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.";
             // Existing generated configs retain their old descriptions across DLL updates.
             if (spec.Id == 7110 && spec.Description == "Four-second, one-use LCZ access. No checkpoints, gates, or armories.")
                 spec.Description = "Reusable maintenance keycard. Containment level 1 with normal door interactions.";
@@ -147,6 +152,7 @@ namespace Brainless.Items
 
         public bool CanIssue(int count) => owner.CanIssue(Spec, count);
         public bool CanIssueBatch(uint[] ids) => owner.CanIssueBatch(ids);
+        public string GiveForRole(Player player, bool admin) => TryGive(player, admin, false);
         protected override void SubscribeEvents()
         {
         }

@@ -31,12 +31,13 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 1, 3);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
 
         private readonly Lifetime lifetime = new Lifetime();
         private readonly LimitedBudget budget = new LimitedBudget();
+        private readonly FragProjectiles fragments = new FragProjectiles();
         private readonly Dictionary<uint, RegisteredItem> registered = new Dictionary<uint, RegisteredItem>();
         private readonly Dictionary<int, int> charges = new Dictionary<int, int>();
         private readonly Dictionary<int, Payload> thrown = new Dictionary<int, Payload>();
@@ -49,9 +50,9 @@ namespace Brainless.Items
         private readonly List<Field> fields = new List<Field>();
         private readonly Dictionary<Room, float> jamCooldown = new Dictionary<Room, float>();
         private KeybindSetting toolKey;
-        private float lastTick;
         private int chalkNumber;
         private bool capacitySet;
+        private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
             var enabled = Config.Items.Where(s => s.Enabled).ToArray();
@@ -92,12 +93,16 @@ namespace Brainless.Items
             S.RoundStarted += RoundStarted;
             S.RoundEnded += Ended;
             Reset();
-            AdminItems.Enable("brainless.items.commands", "brainless.items.bypasslimits");
+            AdminItems.Enable("brainless.items.commands");
+            NativeSmoke.Enable();
             base.OnEnabled();
+            updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Items", Config.AutoUpdate);
         }
 
         public override void OnDisabled()
         {
+            updates?.Dispose();
+            updates = null;
             P.UsingItem -= Using;
             P.FlippingCoin -= Coin;
             P.TogglingRadio -= Radio;
@@ -125,6 +130,7 @@ namespace Brainless.Items
                 item.Unregister();
             registered.Clear();
             Cleanup();
+            NativeSmoke.Disable();
             base.OnDisabled();
         }
 
@@ -133,6 +139,11 @@ namespace Brainless.Items
             foreach (var layer in movement.Values)
                 layer.Clear();
             movement.Clear();
+            fragments.Clear();
+            NativeSmoke.Clear();
+            foreach (var payload in thrown.Values.ToArray())
+                if (payload.Projectile.Base != null)
+                    Safe.Run(() => payload.Projectile.Destroy());
             lifetime.Clear();
             channels.Clear();
             keyHeld.Clear();
@@ -186,17 +197,17 @@ namespace Brainless.Items
             EnsureCapacity();
             int cap = spec.Id == 7102 ? Math.Min(spec.RoundCap, Rules.ClusterCap(Population)) : spec.RoundCap;
             if (spec.Id == 7102 && Population < 12)
-                return $"Clusters require at least 12 players for normal supply; currently {Population}. Admin testing can use --force.";
+                return $"Clusters require at least 12 players for normal supply; currently {Population}.";
             if (budget.Count(spec.Id.ToString()) + count > cap)
-                return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{cap}). Admin testing can use --force.";
+                return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{cap}).";
             int slots = spec.Id == 7101 ? count * 2 : count;
             if (budget.Total + slots > budget.Capacity)
-                return $"Utility supply exhausted ({budget.Total}/{budget.Capacity}); this kit needs {slots} slot(s). Admin testing can use --force.";
+                return $"Utility supply exhausted ({budget.Total}/{budget.Capacity}); this kit needs {slots} slot(s).";
             if (spec.Id == 7101)
             {
                 var filter = registered[7111];
                 if (!budget.CanIssue("7111", filter.Spec.RoundCap, count))
-                    return "The paired Filter Inhaler round limit has been reached. Admin testing can use --force.";
+                    return "The paired Filter Inhaler round limit has been reached.";
             }
 
             return null;
@@ -645,6 +656,7 @@ namespace Brainless.Items
             thrown[projectile.Serial] = new Payload
             {
                 Item = item,
+                Projectile = projectile,
                 Source = new DamageSource(owner)
             };
             if (projectile is TimeGrenadeProjectile timed)
@@ -653,14 +665,15 @@ namespace Brainless.Items
 
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() =>
         {
+            if (fragments.Exploding(ev))
+                return;
             if (!thrown.TryGetValue(ev.Projectile.Serial, out var payload))
                 return;
             bool allowed = ev.IsAllowed;
             ev.IsAllowed = false;
             thrown.Remove(ev.Projectile.Serial);
             Vector3 position = ev.Position;
-            var pickup = ev.Projectile;
-            lifetime.Later(.02f, () => pickup.Destroy());
+            // Native EffectGrenade.ServerFuseEnd already destroys the projectile.
             if (!allowed)
                 return;
             switch (payload.Item.Id)
@@ -678,7 +691,10 @@ namespace Brainless.Items
                         Expires = Time.time + (gas ? 8 : 6),
                         Radius = radius
                     };
-                    field.Marker = World.Marker(lifetime, position + Vector3.up * (gas ? .8f : .025f), new Color(gas ? .8f : .1f, gas ? .9f : .65f, .15f, gas ? .12f : .35f), new Vector3(radius * 2, gas ? .8f : .02f, radius * 2));
+                    if (gas)
+                        field.Smoke = NativeSmoke.Spawn(Ground(position), radius);
+                    else
+                        field.Marker = World.Marker(lifetime, position + Vector3.up * .025f, new Color(.1f, .65f, .15f, .35f), new Vector3(radius * 2, .02f, radius * 2));
                     fields.Add(field);
                     World.Cue(position, gas ? "Irritant gas - leave the cloud or use a filter" : "Containment foam - slow floor", 10);
                     break;
@@ -692,38 +708,21 @@ namespace Brainless.Items
         });
         private void Cluster(Vector3 position, DamageSource source)
         {
-            var totals = new Dictionary<Player, float>();
-            for (int i = 0; i < 3; i++)
+            var blastBudget = new BlastBudget();
+            float rotation = UnityEngine.Random.Range(0, Mathf.PI * 2);
+            // All four leave the first detonation together. Each has native
+            // rigidbody bounce, gravity, ticking fuse and explosion effects.
+            for (int i = 0; i < 4; i++)
             {
-                var offset = UnityEngine.Random.insideUnitCircle * 2.5f;
-                Vector3 child = Ground(position + new Vector3(offset.x, 0, offset.y));
-                if (Room.Get(child) != Room.Get(position) || !World.ClearLine(position + Vector3.up * .2f, child + Vector3.up * .2f))
-                    child = position;
-                var marker = World.Marker(lifetime, child + Vector3.up * .1f, Color.red, Vector3.one * .2f, PrimitiveType.Sphere);
-                var point = child;
-                FxAudio.Play(lifetime, point, 1.2f, "beep");
-                World.Cue(point, "Cluster submunition - move!", 8);
-                lifetime.Later(1.2f, () =>
-                {
-                    lifetime.Release(marker);
-                    foreach (var target in Player.List.Where(source.CanAffect).ToArray())
-                    {
-                        float already = totals.TryGetValue(target, out float total) ? total : 0;
-                        float damage = Math.Min((target.IsScp ? 200 : 75) - already, Rules.Falloff(Vector3.Distance(point, target.Position), 2.5f, target.IsScp ? 90 : 35));
-                        if (damage > 0 && World.ClearLine(point + Vector3.up * .15f, target.Position))
-                        {
-                            totals[target] = already + damage;
-                            source.Blast(target, point, damage);
-                        }
-                    }
-                });
+                float angle = rotation + i * Mathf.PI * .5f;
+                Vector3 outward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
+                fragments.Launch(position + Vector3.up * .15f, outward * 4.5f + Vector3.up * 4, 1.5f + i * .08f, source, 2.5f, 35, 90, blastBudget);
             }
         }
 
         private Vector3 Ground(Vector3 point) => Physics.Raycast(point + Vector3.up, Vector3.down, out var hit, 3, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.point : point - Vector3.up * .8f;
         private IEnumerator<float> Tick()
         {
-            lastTick = Time.time;
             while (true)
             {
                 yield return Timing.WaitForSeconds(.1f);
@@ -733,8 +732,6 @@ namespace Brainless.Items
 
         private void Update()
         {
-            float delta = Math.Min(.25f, Time.time - lastTick);
-            lastTick = Time.time;
             foreach (var pair in channels.ToArray())
             {
                 var p = pair.Key;
@@ -758,6 +755,7 @@ namespace Brainless.Items
             {
                 fields.Remove(field);
                 lifetime.Release(field.Marker);
+                NativeSmoke.Release(field.Smoke);
             }
 
             foreach (var player in Player.List.Where(p => p.IsAlive).ToArray())
@@ -775,16 +773,7 @@ namespace Brainless.Items
 
                     if (!player.IsHuman || (filters.TryGetValue(player, out float until) && until > Time.time))
                         continue;
-                    if (!field.Exposure.TryGetValue(player, out var exposure))
-                        field.Exposure[player] = exposure = new Exposure();
-                    float before = exposure.Seconds;
-                    exposure.Seconds += delta;
-                    float damage = Math.Min(21 - exposure.Damage, 3 * (Math.Max(0, exposure.Seconds - 1) - Math.Max(0, before - 1)));
-                    if (damage > 0)
-                    {
-                        exposure.Damage += damage;
-                        field.Source.Hurt(player, damage, "Irritant gas");
-                    }
+                    slow = Math.Min(slow, .8f);
                 }
 
                 if (!movement.TryGetValue(player, out var layer))
@@ -827,6 +816,7 @@ namespace Brainless.Items
         private sealed class Payload
         {
             internal RegisteredItem Item;
+            internal Projectile Projectile;
             internal DamageSource Source;
         }
 
@@ -861,12 +851,7 @@ namespace Brainless.Items
             internal DamageSource Source;
             internal float Expires, Radius;
             internal Primitive Marker;
-            internal Dictionary<Player, Exposure> Exposure = new Dictionary<Player, Exposure>();
-        }
-
-        private sealed class Exposure
-        {
-            internal float Seconds, Damage;
+            internal Scp244Pickup Smoke;
         }
     }
 }
