@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 0);
+        public override Version Version => new Version(0, 1, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public static Plugin Instance { get; private set; }
 
@@ -45,6 +45,7 @@ namespace Brainless.ScpProximityChat
             Config.VoiceRange = Bounded(Config.VoiceRange, 5, 30, 16);
             Config.FullVolumeRange = Bounded(Config.FullVolumeRange, .1f, Config.VoiceRange, 2);
             Config.Volume = Bounded(Config.Volume, 0, 2, 1);
+            Config.HintDurationSeconds = Bounded(Config.HintDurationSeconds, .5f, 10, 2);
             harmony = new Harmony("brainless.scp-proximity-chat");
             try
             {
@@ -135,13 +136,23 @@ namespace Brainless.ScpProximityChat
             {
                 State(player).ResetInput();
                 response = "No native speaker channel is available. Team chat is still selected.";
+                Notify(player, response);
                 return false;
             }
 
             if (!local)
                 DestroySpeaker(player);
             response = "SCP voice: " + (local ? "NEARBY" : "TEAM") + ". Hold your normal voice key to speak.";
+            Notify(player, local ? Config.EnabledHint ?? "Proximity chat enabled" : Config.DisabledHint ?? "Proximity chat disabled");
             return true;
+        }
+
+        private void Notify(Player player, string text)
+        {
+            // Explicit input feedback must be visible even when a role HUD owns
+            // the current hint. The HUD can resume after this short message.
+            if (Config.ShowHints && player.IsConnected)
+                player.ShowHint(text, Config.HintDurationSeconds);
         }
 
         private void SettingReceived(ReferenceHub hub, ServerSpecificSettingBase setting) => Guard(() =>
@@ -154,8 +165,11 @@ namespace Brainless.ScpProximityChat
             var state = State(player);
             if (setting.SettingId == Config.SettingsIdBase + 2 && setting is SSTwoButtonsSetting mode)
             {
+                bool wasLocal = state.Local;
                 state.SetMode(mode.SyncIsB);
                 DestroySpeaker(player);
+                if (wasLocal)
+                    Notify(player, Config.DisabledHint ?? "Proximity chat disabled");
             }
             else if (setting.SettingId == Config.SettingsIdBase + 3 && setting is SSTwoButtonsSetting hear)
                 state.HearNearby = hear.SyncIsB;
@@ -171,9 +185,7 @@ namespace Brainless.ScpProximityChat
                 state.Input(key.SyncIsPressed);
                 if (before != state.Local)
                 {
-                    Select(player, state.Local, out string response);
-                    if (Config.ShowHints && !player.HasHint)
-                        player.ShowHint(response, 2);
+                    Select(player, state.Local, out _);
                 }
             }
         });

@@ -18,6 +18,26 @@ namespace Brainless.Items
         public SpecimenTuning PreservedSpecimen { get; set; } = new SpecimenTuning();
         public InteractionTuning Interaction { get; set; } = new InteractionTuning();
         public SupplyTuning Supply { get; set; } = new SupplyTuning();
+
+        internal int UpgradeGrenades(int revision)
+        {
+            if (revision >= 1)
+                return revision;
+            var c = ClusterGrenade;
+            c.Radius = ExplosionRules.UpgradeStock(c.Radius, 2.75f, 4, revision);
+            c.HumanDamage = ExplosionRules.UpgradeStock(c.HumanDamage, 40, 70, revision);
+            c.ScpDamage = ExplosionRules.UpgradeStock(c.ScpDamage, 100, 180, revision);
+            c.SharedHumanDamageCap = ExplosionRules.UpgradeStock(c.SharedHumanDamageCap, 85, 150, revision);
+            c.SharedScpDamageCap = ExplosionRules.UpgradeStock(c.SharedScpDamageCap, 225, 500, revision);
+            c.ChildFuseSeconds = ExplosionRules.UpgradeStock(c.ChildFuseSeconds, 1.5f, 1.2f, revision);
+            c.HorizontalSpeed = ExplosionRules.UpgradeStock(c.HorizontalSpeed, 4.5f, 3, revision);
+            c.UpwardSpeed = ExplosionRules.UpgradeStock(c.UpwardSpeed, 4, 3, revision);
+            var impact = ImpactGrenade;
+            impact.Radius = ExplosionRules.UpgradeStock(impact.Radius, 3.5f, 5, revision);
+            impact.HumanDamage = ExplosionRules.UpgradeStock(impact.HumanDamage, 80, 140, revision);
+            impact.ScpDamage = ExplosionRules.UpgradeStock(impact.ScpDamage, 180, 350, revision);
+            return 1;
+        }
     }
 
     public class FieldTuning
@@ -69,25 +89,37 @@ namespace Brainless.Items
 
     public class BlastTuning
     {
+        [Tune(1, 100)]
+        public int ArmorPenetration { get; set; } = ExplosionRules.DefaultPenetration;
+
         [Tune(.1, 60)]
-        public float Radius { get; set; } = 3.5f;
+        public float Radius { get; set; } = 5;
 
         [Tune(0, 100000)]
-        public float HumanDamage { get; set; } = 80;
+        public float HumanDamage { get; set; } = 140;
 
         [Tune(0, 100000)]
-        public float ScpDamage { get; set; } = 180;
+        public float ScpDamage { get; set; } = 350;
         public bool RequireLineOfSight { get; set; } = true;
         public bool AffectOwner { get; set; } = true;
     }
 
     public sealed class ClusterTuning : BlastTuning
     {
+        [Tune(.1, 60)]
+        public float ParentRadius { get; set; } = 4.5f;
+
+        [Tune(0, 100000)]
+        public float ParentHumanDamage { get; set; } = 90;
+
+        [Tune(0, 100000)]
+        public float ParentScpDamage { get; set; } = 250;
+
         public ClusterTuning()
         {
-            Radius = 2.75f;
-            HumanDamage = 40;
-            ScpDamage = 100;
+            Radius = 4;
+            HumanDamage = 70;
+            ScpDamage = 180;
         }
 
         [Tune(.05, 120)]
@@ -97,22 +129,22 @@ namespace Brainless.Items
         public int GrenadeCount { get; set; } = 4;
 
         [Tune(.05, 120)]
-        public float ChildFuseSeconds { get; set; } = 1.5f;
+        public float ChildFuseSeconds { get; set; } = 1.2f;
 
         [Tune(0, 10)]
         public float ChildFuseStaggerSeconds { get; set; } = .08f;
 
         [Tune(0, 50)]
-        public float HorizontalSpeed { get; set; } = 4.5f;
+        public float HorizontalSpeed { get; set; } = 3;
 
         [Tune(0, 50)]
-        public float UpwardSpeed { get; set; } = 4;
+        public float UpwardSpeed { get; set; } = 3;
 
         [Tune(0, 100000)]
-        public float SharedHumanDamageCap { get; set; } = 85;
+        public float SharedHumanDamageCap { get; set; } = 150;
 
         [Tune(0, 100000)]
-        public float SharedScpDamageCap { get; set; } = 225;
+        public float SharedScpDamageCap { get; set; } = 500;
     }
 
     public sealed class ImpactTuning : BlastTuning

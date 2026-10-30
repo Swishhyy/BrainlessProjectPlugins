@@ -28,6 +28,9 @@ void Near(float actual, float expected, string name) => Check(Math.Abs(actual - 
 if (args.Length == 2 && args[0] == "--verify-native")
 {
     MetadataContracts.Run(args[1], Check);
+#if NATIVE_CONFIG_TESTS
+    DistributionConfigTests.Run(Check);
+#endif
     Console.WriteLine($"{passed} native contracts passed.");
     return;
 }
@@ -36,6 +39,7 @@ var random = new Random(731);
 LockpickTests.Run(Check);
 VoiceTests.Run(Check);
 TuningTests.Run(Check);
+DistributionTests.Run(Check);
 Check(Rules.WeightedIndex(new[] { 0, 0, 0 }, random) == -1, "zero weights leave a plain coin flip");
 Check(Rules.WeightedIndex(new[] { -20, 0 }, random) == -1, "negative weights cannot cause an exception");
 Check(Enumerable.Range(0, 1000).All(_ => Rules.WeightedIndex(new[] { 0, 8, 0 }, random) == 1), "zero-weight effects never win");
@@ -123,6 +127,9 @@ if (args.Length > 0)
 {
     string root = args[0];
     MetadataContracts.Run(root, Check);
+#if NATIVE_CONFIG_TESTS
+    DistributionConfigTests.Run(Check);
+#endif
     var names = new[]
     {
         "Roles/Brainless.Roles.dll",
@@ -141,7 +148,7 @@ if (args.Length > 0)
         var reader = pe.GetMetadataReader();
         var references = reader.AssemblyReferences.Select(h => reader.GetString(reader.GetAssemblyReference(h).Name)).ToArray();
         Check(!references.Intersect(ownAssemblies).Any(), relative + " has no dependency on another suite DLL");
-        Check(references.Contains("Exiled.API"), relative + " references the real EXILED API");
+        Check(System.Linq.Enumerable.Contains(references, "Exiled.API"), relative + " references the real EXILED API");
         if (folder == "ScpProximityChat")
             Check(!references.Any(name => name.Contains("NAudio", StringComparison.OrdinalIgnoreCase) || name.Contains("SecretAPI", StringComparison.OrdinalIgnoreCase) || name.Contains("AudioPlayer", StringComparison.OrdinalIgnoreCase)), "SCP proximity chat has no external audio or settings DLL dependency");
     }

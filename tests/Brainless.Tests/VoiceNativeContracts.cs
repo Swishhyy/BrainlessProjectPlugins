@@ -23,7 +23,7 @@ internal static class VoiceNativeContracts
         check(Calls(pe.GetMethodBody(decode.RelativeVirtualAddress).GetILBytes(), md).Contains("Decode"), "native speaker playback decodes the original Opus packet without an external audio encoder");
     }
 
-    private static IEnumerable<string> Calls(byte[] bytes, MetadataReader md)
+    internal static IEnumerable<string> Calls(byte[] bytes, MetadataReader md)
     {
         var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.FieldType == typeof(OpCode)).Select(f => (OpCode)f.GetValue(null)).ToDictionary(o => unchecked((ushort)o.Value));
         int offset = 0;

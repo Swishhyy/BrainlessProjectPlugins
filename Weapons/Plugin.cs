@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 0);
+        public override Version Version => new Version(0, 3, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -43,6 +43,7 @@ namespace Brainless.Weapons
         private readonly Dictionary<Door, DoorProgress> doors = new Dictionary<Door, DoorProgress>();
         private bool capacitySet, reflected;
         private Brainless.Internal.Updates.PluginUpdates updates;
+        private NaturalDistribution distribution;
         public override void OnEnabled()
         {
             Config.Prepare();
@@ -77,6 +78,7 @@ namespace Brainless.Weapons
             Instance = this;
             Reset();
             AdminItems.Enable("brainless.weapons.commands");
+            distribution = new NaturalDistribution("Weapons", lifetime, () => Config.Distribution, NaturalContent, () => Config.WorldLoot ? Config.Tuning.Supply.WorldLootCount : 0, () => Config.Debug);
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Weapons", Config.AutoUpdate);
         }
@@ -84,6 +86,8 @@ namespace Brainless.Weapons
         public override void OnDisabled()
         {
             Instance = null;
+            distribution?.Dispose();
+            distribution = null;
             updates?.Dispose();
             updates = null;
             P.Shooting -= Shooting;
@@ -111,6 +115,7 @@ namespace Brainless.Weapons
 
         private void Reset()
         {
+            distribution?.Reset();
             lifetime.Clear();
             grenades.Clear();
             states.Clear();
@@ -147,23 +152,10 @@ namespace Brainless.Weapons
         private void RoundStarted()
         {
             EnsureCapacity();
-            if (!Config.WorldLoot)
-                return;
-            lifetime.Later(1, () =>
-            {
-                var room = Room.List.FirstOrDefault(r => r.Zone == ZoneType.HeavyContainment && r.Type.ToString().IndexOf("Armory", StringComparison.OrdinalIgnoreCase) >= 0);
-                if (room == null)
-                    return;
-                for (int i = 0; i < Config.Tuning.Supply.WorldLootCount; i++)
-                {
-                    var available = registered.Values.Where(w => w.Id != 7205 && CanIssue(w.Spec, 1)).ToArray();
-                    if (available.Length == 0)
-                        break;
-                    available[UnityEngine.Random.Range(0, available.Length)].Spawn(room.Position + Vector3.up + Vector3.right * .5f * i);
-                }
-            });
+            distribution?.RoundStarted();
         }
 
+        private IEnumerable<NaturalContent> NaturalContent() => registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
         internal bool CanIssue(WeaponSpec spec, int count) => IssueFailure(spec, count, false) == null;
         internal string IssueFailure(WeaponSpec spec, int count, bool ignoreLimits)
         {
@@ -190,14 +182,8 @@ namespace Brainless.Weapons
 
         internal bool Mint(RegisteredWeapon definition, Firearm firearm, bool ignoreLimits = false)
         {
-            if (IssueFailure(definition.Spec, 1, ignoreLimits) != null || !budget.TryIssue(definition.Id.ToString(), definition.Spec.RoundCap, ignoreLimits: ignoreLimits))
+            if (!MintSerial(definition, firearm.Serial, ignoreLimits))
                 return false;
-            states[firearm.Serial] = new WeaponState
-            {
-                Definition = definition,
-                InitialCapacity = definition.Spec.Magazine,
-                LastHeat = Time.time
-            };
             int magazine = definition.Spec.Magazine;
             if (magazine > 0)
             {
@@ -206,10 +192,21 @@ namespace Brainless.Weapons
                 firearm.BarrelAmmo = 0;
             }
 
-            if (definition.Id == 7205)
-                shots.Register(firearm.Serial, magazine);
-            else if (definition.Id == 7207)
-                shots.Register(firearm.Serial, magazine);
+            return true;
+        }
+
+        internal bool MintSerial(RegisteredWeapon definition, int serial, bool ignoreLimits = false)
+        {
+            if (IssueFailure(definition.Spec, 1, ignoreLimits) != null || !budget.TryIssue(definition.Id.ToString(), definition.Spec.RoundCap, ignoreLimits: ignoreLimits))
+                return false;
+            states[serial] = new WeaponState
+            {
+                Definition = definition,
+                InitialCapacity = definition.Spec.Magazine,
+                LastHeat = Time.time
+            };
+            if (definition.Id == 7205 || definition.Id == 7207)
+                shots.Register(serial, definition.Spec.Magazine);
             return true;
         }
 
@@ -346,7 +343,7 @@ namespace Brainless.Weapons
                         Vector3 muzzle = origin + direction * .55f;
                         if (Physics.Raycast(origin, direction, out var hit, .6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                             muzzle = hit.point - direction * .1f;
-                        grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner);
+                        grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner, armorPenetration: Config.LauncherArmorPenetration);
                     }
                 });
             }

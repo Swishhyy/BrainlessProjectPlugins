@@ -2,7 +2,9 @@
   <PropertyGroup><TargetFramework>net8.0</TargetFramework><OutputType>Exe</OutputType><PlatformTarget>AnyCPU</PlatformTarget></PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
+    <Compile Include="../../Shared/ExplosionRules.cs" Link="ExplosionRules.cs" />
     <Compile Include="../../Shared/Tuning.cs" Link="Tuning.cs" />
+    <Compile Include="../../Shared/DistributionRules.cs" Link="DistributionRules.cs" />
     <Compile Include="../../Items/Tuning.cs" Link="ItemTuning.cs" />
     <Compile Include="../../Items/ImpactTrigger.cs" Link="ImpactTrigger.cs" />
     <Compile Include="../../Weapons/Tuning.cs" Link="WeaponTuning.cs" />
@@ -18,6 +20,21 @@
     <ProjectReference Include="../Fixtures/Old/UpdateFixture.Old.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="../Fixtures/New/UpdateFixture.New.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
+  <PropertyGroup Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
+    <DefineConstants>$(DefineConstants);NATIVE_CONFIG_TESTS</DefineConstants>
+    <NativeConfigReferencesPath>$(MSBuildProjectDirectory)/obj/native-config-references</NativeConfigReferencesPath>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
+    <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />
+    <Reference Include="Assembly-CSharp" HintPath="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" Private="true" />
+    <Reference Include="Exiled.API" HintPath="$(ReferencesPath)/Exiled.API.dll" Private="true" />
+    <Reference Include="YamlDotNet" HintPath="$(ReferencesPath)/YamlDotNet.dll" Private="true" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ReferencesPath)/UnityEngine.CoreModule.dll" Private="true" />
+  </ItemGroup>
+  <Target Name="PrepareNativeConfigReferences" BeforeTargets="ResolveAssemblyReferences" Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
+    <MakeDir Directories="$(NativeConfigReferencesPath)" />
+    <Copy SourceFiles="$(ReferencesPath)/Assembly-CSharp-Publicized.dll" DestinationFiles="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" />
+  </Target>
   <Target Name="CopyUpdateFixtures" AfterTargets="Build">
     <Copy SourceFiles="../Fixtures/Old/bin/$(Configuration)/net8.0/Brainless.UpdateFixture.dll" DestinationFolder="$(OutDir)Fixtures/Old" />
     <Copy SourceFiles="../Fixtures/New/bin/$(Configuration)/net8.0/Brainless.UpdateFixture.dll" DestinationFolder="$(OutDir)Fixtures/New" />

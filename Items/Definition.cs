@@ -4,6 +4,7 @@ using System.Linq;
 using Brainless.Internal;
 using Exiled.API.Features;
 using Exiled.API.Features.Items;
+using Exiled.API.Features.Lockers;
 using Exiled.API.Features.Pickups;
 using Exiled.API.Features.Spawn;
 using Exiled.CustomItems.API.Features;
@@ -31,7 +32,9 @@ namespace Brainless.Items
         public bool WorldLoot { get; set; } = true;
         public int ToolKeybindId { get; set; } = 7100;
         public ItemTuning Tuning { get; set; } = new ItemTuning();
+        public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
         public int CatalogRevision { get; set; }
+        public int GrenadeBalanceRevision { get; set; }
         public List<ItemSpec> Items { get; set; } = new List<ItemSpec>
         {
             new ItemSpec
@@ -45,7 +48,7 @@ namespace Brainless.Items
             {
                 Id = 7102,
                 Name = "Cluster Grenade",
-                Description = "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.",
+                Description = "Parent blast plus four real grenades launched outward. Shared damage cap; no recursive clusters.",
                 BaseType = ItemType.GrenadeHE
             },
             new ItemSpec
@@ -133,6 +136,10 @@ namespace Brainless.Items
                 Items.Add(CreateImpact());
             CatalogRevision = 1;
             Brainless.Internal.Tuning.Validate(Tuning, "tuning");
+            GrenadeBalanceRevision = Tuning.UpgradeGrenades(GrenadeBalanceRevision);
+            if (Distribution == null)
+                throw new InvalidOperationException("distribution cannot be null.");
+            Distribution.Validate(id => id >= 7101 && id <= 7113 && id != 7110);
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
             if (Items.Any(i => i.Id < 7101 || i.Id > 7113 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
@@ -161,6 +168,8 @@ namespace Brainless.Items
                 spec.Description = "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow.";
             if (spec.Id == 7102 && spec.Description == "Three smaller blasts, shared damage cap; keep clear of the beeps.")
                 spec.Description = "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.";
+            if (spec.Id == 7102 && spec.Description == "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.")
+                spec.Description = "Parent blast plus four real grenades launched outward. Shared damage cap; no recursive clusters.";
             Spec = spec;
             Id = spec.Id;
             Name = spec.Name;
@@ -175,6 +184,50 @@ namespace Brainless.Items
             Name = spec.Name;
             Description = spec.Description;
             Weight = spec.Weight;
+        }
+
+        internal string AdoptItem(Player player, Item item)
+        {
+            if (item.Type != Type || !player.Items.Contains(item))
+                return "The native inventory item changed.";
+            bool paired = Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter;
+            if (paired && player.Items.Count >= 8)
+                return "The gas filter needs one free inventory slot.";
+            string failure = owner.IssueFailure(Spec, 1, false);
+            if (failure != null)
+                return failure;
+            if (!owner.Mint(this, item.Serial))
+                return "Natural supply was exhausted.";
+            if (paired && (failure = owner.GiveFilter(player, false)) != null)
+            {
+                owner.Unmint(this, item.Serial, false);
+                return failure;
+            }
+
+            TrackedSerials.Add(item.Serial);
+            return null;
+        }
+
+        internal string AdoptPickup(Pickup pickup, Chamber chamber)
+        {
+            if (pickup.Base == null || pickup.Type != Type)
+                return "The native map pickup changed.";
+            if (Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter && chamber == null && (!pickup.IsSpawned || pickup.IsLocked))
+                return "A paired gas filter needs an accessible loose pickup or a known locker chamber.";
+            string failure = owner.IssueFailure(Spec, 1, false);
+            if (failure != null)
+                return failure;
+            if (!owner.Mint(this, pickup.Serial))
+                return "Natural supply was exhausted.";
+            if (Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter && (failure = owner.SpawnMapFilter(pickup, chamber)) != null)
+            {
+                owner.Unmint(this, pickup.Serial, false);
+                return failure;
+            }
+
+            TrackedSerials.Add(pickup.Serial);
+            pickup.Weight = Weight;
+            return null;
         }
 
         public override uint Id { get; set; }

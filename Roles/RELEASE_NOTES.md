@@ -1,8 +1,5 @@
-- Explosive zombie Z04 now captures its identity before role cleanup and produces one native blast after a confirmed death, including environmental/explosion deaths by default.
-- Configure warning, radius, human/SCP damage, death filters, optional limits and cues under `explosive_zombie`.
-- `bprole reload` applies validated YAML without resetting active assignments or lockpick cooldowns. Existing blasts retain their captured settings.
-- Existing side HUD, Locksmith rework and independent release updater are included.
+- Fix Z04 explosion damage initialization: use valid native armor penetration (50 by default), zero force and native HE cover masks. Previously zero penetration skipped native damage setup.
+- Adds configurable `explosive_zombie.armor_penetration` (1-100). Existing death triggers, warning, damage/radius and limits are retained.
+- Side role HUD, Locksmith, commands and independent updater remain included.
 
-Validation: independent builds against EXILED 9.15.2 / SCP: SL 14.2.8, headless gameplay/updater checks and native API contracts. Unity client physics, smoke rendering and live audio still require a server playtest.
-
-See [configuration](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/TUNING.md), [commands](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/COMMANDS.md) and [updates](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/UPDATES.md).
+Built against EXILED 9.15.2 / SCP:SL 14.2.8. Native constructor and compiled damage bridges are covered by regression checks; live gameplay still requires a server playtest.

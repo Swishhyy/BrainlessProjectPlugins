@@ -35,10 +35,12 @@ namespace Brainless.Internal
             target.Hurt(handler);
         }
 
-        internal void Blast(Player target, Vector3 position, float amount)
+        internal void Blast(Player target, Vector3 position, float amount, int armorPenetration = 50)
         {
             if (amount > 0 && CanAffect(target))
-                target.Hurt(new PlayerStatsSystem.ExplosionDamageHandler(Footprint, position, amount, 0, global::ExplosionType.Grenade));
+                // Native zero penetration returns before damage/attacker setup.
+                // Its force argument is a vector, not the world-space blast origin.
+                target.Hurt(new PlayerStatsSystem.ExplosionDamageHandler(Footprint, Vector3.zero, amount, ExplosionRules.Penetration(armorPenetration), global::ExplosionType.Grenade));
         }
     }
 

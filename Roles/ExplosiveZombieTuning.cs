@@ -15,6 +15,9 @@ namespace Brainless.Roles
 
         [Tune(0, 100000)]
         public float ScpDamage { get; set; }
+
+        [Tune(1, 100)]
+        public int ArmorPenetration { get; set; } = ExplosionRules.DefaultPenetration;
         public bool RequireLineOfSight { get; set; } = true;
         public bool RequireEnemyKill { get; set; }
         public bool TriggerOnEnvironmentalDeaths { get; set; } = true;

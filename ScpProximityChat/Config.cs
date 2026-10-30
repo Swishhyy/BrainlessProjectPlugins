@@ -18,6 +18,9 @@ namespace Brainless.ScpProximityChat
         public KeyCode SuggestedKey { get; set; } = KeyCode.N;
         public bool DefaultHoldMode { get; set; }
         public bool ShowHints { get; set; } = true;
+        public float HintDurationSeconds { get; set; } = 2;
+        public string EnabledHint { get; set; } = "Proximity chat enabled";
+        public string DisabledHint { get; set; } = "Proximity chat disabled";
 
         [Description("Maximum nearby voice radius in metres (5-30). Native receiver visibility checks still apply.")]
         public float VoiceRange { get; set; } = 16;

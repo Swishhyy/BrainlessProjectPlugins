@@ -6,7 +6,7 @@ The `brainless_items` configuration contains the 12 item definitions and their p
 
 Gas (7101) uses the native SCP-244 fog/particles for eight seconds, with a four-meter radius, no damage ticks and a 20% human slow. Its native fog exposure/visual signal is retained, while harmful server cold subeffects from custom emitters are filtered; ordinary SCP-244 pickups keep their behavior. A filter blocks the custom slow, while the world smoke still obstructs sight. No primitive renders the cloud.
 
-Cluster (7102) releases four real HE projectiles at the first detonation. They launch outward/upward, bounce and explode after 1.5-1.74 seconds. There are no marker spheres and no recursive child clusters. Their 2.75-meter blasts peak at 40 human / 100 SCP damage per child and share a per-target ceiling of 85 human / 225 SCP damage across all four children; the parent releases them without native HE damage.
+Cluster (7102) has a parent blast (90 human / 250 SCP peak, 4.5m radius) and launches four real HE children outward/upward. Children peak at 70 human / 180 SCP over 4m, with 1.2-1.44s fuses. Parent and children share a per-target raw damage cap of 150 human / 500 SCP. They never recursively split or apply native door damage.
 
 Use native throw/consume controls. The server-specific **Use custom item or nearby device** key defaults to **V**. Hold it for a channel. Look at a device to scan/remove it, look at a closed ordinary door for a brace, or use it while holding a deployable. Zombies look at a dropped specimen and hold the same key. The binding is editable in server-specific settings.
 
@@ -22,6 +22,10 @@ The jammer blocks room-level actions, not zone blackout. Echo uses synthetic spa
 
 Build: `dotnet build Items/Brainless.Items.csproj -c Release` after preparing references.
 
-Version 0.2.0 adds Impact Grenade (7113): native HE body, surface contact detonation after 0.1 seconds, a 10-second fallback fuse and a 3.5m blast peaking at 80 human / 180 SCP damage. Thrower collisions are ignored; player impacts are optional. Existing lists receive 7113 when `catalog_revision` is 0/missing. Set `catalog_revision: 1` when deliberately removing it.
+Impact Grenade (7113) uses a native HE body, detonates on surface contact after 0.1 seconds, and has a 10-second fallback fuse. Its default 5m blast peaks at 140 human / 350 SCP damage before native mitigation. Thrower collisions are ignored; player impacts are optional. Existing lists receive 7113 when `catalog_revision` is 0/missing. Set `catalog_revision: 1` when deliberately removing it.
 
 Every item has its own section under `tuning`, plus list fields for name/description, charges, weight and round cap. Counts, damage, slows, radius, duration, fuses, deploy/remove/use times and supply settings are editable. Run `bpitems reload` with `brainless.items.configure` after saving. Registration changes require a restart. Existing fields/projectiles/charges keep their state. See the packaged `TUNING.md` for the complete reference and native smoke size limits.
+
+Version 0.3.0 enables map/locker replacements and occasional starting gear through `distribution`. Defaults: 25% per eligible pickup, at most 3 replacements, one bundle per room, and a 30% player roll with at most 3 successful grants per round / 1 per user. Class-D can receive chalk, a brace or dressing; other human kits can have native medicine/grenades converted. Optional `world_loot` extra bundles now scatter at real loose-loot locations instead of a single armory origin. All routes share existing supply caps; configured counts are maxima, not guarantees. See packaged `NATURAL_LOOT.md`.
+
+Custom explosions now pass valid native armor penetration (50 by default), fixing a zero-damage setup bug. Stock grenade values from older configs migrate to the stronger preset when `grenade_balance_revision` is 0/missing; edited values are retained. Set that marker to 1 before deliberately restoring old numbers. All parent/child damage, caps, radius, spread, fuse and penetration settings remain configurable.

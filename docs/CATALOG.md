@@ -49,7 +49,7 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | Design ID | Registry ID | Name | Behavior |
 | --- | --- | --- | --- |
 | I01 | 7101 | Irritant Gas Grenade | Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow. |
-| I02 | 7102 | Cluster Grenade | First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters. |
+| I02 | 7102 | Cluster Grenade | Parent blast plus four real grenades launched outward. Shared damage cap; no recursive clusters. |
 | I03 | 7103 | Containment Foam Canister | Six-second floor patch slows humans 10% and SCPs 8%. |
 | I04 | 7104 | Echo Canister | Six seconds of synthetic footsteps; no damage or flash. |
 | I05 | 7105 | Door Brace | Hold tool key at an ordinary closed door. Others can remove it. |
@@ -71,7 +71,7 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | W04 | 7204 | Redline SMG | Heat prototype: short bursts; 12 shots overheat for three seconds. Native cadence pending client validation. |
 | W05 | 7205 | Last Word | Six shots total. Cannot reload, unload or expand its magazine. |
 | W06 | 7206 | Ricochet Pistol | One bounce from approved static mesh geometry. 85% direct damage; 50% body damage after bouncing. |
-| W07 | 7207 | Grenade Launcher | Logicer body; 16 grenades total, no reload. Small 2.5m blast: up to 45 human / 90 SCP damage. Tap fire every 0.65s. |
+| W07 | 7207 | Grenade Launcher | Logicer body; 16 grenades total, no reload. Small 3.5m blast: up to 70 human / 150 SCP damage. Tap fire every 0.65s. |
 
 ## Initial supply
 

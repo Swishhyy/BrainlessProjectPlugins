@@ -1,6 +1,6 @@
 # BetterCoinflips BP
 
-This is the imported BetterCoinflips plugin, updated to **5.1.2** for **EXILED 9.15.2 / SCP: SL 14.2.8**. It builds separately as `BetterCoinflips.dll` and does not depend on any Brainless plugin DLL.
+This is the imported BetterCoinflips plugin, updated to **5.1.3** for **EXILED 9.15.2 / SCP: SL 14.2.8**. It builds separately as `BetterCoinflips.dll` and does not depend on any Brainless plugin DLL.
 
 Independent release updates are enabled under `auto_update`. They check GitHub Releases every 60 minutes, verify this DLL's checksum and identity, keep a `.previous` backup, and apply the new version after a full server restart. Set `BRAINLESS_GITHUB_TOKEN` in the server environment for this private repository; see `docs/UPDATES.md`.
 
@@ -15,3 +15,5 @@ Build: `dotnet build BetterCoinflips/BetterCoinflips.csproj -c Release` after pr
 Original author: **Miki_hero**. Original documentation is retained in [UPSTREAM_README.md](UPSTREAM_README.md). The fork source and import revision are recorded in [IMPORT.md](IMPORT.md).
 
 Version 5.1.2 rebuilds the maintained shared helpers with the rest of the suite; coin effects and their configured probabilities are unchanged. The independent updater remains included.
+
+Version 5.1.3 synchronizes the corrected explosion helper compiled into the suite; coin-effect weights/settings are unchanged.
