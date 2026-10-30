@@ -4,7 +4,7 @@ Each gameplay folder builds its own assembly. EXILED and the game's assemblies a
 
 ## Optional equipment contracts
 
-Roles looks up IDs 7101-7112 and 7201-7207 in EXILED's CustomItems registry. Providers expose `CanIssueBatch(uint[])` on their registered item definitions. Roles validates the whole required batch per provider before changing a kit. Eligibility is evaluated before the weighted draw. Missing providers exclude only profiles that require them; other profiles can still be selected. No eligible profile leaves an ordinary role. Admin profile tests use the optional `GiveForRole(Player, bool)` provider method through reflection, preserving binary independence. This preflight happens on the main server thread, immediately before issuance.
+Roles looks up optional IDs 7101-7109, 7111-7112 and 7201-7207 in EXILED's CustomItems registry. Providers expose `CanIssueBatch(uint[])` on their registered item definitions. Roles validates the whole required batch per provider before changing a kit. Eligibility is evaluated before the weighted draw. Missing providers exclude only profiles that require them; other profiles can still be selected. No eligible profile leaves an ordinary role. Admin profile tests use the optional `GiveForRole(Player, bool)` provider method through reflection, preserving binary independence. This preflight happens on the main server thread, immediately before issuance.
 
 Roles owns spawn selection and temporary character traits. Items owns utility supply, charges, devices, area effects and tool inputs. Weapons owns weapon supply, gun state and special hit handling. BetterCoinflips owns normal coin gambling and its legacy effects. None may restore a resource merely because an item changes owners.
 
@@ -22,6 +22,7 @@ Each of the four DLLs compiles its own updater. It reads its own release manifes
 - A delayed blast captures the thrower's footprint and faction at creation, so death or a faction change during the fuse does not change who the explosion belongs to.
 - Native faction, armor and protection handling is retained for explosive and firearm damage. Gas does not damage anyone. A scoped SCP-244 renderer supplies native smoke; per-object server exposure/radius patches affect only custom emitters. A leased 20% human slow respects filters and the existing targeting policy. Ordinary SCP-244 damage stays native.
 - Movement uses native synced effects with a bounded lease. Stronger existing effects take precedence; the plugin releases only an effect value it still owns.
+- Maintenance Pass 7110 is retired and stripped from existing role/item lists on enable. Locksmith owns its timer/cooldown and needs no provider. A synchronous completion scope grants only its player/door/collider interaction, while native events and mechanical behavior remain active; no door permission or lock mask is rewritten. Both level-three access categories are rechecked throughout the channel. User-ID cooldowns survive individual role changes/reconnects and reset with the round.
 - Guard card and item normalization at SCP-914 is explicit. Custom effects are stripped before the ordinary recipe runs. A specimen, Last Word or launcher becomes a coin, avoiding a free cure or a refillable starting pistol.
 
 ## Failure limits

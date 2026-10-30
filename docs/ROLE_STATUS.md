@@ -11,7 +11,7 @@ All 35 profiles have an implementation and compile against the pinned EXILED/gam
 | D03 | Child | Opt-in: allow_experimental_roles | None | 0 |
 | D04 | Thief | Enabled; normal spawn roll | None | 0 |
 | D05 | Survivor | Enabled; normal spawn roll | None | 0 |
-| D06 | Locksmith | Enabled; normal spawn roll | 7110 | 0 |
+| D06 | Locksmith | Enabled; normal spawn roll | None | 0 |
 | D07 | Noise Complaint | Enabled; normal spawn roll | 7104 | 0 |
 | S01 | Mad Scientist | Enabled; normal spawn roll | 7205, 7112 | 0 |
 | S02 | Pharmacist | Enabled; normal spawn roll | None | 0 |

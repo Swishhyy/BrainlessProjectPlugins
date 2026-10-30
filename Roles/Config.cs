@@ -19,6 +19,12 @@ namespace Brainless.Roles
         public float RoleHudVerticalOffset { get; set; } = -11;
         public bool AllowExperimentalRoles { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
+
+        [Description("Seconds a Locksmith must stay at the door control to complete a lockpick.")]
+        public float LockpickDurationSeconds { get; set; } = LockpickRules.DefaultDuration;
+
+        [Description("Cooldown after a successful lockpick. Interrupted attempts do not spend it.")]
+        public float LockpickCooldownSeconds { get; set; } = LockpickRules.DefaultCooldown;
         public bool CaptainGateAccess { get; set; }
         public bool EnableDoctorEvent { get; set; }
         public bool ExtremeMuncherEventPreset { get; set; }

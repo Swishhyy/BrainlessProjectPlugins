@@ -29,5 +29,20 @@ internal static class MetadataContracts
         check(attack.GetParameters().Count == 1 && attack.RelativeVirtualAddress != 0, "Tickler cooldown patch matches the actual native attack method");
         var resync = Method("InventorySystem.Items.Firearms.Modules", "AutomaticActionModule", "ServerResync");
         check(resync.GetParameters().Count == 0, "launcher rejected shots can resynchronize the native LMG ammo");
+        var interaction = Method("Interactables.Interobjects.DoorUtils", "DoorVariant", "ServerInteract");
+        check(interaction.GetParameters().Count == 2 && interaction.RelativeVirtualAddress != 0, "Locksmith completion targets the native door interaction with collider identity");
+        using var exiled = File.OpenRead(Path.Combine(root, ".build", "references", "Exiled.API.dll"));
+        using var exiledPe = new PEReader(exiled);
+        var api = exiledPe.GetMetadataReader();
+        var flags = api.TypeDefinitions.Select(h => api.GetTypeDefinition(h)).Single(t => api.GetString(t.Namespace) == "Exiled.API.Enums" && api.GetString(t.Name) == "KeycardPermissions");
+        int Flag(string name)
+        {
+            var field = flags.GetFields().Select(h => api.GetFieldDefinition(h)).Single(f => api.GetString(f.Name) == name);
+            return api.GetBlobReader(api.GetConstant(field.GetDefaultValue()).Value).ReadInt32();
+        }
+
+        int containment = Flag("ContainmentLevelThree"), armory = Flag("ArmoryLevelThree");
+        check(Brainless.Roles.LockpickRules.IsLevelThree(containment, containment, armory) && Brainless.Roles.LockpickRules.IsLevelThree(armory, containment, armory), "Locksmith excludes both level-three categories from the actual EXILED enum");
+        check(!Brainless.Roles.LockpickRules.IsLevelThree(Flag("Checkpoints") | Flag("ExitGates") | Flag("ContainmentLevelTwo") | Flag("ArmoryLevelTwo"), containment, armory), "native checkpoint, gate and level-two permissions remain eligible for Locksmith");
     }
 }

@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 3);
+        public override Version Version => new Version(0, 1, 4);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -53,6 +53,7 @@ namespace Brainless.Roles
         private int waveCount;
         private Harmony harmony;
         private RoleHud roleHud;
+        private Lockpicking lockpicking;
         private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
@@ -61,6 +62,10 @@ namespace Brainless.Roles
             foreach (var role in Config.Roles)
             {
                 role.Id = role.Id.ToUpperInvariant();
+                // Retire the pass even in previously generated/customized YAML kits.
+                role.CustomItems.RemoveAll(id => id == 7110);
+                if (role.Id == "D06" && role.Hint == "One Maintenance Pass; 90 HP.")
+                    role.Hint = "90 HP. Interact to lockpick: 15 seconds, 120-second cooldown. Level 3 excluded.";
                 if (role.Id == "Z05" && role.HealthMultiplier == 1 && role.ShieldMultiplier == 1)
                 {
                     role.HealthMultiplier = .4f;
@@ -69,6 +74,11 @@ namespace Brainless.Roles
             }
 
             Instance = this;
+            if (float.IsNaN(Config.LockpickDurationSeconds) || float.IsInfinity(Config.LockpickDurationSeconds) || Config.LockpickDurationSeconds <= 0)
+                Config.LockpickDurationSeconds = LockpickRules.DefaultDuration;
+            if (float.IsNaN(Config.LockpickCooldownSeconds) || float.IsInfinity(Config.LockpickCooldownSeconds) || Config.LockpickCooldownSeconds < 0)
+                Config.LockpickCooldownSeconds = LockpickRules.DefaultCooldown;
+            lockpicking = new Lockpicking(Config, lifetime, RoleId);
             roleHud = new RoleHud(Config, player => active.TryGetValue(player, out var state) ? state.Definition : null);
             harmony = new Harmony("brainless.roles.0.1");
             harmony.PatchAll();
@@ -76,6 +86,7 @@ namespace Brainless.Roles
             P.Spawned += Spawned;
             P.Dying += Dying;
             P.Hurting += Hurting;
+            P.InteractingDoor += LockpickDoor;
             P.Left += Left;
             S.WaitingForPlayers += Reset;
             S.RoundEnded += Ended;
@@ -96,6 +107,7 @@ namespace Brainless.Roles
             P.Spawned -= Spawned;
             P.Dying -= Dying;
             P.Hurting -= Hurting;
+            P.InteractingDoor -= LockpickDoor;
             P.Left -= Left;
             S.WaitingForPlayers -= Reset;
             S.RoundEnded -= Ended;
@@ -106,6 +118,8 @@ namespace Brainless.Roles
             foreach (var player in active.Keys.ToArray())
                 Remove(player);
             lifetime.Clear();
+            lockpicking?.Clear();
+            lockpicking = null;
             roleHud?.Clear();
             roleHud = null;
             harmony?.UnpatchAll(harmony.Id);
@@ -116,6 +130,7 @@ namespace Brainless.Roles
         private void Ended(Exiled.Events.EventArgs.Server.RoundEndedEventArgs ev) => Reset();
         private void Reset()
         {
+            lockpicking?.Clear();
             roleHud?.Clear();
             foreach (var player in active.Keys.ToArray())
                 Remove(player);
@@ -548,6 +563,7 @@ namespace Brainless.Roles
 
         private void Remove(Player player)
         {
+            lockpicking?.Cancel(player);
             if (!active.TryGetValue(player, out var state))
                 return;
             active.Remove(player);
@@ -576,6 +592,7 @@ namespace Brainless.Roles
                 yield return Timing.WaitForSeconds(.2f);
                 foreach (var pair in active.ToArray())
                     Safe.Run(() => Update(pair.Key, pair.Value));
+                Safe.Run(() => lockpicking?.Update());
                 Safe.Run(() => roleHud?.Update());
             }
         }
@@ -613,10 +630,13 @@ namespace Brainless.Roles
 
         private void Hurting(HurtingEventArgs ev)
         {
+            if (ev.IsAllowed && ev.Amount > 0)
+                lockpicking?.Cancel(ev.Player, "you took damage");
             if (RoleId(ev.Attacker) == "Z02" && ev.DamageHandler.Type == DamageType.Scp0492 && ev.Amount > 0)
                 ev.Amount *= .5f;
         }
 
+        private void LockpickDoor(InteractingDoorEventArgs ev) => Safe.Run(() => lockpicking?.DoorInteraction(ev));
         private void Dying(DyingEventArgs ev) => Safe.Run(() =>
         {
             if (!ev.IsAllowed || RoleId(ev.Player) != "Z04" || ev.Attacker == null || !HitboxIdentity.IsEnemy(ev.Attacker.Role.Type, ev.Player.Role.Type) || burstSpent.Contains(ev.Player.UserId) || burstArmed || ev.DamageHandler.Type == DamageType.Explosion)

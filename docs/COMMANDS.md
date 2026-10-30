@@ -22,7 +22,7 @@ Use Remote Admin's text command box without a leading slash. `ci` is EXILED's al
 | `coinuses set player <playerID> <uses>` | `bc.coinuses.set` | Set uses on another player's held coin. |
 | `coinuses set serial <serial> <uses>` | `bc.coinuses.set` | Set uses by serial. |
 
-Items use IDs 7101-7112; weapons use 7201-7207. See [CATALOG.md](CATALOG.md). Disabled/experimental entries are not registered until enabled.
+Items use IDs 7101-7109 and 7111-7112 (7110 is retired); weapons use 7201-7207. See [CATALOG.md](CATALOG.md). Disabled/experimental entries are not registered until enabled.
 
 ## Admin grants
 
@@ -52,3 +52,7 @@ For CedMod-managed permissions, add `customitems.*` to the staff group's EXILED/
 All `bprole`/`bproles` commands are registered only in Remote Admin and require `brainless.roles`, including `myrole`. Add that node to the CedMod staff group's EXILED/plugin permissions. Normal players can use the role HUD without a command permission. `bproles` shows actual configuration, missing equipment IDs, experimental switches, population requirements and exhausted natural supply. `READY` means eligible to roll, not guaranteed to spawn.
 
 `bprole set` queues a fresh base role/inventory, then applies the chosen profile after the native spawn finishes. It preserves a matching reinforcement rank, does not spend natural kit/role supply, and reports disabled/missing content. Inspect the result after a moment with `bprole <playerID>`. Native force-class changes alone do not run the random role selector. Doctor still requires its experimental/event switches and enabled profile.
+
+## Locksmith interaction
+
+D06 uses the ordinary interact key at a denied closed door; no item, new command or permission is needed. Default channel time is 15 seconds and cooldown is 120 seconds after success. Doors requiring containment level 3 or armory level 3 are excluded, including requirements inherited from a parent checkpoint. Gates/checkpoints otherwise use their native interaction behavior. Interruptions do not spend cooldown; a successful cooldown persists through role changes/reconnects until round reset. `ci give 7110` no longer grants a Maintenance Pass.

@@ -7,13 +7,13 @@ Independent SCP: Secret Laboratory plugins for the Brainless Project server.
 | Folder | Compiled file | Purpose |
 | --- | --- | --- |
 | [Roles](Roles) | `Brainless.Roles.dll` | 35 configurable role profiles, spawn selection, guard badges and SCP variants |
-| [Items](Items) | `Brainless.Items.dll` | 12 custom throwables, tools, devices and supplies |
+| [Items](Items) | `Brainless.Items.dll` | 11 custom throwables, tools, devices and supplies |
 | [Weapons](Weapons) | `Brainless.Weapons.dll` | Five normal weapons including a 16-shot grenade launcher, plus two disabled experimental prototypes |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Imported BetterCoinflips, updated to 5.1.1 for EXILED 9.15.2 |
 
 Read the [automatic updates guide](docs/UPDATES.md), [commands and permissions](docs/COMMANDS.md), [content catalog](docs/CATALOG.md), [architecture](docs/ARCHITECTURE.md), [role availability](docs/ROLE_STATUS.md), and [server playtest checklist](docs/PLAYTEST.md).
 
-Roles, Items and Weapons are version **0.1.3**; BetterCoinflips is **5.1.1**. All four independently check GitHub Releases for their own updates. Admin `ci give`/`ci spawn` commands issue available content without population/supply caps or extra bypass permissions. Natural loadouts and loot keep their normal supply limits. The role HUD and reusable Maintenance Pass are included. Gas uses native SCP-244 smoke with no damage and a 20% human slow. Clusters launch four native grenades. Admins can inspect roles with `bprole`, audit availability with `bproles`, and test a profile with `bprole set <ID> [playerID]`.
+Roles and Items are version **0.1.4**; Weapons is **0.1.3** and BetterCoinflips is **5.1.1**. All four independently check GitHub Releases for their own updates. Admin `ci give`/`ci spawn` commands issue available content without population/supply caps or extra bypass permissions. Natural loadouts and loot keep their normal supply limits. The role HUD is included. Locksmith now picks eligible doors in 15 seconds with a 120-second cooldown after success; containment/armory level 3 is excluded. The Maintenance Pass has been removed. Gas uses native SCP-244 smoke with no damage and a 20% human slow. Clusters launch four native grenades. Admins can inspect roles with `bprole`, audit availability with `bproles`, and test a profile with `bprole set <ID> [playerID]`.
 
 ## Install
 
@@ -61,7 +61,7 @@ The packaging script writes separate folders and ZIPs to `artifacts`. It continu
 dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- .
 ```
 
-This checks supply limits, Last Word and launcher shot budgets, eligible role draws, shared cluster damage caps, weighted effects, blast falloff, Nullifier shield spillover, and the actual built DLLs' dependency tables. It does not simulate the Unity server. Follow `docs/PLAYTEST.md` on a test server before normal rotation.
+This checks supply limits, Last Word and launcher shot budgets, eligible role draws, Locksmith timing/cooldowns/access policy, shared cluster damage caps, weighted effects, blast falloff, Nullifier shield spillover, and the actual built DLLs' dependency tables. It does not simulate the Unity server. Follow `docs/PLAYTEST.md` on a test server before normal rotation.
 
 ## Prototype status
 

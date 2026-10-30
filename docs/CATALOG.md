@@ -11,7 +11,7 @@ Stable IDs map the design document into independent plugins. All values are play
 | D03 | Child | ClassD | Small experimental silhouette; 85 HP; approved candy only. |
 | D04 | Thief | ClassD | One random contraband item. |
 | D05 | Survivor | ClassD | Zone Manager card and painkillers; 85 HP. |
-| D06 | Locksmith | ClassD | One Maintenance Pass; 90 HP. |
+| D06 | Locksmith | ClassD | 90 HP. Interact to lockpick: 15 seconds, 120-second cooldown. Level 3 excluded. |
 | D07 | Noise Complaint | ClassD | One Echo Canister; throw it to bluff a route. |
 | S01 | Mad Scientist | Scientist | Six shots in Last Word; one specimen; no medkit. |
 | S02 | Pharmacist | Scientist | Two medkits and painkillers to share. |
@@ -57,7 +57,6 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | I07 | 7107 | Survey Beacon | Deploy with tool key; two audible scans in this room. |
 | I08 | 7108 | Trace Chalk | Three numbered floor markers, visible to everyone for 45 seconds. |
 | I09 | 7109 | Field Dressing | Four seconds to heal 35 HP. Sprinting or damage interrupts. |
-| I10 | 7110 | Maintenance Pass | Reusable maintenance keycard. Containment level 1 with normal door interactions. |
 | I11 | 7111 | Filter Inhaler | Two seconds to gain 12 seconds of custom gas protection. |
 | I12 | 7112 | Preserved Specimen | Not SCP-500. Offer it to a zombie; hold tool key to eat it for 80 HP. |
 

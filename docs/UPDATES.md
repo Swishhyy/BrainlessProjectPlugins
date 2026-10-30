@@ -1,6 +1,6 @@
 # Automatic plugin updates
 
-Roles 0.1.3, Items 0.1.3, Weapons 0.1.3 and BetterCoinflips 5.1.1 include their own updater. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
+Roles 0.1.4, Items 0.1.4, Weapons 0.1.3 and BetterCoinflips 5.1.1 include their own updater. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
 
 ## Server setup
 
@@ -35,7 +35,7 @@ Once these workflows are on `main`, a push/merge to `main` automatically builds 
 
 1. Bump the changed project's `.csproj` version and its `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`.
 2. Commit and merge/push to `main`, or open **Actions → Release plugins → Run workflow** and select the desired plugin or All. Prerelease is optional for manual runs.
-3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.1.3`, `items-v0.1.3`, `weapons-v0.1.3` and `bettercoinflips-v5.1.1`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
+3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.1.4`, `items-v0.1.4`, `weapons-v0.1.3` and `bettercoinflips-v5.1.1`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
 
 You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all four. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
 
@@ -53,3 +53,5 @@ Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository 
 Each manifest has schema version 1, repository identity, and a `plugins` array containing the component ID, assembly name, DLL asset name, numeric version, SHA-256, minimum EXILED version, exact SCP: SL version and `net48` target. `scripts/prepare_release.py` generates this from the built project; CI verifies the actual DLL identity/version before publishing. Updating game support also requires reviewing build references and the manifest's compatibility values.
 
 Recent release lists use ETags, manifests are cached, and an already-downloaded pending version is not fetched again. `releases_to_scan` is bounded to 1-30; increase it if many other component releases push an older component beyond the default ten entries. The minimum check interval is five minutes.
+
+For the Locksmith rework, update both Roles and Items to 0.1.4 and fully restart. Roles removes retired item 7110 from configured kits and supplies the innate ability; Items removes the retired definition even from old generated lists. Weapons and BetterCoinflips retain their existing versions.

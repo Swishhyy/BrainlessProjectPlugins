@@ -98,13 +98,6 @@ namespace Brainless.Items
             },
             new ItemSpec
             {
-                Id = 7110,
-                Name = "Maintenance Pass",
-                Description = "Reusable maintenance keycard. Containment level 1 with normal door interactions.",
-                BaseType = ItemType.KeycardCustomSite02
-            },
-            new ItemSpec
-            {
                 Id = 7111,
                 Name = "Filter Inhaler",
                 Description = "Two seconds to gain 12 seconds of custom gas protection.",
@@ -119,6 +112,8 @@ namespace Brainless.Items
                 BaseType = ItemType.SCP500
             },
         };
+
+        internal void RetireRemovedItems() => Items.RemoveAll(item => item.Id == 7110);
     }
 
     // No base event subscriptions: this plugin owns and cleans up its own handlers.
@@ -134,9 +129,6 @@ namespace Brainless.Items
                 spec.Description = "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow.";
             if (spec.Id == 7102 && spec.Description == "Three smaller blasts, shared damage cap; keep clear of the beeps.")
                 spec.Description = "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.";
-            // Existing generated configs retain their old descriptions across DLL updates.
-            if (spec.Id == 7110 && spec.Description == "Four-second, one-use LCZ access. No checkpoints, gates, or armories.")
-                spec.Description = "Reusable maintenance keycard. Containment level 1 with normal door interactions.";
             Spec = spec;
             Id = spec.Id;
             Name = spec.Name;
@@ -193,7 +185,6 @@ namespace Brainless.Items
                 return "The server did not add the item to the inventory; check the server log.";
             }
 
-            owner.Setup(item, this);
             if (Id == 7101)
             {
                 failure = owner.GiveFilter(player, ignoreLimits);
@@ -226,7 +217,6 @@ namespace Brainless.Items
             Item item = Item.Create(Type);
             if (!owner.Mint(this, item.Serial, ignoreLimits))
                 return "Supply changed before the spawn could complete; retry.";
-            owner.Setup(item, this);
             pickup = base.Spawn(position, item, previousOwner);
             if (pickup == null)
             {

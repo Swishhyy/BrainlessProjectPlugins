@@ -31,7 +31,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 3);
+        public override Version Version => new Version(0, 1, 4);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
 
@@ -55,6 +55,7 @@ namespace Brainless.Items
         private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
+            Config.RetireRemovedItems();
             var enabled = Config.Items.Where(s => s.Enabled).ToArray();
             if (enabled.Select(s => s.Id).Distinct().Count() != enabled.Length || enabled.Select(s => s.Name).Distinct().Count() != enabled.Length)
                 throw new InvalidOperationException("Item IDs and names must be unique.");
@@ -232,15 +233,6 @@ namespace Brainless.Items
                 return false;
             charges[serial] = Math.Max(1, item.Spec.Charges);
             return true;
-        }
-
-        internal void Setup(Item item, RegisteredItem definition)
-        {
-            if (item is Exiled.API.Features.Items.Keycards.CustomKeycardItem card)
-            {
-                card.Permissions = KeycardPermissions.ContainmentLevelOne;
-                card.ItemName = definition.Name;
-            }
         }
 
         internal void Unmint(RegisteredItem item, int serial, bool ignoreLimits)
@@ -782,7 +774,7 @@ namespace Brainless.Items
             }
         }
 
-        private ItemType Conversion(uint id, ItemType type) => id == 7110 ? ItemType.KeycardJanitor : id == 7105 || id == 7108 || id == 7112 ? ItemType.Coin : type;
+        private ItemType Conversion(uint id, ItemType type) => id == 7105 || id == 7108 || id == 7112 ? ItemType.Coin : type;
         private void UpgradePickup(UpgradingPickupEventArgs ev) => Safe.Run(() =>
         {
             var item = Find(ev.Pickup.Serial);

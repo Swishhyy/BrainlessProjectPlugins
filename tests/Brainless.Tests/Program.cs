@@ -33,6 +33,7 @@ if (args.Length == 2 && args[0] == "--verify-native")
 }
 
 var random = new Random(731);
+LockpickTests.Run(Check);
 Check(Rules.WeightedIndex(new[] { 0, 0, 0 }, random) == -1, "zero weights leave a plain coin flip");
 Check(Rules.WeightedIndex(new[] { -20, 0 }, random) == -1, "negative weights cannot cause an exception");
 Check(Enumerable.Range(0, 1000).All(_ => Rules.WeightedIndex(new[] { 0, 8, 0 }, random) == 1), "zero-weight effects never win");

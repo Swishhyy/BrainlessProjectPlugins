@@ -59,9 +59,8 @@ namespace Brainless.Roles
             r.Health = 85;
             r.Add.AddRange(new[] { ItemType.KeycardZoneManager, ItemType.Painkillers });
             list.Add(r);
-            r = R("D06", "Locksmith", RoleTypeId.ClassD, "One Maintenance Pass; 90 HP.");
+            r = R("D06", "Locksmith", RoleTypeId.ClassD, "90 HP. Interact to lockpick: 15 seconds, 120-second cooldown. Level 3 excluded.");
             r.Health = 90;
-            r.CustomItems.Add(7110);
             list.Add(r);
             r = R("D07", "Noise Complaint", RoleTypeId.ClassD, "One Echo Canister; throw it to bluff a route.");
             r.CustomItems.Add(7104);
