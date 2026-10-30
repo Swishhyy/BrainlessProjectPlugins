@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.ScpProximityChat</AssemblyName>
+    <RootNamespace>Brainless.ScpProximityChat</RootNamespace>
+    <Version>0.1.0</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Authors>Brainless Project</Authors>
+  </PropertyGroup>
+</Project>

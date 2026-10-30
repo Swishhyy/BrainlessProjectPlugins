@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>BetterCoinflips</AssemblyName>
+    <RootNamespace>BetterCoinflips</RootNamespace>
+    <Version>5.1.2</Version>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Authors>Miki_hero; Brainless Project</Authors>
+  </PropertyGroup>
+</Project>

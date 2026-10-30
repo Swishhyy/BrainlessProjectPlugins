@@ -1,0 +1,109 @@
+name: Release plugins
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin to publish
+        type: choice
+        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat]
+        default: All
+      prerelease:
+        description: Publish as a prerelease
+        type: boolean
+        default: false
+  push:
+    branches: [main, 'release/**']
+    tags: ['roles-v*', 'items-v*', 'weapons-v*', 'bettercoinflips-v*', 'scpproximitychat-v*']
+  release:
+    types: [published]
+permissions:
+  contents: read
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.select.outputs.plugins }}
+    steps:
+      - id: select
+        env:
+          REQUESTED_PLUGIN: ${{ inputs.plugin || 'All' }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          projects = ['Roles', 'Items', 'Weapons', 'BetterCoinflips', 'ScpProximityChat']
+          event = os.environ['GITHUB_EVENT_NAME']
+          ref = os.environ['GITHUB_REF_NAME']
+          if (event == 'push' and os.environ.get('GITHUB_REF_TYPE') == 'tag') or (event == 'release' and any(ref.startswith(p.lower()+'-v') for p in projects)):
+              selected = [p for p in projects if ref.startswith(p.lower()+'-v')]
+          else:
+              requested = os.environ['REQUESTED_PLUGIN']
+              selected = projects if requested == 'All' else [p for p in projects if p == requested]
+          if not selected:
+              raise SystemExit('No matching plugin selected.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('plugins='+json.dumps(selected)+'\n')
+          PY
+  publish:
+    name: Release ${{ matrix.plugin }}
+    needs: select
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJSON(needs.select.outputs.plugins) }}
+    concurrency:
+      group: release-${{ matrix.plugin }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python scripts/fetch_references.py
+      - name: Build this plugin independently
+        run: python scripts/build.py --plugin ${{ matrix.plugin }}
+      - name: Run updater and gameplay regressions
+        run: dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release
+      - name: Prepare DLL and checksum manifest
+        id: prepare
+        run: python scripts/prepare_release.py --plugin ${{ matrix.plugin }}
+      - name: Verify actual assembly identity and version
+        env:
+          RELEASE_DLL: ${{ steps.prepare.outputs.dll }}
+          ASSEMBLY_NAME: ${{ steps.prepare.outputs.assembly }}
+          PLUGIN_VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- --verify-assembly "$RELEASE_DLL" "$ASSEMBLY_NAME" "$PLUGIN_VERSION"
+          dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- --verify-native .
+      - name: Publish this plugin's release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PLUGIN: ${{ matrix.plugin }}
+          PLUGIN_VERSION: ${{ steps.prepare.outputs.version }}
+          RELEASE_DLL: ${{ steps.prepare.outputs.dll }}
+          RELEASE_MANIFEST: ${{ steps.prepare.outputs.manifest }}
+          COMPONENT_TAG: ${{ steps.prepare.outputs.tag }}
+          PRERELEASE: ${{ inputs.prerelease || github.event.release.prerelease || false }}
+        run: |
+          args=(--plugin "$PLUGIN" --version "$PLUGIN_VERSION" --dll "$RELEASE_DLL" --manifest "$RELEASE_MANIFEST")
+          if [ "$GITHUB_EVENT_NAME" = release ]; then
+            if [[ "$GITHUB_REF_NAME" == "${PLUGIN,,}-v"* ]] && [ "$GITHUB_REF_NAME" != "$COMPONENT_TAG" ]; then
+              echo 'Component release tag must match the project version.'
+              exit 1
+            fi
+            args+=(--tag "$GITHUB_REF_NAME" --existing-release)
+          else
+            if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "$COMPONENT_TAG" ]; then
+              echo 'Tag version must match the project version.'
+              exit 1
+            fi
+            args+=(--tag "$COMPONENT_TAG")
+          fi
+          if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
+          python scripts/publish_release.py "${args[@]}"

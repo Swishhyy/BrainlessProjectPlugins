@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.Weapons</AssemblyName>
+    <RootNamespace>Brainless.Weapons</RootNamespace>
+    <Version>0.2.0</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Authors>Brainless Project</Authors>
+  </PropertyGroup>
+</Project>

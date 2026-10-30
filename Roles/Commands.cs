@@ -1,0 +1,105 @@
+using System;
+using System.Linq;
+using CommandSystem;
+using Exiled.API.Features;
+using Exiled.Permissions.Extensions;
+
+namespace Brainless.Roles
+{
+    internal static class RoleCommands
+    {
+        internal static bool Ready(ICommandSender sender, out Plugin plugin, out string response)
+        {
+            plugin = Plugin.Instance;
+            response = null;
+            if (!sender.CheckPermission("brainless.roles"))
+                response = "Missing brainless.roles permission.";
+            else if (plugin == null || !plugin.Config.IsEnabled)
+                response = "Brainless Roles is not enabled.";
+            return response == null;
+        }
+
+        internal static Player Target(string value, ICommandSender sender) => value == null ? Player.Get(sender) : Player.Get(value);
+        internal static bool Valid(Player player) => player != null && player.IsConnected && !player.IsHost;
+    }
+
+    [CommandHandler(typeof(RemoteAdminCommandHandler))]
+    public sealed class RoleCommand : ICommand
+    {
+        public string Command => "bprole";
+        public string[] Aliases => new[]
+        {
+            "myrole"
+        };
+        public string Description => "Inspect roles, test with bprole set <roleID> [playerID], or reload tuning with bprole reload.";
+
+        public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
+        {
+            if (!RoleCommands.Ready(sender, out var plugin, out response))
+                return false;
+            string[] args = arguments.ToArray();
+            if (args.Length == 1 && args[0].Equals("reload", StringComparison.OrdinalIgnoreCase))
+                return plugin.ReloadTuning(out response);
+            if (args.Length == 1 && (args[0] == "*" || args[0].Equals("all", StringComparison.OrdinalIgnoreCase)))
+            {
+                response = string.Join("\n\n", Player.List.Where(RoleCommands.Valid).OrderBy(p => p.Id).Select(plugin.Inspect));
+                if (response.Length == 0)
+                    response = "No connected players.";
+                return true;
+            }
+
+            bool set = args.Length > 0 && args[0].Equals("set", StringComparison.OrdinalIgnoreCase);
+            if ((set && (args.Length < 2 || args.Length > 3)) || (!set && args.Length > 1))
+            {
+                response = "Usage: bprole [playerID|all|reload], or bprole set <roleID> [playerID].";
+                return false;
+            }
+
+            string target = set ? args.Length == 3 ? args[2] : null : args.Length == 1 ? args[0] : null;
+            Player player = RoleCommands.Target(target, sender);
+            if (!RoleCommands.Valid(player))
+            {
+                response = "No connected player matched. Server-console users must specify a player ID.";
+                return false;
+            }
+
+            if (set)
+                return plugin.SetForAdmin(player, args[1], out response);
+            response = plugin.Inspect(player);
+            return true;
+        }
+    }
+
+    [CommandHandler(typeof(RemoteAdminCommandHandler))]
+    public sealed class RolesCommand : ICommand
+    {
+        public string Command => "bproles";
+        public string[] Aliases => Array.Empty<string>();
+        public string Description => "Audit configured profiles and why each can/cannot roll now. Optionally specify a player ID.";
+
+        public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
+        {
+            if (!RoleCommands.Ready(sender, out var plugin, out response))
+                return false;
+            if (arguments.Count > 1)
+            {
+                response = "Usage: bproles [playerID].";
+                return false;
+            }
+
+            Player player = arguments.Count == 0 ? null : RoleCommands.Target(arguments.Array[arguments.Offset], sender);
+            if (arguments.Count > 0 && !RoleCommands.Valid(player))
+            {
+                response = "No connected player matched.";
+                return false;
+            }
+
+            response = "Availability for " + (player == null ? "the current server" : player.Nickname + " (" + player.Id + ")") + ". READY means eligible; spawn chance and other listed caps still apply.\n" + string.Join("\n", plugin.Config.Roles.Select(role =>
+            {
+                string reason = plugin.Availability(role, player);
+                return role.Id + ": " + role.Name + " - " + (reason == null ? "READY" : "BLOCKED: " + reason);
+            }));
+            return true;
+        }
+    }
+}
