@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 4);
+        public override Version Version => new Version(0, 1, 5);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -57,6 +57,7 @@ namespace Brainless.Roles
         private Brainless.Internal.Updates.PluginUpdates updates;
         public override void OnEnabled()
         {
+            Config.UpgradeHudLayout();
             if (Config.Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name)) || Config.Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Config.Roles.Count)
                 throw new InvalidOperationException("Role profiles need unique IDs and nonempty names.");
             foreach (var role in Config.Roles)

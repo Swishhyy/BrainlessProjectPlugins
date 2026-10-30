@@ -10,7 +10,21 @@ Keep `captain_gate_access` false for restricted initial Guard access. Candy uses
 
 Optional items and weapons are found through the framework registry. Unavailable kits are excluded before the weighted roll; another eligible profile can still win. With no eligible profile, the player remains ordinary. Inventory changes and stat restoration stay in this project. `bprole` (alias `myrole`) in Remote Admin shows your actual role/stats and assignment reason; `bprole <playerID>` or `bprole all` inspects others. `bproles [playerID]` audits the roster and reports why each profile is available or blocked. All require `brainless.roles`; ordinary players have only the HUD. `bprole set <roleID> [playerID]` resets a native kit and schedules an admin test assignment without natural caps; configuration switches and required providers still apply. A matching MTF/Chaos rank is kept. See `docs/ROLE_STATUS.md` for all 35 default profiles and gates.
 
-The role HUD is enabled by default for living players, showing their custom role name and specialty, or their ordinary role if no custom profile was assigned. It appears near the bottom center and returns after item instructions, warnings or CedMod hints expire. It never clears another plugin's active hint. In `brainless_roles`, use `show_role_hud`, `role_hud_show_description` and `role_hud_vertical_offset` to configure it; the default offset is -11 em. Role changes, death, leaving, round reset and unloading clear only HUD text this plugin owns. No HUD permission or extra plugin is required.
+The role HUD is enabled by default for living players. It shows the role name in its faction color, the custom ID when applicable, and an optional description in a compact column at the left side. The name stays on one line and the description wraps to at most four short lines, with fixed spacing. It returns after item instructions, warnings or CedMod hints expire and never clears another plugin's active hint. Role changes, death, leaving, round reset and unloading clear only HUD text this plugin owns. No HUD permission or extra plugin is required.
+
+Configure placement under `brainless_roles`:
+
+```yaml
+show_role_hud: true
+role_hud_show_description: true
+role_hud_side: Left
+role_hud_edge_padding_percent: 3
+role_hud_width_percent: 30
+role_hud_vertical_offset: 0
+role_hud_layout_revision: 1
+```
+
+Use `Right` for the other side. Padding/width are percentages of the native hint area; width is bounded to 20-40% and edge padding to 0-12%. Vertical offset uses the role-name font size (20 pixels per unit); negative moves down. Roles 0.1.5 migrates the old stock -11 vertical offset to 0 when `role_hud_layout_revision` is missing/0. Custom offsets are otherwise preserved. Set revision 1 with deliberate placement changes. Check the result at your clients' resolutions and alongside other HUD plugins.
 
 Build: `dotnet build Roles/Brainless.Roles.csproj -c Release` after preparing references. See the repository playtest checklist before installation on the main server.
 

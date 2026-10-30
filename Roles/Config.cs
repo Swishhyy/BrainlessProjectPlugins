@@ -5,18 +5,47 @@ using InventorySystem.Items.Usables.Scp330;
 
 namespace Brainless.Roles
 {
+    public enum HudSide
+    {
+        Left,
+        Right
+    }
+
     public sealed class Config : IConfig
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
-        [Description("Show the current custom or native role near the bottom of the screen. Temporarily yields to other hints.")]
+        [Description("Show the current custom or native role at the side of the screen. Temporarily yields to other hints.")]
         public bool ShowRoleHud { get; set; } = true;
         public bool RoleHudShowDescription { get; set; } = true;
 
+        [Description("Screen side for the role HUD: Left or Right.")]
+        public HudSide RoleHudSide { get; set; } = HudSide.Left;
+
+        [Description("Inset from the chosen edge, as a percentage of the hint area.")]
+        public float RoleHudEdgePaddingPercent { get; set; } = 3;
+
+        [Description("Width of the role HUD column, as a percentage of the hint area.")]
+        public float RoleHudWidthPercent { get; set; } = 30;
+
         [Description("Vertical offset in text em units; negative values move the role display down.")]
-        public float RoleHudVerticalOffset { get; set; } = -11;
+        public float RoleHudVerticalOffset { get; set; }
+
+        [Description("Layout migration marker. Set to 1 when deliberately customizing the new side HUD.")]
+        public int RoleHudLayoutRevision { get; set; }
+
+        internal void UpgradeHudLayout()
+        {
+            if (RoleHudLayoutRevision >= 1)
+                return;
+            // Existing YAML retains the former bottom-center offset.
+            if (RoleHudVerticalOffset == -11)
+                RoleHudVerticalOffset = 0;
+            RoleHudLayoutRevision = 1;
+        }
+
         public bool AllowExperimentalRoles { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
