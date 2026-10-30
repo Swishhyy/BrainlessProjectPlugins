@@ -3,6 +3,7 @@
   <ItemGroup>
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
     <Compile Include="../../Roles/LockpickRules.cs" Link="LockpickRules.cs" />
+    <Compile Include="../../ScpProximityChat/VoiceState.cs" Link="VoiceState.cs" />
     <Compile Include="../../Shared/Updates/UpdateModels.cs" Link="Updates/UpdateModels.cs" />
     <Compile Include="../../Shared/Updates/UpdateFiles.cs" Link="Updates/UpdateFiles.cs" />
     <Compile Include="../../Shared/Updates/ReleaseClient.cs" Link="Updates/ReleaseClient.cs" />

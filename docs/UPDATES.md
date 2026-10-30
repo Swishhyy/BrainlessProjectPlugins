@@ -1,6 +1,6 @@
 # Automatic plugin updates
 
-Roles 0.1.5, Items 0.1.4, Weapons 0.1.3 and BetterCoinflips 5.1.1 include their own updater. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
+Roles 0.1.5, Items 0.1.4, Weapons 0.1.3, BetterCoinflips 5.1.1 and ScpProximityChat 0.1.0 include their own updater. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
 
 ## Server setup
 
@@ -15,7 +15,7 @@ auto_update:
   releases_to_scan: 10
 ```
 
-The repository is currently private. Create a fine-grained GitHub personal access token restricted to **Swishhyy/BrainlessProjectPlugins**, with **Contents: read-only**, and place its value in the **server process environment** as `BRAINLESS_GITHUB_TOKEN`. Configure this in your host panel, container, service or startup environment, then restart the server. Put only the environment variable's name in YAML. Never commit or paste the token value into configuration or release notes. The updater reads the same variable independently in all four DLLs. Public repositories can be read without a token; this code does not change the repository's visibility.
+The repository is currently private. Create a fine-grained GitHub personal access token restricted to **Swishhyy/BrainlessProjectPlugins**, with **Contents: read-only**, and place its value in the **server process environment** as `BRAINLESS_GITHUB_TOKEN`. Configure this in your host panel, container, service or startup environment, then restart the server. Put only the environment variable's name in YAML. Never commit or paste the token value into configuration or release notes. The updater reads the same variable independently in all five DLLs. Public repositories can be read without a token; this code does not change the repository's visibility.
 
 The server account needs write access to the installed plugin directory. The updater uses EXILED Loader's exact path for its own assembly, so it also handles installations under a port-specific directory or a renamed DLL file.
 
@@ -35,9 +35,9 @@ Once these workflows are on `main`, a push/merge to `main` automatically builds 
 
 1. Bump the changed project's `.csproj` version and its `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`.
 2. Commit and merge/push to `main`, or open **Actions → Release plugins → Run workflow** and select the desired plugin or All. Prerelease is optional for manual runs.
-3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.1.5`, `items-v0.1.4`, `weapons-v0.1.3` and `bettercoinflips-v5.1.1`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
+3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.1.5`, `items-v0.1.4`, `weapons-v0.1.3` `bettercoinflips-v5.1.1` and `scpproximitychat-v0.1.0`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
 
-You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all four. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
+You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all five. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
 
 Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository Contents: write. Downloading servers only need a separate read-only token. The workflow becomes available for manual runs after it is on the default branch. Regular pull-request builds prepare and verify the same release assets without publishing anything.
 
@@ -49,6 +49,7 @@ Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository 
 | Items | `Brainless.Items.dll` | `Brainless.Items.update.json` |
 | Weapons | `Brainless.Weapons.dll` | `Brainless.Weapons.update.json` |
 | BetterCoinflips | `BetterCoinflips.dll` | `BetterCoinflips.update.json` |
+| ScpProximityChat | `Brainless.ScpProximityChat.dll` | `Brainless.ScpProximityChat.update.json` |
 
 Each manifest has schema version 1, repository identity, and a `plugins` array containing the component ID, assembly name, DLL asset name, numeric version, SHA-256, minimum EXILED version, exact SCP: SL version and `net48` target. `scripts/prepare_release.py` generates this from the built project; CI verifies the actual DLL identity/version before publishing. Updating game support also requires reviewing build references and the manifest's compatibility values.
 

@@ -34,6 +34,7 @@ if (args.Length == 2 && args[0] == "--verify-native")
 
 var random = new Random(731);
 LockpickTests.Run(Check);
+VoiceTests.Run(Check);
 Check(Rules.WeightedIndex(new[] { 0, 0, 0 }, random) == -1, "zero weights leave a plain coin flip");
 Check(Rules.WeightedIndex(new[] { -20, 0 }, random) == -1, "negative weights cannot cause an exception");
 Check(Enumerable.Range(0, 1000).All(_ => Rules.WeightedIndex(new[] { 0, 8, 0 }, random) == 1), "zero-weight effects never win");
@@ -126,7 +127,8 @@ if (args.Length > 0)
         "Roles/Brainless.Roles.dll",
         "Items/Brainless.Items.dll",
         "Weapons/Brainless.Weapons.dll",
-        "BetterCoinflips/BetterCoinflips.dll"
+        "BetterCoinflips/BetterCoinflips.dll",
+        "ScpProximityChat/Brainless.ScpProximityChat.dll"
     };
     var ownAssemblies = names.Select(p => Path.GetFileNameWithoutExtension(p)).ToArray();
     foreach (string relative in names)
@@ -139,6 +141,8 @@ if (args.Length > 0)
         var references = reader.AssemblyReferences.Select(h => reader.GetString(reader.GetAssemblyReference(h).Name)).ToArray();
         Check(!references.Intersect(ownAssemblies).Any(), relative + " has no dependency on another suite DLL");
         Check(references.Contains("Exiled.API"), relative + " references the real EXILED API");
+        if (folder == "ScpProximityChat")
+            Check(!references.Any(name => name.Contains("NAudio", StringComparison.OrdinalIgnoreCase) || name.Contains("SecretAPI", StringComparison.OrdinalIgnoreCase) || name.Contains("AudioPlayer", StringComparison.OrdinalIgnoreCase)), "SCP proximity chat has no external audio or settings DLL dependency");
     }
 
     using var nativeCommands = File.OpenRead(Path.Combine(root, ".build", "references", "Exiled.CustomItems.dll"));

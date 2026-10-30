@@ -16,6 +16,7 @@ PROJECTS = {
     'Items': ('Items/Brainless.Items.csproj', 'Brainless.Items.dll'),
     'Weapons': ('Weapons/Brainless.Weapons.csproj', 'Brainless.Weapons.dll'),
     'BetterCoinflips': ('BetterCoinflips/BetterCoinflips.csproj', 'BetterCoinflips.dll'),
+    'ScpProximityChat': ('ScpProximityChat/Brainless.ScpProximityChat.csproj', 'Brainless.ScpProximityChat.dll'),
 }
 parser = argparse.ArgumentParser()
 parser.add_argument('--plugin', choices=list(PROJECTS))

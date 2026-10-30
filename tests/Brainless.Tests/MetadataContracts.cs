@@ -11,6 +11,7 @@ internal static class MetadataContracts
         using var stream = File.OpenRead(Path.Combine(root, ".build", "references", "Assembly-CSharp-Publicized.dll"));
         using var pe = new PEReader(stream);
         var md = pe.GetMetadataReader();
+        VoiceNativeContracts.Run(pe, md, check);
         MethodDefinition Method(string ns, string name, string method)
         {
             var type = md.TypeDefinitions.Select(h => md.GetTypeDefinition(h)).Single(t => md.GetString(t.Namespace) == ns && md.GetString(t.Name) == name);

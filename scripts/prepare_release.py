@@ -15,6 +15,7 @@ PROJECTS = {
     'Items': ('Brainless.Items', 'Items/Brainless.Items.csproj'),
     'Weapons': ('Brainless.Weapons', 'Weapons/Brainless.Weapons.csproj'),
     'BetterCoinflips': ('BetterCoinflips', 'BetterCoinflips/BetterCoinflips.csproj'),
+    'ScpProximityChat': ('Brainless.ScpProximityChat', 'ScpProximityChat/Brainless.ScpProximityChat.csproj'),
 }
 
 def prepare(plugin, output):

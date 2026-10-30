@@ -56,3 +56,17 @@ All `bprole`/`bproles` commands are registered only in Remote Admin and require 
 ## Locksmith interaction
 
 D06 uses the ordinary interact key at a denied closed door; no item, new command or permission is needed. Default channel time is 15 seconds and cooldown is 120 seconds after success. Doors requiring containment level 3 or armory level 3 are excluded, including requirements inherited from a parent checkpoint. Gates/checkpoints otherwise use their native interaction behavior. Interruptions do not spend cooldown; a successful cooldown persists through role changes/reconnects until round reset. `ci give 7110` no longer grants a Maintenance Pass.
+
+## SCP nearby voice
+
+These are **F1 player-console** commands with a leading dot. No admin or CedMod permission is needed. The native Server Specific Settings menu also supplies a rebindable key (suggested N), Toggle/Hold mode and a receive switch. Always hold your normal voice key to transmit.
+
+| Command | Purpose |
+| --- | --- |
+| `.scpchat` / `.scpvc` | Toggle nearby/team for an enabled living SCP. |
+| `.scpchat local` / `.scpchat team` | Select the route explicitly. |
+| `.scpchat status` | Inspect your route and receive/mute state. |
+| `.scpchat mute all` / `.scpchat unmute all` | Disable/enable all custom nearby SCP audio, preserving individual mutes. |
+| `.scpchat mute <playerID>` / `.scpchat unmute <playerID>` | Block/unblock one connected player's nearby SCP audio for your session. |
+
+Nearby mode replaces team chat for that speech. It excludes distant receivers and spectators. Standard scoreboard individual mutes do not cover speaker-toy audio; use these receive controls. Server administrative voice mutes still apply. See [ScpProximityChat](../ScpProximityChat/README.md) for configuration and native-channel exclusions.
