@@ -21,9 +21,16 @@ internal static class VoiceNativeContracts
         var playback = md.TypeDefinitions.Select(md.GetTypeDefinition).Single(t => md.GetString(t.Namespace) == "VoiceChat.Playbacks" && md.GetString(t.Name) == "SpeakerToyPlaybackBase");
         var decode = playback.GetMethods().Select(md.GetMethodDefinition).Single(m => md.GetString(m.Name) == "DecodeSamples");
         check(Calls(pe.GetMethodBody(decode.RelativeVirtualAddress).GetILBytes(), md).Contains("Decode"), "native speaker playback decodes the original Opus packet without an external audio encoder");
+        var toy = md.TypeDefinitions.Select(md.GetTypeDefinition).Single(t => md.GetString(t.Namespace) == "AdminToys" && md.GetString(t.Name) == "SpeakerToy");
+        var volumeHook = toy.GetMethods().Select(md.GetMethodDefinition).Single(m => md.GetString(m.Name) == "OnVolumeChanged");
+        var volumeMembers = Calls(pe.GetMethodBody(volumeHook.RelativeVirtualAddress).GetILBytes(), md, true).ToArray();
+        check(volumeMembers.Contains("VolumeScale") && !volumeMembers.Contains("set_volume") && !volumeMembers.Contains("Clamp01"), "native speaker gain writes the unclamped PCM VolumeScale rather than Unity's 0-to-1 AudioSource volume");
+        var playbackBase = md.TypeDefinitions.Select(md.GetTypeDefinition).Single(t => md.GetString(t.Namespace) == "VoiceChat.Playbacks" && md.GetString(t.Name) == "VoiceChatPlaybackBase");
+        var filter = playbackBase.GetMethods().Select(md.GetMethodDefinition).Single(m => md.GetString(m.Name) == "OnAudioFilterRead");
+        check(Calls(pe.GetMethodBody(filter.RelativeVirtualAddress).GetILBytes(), md, true).Contains("VolumeScale"), "native audio playback applies the synchronized speaker gain to decoded speech samples");
     }
 
-    internal static IEnumerable<string> Calls(byte[] bytes, MetadataReader md)
+    internal static IEnumerable<string> Calls(byte[] bytes, MetadataReader md, bool includeFields = false)
     {
         var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.FieldType == typeof(OpCode)).Select(f => (OpCode)f.GetValue(null)).ToDictionary(o => unchecked((ushort)o.Value));
         int offset = 0;
@@ -42,7 +49,7 @@ internal static class VoiceNativeContracts
                 OperandType.InlineSwitch => 4 + BitConverter.ToInt32(bytes, offset) * 4,
                 _ => 4,
             };
-            if (opcode.OperandType == OperandType.InlineMethod)
+            if (opcode.OperandType == OperandType.InlineMethod || includeFields && opcode.OperandType == OperandType.InlineField)
             {
                 var handle = MetadataTokens.EntityHandle(BitConverter.ToInt32(bytes, offset));
                 if (handle.Kind == HandleKind.MethodSpecification)
@@ -51,6 +58,8 @@ internal static class VoiceNativeContracts
                     yield return md.GetString(md.GetMethodDefinition((MethodDefinitionHandle)handle).Name);
                 else if (handle.Kind == HandleKind.MemberReference)
                     yield return md.GetString(md.GetMemberReference((MemberReferenceHandle)handle).Name);
+                else if (handle.Kind == HandleKind.FieldDefinition)
+                    yield return md.GetString(md.GetFieldDefinition((FieldDefinitionHandle)handle).Name);
             }
 
             offset += size;

@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 6);
+        public override Version Version => new Version(0, 1, 7);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public static Plugin Instance { get; private set; }
 
@@ -45,7 +45,7 @@ namespace Brainless.ScpProximityChat
             Config.UpgradeAudio();
             Config.VoiceRange = Bounded(Config.VoiceRange, 5, 30, 16);
             Config.FullVolumeRange = Bounded(Config.FullVolumeRange, .1f, Config.VoiceRange, Brainless.Internal.AudioRules.FullVolumeRange);
-            Config.Volume = Bounded(Config.Volume, 0, 10, Brainless.Internal.AudioRules.VoiceVolume);
+            Config.Volume = Bounded(Config.Volume, 0, 10, VoiceAudio.DefaultVolume);
             Config.HintDurationSeconds = Bounded(Config.HintDurationSeconds, .5f, 10, 2);
             harmony = new Harmony("brainless.scp-proximity-chat");
             try
@@ -124,6 +124,12 @@ namespace Brainless.ScpProximityChat
 
         internal bool Eligible(Player player) => player != null && player.IsConnected && player.IsAlive && !player.IsHost && player.IsScp && player.Role.Type != RoleTypeId.Scp079 && player.Role.Type != RoleTypeId.Scp3114 && Config.AllowedRoles?.Contains(player.Role.Type) == true;
         private bool IsLocal(Player player) => Eligible(player) && states.TryGetValue(player, out var state) && state.Local;
+        internal string AudioStatus(Player player)
+        {
+            string active = speakers.TryGetValue(player, out var speaker) && speaker.Base != null ? speaker.Volume.ToString("0.##") + "x" : "inactive";
+            return $"Plugin {Version}; configured gain: {Config.Volume:0.##}x; active speaker gain: {active}; full-volume distance: {Config.FullVolumeRange:0.#}m; range: {Config.VoiceRange:0.#}m.";
+        }
+
         internal bool Select(Player player, bool local, out string response)
         {
             if (!Eligible(player))

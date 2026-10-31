@@ -34,11 +34,11 @@ internal static class DistributionConfigTests
         check(smokeLoot.MapRules[0].SourceTypes.Single() == ItemType.GrenadeFlash && smokeLoot.PlayerRules.Single().ReplaceTypes.Single() == ItemType.GrenadeFlash && smokeLoot.MapRules[1].SourceTypes.Single() == ItemType.GrenadeHE, "smoke crafting and natural loot use a flashbang body while cluster grenades keep HE bodies");
         var voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\n");
         voice.UpgradeAudio();
-        check(voice.Volume == 3.5f && voice.FullVolumeRange == 6 && voice.AudioBalanceRevision == 1, "old SCP voice YAML receives the audible preset without deleting the server config");
+        check(voice.Volume == 10 && voice.FullVolumeRange == 6 && voice.AudioBalanceRevision == 2, "old SCP voice YAML receives the stronger speech preset without deleting the server config");
         voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 0.5\nfull_volume_range: 4\n");
         voice.UpgradeAudio();
         check(voice.Volume == .5f && voice.FullVolumeRange == 4, "edited SCP voice gain and full-volume range survive the audio migration");
-        voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\naudio_balance_revision: 1\n");
+        voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\naudio_balance_revision: 2\n");
         voice.UpgradeAudio();
         check(voice.Volume == 1 && voice.FullVolumeRange == 2, "SCP voice owners can explicitly retain the old quieter preset");
         var door = reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7105\n  source_types: [Coin]\n- custom_id: 7108\n  source_types: [Coin]\nplayer_rules:\n- custom_id: 7105\n  replace_types: [Coin]\n");
