@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 5);
+        public override Version Version => new Version(0, 1, 6);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public static Plugin Instance { get; private set; }
 

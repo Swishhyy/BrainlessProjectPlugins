@@ -44,56 +44,56 @@ namespace Brainless.Items
             {
                 Id = 7101,
                 Name = "Irritant Gas Grenade",
-                Description = "Flashbang body releasing native SCP-244 smoke only. No flash, blast, custom slow or damage.",
+                Description = "Creates thick smoke to block vision.",
                 BaseType = ItemType.GrenadeFlash
             },
             new ItemSpec
             {
                 Id = 7102,
                 Name = "Cluster Grenade",
-                Description = "Parent blast plus four real grenades launched outward. Shared damage cap; no recursive clusters.",
+                Description = "Bursts into smaller grenades that scatter and explode.",
                 BaseType = ItemType.GrenadeHE
             },
             new ItemSpec
             {
                 Id = 7103,
                 Name = "Containment Foam Canister",
-                Description = "Six-second floor patch slows humans 10% and SCPs 8%.",
+                Description = "Slows anyone walking through the foam.",
                 BaseType = ItemType.GrenadeFlash
             },
             new ItemSpec
             {
                 Id = 7104,
                 Name = "Echo Canister",
-                Description = "Six seconds of synthetic footsteps; no damage or flash.",
+                Description = "Plays fake footsteps to distract nearby players.",
                 BaseType = ItemType.GrenadeFlash
             },
             new ItemSpec
             {
                 Id = 7105,
                 Name = "Door Jammer",
-                Description = "Equip this keycard and interact with a closed ordinary door to jam it. Others can remove it.",
+                Description = "Use this card on a closed door to jam it briefly.",
                 BaseType = ItemType.KeycardJanitor
             },
             new ItemSpec
             {
                 Id = 7106,
                 Name = "Signal Jammer",
-                Description = "Hold tool key to deploy a short, noisy SCP-079 room jammer.",
+                Description = "Deploy to disrupt SCP-079 in your room.",
                 BaseType = ItemType.Radio
             },
             new ItemSpec
             {
                 Id = 7107,
                 Name = "Survey Beacon",
-                Description = "Deploy with tool key; two audible scans in this room.",
+                Description = "Deploy and scan your room for humans and SCPs.",
                 BaseType = ItemType.Flashlight
             },
             new ItemSpec
             {
                 Id = 7108,
                 Name = "Trace Chalk",
-                Description = "Three numbered floor markers, visible to everyone for 45 seconds.",
+                Description = "Leaves numbered markers to help you find your way.",
                 BaseType = ItemType.Coin,
                 Charges = 3
             },
@@ -101,7 +101,7 @@ namespace Brainless.Items
             {
                 Id = 7109,
                 Name = "Field Dressing",
-                Description = "Four seconds to heal 35 HP. Sprinting or damage interrupts.",
+                Description = "Hold still to bandage yourself and recover health.",
                 BaseType = ItemType.Medkit,
                 RoundCap = 4
             },
@@ -109,7 +109,7 @@ namespace Brainless.Items
             {
                 Id = 7111,
                 Name = "Filter Inhaler",
-                Description = "Two seconds to gain 12 seconds of custom gas protection.",
+                Description = "Protects you from toxic clouds for a short time.",
                 BaseType = ItemType.Painkillers,
                 RoundCap = 4
             },
@@ -117,7 +117,7 @@ namespace Brainless.Items
             {
                 Id = 7112,
                 Name = "Preserved Specimen",
-                Description = "Not SCP-500. Offer it to a zombie; hold tool key to eat it for 80 HP.",
+                Description = "Drop it for a zombie to eat and recover health.",
                 BaseType = ItemType.SCP500
             },
             CreateImpact(),
@@ -128,7 +128,7 @@ namespace Brainless.Items
             Id = 7113,
             Name = "Impact Grenade",
             BaseType = ItemType.GrenadeHE,
-            Description = "Detonates on surface contact after a short arming delay. Configurable blast and safety fuse."
+            Description = "Explodes when it hits a surface."
         };
         internal void Prepare()
         {
@@ -193,6 +193,10 @@ namespace Brainless.Items
                 if (throwable && i.BaseType != (i.Id == 7101 || i.Id == 7103 || i.Id == 7104 || i.Id == 7118 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
                     throw new InvalidOperationException("Throwable " + i.Id + " must keep its native grenade body.");
             }
+
+            var descriptions = new Config().Items.ToDictionary(i => i.Id, i => i.Description);
+            foreach (var entry in Items)
+                entry.Description = GameplayText.Clean(entry.Description, descriptions.TryGetValue(entry.Id, out string shortText) ? shortText : "");
         }
     }
 

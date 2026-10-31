@@ -1,4 +1,4 @@
-# Project Brainless SCP SL Fixes 0.2.0
+# Project Brainless SCP SL Fixes 0.2.1
 
 Small configurable gameplay additions, in a separate `Brainless.SlFixes.dll` for EXILED 9.15.2 / SCP:SL 14.2.8. Install it in EXILED/Plugins and fully restart. Install `Brainless.Core.dll` for saved XP and optional Discord stats; SCP-914 behavior still runs if Core is absent. Install Items/Weapons 0.5.0 for their crafting adapters. No gameplay plugin depends on another gameplay DLL.
 

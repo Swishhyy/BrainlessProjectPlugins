@@ -1,7 +1,7 @@
-# Items 0.5.0
+# Items 0.5.1
 
-Rebuilds SUP gameplay without its webhook: four configurable SCP-500 variants, Bio Grenade, Hacking Chip, bounded spectator reinforcement radio, battery-powered SCRAMBLE utility and Volatile Pills. Adds stable IDs 7114–7122, one-time natural map/player loot migrations and old `sci` help/list/give compatibility. Existing Project Brainless grenades and roles keep their behavior.
+Updater compatibility patch: removes DataContract JSON initialization and machine proxy discovery, adds strict metadata parsing and sanitized failure diagnostics, and retains credential isolation, TLS/checksum/assembly validation and atomic replacement. An affected old updater needs one manual DLL replacement and a full restart; existing token YAML remains valid.
 
-Optional per-item YAML overrides are generated once and preserve edits; reload validates detached settings. Scoped stealth/boost state, correct SCP-939 target checks, per-round resets, friendly-fire/cover protection and serial battery tracking replace the old bugs. See docs/SUP_MIGRATION.md for defaults, limits and new SCP-914 recipes (Fixes 0.2.0).
+Shortens every default gameplay description and cleans old generated/config-oriented text when loaded, including per-item overrides. Descriptions explain equipment and abilities; short custom gameplay text is retained. Existing mechanics and IDs remain.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Auto-updates remain supported with optional Core integration. Client fog, effects and live game interactions still need server playtesting.
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Round Events 0.1.0 adds Infection as a separate optional DLL. Full live hosting/gameplay verification is still required.

@@ -1,3 +1,7 @@
-Guard Captain keycards now use explicit native Containment 1 / Armory 2 / Administration 1 levels; the old captain_gate_access option is retired. Remote Admin supports bprole set Z04 and bprole set explosive_zombie, optionally followed by a player ID. Role names accept underscores. Optional Core shares update services without a hard dependency.
+# Roles 0.2.6
 
-Separate EXILED 9.15.2 / SCP:SL 14.2.8 DLL. Verified component updates and direct auto_update.token remain. Install Core/SlFixes manually once if wanted; no gameplay plugin requires another gameplay DLL. Fully restart after download. Headless tests do not substitute for client smoke, physics and live Discord checks.
+Updater compatibility patch: removes DataContract JSON initialization and machine proxy discovery, adds strict metadata parsing and sanitized failure diagnostics, and retains credential isolation, TLS/checksum/assembly validation and atomic replacement. An affected old updater needs one manual DLL replacement and a full restart; existing token YAML remains valid.
+
+Shortens every default gameplay description and cleans old generated/config-oriented text when loaded, including per-item overrides. Descriptions explain equipment and abilities; short custom gameplay text is retained. Existing mechanics and IDs remain.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Round Events 0.1.0 adds Infection as a separate optional DLL. Full live hosting/gameplay verification is still required.

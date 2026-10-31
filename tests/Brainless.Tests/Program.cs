@@ -43,6 +43,8 @@ CandyTests.Run(Check);
 AudioTests.Run(Check);
 StatsTests.Run(Check);
 SupTests.Run(Check);
+InfectionTests.Run(Check);
+JsonAndTextTests.Run(Check);
 Check(Brainless.Roles.RoleLookup.Matches("Z04", "Explosive", "explosive_zombie") && Brainless.Roles.RoleLookup.Matches("Z04", "Explosive", "z04"), "admin role tests accept both explosive-zombie names and stable role IDs");
 Check(Brainless.Roles.RoleLookup.Matches("G01", "Guard Captain", "guard_captain") && !Brainless.Roles.RoleLookup.Matches("Z03", "Armored", "explosive_zombie"), "readable admin role names remain tied to the correct configured profile");
 TuningTests.Run(Check);
@@ -145,7 +147,8 @@ if (args.Length > 0)
         "BetterCoinflips/BetterCoinflips.dll",
         "ScpProximityChat/Brainless.ScpProximityChat.dll",
         "Core/Brainless.Core.dll",
-        "SlFixes/Brainless.SlFixes.dll"
+        "SlFixes/Brainless.SlFixes.dll",
+        "RoundEvents/Brainless.RoundEvents.dll"
     };
     var ownAssemblies = names.Select(p => Path.GetFileNameWithoutExtension(p)).ToArray();
     foreach (string relative in names)

@@ -5,7 +5,7 @@ on:
       plugin:
         description: Plugin to publish
         type: choice
-        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes]
+        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents]
         default: All
       prerelease:
         description: Publish as a prerelease
@@ -13,7 +13,7 @@ on:
         default: false
   push:
     branches: [main, 'release/**']
-    tags: ['roles-v*', 'items-v*', 'weapons-v*', 'bettercoinflips-v*', 'scpproximitychat-v*', 'core-v*', 'slfixes-v*']
+    tags: ['roles-v*', 'items-v*', 'weapons-v*', 'bettercoinflips-v*', 'scpproximitychat-v*', 'core-v*', 'slfixes-v*', 'roundevents-v*']
   release:
     types: [published]
 permissions:
@@ -30,7 +30,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          projects = ['Roles', 'Items', 'Weapons', 'BetterCoinflips', 'ScpProximityChat', 'Core', 'SlFixes']
+          projects = ['Roles', 'Items', 'Weapons', 'BetterCoinflips', 'ScpProximityChat', 'Core', 'SlFixes', 'RoundEvents']
           event = os.environ['GITHUB_EVENT_NAME']
           ref = os.environ['GITHUB_REF_NAME']
           if (event == 'push' and os.environ.get('GITHUB_REF_TYPE') == 'tag') or (event == 'release' and any(ref.startswith(p.lower()+'-v') for p in projects)):
