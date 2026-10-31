@@ -24,8 +24,7 @@ namespace Brainless.Internal.Updates
             label = "[" + assembly.GetName().Name + " updater] ";
             var exiled = Exiled.Loader.Loader.Version;
             var game = new Version(GameCore.Version.Major, GameCore.Version.Minor, GameCore.Version.Revision);
-            string variable = config.TokenEnvironmentVariable;
-            client = new ReleaseClient(() => string.IsNullOrWhiteSpace(variable) ? null : Environment.GetEnvironmentVariable(variable));
+            client = new ReleaseClient(() => config.ResolveToken(Environment.GetEnvironmentVariable));
             logger = Timing.RunCoroutine(WriteMessages());
             Log.Info(label + "Enabled; release checks every " + Math.Max(5, config.CheckIntervalMinutes) + " minutes. New DLLs load after a full server restart.");
             worker = Task.Run(async () =>

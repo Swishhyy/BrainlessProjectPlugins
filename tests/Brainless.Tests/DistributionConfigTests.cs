@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using Brainless.Internal;
+using Brainless.Internal.Updates;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -11,6 +12,12 @@ internal static class DistributionConfigTests
     {
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
+        var updater = reader.Deserialize<AutoUpdateConfig>("token: ' yaml-test-token '\ntoken_environment_variable: ''\n");
+        check(updater.ResolveToken(_ => throw new Exception("YAML token should not read the environment.")) == "yaml-test-token", "real EXILED YAML accepts a directly configured updater token");
+        var updaterRoundtrip = reader.Deserialize<AutoUpdateConfig>(writer.Serialize(updater));
+        check(updaterRoundtrip.Token == updater.Token && updaterRoundtrip.TokenEnvironmentVariable == "", "updater token and optional empty environment fallback survive YAML serialization");
+        var oldUpdater = reader.Deserialize<AutoUpdateConfig>("token_environment_variable: TEST_GITHUB_TOKEN\nreleases_to_scan: 10\n");
+        check(oldUpdater.Token == "" && oldUpdater.ResolveToken(_ => "old-environment-test-token") == "old-environment-test-token" && oldUpdater.ReleasesToScan == 10, "old updater YAML retains its environment token and configured scan count");
         bool Valid(DistributionConfig value, bool weapon = false)
         {
             try { value.Validate(id => weapon ? id >= 7201 && id <= 7207 : id >= 7101 && id <= 7113 && id != 7110); return true; }

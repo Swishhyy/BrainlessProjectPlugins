@@ -28,7 +28,7 @@ Use `Right` for the other side. Padding/width are percentages of the native hint
 
 Build: `dotnet build Roles/Brainless.Roles.csproj -c Release` after preparing references. See the repository playtest checklist before installation on the main server.
 
-Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Set `BRAINLESS_GITHUB_TOKEN` in the server environment for this private repository. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
+Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Paste a read-only GitHub token into `auto_update.token` in this plugin's YAML for this private repository; `BRAINLESS_GITHUB_TOKEN` remains an optional environment fallback. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
 
 Locksmith (D06) keeps 90 HP and now uses an innate lockpick instead of a Maintenance Pass. Interact normally with a closed door you cannot open: stay within reach for 15 seconds while the progress hint runs. The ability permits doors, gates and checkpoints below containment/armory level 3. The successful interaction uses the native door event path, grants access for that call only, and leaves permission/lock flags intact. A valid keycard still opens its door immediately. Taking damage, moving out of reach/behind cover, restraint, death, role change, opening/moving doors or changed access requirements cancels progress without spending cooldown.
 
@@ -41,3 +41,5 @@ Save YAML and run `bprole reload` with `brainless.roles` to apply settings witho
 Roles 0.2.1 fixes native explosion damage initialization for Z04: `explosive_zombie.armor_penetration` defaults to 50 (1-100). Zero penetration previously caused the native constructor to return without setting damage. The source footprint is retained and blast force is zero; world coordinates are no longer passed as a force vector.
 
 Roles 0.2.2 fixes Candy Man (S04) to receive a real SCP-330 bag, with exactly `candy_man_candy_count: 3` candies by default (1-6). Empty `approved_candy: []` selects registered standard colors; explicit entries can opt into other registered colors. No pill fallback is used. Native seed candy is cleared before filling so the role does not accidentally receive a fourth/random special candy. Existing custom role kit additions remain operator-controlled. Test with `bprole set S04 [playerID]`; the old stock fallback hint migrates on startup/reload.
+
+Version 0.2.3 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.

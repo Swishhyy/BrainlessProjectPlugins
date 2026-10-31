@@ -15,9 +15,22 @@ namespace Brainless.Internal.Updates
         public int CheckIntervalMinutes { get; set; } = 60;
         public bool IncludePrereleases { get; set; }
 
-        [Description("For private releases, put a read-only GitHub token in this environment variable. Do not put the token itself here.")]
+        [Description("Paste a read-only GitHub token here for private releases. Takes precedence over token_environment_variable; leave empty to use the optional environment variable.")]
+        public string Token { get; set; } = string.Empty;
+
+        [Description("Optional fallback environment variable NAME, used only when token is empty. The token itself can be pasted into token above.")]
         public string TokenEnvironmentVariable { get; set; } = "BRAINLESS_GITHUB_TOKEN";
-        public int ReleasesToScan { get; set; } = 10;
+        public int ReleasesToScan { get; set; } = 30;
+
+        internal string ResolveToken(Func<string, string> readEnvironment)
+        {
+            if (!string.IsNullOrWhiteSpace(Token))
+                return Token.Trim();
+            if (string.IsNullOrWhiteSpace(TokenEnvironmentVariable))
+                return null;
+            string value = readEnvironment(TokenEnvironmentVariable.Trim());
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
     }
 
     [DataContract]

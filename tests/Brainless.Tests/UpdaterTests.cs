@@ -31,6 +31,19 @@ internal static class UpdaterTests
             }
 
             Reset();
+            var credentials = new AutoUpdateConfig
+            {
+                Token = "  config-test-token  ",
+                TokenEnvironmentVariable = "SHOULD_NOT_BE_READ"
+            };
+            check(credentials.ResolveToken(_ => throw new Exception("Config token must not need a host environment variable.")) == "config-test-token", "a pasted config token works without host setup and overrides the environment");
+            credentials.Token = " \t ";
+            credentials.TokenEnvironmentVariable = " TEST_GITHUB_TOKEN ";
+            check(credentials.ResolveToken(name => name == "TEST_GITHUB_TOKEN" ? " environment-test-token " : null) == "environment-test-token", "an empty config token preserves existing environment authentication and trims surrounding whitespace");
+            credentials.TokenEnvironmentVariable = null;
+            check(credentials.ResolveToken(_ => throw new Exception("A disabled environment fallback must not be read.")) == null, "both authentication sources can be left empty for public releases");
+            credentials.TokenEnvironmentVariable = "TEST_GITHUB_TOKEN";
+            check(credentials.ResolveToken(_ => null) == null && credentials.ResolveToken(_ => " \t ") == null, "missing or blank environment credentials do not create an authorization header");
             check(UpdatePolicy.ParseVersion("1.1.0") == new Version(1, 1, 0, 0), "updater normalizes three-part and assembly versions");
             check(Rejects(() => UpdatePolicy.ParseVersion("1.1.0-beta")), "updater rejects ambiguous manifest versions");
             check(UpdatePolicy.IsTrustedDownload(new Uri("https://release-assets.githubusercontent.com/a")), "updater accepts GitHub's asset CDN");
@@ -76,11 +89,17 @@ internal static class UpdaterTests
             check(UpdatePolicy.Validate(entry, "Items", Assembly, new Version(9, 15, 2), new Version(14, 3, 0)) != null, "updater blocks a different game build");
             entry.Asset = "../Other.dll";
             check(Rejects(() => UpdatePolicy.Validate(entry, "Items", Assembly, new Version(9, 15, 2), new Version(14, 2, 8))), "manifest paths cannot redirect installation to another DLL");
-            async Task<string> RunClient(FakeGitHub fake, bool prereleases = false)
+            async Task<string> RunClient(FakeGitHub fake, bool prereleases = false, AutoUpdateConfig config = null)
             {
+                config ??= new AutoUpdateConfig
+                {
+                    Token = "unit-test-token",
+                    TokenEnvironmentVariable = ""
+                };
+                config.IncludePrereleases = prereleases;
                 using var http = new HttpClient(fake);
-                using var client = new ReleaseClient(() => "unit-test-token", http);
-                return await client.CheckAndInstallAsync("Items", Assembly, target, new Version(1, 0, 0), new Version(9, 15, 2), new Version(14, 2, 8), new AutoUpdateConfig { IncludePrereleases = prereleases }, CancellationToken.None);
+                using var client = new ReleaseClient(() => config.ResolveToken(_ => "environment-test-token"), http);
+                return await client.CheckAndInstallAsync("Items", Assembly, target, new Version(1, 0, 0), new Version(9, 15, 2), new Version(14, 2, 8), config, CancellationToken.None);
             }
 
             var good = new FakeGitHub(next);
@@ -89,6 +108,24 @@ internal static class UpdaterTests
             check(good.Requests.Count(r => r.Uri.Host == "api.github.com") == 3 && good.Requests.Where(r => r.Uri.Host == "api.github.com").All(r => r.Authorization == "Bearer unit-test-token"), "private release and asset requests use the configured read-only token");
             check(good.Requests.Single(r => r.Uri.Host == "release-assets.githubusercontent.com").Authorization == null, "GitHub asset redirects never receive the authorization token");
             Reset();
+            var environment = new FakeGitHub(next);
+            await RunClient(environment, config: new AutoUpdateConfig { TokenEnvironmentVariable = "TEST_GITHUB_TOKEN" });
+            check(File.ReadAllBytes(target).SequenceEqual(next) && environment.Requests.Where(r => r.Uri.Host == "api.github.com").All(r => r.Authorization == "Bearer environment-test-token"), "existing environment-only server setups can still authenticate and install updates end to end");
+            check(environment.Requests.Single(r => r.Uri.Host == "release-assets.githubusercontent.com").Authorization == null, "environment credentials also stay off the asset CDN");
+            Reset();
+            var anonymous = new FakeGitHub(next)
+            {
+                Status = HttpStatusCode.NotFound
+            };
+            string missingCredentialMessage = await Failure(() => RunClient(anonymous, config: new AutoUpdateConfig { TokenEnvironmentVariable = "" }));
+            check(missingCredentialMessage.Contains("No GitHub token was supplied") && missingCredentialMessage.Contains("auto_update.token") && anonymous.Requests.All(r => r.Authorization == null), "a missing private-repo token explains the YAML fix without sending credentials");
+            var denied = new FakeGitHub(next)
+            {
+                Status = HttpStatusCode.NotFound
+            };
+            string deniedMessage = await Failure(() => RunClient(denied));
+            check(deniedMessage.Contains("Contents: read") && !deniedMessage.Contains("unit-test-token") && !deniedMessage.Contains("No GitHub token was supplied"), "an inaccessible private repo reports token permissions without logging the configured token");
+            check(File.ReadAllBytes(target).SequenceEqual(old) && !File.Exists(target + ".previous"), "credential failures leave the installed DLL and backup untouched");
             var draft = new FakeGitHub(next)
             {
                 Draft = true
@@ -205,6 +242,20 @@ internal static class UpdaterTests
         {
             return true;
         }
+    }
+
+    private static async Task<string> Failure(Func<Task<string>> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (UpdateException exception)
+        {
+            return exception.Message;
+        }
+
+        throw new Exception("Expected an updater authentication failure.");
     }
 
     private sealed class FakeGitHub : HttpMessageHandler

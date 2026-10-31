@@ -14,7 +14,7 @@ Maintenance Pass (7110) has been removed. Existing generated item lists are filt
 
 `ci give 7102 [playerID]` gives a cluster even below 12 players with the ordinary `customitems.give` permission. `ci spawn` uses `customitems.spawn`. Admin commands ignore natural supply caps and never spend that supply; gas includes its paired filter. No `--force` flag or extra permission is required. Results report actual deliveries and inventory/recipient failures. Natural role kits and world loot retain population and supply caps. See `docs/COMMANDS.md`.
 
-Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Set `BRAINLESS_GITHUB_TOKEN` in the server environment for this private repository. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
+Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Paste a read-only GitHub token into `auto_update.token` in this plugin's YAML for this private repository; `BRAINLESS_GITHUB_TOKEN` remains an optional environment fallback. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
 
 Charges survive looting. Custom coin tools are registered so BetterCoinflips ignores them. The specimen looks like a tagged SCP-500 pickup but cannot be consumed as a cure. It normalizes to a coin at SCP-914.
 
@@ -29,3 +29,5 @@ Every item has its own section under `tuning`, plus list fields for name/descrip
 Version 0.3.0 enables map/locker replacements and occasional starting gear through `distribution`. Defaults: 25% per eligible pickup, at most 3 replacements, one bundle per room, and a 30% player roll with at most 3 successful grants per round / 1 per user. Class-D can receive chalk, a brace or dressing; other human kits can have native medicine/grenades converted. Optional `world_loot` extra bundles now scatter at real loose-loot locations instead of a single armory origin. All routes share existing supply caps; configured counts are maxima, not guarantees. See packaged `NATURAL_LOOT.md`.
 
 Custom explosions now pass valid native armor penetration (50 by default), fixing a zero-damage setup bug. Stock grenade values from older configs migrate to the stronger preset when `grenade_balance_revision` is 0/missing; edited values are retained. Set that marker to 1 before deliberately restoring old numbers. All parent/child damage, caps, radius, spread, fuse and penetration settings remain configurable.
+
+Version 0.3.1 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.

@@ -1,6 +1,6 @@
 # Balance and configuration
 
-Project Brainless Roles 0.2.2 and Items/Weapons 0.3.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
+Project Brainless Roles 0.2.3 and Items/Weapons 0.3.1 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
 
 ## Where to edit and apply
 
