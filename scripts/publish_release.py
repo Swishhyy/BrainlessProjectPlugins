@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish one plugin's immutable assets using GitHub Actions' scoped GH_TOKEN."""
+"""Publish immutable assets using GitHub Actions' scoped GH_TOKEN."""
 import argparse
 import hashlib
 import json
@@ -12,7 +12,10 @@ from urllib.parse import quote
 def gh(*args, check=True):
     return subprocess.run(['gh', *args], check=check, capture_output=True, text=True)
 
-def publish(plugin, version, dll, manifest, tag, existing_release=False, prerelease=False):
+def publish_assets(files, tag, title, notes, existing_release=False, prerelease=False, latest=False):
+    files = list(files)
+    if not files or len({file.name for file in files}) != len(files):
+        raise ValueError('Release assets need unique filenames.')
     repository = os.environ['GH_REPO']
     current = gh('api', f'repos/{repository}/releases/tags/{quote(tag, safe="")}', check=False)
     if existing_release:
@@ -23,7 +26,7 @@ def publish(plugin, version, dll, manifest, tag, existing_release=False, prerele
             raise RuntimeError('The release-published job expected a published release.')
         # No clobber: a published asset is never silently replaced at the same version.
         # Upload manifest last so an updater never sees an incomplete pair.
-        for file in (dll, manifest):
+        for file in files:
             match = next((asset for asset in state.get('assets', []) if asset['name'] == file.name), None)
             if match is None:
                 gh('release', 'upload', tag, str(file))
@@ -33,7 +36,7 @@ def publish(plugin, version, dll, manifest, tag, existing_release=False, prerele
     if not current.returncode:
         state = json.loads(current.stdout)
         if not state['draft']:
-            expected = {file.name: 'sha256:'+hashlib.sha256(file.read_bytes()).hexdigest() for file in (dll, manifest)}
+            expected = {file.name: 'sha256:'+hashlib.sha256(file.read_bytes()).hexdigest() for file in files}
             assets = {a['name']: (a.get('digest') or '').lower() for a in state.get('assets', [])}
             if all(assets.get(name) == digest for name, digest in expected.items()):
                 print(f'{tag} already contains these verified assets; skipped.')
@@ -43,21 +46,25 @@ def publish(plugin, version, dll, manifest, tag, existing_release=False, prerele
         if state['target_commitish'] != os.environ['GITHUB_SHA']:
             raise RuntimeError('An existing draft targets another commit; refusing to replace its assets.')
     else:
-        notes = (f'{plugin} {version} for EXILED 9.15.2 / SCP: SL 14.2.8.\n\n'
-                 'Download the DLL for manual installation. Existing installations with the updater '
-                 'will verify and download this plugin independently; the new version loads on the next full server restart.\n')
-        detail = pathlib.Path(__file__).resolve().parents[1]/plugin/'RELEASE_NOTES.md'
-        if detail.is_file():
-            notes += '\n'+detail.read_text()
         with tempfile.TemporaryDirectory() as directory:
             body = pathlib.Path(directory)/'release-notes.md'
             body.write_text(notes)
             args = ['release', 'create', tag, '--draft', '--target', os.environ['GITHUB_SHA'],
-                    '--title', f'{plugin} {version}', '--notes-file', str(body)]
+                    '--title', title, '--notes-file', str(body)]
             if prerelease: args.append('--prerelease')
             gh(*args)
-    gh('release', 'upload', tag, str(dll), str(manifest), '--clobber')
-    gh('release', 'edit', tag, '--draft=false', '--prerelease='+str(prerelease).lower())
+    gh('release', 'upload', tag, *(str(file) for file in files), '--clobber')
+    args = ['release', 'edit', tag, '--draft=false', '--prerelease='+str(prerelease).lower()]
+    if latest and not prerelease: args.append('--latest')
+    gh(*args)
+
+def publish(plugin, version, dll, manifest, tag, existing_release=False, prerelease=False):
+    notes = (f'{plugin} {version} for EXILED 9.15.2 / SCP: SL 14.2.8.\n\n'
+             'Download the DLL for manual installation. Existing installations with the updater '
+             'will verify and download this plugin independently; the new version loads on the next full server restart.\n')
+    detail = pathlib.Path(__file__).resolve().parents[1]/plugin/'RELEASE_NOTES.md'
+    if detail.is_file(): notes += '\n'+detail.read_text()
+    publish_assets([dll, manifest], tag, f'{plugin} {version}', notes, existing_release, prerelease)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -26,7 +26,7 @@ SUP's gameplay ideas are now integrated: four SCP-500 variants, Bio Grenade, Hac
 ## Install
 
 1. Stop the server and install the matching [EXILED release](https://github.com/ExMod-Team/EXILED/releases/tag/v9.15.2). Keep EXILED's standard CustomItems module enabled.
-2. Download the desired plugin artifacts from this repository's [Releases](https://github.com/Swishhyy/BrainlessProjectPlugins/releases), **Actions** tab, or build them below. Each artifact contains one DLL and its own instructions. SCP proximity chat needs only its own DLL on an existing EXILED installation; see [controls and mute settings](ScpProximityChat/README.md).
+2. Download **ProjectBrainless-Plugins.zip** or your selected DLLs from the [latest combined release](https://github.com/Swishhyy/BrainlessProjectPlugins/releases/latest), use the **Actions** artifacts, or build them below. Each release page contains all eight plugins with their individual versions and updater manifests. Each artifact contains one DLL and its own instructions. SCP proximity chat needs only its own DLL on an existing EXILED installation; see [controls and mute settings](ScpProximityChat/README.md).
 3. Put the selected DLLs in your server's `EXILED/Plugins` folder. Install any combination of the eight.
 4. Replace the old `BetterCoinflips.dll`; do not leave two versions installed. Keep a copy of your existing configuration before updating it.
 5. Start the server and edit each installed plugin's generated settings. Round Events uses `project_brainless_round_events`; its automatic selection is off by default. Use `bpitems reload`, `bpweapons reload`, `bprole reload` or inactive-event `bpevent reload` to apply tuning edits; restart for registration/native-body changes.
@@ -61,7 +61,7 @@ dotnet build Items/Brainless.Items.csproj -c Release
 
 The first command downloads checksum-pinned reference assemblies into the ignored `.build/references` directory. A checksum mismatch stops the build rather than silently targeting a different game update. You can instead point `ReferencesPath` at matching local assemblies with `dotnet build ... -p:ReferencesPath=/your/references`.
 
-The packaging script writes separate folders and ZIPs to `artifacts`. It continues building the remaining projects if one fails and returns a failing exit code afterward. The GitHub workflow also uses a separate matrix job and artifact for each plugin, with `fail-fast: false`.
+The packaging script writes separate folders and ZIPs to `artifacts`. It continues building the remaining projects if one fails and returns a failing exit code afterward. The GitHub workflow also uses a separate matrix job and artifact for each plugin, with `fail-fast: false`. Release publishing collects the verified outputs into one page and install ZIP; projects, configurations, versions and DLLs stay separate.
 
 ## Verification
 

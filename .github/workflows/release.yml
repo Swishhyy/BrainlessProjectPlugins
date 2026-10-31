@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       plugin:
-        description: Plugin to publish
+        description: Plugins to publish (All uses one combined release)
         type: choice
         options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents]
         default: All
@@ -13,7 +13,7 @@ on:
         default: false
   push:
     branches: [main, 'release/**']
-    tags: ['roles-v*', 'items-v*', 'weapons-v*', 'bettercoinflips-v*', 'scpproximitychat-v*', 'core-v*', 'slfixes-v*', 'roundevents-v*']
+    tags: ['pb-*', 'roles-v*', 'items-v*', 'weapons-v*', 'bettercoinflips-v*', 'scpproximitychat-v*', 'core-v*', 'slfixes-v*', 'roundevents-v*']
   release:
     types: [published]
 permissions:
@@ -23,39 +23,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       plugins: ${{ steps.select.outputs.plugins }}
+      bundle: ${{ steps.select.outputs.bundle }}
+      tag: ${{ steps.select.outputs.tag }}
+      existing_release: ${{ steps.select.outputs.existing_release }}
     steps:
+      - uses: actions/checkout@v4
       - id: select
         env:
           REQUESTED_PLUGIN: ${{ inputs.plugin || 'All' }}
-        run: |
-          python3 - <<'PY'
-          import json, os
-          projects = ['Roles', 'Items', 'Weapons', 'BetterCoinflips', 'ScpProximityChat', 'Core', 'SlFixes', 'RoundEvents']
-          event = os.environ['GITHUB_EVENT_NAME']
-          ref = os.environ['GITHUB_REF_NAME']
-          if (event == 'push' and os.environ.get('GITHUB_REF_TYPE') == 'tag') or (event == 'release' and any(ref.startswith(p.lower()+'-v') for p in projects)):
-              selected = [p for p in projects if ref.startswith(p.lower()+'-v')]
-          else:
-              requested = os.environ['REQUESTED_PLUGIN']
-              selected = projects if requested == 'All' else [p for p in projects if p == requested]
-          if not selected:
-              raise SystemExit('No matching plugin selected.')
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write('plugins='+json.dumps(selected)+'\n')
-          PY
-  publish:
-    name: Release ${{ matrix.plugin }}
+        run: python scripts/select_release.py
+  build:
+    name: Build release ${{ matrix.plugin }}
     needs: select
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
         plugin: ${{ fromJSON(needs.select.outputs.plugins) }}
-    concurrency:
-      group: release-${{ matrix.plugin }}
-      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -69,6 +53,8 @@ jobs:
         run: python scripts/build.py --plugin ${{ matrix.plugin }}
       - name: Run updater and gameplay regressions
         run: dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release
+      - name: Validate release publication policy
+        run: python -m unittest discover -s tests -p 'test_release_*.py'
       - name: Prepare DLL and checksum manifest
         id: prepare
         run: python scripts/prepare_release.py --plugin ${{ matrix.plugin }}
@@ -80,30 +66,64 @@ jobs:
         run: |
           dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- --verify-assembly "$RELEASE_DLL" "$ASSEMBLY_NAME" "$PLUGIN_VERSION"
           dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release -- --verify-native .
-      - name: Publish this plugin's release assets
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.plugin }}
+          path: artifacts/release/${{ matrix.plugin }}/
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    name: Publish release
+    needs: [select, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release-${{ needs.select.outputs.tag || github.sha }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: artifacts/staged
+      - name: Publish the complete verified selection
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          PLUGIN: ${{ matrix.plugin }}
-          PLUGIN_VERSION: ${{ steps.prepare.outputs.version }}
-          RELEASE_DLL: ${{ steps.prepare.outputs.dll }}
-          RELEASE_MANIFEST: ${{ steps.prepare.outputs.manifest }}
-          COMPONENT_TAG: ${{ steps.prepare.outputs.tag }}
+          SELECTED_PLUGINS: ${{ needs.select.outputs.plugins }}
+          BUNDLE: ${{ needs.select.outputs.bundle }}
+          RELEASE_TAG: ${{ needs.select.outputs.tag }}
+          EXISTING_RELEASE: ${{ needs.select.outputs.existing_release }}
           PRERELEASE: ${{ inputs.prerelease || github.event.release.prerelease || false }}
         run: |
-          args=(--plugin "$PLUGIN" --version "$PLUGIN_VERSION" --dll "$RELEASE_DLL" --manifest "$RELEASE_MANIFEST")
-          if [ "$GITHUB_EVENT_NAME" = release ]; then
-            if [[ "$GITHUB_REF_NAME" == "${PLUGIN,,}-v"* ]] && [ "$GITHUB_REF_NAME" != "$COMPONENT_TAG" ]; then
-              echo 'Component release tag must match the project version.'
-              exit 1
-            fi
-            args+=(--tag "$GITHUB_REF_NAME" --existing-release)
-          else
-            if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "$COMPONENT_TAG" ]; then
-              echo 'Tag version must match the project version.'
-              exit 1
-            fi
-            args+=(--tag "$COMPONENT_TAG")
-          fi
-          if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
-          python scripts/publish_release.py "${args[@]}"
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess, sys, xml.etree.ElementTree as ET
+          sys.path.insert(0, 'scripts')
+          from prepare_release import PROJECTS, ROOT
+          from publish_release import publish, publish_assets
+          from publish_bundle import prepare_bundle
+          assets = ROOT/'artifacts/staged'
+          existing = os.environ['EXISTING_RELEASE'] == 'true'
+          prerelease = os.environ['PRERELEASE'] == 'true'
+          tag = os.environ['RELEASE_TAG']
+          try:
+              if os.environ['BUNDLE'] == 'true':
+                  files, notes = prepare_bundle(assets, ROOT/'artifacts/combined', os.environ['GH_REPO'])
+                  publish_assets(files, tag, 'Project Brainless — All Plugins', notes, existing, prerelease, latest=True)
+              else:
+                  plugin, = json.loads(os.environ['SELECTED_PLUGINS'])
+                  assembly, project = PROJECTS[plugin]
+                  version = ET.parse(ROOT/project).findtext('.//Version')
+                  expected_tag = plugin.lower()+'-v'+version
+                  if tag and tag != expected_tag:
+                      raise ValueError('Component release tag must match the project version.')
+                  dll, = assets.rglob(assembly+'.dll')
+                  manifest, = assets.rglob(assembly+'.update.json')
+                  publish(plugin, version, dll, manifest, tag or expected_tag, existing, prerelease)
+          except subprocess.CalledProcessError as error:
+              raise SystemExit(f'GitHub release command failed with exit code {error.returncode}; published assets were not clobbered.')
+          PY
