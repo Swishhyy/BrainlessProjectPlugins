@@ -2,7 +2,7 @@
 
 Install `Brainless.Items.dll` in `EXILED/Plugins` on EXILED 9.15.2 / SCP: SL 14.2.8, with EXILED's standard CustomItems module enabled. Roles and Weapons are optional.
 
-The `brainless_items` configuration contains the 12 item definitions and their per-round caps. IDs 7101-7109 and 7111-7113 are stable integration IDs; 7110 is retired. Total supply is 6 / 10 / 14 utilities at fewer than 12 / 12-23 / 24+ players. Smoke occupies one utility slot and creates no filter. Cluster supply is 0 / 1 / 2 by the same bands.
+The `brainless_items` configuration contains the 21 item definitions and their per-round caps. IDs 7101-7109 and 7111-7122 are stable integration IDs; 7110 is retired. Total supply is 6 / 10 / 14 utilities at fewer than 12 / 12-23 / 24+ players. Smoke occupies one utility slot and creates no filter. Cluster supply is 0 / 1 / 2 by the same bands.
 
 Smoke (7101) uses a flashbang body and full-size native SCP-244 fog. It applies no flash, blast damage or custom slow. One emitter lasts 20 seconds by default; duration and emitter count are configurable. It needs no paired filter or extra inventory slot. Native client fog remains; server cold exposure from owned clouds is excluded. Ordinary SCP-244 keeps its behavior except while a player deliberately uses a Filter Inhaler.
 
@@ -34,4 +34,6 @@ Version 0.3.1 accepts a read-only GitHub token directly in `auto_update.token`; 
 
 Version 0.3.2 turns Door Jammer 7105 into a keycard, migrates old stock coin definitions/distribution, strengthens the cluster parent/children while retaining four children and finite caps, and raises custom audio gain/full-volume distance. General cues use `tuning.audio`; Echo keeps its separate audio fields. Old stock settings migrate without resetting edited values. See `TUNING.md`.
 
-Version 0.4.0 simplifies gas to native smoke only, migrates the old HE body and matching loot rules to flashbangs, and exposes confirmed in-place SCP-914 crafting adapters for SlFixes. Optional Core can host this DLL's update checks; standalone operation remains supported.
+Version 0.5.0 simplifies gas to native smoke only, migrates the old HE body and matching loot rules to flashbangs, and exposes confirmed in-place SCP-914 crafting adapters for SlFixes. Optional Core can host this DLL's update checks; standalone operation remains supported.
+
+SUP content 7114–7122 is documented in [SUP_MIGRATION.md](../docs/SUP_MIGRATION.md). New items join the existing supply and distribution ledgers. `sci itemlist`, `sci give <ID> [playerID]` and `sci help` provide compatibility without webhook logging. Optional `individual_item_files: true` stores catalog/tuning overrides in `EXILED/Configs/ProjectBrainless/<port>/Items/<ID>.yml`; existing files are never overwritten. `bpitems reload` validates these overrides on a detached configuration before applying them. Enabled/ID/body registration changes still require a full restart.

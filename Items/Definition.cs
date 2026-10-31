@@ -31,6 +31,8 @@ namespace Brainless.Items
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
         public bool WorldLoot { get; set; } = true;
         public int ToolKeybindId { get; set; } = 7100;
+        public SupTuning Sup { get; set; } = new SupTuning();
+        public bool IndividualItemFiles { get; set; }
         public ItemTuning Tuning { get; set; } = new ItemTuning();
         public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
         public int CatalogRevision { get; set; }
@@ -119,7 +121,7 @@ namespace Brainless.Items
                 BaseType = ItemType.SCP500
             },
             CreateImpact(),
-        };
+        }.Concat(SupCatalog.Defaults()).ToList();
 
         private static ItemSpec CreateImpact() => new ItemSpec
         {
@@ -133,6 +135,14 @@ namespace Brainless.Items
             if (Items == null || Items.Any(i => i == null))
                 throw new InvalidOperationException("Items cannot contain null entries.");
             Items.RemoveAll(item => item.Id == 7110);
+            if (CatalogRevision < 4)
+            {
+                foreach (var spec in SupCatalog.Defaults())
+                    if (!Items.Any(i => i.Id == spec.Id))
+                        Items.Add(spec);
+                Distribution?.UpgradeSup();
+            }
+
             if (CatalogRevision < 1 && !Items.Any(i => i.Id == 7113))
                 Items.Add(CreateImpact());
             if (CatalogRevision < 2)
@@ -159,22 +169,28 @@ namespace Brainless.Items
             Brainless.Internal.Tuning.Validate(Tuning, "tuning");
             Tuning.Supply.PairGasWithFilter = false;
             Tuning.GasGrenade.Upgrade(CatalogRevision);
-            CatalogRevision = 3;
+            CatalogRevision = Math.Max(4, CatalogRevision);
+            if (Sup == null)
+                throw new InvalidOperationException("sup cannot be null.");
+            Sup.Validate();
             GrenadeBalanceRevision = Tuning.UpgradeGrenades(GrenadeBalanceRevision);
             AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
-            Distribution.Validate(id => id >= 7101 && id <= 7113 && id != 7110);
+            Distribution.Validate(id => id >= 7101 && id <= 7122 && id != 7110);
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
-            if (Items.Any(i => i.Id < 7101 || i.Id > 7113 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
-                throw new InvalidOperationException("Item IDs must be 7101-7113 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
+            if (Items.Any(i => i.Id < 7101 || i.Id > 7122 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
+                throw new InvalidOperationException("Item IDs must be 7101-7122 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
             if (Items.Select(i => i.Id).Distinct().Count() != Items.Count || Items.Any(i => string.IsNullOrWhiteSpace(i.Name)) || Items.Select(i => i.Name).Distinct().Count() != Items.Count)
                 throw new InvalidOperationException("Item IDs/names must be nonempty and unique.");
+            foreach (var expected in SupCatalog.Defaults())
+                if (Items.Any(i => i.Id == expected.Id && i.BaseType != expected.BaseType))
+                    throw new InvalidOperationException("SUP item " + expected.Id + " must keep its native body.");
             foreach (var i in Items)
             {
-                bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7104 || i.Id == 7113;
-                if (throwable && i.BaseType != (i.Id == 7101 || i.Id == 7103 || i.Id == 7104 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
+                bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7104 || i.Id == 7113 || i.Id == 7118;
+                if (throwable && i.BaseType != (i.Id == 7101 || i.Id == 7103 || i.Id == 7104 || i.Id == 7118 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
                     throw new InvalidOperationException("Throwable " + i.Id + " must keep its native grenade body.");
             }
         }

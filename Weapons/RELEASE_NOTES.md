@@ -1,3 +1,7 @@
-Each approved native launcher bullet now launches one grenade. Removed the separate cooldown that desynchronized shooting and grenades; total capacity is hard-capped at 16, smaller custom capacities are preserved, reserve is zero, and reload/unload/refill remain blocked. Empty/duplicate callbacks cannot create extra grenades. Adds confirmed crafting adapters and optional Core update delegation.
+# Weapons 0.5.0
 
-Separate EXILED 9.15.2 / SCP:SL 14.2.8 DLL. Verified component updates and direct auto_update.token remain. Install Core/SlFixes manually once if wanted; no gameplay plugin requires another gameplay DLL. Fully restart after download. Headless tests do not substitute for client smoke, physics and live Discord checks.
+Adds SUP-inspired Railgun 7208: configurable charge/discharge, progress and bounded ring/beam visuals, separate human/SCP/impact damage, forward-only hit tests and world-cover limits. Three finite charges by default; cancellation before firing consumes nothing and ordinary reload/attachments/pickup transfers cannot replenish it.
+
+The launcher retains one grenade per native LMG bullet and its hard 16-shot ceiling. Optional empty-serial disposal defaults on. Adds one-time railgun/launcher distribution rows and optional per-weapon YAML overrides which preserve saved edits. No webhook or additional plugin dependency.
+
+Built against EXILED 9.15.2 / SCP:SL 14.2.8. Auto-updates remain supported. See docs/SUP_MIGRATION.md for configuration and live playtest requirements.

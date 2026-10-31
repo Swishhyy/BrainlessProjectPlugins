@@ -27,12 +27,12 @@ using FxAudio = Brainless.Internal.Audio;
 
 namespace Brainless.Items
 {
-    public sealed class Plugin : Plugin<Config>
+    public sealed partial class Plugin : Plugin<Config>
     {
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 4, 0);
+        public override Version Version => new Version(0, 5, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -61,6 +61,8 @@ namespace Brainless.Items
         public override void OnEnabled()
         {
             Config.Prepare();
+            LoadIndividualItems(Config);
+            Config.Prepare();
             var enabled = Config.Items.Where(s => s.Enabled).ToArray();
             if (enabled.Select(s => s.Id).Distinct().Count() != enabled.Length || enabled.Select(s => s.Name).Distinct().Count() != enabled.Length)
                 throw new InvalidOperationException("Item IDs and names must be unique.");
@@ -77,6 +79,7 @@ namespace Brainless.Items
 
             toolKey = new KeybindSetting(Config.ToolKeybindId, "Use custom item or nearby device", KeyCode.V, true, false, "Hold for tools, devices and specimens.", onChanged: KeyChanged);
             SettingBase.Register(new[] { toolKey }).ToArray();
+            SupSubscribe();
             P.UsingItem += Using;
             P.FlippingCoin += Coin;
             P.TogglingRadio += Radio;
@@ -115,6 +118,7 @@ namespace Brainless.Items
             distribution = null;
             updates?.Dispose();
             updates = null;
+            SupUnsubscribe();
             P.UsingItem -= Using;
             P.FlippingCoin -= Coin;
             P.TogglingRadio -= Radio;
@@ -152,6 +156,7 @@ namespace Brainless.Items
             foreach (var layer in movement.Values)
                 layer.Clear();
             movement.Clear();
+            SupCleanup();
             fragments.Clear();
             NativeSmoke.Clear();
             foreach (var payload in thrown.Values.ToArray())
@@ -174,17 +179,20 @@ namespace Brainless.Items
             charges.Clear();
             foreach (var item in registered.Values)
                 item.TrackedSerials.Clear();
+            SupReset();
             specimenUsed.Clear();
             jamCooldown.Clear();
             chalkNumber = 0;
             budget.Reset(0);
             capacitySet = false;
             lifetime.Run(Tick());
+            lifetime.Run(SupUpdates());
         }
 
         private void Ended(Exiled.Events.EventArgs.Server.RoundEndedEventArgs ev) => Reset();
         private void RoundStarted()
         {
+            roundStartedAt = Time.time;
             EnsureCapacity();
             distribution?.RoundStarted();
         }
@@ -231,7 +239,7 @@ namespace Brainless.Items
         internal bool CanIssueBatch(uint[] ids)
         {
             EnsureCapacity();
-            var ours = ids.Where(id => id >= 7101 && id <= 7113).ToArray();
+            var ours = ids.Where(id => id >= 7101 && id <= 7122).ToArray();
             int extra = Config.Tuning.Supply.PairGasWithFilter ? ours.Count(id => id == 7101) : 0;
             if (budget.Total + ours.Length + extra > budget.Capacity)
                 return false;
@@ -357,6 +365,7 @@ namespace Brainless.Items
         {
             if (ev.IsAllowed)
             {
+                SupLeave(ev.Player);
                 channels.Remove(ev.Player);
                 filters.Remove(ev.Player);
                 keyHeld.Remove(ev.Player);
@@ -370,6 +379,7 @@ namespace Brainless.Items
 
         private void Left(LeftEventArgs ev)
         {
+            SupLeave(ev.Player);
             channels.Remove(ev.Player);
             keyHeld.Remove(ev.Player);
             filters.Remove(ev.Player);
@@ -382,6 +392,8 @@ namespace Brainless.Items
 
         private void Hurting(HurtingEventArgs ev)
         {
+            if (ev.IsAllowed && ev.Amount > 0 && Config.Sup.InvisibilityPills.BreakOnAttack)
+                StopStealth(ev.Attacker);
             if (Config.Tuning.Interaction.CancelOnDamage && ev.IsAllowed && ev.Amount > 0)
                 channels.Remove(ev.Player);
         }
@@ -453,6 +465,8 @@ namespace Brainless.Items
             var item = held == null ? null : Find(held.Serial);
             if (item == null || !player.IsHuman)
                 return;
+            if (ActivateSup(player, held, item, hold))
+                return;
             switch (item.Id)
             {
                 case 7105:
@@ -523,9 +537,9 @@ namespace Brainless.Items
             return true;
         }
 
-        private Door LookDoor(Player player)
+        private Door LookDoor(Player player, float? reach = null)
         {
-            foreach (var hit in Physics.RaycastAll(player.CameraTransform.position, player.CameraTransform.forward, Config.Tuning.DoorBrace.Reach, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+            foreach (var hit in Physics.RaycastAll(player.CameraTransform.position, player.CameraTransform.forward, reach ?? Config.Tuning.DoorBrace.Reach, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
             {
                 if (hit.collider.GetComponentInParent<ReferenceHub>() != null)
                     continue;
@@ -537,6 +551,14 @@ namespace Brainless.Items
 
         private void Door(InteractingDoorEventArgs ev) => Safe.Run(() =>
         {
+            var hacking = ev.Player.CurrentItem == null ? null : Find(ev.Player.CurrentItem.Serial);
+            if (hacking?.Id == 7119)
+            {
+                ev.IsAllowed = false;
+                HackDoor(ev.Player, ev.Player.CurrentItem, ev.Door, false);
+                return;
+            }
+
             if (!ev.IsAllowed)
                 return;
             var brace = devices.FirstOrDefault(d => d.Id == 7105 && d.Door == ev.Door);
@@ -652,6 +674,8 @@ namespace Brainless.Items
 
         private void Thrown(ThrownProjectileEventArgs ev)
         {
+            if (Config.Sup.InvisibilityPills.BreakOnAttack)
+                StopStealth(ev.Player);
             var item = Find(ev.Throwable.Serial);
             if (item == null)
                 return;
@@ -667,11 +691,11 @@ namespace Brainless.Items
 
         private void Arm(RegisteredItem item, Projectile projectile, Player owner)
         {
-            if (item.Id == 7101)
+            if (item.Id == 7101 || item.Id == 7118)
             {
                 int serial = projectile.Serial;
                 smokeProjectiles.Add(serial);
-                lifetime.Later(Config.Tuning.GasGrenade.FuseSeconds + 5, () => smokeProjectiles.Remove(serial));
+                lifetime.Later((item.Id == 7118 ? Config.Sup.BioGrenade.FuseSeconds : Config.Tuning.GasGrenade.FuseSeconds) + 5, () => smokeProjectiles.Remove(serial));
             }
 
             if (item.Id == 7113 && projectile is ExplosionGrenadeProjectile impact)
@@ -693,10 +717,11 @@ namespace Brainless.Items
                 Field = Config.Tuning.ContainmentFoam,
                 Gas = Config.Tuning.GasGrenade,
                 Cluster = Config.Tuning.ClusterGrenade,
+                Bio = Config.Sup.BioGrenade,
                 Echo = Config.Tuning.EchoCanister
             };
             if (projectile is TimeGrenadeProjectile timed)
-                timed.FuseTime = item.Id == 7101 ? Config.Tuning.GasGrenade.FuseSeconds : item.Id == 7102 ? Config.Tuning.ClusterGrenade.FuseSeconds : item.Id == 7104 ? Config.Tuning.EchoCanister.FuseSeconds : Config.Tuning.ContainmentFoam.FuseSeconds;
+                timed.FuseTime = item.Id == 7118 ? Config.Sup.BioGrenade.FuseSeconds : item.Id == 7101 ? Config.Tuning.GasGrenade.FuseSeconds : item.Id == 7102 ? Config.Tuning.ClusterGrenade.FuseSeconds : item.Id == 7104 ? Config.Tuning.EchoCanister.FuseSeconds : Config.Tuning.ContainmentFoam.FuseSeconds;
         }
 
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() =>
@@ -719,6 +744,9 @@ namespace Brainless.Items
                 return;
             switch (payload.Item.Id)
             {
+                case 7118:
+                    SpawnBio(position, payload.Source, payload.Bio);
+                    break;
                 case 7101:
                     for (int i = 0; i < payload.Gas.SmokeEmitters; i++)
                         NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f + Vector3.right * (i % 2 == 0 ? .08f : -.08f), payload.Gas.DurationSeconds);
@@ -867,6 +895,8 @@ namespace Brainless.Items
             {
                 var next = ConfigReload.Read(this);
                 next.Prepare();
+                LoadIndividualItems(next);
+                next.Prepare();
                 if (!next.IsEnabled || next.ToolKeybindId != Config.ToolKeybindId || next.Items.Count != Config.Items.Count || next.Items.Any(i => !Config.Items.Any(old => old.Id == i.Id && old.BaseType == i.BaseType && old.Enabled == i.Enabled)))
                     throw new InvalidOperationException("Enabled state, keybind IDs, item IDs, native bodies and registration changes require a server restart. Tuning was not changed.");
                 if (next.Items.Where(i => registered.ContainsKey(i.Id)).Any(i => Exiled.CustomItems.API.Features.CustomItem.Registered.Any(other => !registered.Values.Contains(other) && other.Name == i.Name)))
@@ -926,6 +956,7 @@ namespace Brainless.Items
             internal DamageSource Source;
             internal FieldTuning Field;
             internal GasTuning Gas;
+            internal BioTuning Bio;
             internal ClusterTuning Cluster;
             internal EchoTuning Echo;
         }

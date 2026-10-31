@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework><OutputType>Exe</OutputType><PlatformTarget>AnyCPU</PlatformTarget></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../Shared/SupRules.cs" Link="SupRules.cs" />
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
     <Compile Include="../../Shared/ExplosionRules.cs" Link="ExplosionRules.cs" />
     <Compile Include="../../Shared/AudioRules.cs" Link="AudioRules.cs" />
@@ -32,6 +33,8 @@
     <NativeConfigReferencesPath>$(MSBuildProjectDirectory)/obj/native-config-references</NativeConfigReferencesPath>
   </PropertyGroup>
   <ItemGroup Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
+    <Compile Include="../../Shared/ItemFiles.cs" Link="ItemFiles.cs" />
+    <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />
     <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />
     <Compile Include="../../ScpProximityChat/Config.cs" Link="ScpChatConfig.cs" />
     <Compile Include="../../Core/DiscordProtocol.cs" Link="DiscordProtocol.cs" />
