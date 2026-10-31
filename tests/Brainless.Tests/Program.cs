@@ -36,10 +36,14 @@ if (args.Length == 2 && args[0] == "--verify-native")
 }
 
 var random = new Random(731);
+Check(Brainless.Weapons.LauncherRules.Capacity(100) == 16 && Brainless.Weapons.LauncherRules.Capacity(16) == 16 && Brainless.Weapons.LauncherRules.Capacity(8) == 8, "launcher capacity never exceeds sixteen while smaller custom capacities remain valid");
 LockpickTests.Run(Check);
 VoiceTests.Run(Check);
 CandyTests.Run(Check);
 AudioTests.Run(Check);
+StatsTests.Run(Check);
+Check(Brainless.Roles.RoleLookup.Matches("Z04", "Explosive", "explosive_zombie") && Brainless.Roles.RoleLookup.Matches("Z04", "Explosive", "z04"), "admin role tests accept both explosive-zombie names and stable role IDs");
+Check(Brainless.Roles.RoleLookup.Matches("G01", "Guard Captain", "guard_captain") && !Brainless.Roles.RoleLookup.Matches("Z03", "Armored", "explosive_zombie"), "readable admin role names remain tied to the correct configured profile");
 TuningTests.Run(Check);
 DistributionTests.Run(Check);
 Check(Rules.WeightedIndex(new[] { 0, 0, 0 }, random) == -1, "zero weights leave a plain coin flip");
@@ -138,7 +142,9 @@ if (args.Length > 0)
         "Items/Brainless.Items.dll",
         "Weapons/Brainless.Weapons.dll",
         "BetterCoinflips/BetterCoinflips.dll",
-        "ScpProximityChat/Brainless.ScpProximityChat.dll"
+        "ScpProximityChat/Brainless.ScpProximityChat.dll",
+        "Core/Brainless.Core.dll",
+        "SlFixes/Brainless.SlFixes.dll"
     };
     var ownAssemblies = names.Select(p => Path.GetFileNameWithoutExtension(p)).ToArray();
     foreach (string relative in names)

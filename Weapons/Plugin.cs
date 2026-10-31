@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 2);
+        public override Version Version => new Version(0, 4, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -42,7 +42,7 @@ namespace Brainless.Weapons
         private readonly Dictionary<Player, float> tagImmunity = new Dictionary<Player, float>();
         private readonly Dictionary<Door, DoorProgress> doors = new Dictionary<Door, DoorProgress>();
         private bool capacitySet, reflected;
-        private Brainless.Internal.Updates.PluginUpdates updates;
+        private IDisposable updates;
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
@@ -242,11 +242,13 @@ namespace Brainless.Weapons
             if (state == null)
                 return;
             int capacity = FixedAmmo(state) ? state.InitialCapacity : state.Definition.Spec.Magazine;
+            if (state.Definition.Id == 7207)
+                capacity = LauncherRules.Capacity(capacity);
             if (capacity > 0)
                 firearm.MaxMagazineAmmo = capacity;
             if (FixedAmmo(state))
             {
-                int left = shots.Remaining(firearm.Serial);
+                int left = Math.Min(shots.Remaining(firearm.Serial), capacity);
                 int barrel = Math.Min(firearm.BarrelAmmo, left);
                 firearm.BarrelAmmo = barrel;
                 firearm.MagazineAmmo = Math.Min(firearm.MagazineAmmo, left - barrel);
@@ -289,13 +291,6 @@ namespace Brainless.Weapons
                 return;
             }
 
-            if (state.Definition.Id == 7207 && Time.time < state.NextLaunch)
-            {
-                ev.IsAllowed = false;
-                ev.Firearm.AutomaticActionModule?.ServerResync();
-                return;
-            }
-
             if (state.Definition.Id == 7204)
             {
                 Cool(state);
@@ -327,14 +322,17 @@ namespace Brainless.Weapons
                 Vector3 origin = ev.Player.CameraTransform.position;
                 Vector3 direction = ev.Direction.normalized;
                 var source = new DamageSource(ev.Player);
-                if (launcher)
-                    state.NextLaunch = Time.time + Config.LauncherShotInterval;
                 lifetime.Later(0, () =>
                 {
                     if (!ev.IsAllowed || state.ConsumedToken == token)
                         return;
                     state.ConsumedToken = token;
-                    shots.Consume(gun.Serial);
+                    if (!shots.Consume(gun.Serial))
+                    {
+                        Clamp(gun);
+                        return;
+                    }
+
                     Clamp(gun);
                     if (launcher)
                     {
@@ -596,7 +594,7 @@ namespace Brainless.Weapons
         {
             internal int InitialCapacity;
             internal RegisteredWeapon Definition;
-            internal float Heat, LastFire, LastHeat, VentUntil, NextLaunch;
+            internal float Heat, LastFire, LastHeat, VentUntil;
             internal int Token, ConsumedToken, DoorToken, AmmoBefore;
             internal Dictionary<Player, Tag> Tags = new Dictionary<Player, Tag>();
         }

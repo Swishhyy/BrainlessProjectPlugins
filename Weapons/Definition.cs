@@ -38,9 +38,6 @@ namespace Brainless.Weapons
         public WeaponTuning Tuning { get; set; } = new WeaponTuning();
         public WeaponDistributionConfig Distribution { get; set; } = new WeaponDistributionConfig();
 
-        [Tune(.05, 30)]
-        public float LauncherShotInterval { get; set; } = .65f;
-
         [Tune(0, 100)]
         public float LauncherSpeed { get; set; } = 18;
 
@@ -133,7 +130,7 @@ namespace Brainless.Weapons
         {
             Id = 7207,
             Name = "Grenade Launcher",
-            Description = "Logicer body; 16 grenades total, no reload. Small 3.5m blast: up to 70 human / 150 SCP damage. Tap fire every 0.65s.",
+            Description = "Logicer body; each bullet launches one grenade. Maximum 16 rounds, no reload. Small configurable blast.",
             BaseType = ItemType.GunLogicer,
             Magazine = 16,
             Reserve = 0,
@@ -169,6 +166,15 @@ namespace Brainless.Weapons
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
             foreach (var w in Weapons)
+                if (w.Id == 7207)
+                {
+                    w.Magazine = LauncherRules.Capacity(w.Magazine);
+                    w.Reserve = 0;
+                    if (w.Description == "Logicer body; 16 grenades total, no reload. Small 3.5m blast: up to 70 human / 150 SCP damage. Tap fire every 0.65s.")
+                        w.Description = "Logicer body; each bullet launches one grenade. Maximum 16 rounds, no reload. Small configurable blast.";
+                }
+
+            foreach (var w in Weapons)
                 if (w.Id < 7201 || w.Id > 7207 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7205 || w.Id == 7207) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
                     throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
             foreach (var w in Weapons)
@@ -186,7 +192,7 @@ namespace Brainless.Weapons
         {
             this.owner = owner;
             if (spec.Id == 7207 && spec.Description == "Logicer body; 16 grenades total, no reload. Small 2.5m blast: up to 45 human / 90 SCP damage. Tap fire every 0.65s.")
-                spec.Description = "Logicer body; 16 grenades total, no reload. Small 3.5m blast: up to 70 human / 150 SCP damage. Tap fire every 0.65s.";
+                spec.Description = "Logicer body; each bullet launches one grenade. Maximum 16 rounds, no reload. Small configurable blast.";
             Spec = spec;
             Id = spec.Id;
             Name = spec.Name;
@@ -201,6 +207,17 @@ namespace Brainless.Weapons
             Name = spec.Name;
             Description = spec.Description;
             Weight = spec.Weight;
+        }
+
+        // Stable optional crafting API used by Brainless.SlFixes. A successful
+        // conversion keeps the native serial/body and spends normal supply.
+        public string TryCraftInventory(Player player, Item item) => AdoptItem(player, item);
+        public string TryCraftPickup(Pickup pickup, Vector3 output)
+        {
+            string failure = AdoptPickup(pickup, null);
+            if (failure == null)
+                pickup.Position = output;
+            return failure;
         }
 
         internal string AdoptItem(Player player, Item item)

@@ -33,7 +33,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 4);
+        public override Version Version => new Version(0, 2, 5);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -57,7 +57,7 @@ namespace Brainless.Roles
         private Harmony harmony;
         private RoleHud roleHud;
         private Lockpicking lockpicking;
-        private Brainless.Internal.Updates.PluginUpdates updates;
+        private IDisposable updates;
         public override void OnEnabled()
         {
             Config.Prepare();
@@ -309,7 +309,7 @@ namespace Brainless.Roles
             if (player != null)
             {
                 int removed = player.Items.Count(i => definition.Remove.Contains(i.Type));
-                int added = definition.Add.Count + definition.CustomItems.Count + definition.CustomItems.Count(id => id == 7101);
+                int added = definition.Add.Count + definition.CustomItems.Count;
                 if (definition.Id == "D03")
                     added++;
                 if (definition.Id == "S04")
@@ -333,7 +333,7 @@ namespace Brainless.Roles
 
         internal bool SetForAdmin(Player player, string id, out string response)
         {
-            var definition = Config.Roles.FirstOrDefault(r => r.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+            var definition = Config.Roles.FirstOrDefault(r => RoleLookup.Matches(r.Id, r.Name, id));
             if (definition == null)
             {
                 response = "Unknown role ID. Use bproles.";
@@ -545,13 +545,7 @@ namespace Brainless.Roles
                 player.RemoveItem(item);
             int tier = id == "G01" ? 2 : id == "G02" || id == "G04" ? 0 : 1;
             var card = (Exiled.API.Features.Items.Keycards.CustomKeycardItem)player.AddItem(ItemType.KeycardCustomTaskForce);
-            card.Permissions = KeycardPermissions.Checkpoints | KeycardPermissions.Intercom | KeycardPermissions.ArmoryLevelOne;
-            if (tier > 0)
-                card.Permissions |= KeycardPermissions.ContainmentLevelOne;
-            if (tier == 2)
-                card.Permissions |= KeycardPermissions.ArmoryLevelTwo;
-            if (tier == 2 && Config.CaptainGateAccess)
-                card.Permissions |= KeycardPermissions.ExitGates;
+            card.KeycardLevels = new Interactables.Interobjects.DoorUtils.KeycardLevels(tier > 0 ? 1 : 0, tier == 2 ? 2 : 1, 1, true);
             card.ItemName = id == "G01" ? "Guard Captain Badge" : "Facility Security Badge";
             badges[card.Serial] = tier;
         }

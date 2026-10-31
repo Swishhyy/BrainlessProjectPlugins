@@ -12,6 +12,26 @@ internal static class DistributionConfigTests
     {
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
+        var gateway = Brainless.Core.DiscordProtocol.Read("{\"op\":10,\"d\":{\"heartbeat_interval\":41250}}");
+        check(Brainless.Core.DiscordProtocol.Number(Brainless.Core.DiscordProtocol.At(gateway, "op")) == 10 && Brainless.Core.DiscordProtocol.Number(Brainless.Core.DiscordProtocol.At(Brainless.Core.DiscordProtocol.At(gateway, "d"), "heartbeat_interval")) == 41250, "the built-in Discord adapter parses real gateway JSON through the existing framework serializer");
+        using (var json = System.Text.Json.JsonDocument.Parse(Brainless.Core.DiscordProtocol.Write(Brainless.Core.DiscordProtocol.Object("op", 1, "d", null))))
+            check(json.RootElement.GetProperty("op").GetInt32() == 1 && json.RootElement.GetProperty("d").ValueKind == System.Text.Json.JsonValueKind.Null, "gateway heartbeat JSON preserves a null initial sequence and remains valid Discord JSON");
+        check(!Brainless.Core.DiscordProtocol.SafeName("@everyone **test**\n").Contains('@') && !Brainless.Core.DiscordProtocol.SafeName("@everyone **test**\n").Contains('\n'), "Discord leaderboard names cannot generate mentions or inject extra output lines");
+        var fixes = reader.Deserialize<Brainless.SlFixes.Config>("rough_teleport_chance: 100\n");
+        fixes.Validate();
+        check(fixes.Recipes.Any(r => r.CustomId == 7101 && r.Source == ItemType.GrenadeFlash) && fixes.Recipes.Any(r => r.CustomId == 7102 && r.Setting == Scp914.Scp914KnobSetting.VeryFine), "partial Fixes YAML retains smoke/cluster recipes and compatible native bodies");
+        var captain = new Interactables.Interobjects.DoorUtils.KeycardLevels(1, 2, 1, false);
+        var readBack = new Interactables.Interobjects.DoorUtils.KeycardLevels(captain.Permissions);
+        check(readBack.Containment == 1 && readBack.Armory == 2 && readBack.Admin == 1, "native captain card permissions roundtrip as containment 1, armory 2, administration 1");
+        var smoke = reader.Deserialize<Brainless.Items.GasTuning>("duration_seconds: 8\n");
+        smoke.Upgrade(2);
+        check(smoke.DurationSeconds == 20, "legacy short smoke lifetime upgrades to a visible native-fog lifetime");
+        smoke.DurationSeconds = 8;
+        smoke.Upgrade(3);
+        check(smoke.DurationSeconds == 8, "current smoke configs can deliberately retain a shorter lifetime");
+        var smokeLoot = reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7101\n  source_types: [GrenadeHE]\n- custom_id: 7102\n  source_types: [GrenadeHE]\nplayer_rules:\n- custom_id: 7101\n  replace_types: [GrenadeHE]\n");
+        smokeLoot.UpgradeSmokeBody();
+        check(smokeLoot.MapRules[0].SourceTypes.Single() == ItemType.GrenadeFlash && smokeLoot.PlayerRules.Single().ReplaceTypes.Single() == ItemType.GrenadeFlash && smokeLoot.MapRules[1].SourceTypes.Single() == ItemType.GrenadeHE, "smoke crafting and natural loot use a flashbang body while cluster grenades keep HE bodies");
         var voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\n");
         voice.UpgradeAudio();
         check(voice.Volume == 3.5f && voice.FullVolumeRange == 6 && voice.AudioBalanceRevision == 1, "old SCP voice YAML receives the audible preset without deleting the server config");

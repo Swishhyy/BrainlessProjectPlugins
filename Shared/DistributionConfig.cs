@@ -87,7 +87,7 @@ namespace Brainless.Internal
                 Map(7105, 2, ItemType.KeycardJanitor),
                 Map(7104, 3, ItemType.GrenadeFlash),
                 Map(7103, 2, ItemType.GrenadeFlash),
-                Map(7101, 3, ItemType.GrenadeHE),
+                Map(7101, 3, ItemType.GrenadeFlash),
                 Map(7113, 2, ItemType.GrenadeHE),
                 Map(7102, 1, ItemType.GrenadeHE),
                 Map(7107, 1, ItemType.Flashlight),
@@ -102,7 +102,7 @@ namespace Brainless.Internal
                 Replace(7111, 2, ItemType.Painkillers),
                 Replace(7104, 3, ItemType.GrenadeFlash),
                 Replace(7103, 2, ItemType.GrenadeFlash),
-                Replace(7101, 3, ItemType.GrenadeHE),
+                Replace(7101, 3, ItemType.GrenadeFlash),
                 Replace(7113, 2, ItemType.GrenadeHE),
                 Replace(7102, 1, ItemType.GrenadeHE),
             }
@@ -157,6 +157,22 @@ namespace Brainless.Internal
     // operator writes only part of a distribution block in existing YAML.
     public sealed class ItemDistributionConfig : DistributionConfig
     {
+        internal void UpgradeSmokeBody()
+        {
+            foreach (var rule in MapRules?.Where(r => r != null && r.CustomId == 7101) ?? Enumerable.Empty<MapLootRule>())
+                if (rule.SourceTypes?.SequenceEqual(new[] { ItemType.GrenadeHE }) == true)
+                    rule.SourceTypes = new List<ItemType>
+                    {
+                        ItemType.GrenadeFlash
+                    };
+            foreach (var rule in PlayerRules?.Where(r => r != null && r.CustomId == 7101) ?? Enumerable.Empty<PlayerLootRule>())
+                if (rule.ReplaceTypes?.SequenceEqual(new[] { ItemType.GrenadeHE }) == true)
+                    rule.ReplaceTypes = new List<ItemType>
+                    {
+                        ItemType.GrenadeFlash
+                    };
+        }
+
         internal void UpgradeDoorJammerBody()
         {
             foreach (var rule in MapRules?.Where(r => r != null && r.CustomId == 7105) ?? Enumerable.Empty<MapLootRule>())

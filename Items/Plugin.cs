@@ -32,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 2);
+        public override Version Version => new Version(0, 4, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -43,6 +43,7 @@ namespace Brainless.Items
         private readonly Dictionary<uint, RegisteredItem> registered = new Dictionary<uint, RegisteredItem>();
         private readonly Dictionary<int, int> charges = new Dictionary<int, int>();
         private readonly Dictionary<int, Payload> thrown = new Dictionary<int, Payload>();
+        private readonly HashSet<int> smokeProjectiles = new HashSet<int>();
         private readonly Dictionary<Player, Channel> channels = new Dictionary<Player, Channel>();
         private readonly HashSet<Player> keyHeld = new HashSet<Player>();
         private readonly Dictionary<Player, float> filters = new Dictionary<Player, float>();
@@ -55,7 +56,7 @@ namespace Brainless.Items
         private int chalkNumber;
         private bool capacitySet;
         private float lastFieldTick;
-        private Brainless.Internal.Updates.PluginUpdates updates;
+        private IDisposable updates;
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
@@ -87,6 +88,7 @@ namespace Brainless.Items
             P.Left += Left;
             P.ChangingItem += Selected;
             M.ExplodingGrenade += Exploding;
+            M.SpawningGrenadeEffect += GrenadeEffect;
             M.ChangedIntoGrenade += ChangedIntoGrenade;
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
@@ -124,6 +126,7 @@ namespace Brainless.Items
             P.Left -= Left;
             P.ChangingItem -= Selected;
             M.ExplodingGrenade -= Exploding;
+            M.SpawningGrenadeEffect -= GrenadeEffect;
             M.ChangedIntoGrenade -= ChangedIntoGrenade;
             U.UpgradingPickup -= UpgradePickup;
             U.UpgradingInventoryItem -= UpgradeInventory;
@@ -161,6 +164,7 @@ namespace Brainless.Items
             devices.Clear();
             filters.Clear();
             thrown.Clear();
+            smokeProjectiles.Clear();
         }
 
         private void Reset()
@@ -663,6 +667,13 @@ namespace Brainless.Items
 
         private void Arm(RegisteredItem item, Projectile projectile, Player owner)
         {
+            if (item.Id == 7101)
+            {
+                int serial = projectile.Serial;
+                smokeProjectiles.Add(serial);
+                lifetime.Later(Config.Tuning.GasGrenade.FuseSeconds + 5, () => smokeProjectiles.Remove(serial));
+            }
+
             if (item.Id == 7113 && projectile is ExplosionGrenadeProjectile impact)
             {
                 var tuning = Config.Tuning.ImpactGrenade;
@@ -679,7 +690,8 @@ namespace Brainless.Items
                 Item = item,
                 Projectile = projectile,
                 Source = new DamageSource(owner),
-                Field = item.Id == 7101 ? Config.Tuning.GasGrenade : Config.Tuning.ContainmentFoam,
+                Field = Config.Tuning.ContainmentFoam,
+                Gas = Config.Tuning.GasGrenade,
                 Cluster = Config.Tuning.ClusterGrenade,
                 Echo = Config.Tuning.EchoCanister
             };
@@ -708,12 +720,15 @@ namespace Brainless.Items
             switch (payload.Item.Id)
             {
                 case 7101:
+                    for (int i = 0; i < payload.Gas.SmokeEmitters; i++)
+                        NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f + Vector3.right * (i % 2 == 0 ? .08f : -.08f), payload.Gas.DurationSeconds);
+                    if (Config.Debug)
+                        Log.Info($"[Smoke 7101] Serial {ev.Projectile.Serial}: {payload.Gas.SmokeEmitters} full-size native emitters for {payload.Gas.DurationSeconds}s.");
+                    break;
                 case 7103:
-                    bool gas = payload.Item.Id == 7101;
                     float radius = payload.Field.Radius;
                     var field = new Field
                     {
-                        Gas = gas,
                         Position = position,
                         Room = Room.Get(position),
                         Source = payload.Source,
@@ -721,22 +736,9 @@ namespace Brainless.Items
                         Radius = radius,
                         Tuning = payload.Field
                     };
-                    // Gameplay must still work if a native renderer fails to initialize.
                     fields.Add(field);
-                    if (gas)
-                    {
-                        for (int i = 0; i < ((GasTuning)payload.Field).SmokeEmitters; i++)
-                        {
-                            int emitter = i;
-                            Safe.Run(() => field.Smoke.Add(NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f + Vector3.right * (emitter % 2 == 0 ? .08f : -.08f), radius)));
-                        }
-
-                        if (Config.Debug)
-                            Log.Info($"[Gas 7101] Serial {ev.Projectile.Serial}: {field.Smoke.Count} native emitters, radius {radius}, duration {payload.Field.DurationSeconds}s.");
-                    }
-                    else
-                        field.Marker = World.Marker(lifetime, position + Vector3.up * .025f, new Color(.1f, .65f, .15f, .35f), new Vector3(radius * 2, .02f, radius * 2));
-                    World.Cue(position, gas ? "Irritant gas - leave the cloud or use a filter" : "Containment foam - slow floor", 10);
+                    field.Marker = World.Marker(lifetime, position + Vector3.up * .025f, new Color(.1f, .65f, .15f, .35f), new Vector3(radius * 2, .02f, radius * 2));
+                    World.Cue(position, "Containment foam - slow floor", 10);
                     break;
                 case 7102:
                     Cluster(position, payload.Source, payload.Cluster, ev.TargetsToAffect);
@@ -746,6 +748,13 @@ namespace Brainless.Items
                     break;
             }
         });
+        private void GrenadeEffect(SpawningGrenadeEffectEventArgs ev)
+        {
+            if (smokeProjectiles.Contains(ev.Projectile.Serial))
+                ev.IsAllowed = false;
+        }
+
+        internal bool FilterProtectsAt(Vector3 point) => filters.Any(pair => pair.Value > Time.time && pair.Key.IsConnected && pair.Key.IsAlive && (pair.Key.CameraTransform.position - point).sqrMagnitude < .001f);
         private void PlayAudio(Vector3 position, float seconds, string kind)
         {
             var audio = Config.Tuning.Audio;
@@ -804,6 +813,7 @@ namespace Brainless.Items
         private void Update()
         {
             fragments.Prune();
+            NativeSmoke.Prune();
             float elapsed = Mathf.Clamp(Time.time - lastFieldTick, 0, 1);
             lastFieldTick = Time.time;
             foreach (var pair in channels.ToArray())
@@ -829,8 +839,6 @@ namespace Brainless.Items
             {
                 fields.Remove(field);
                 lifetime.Release(field.Marker);
-                foreach (var smoke in field.Smoke)
-                    NativeSmoke.Release(smoke);
             }
 
             foreach (var player in Player.List.Where(p => p.IsAlive).ToArray())
@@ -841,12 +849,10 @@ namespace Brainless.Items
                     var tuning = field.Tuning;
                     if (player.IsGodModeEnabled || (!tuning.AffectOwner && player == field.Source.Owner) || (!tuning.AffectAllies && !field.Source.CanAffect(player)) || (tuning.SameRoomOnly && player.CurrentRoom != field.Room) || Vector3.Distance(player.Position, field.Position) > field.Radius || (tuning.RequireLineOfSight && !World.ClearLine(field.Position + Vector3.up * .2f, player.Position)))
                         continue;
-                    bool filtered = field.Gas && filters.TryGetValue(player, out float until) && until > Time.time;
-                    if (!filtered || !Config.Tuning.FilterInhaler.BlocksSlow)
-                        slow = Math.Min(slow, 1 - (player.IsScp ? tuning.ScpSlowPercent : tuning.HumanSlowPercent) / 100);
+                    slow = Math.Min(slow, 1 - (player.IsScp ? tuning.ScpSlowPercent : tuning.HumanSlowPercent) / 100);
                     float damage = player.IsScp ? tuning.ScpDamagePerSecond : tuning.HumanDamagePerSecond;
-                    if (damage > 0 && (!filtered || !Config.Tuning.FilterInhaler.BlocksDamage))
-                        field.Source.Hurt(player, damage * elapsed, field.Gas ? "Irritant gas" : "Containment foam");
+                    if (damage > 0)
+                        field.Source.Hurt(player, damage * elapsed, "Containment foam");
                 }
 
                 if (!movement.TryGetValue(player, out var layer))
@@ -919,6 +925,7 @@ namespace Brainless.Items
             internal Projectile Projectile;
             internal DamageSource Source;
             internal FieldTuning Field;
+            internal GasTuning Gas;
             internal ClusterTuning Cluster;
             internal EchoTuning Echo;
         }
@@ -948,14 +955,12 @@ namespace Brainless.Items
 
         private sealed class Field
         {
-            internal bool Gas;
             internal Vector3 Position;
             internal Room Room;
             internal DamageSource Source;
             internal float Expires, Radius;
             internal Primitive Marker;
             internal FieldTuning Tuning;
-            internal readonly List<Scp244Pickup> Smoke = new List<Scp244Pickup>();
         }
     }
 }

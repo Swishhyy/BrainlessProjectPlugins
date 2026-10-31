@@ -9,14 +9,14 @@ namespace BetterCoinflips
     public class Plugin : Plugin<Config, Configs.Translations>
     {
         public override Version RequiredExiledVersion => new(9, 15, 2);
-        public override Version Version => new(5, 1, 5);
+        public override Version Version => new(5, 1, 6);
         public override string Author => "Miki_hero";
         public override string Name => "BetterCoinflips";
 
         public static Plugin Instance;
         private EventHandlers _eventHandler;
         private readonly Brainless.Internal.Lifetime _lifetime = new();
-        private Brainless.Internal.Updates.PluginUpdates updates;
+        private IDisposable updates;
         public void Later(float delay, Action action) => _lifetime.Later(delay, action);
         public override void OnEnabled()
         {

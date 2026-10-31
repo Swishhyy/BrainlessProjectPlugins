@@ -42,8 +42,8 @@ namespace Brainless.Items
             {
                 Id = 7101,
                 Name = "Irritant Gas Grenade",
-                Description = "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow.",
-                BaseType = ItemType.GrenadeHE
+                Description = "Flashbang body releasing native SCP-244 smoke only. No flash, blast, custom slow or damage.",
+                BaseType = ItemType.GrenadeFlash
             },
             new ItemSpec
             {
@@ -148,8 +148,18 @@ namespace Brainless.Items
                         Distribution?.UpgradeDoorJammerBody();
                 }
 
-            CatalogRevision = 2;
+            foreach (var item in Items.Where(i => i.Id == 7101))
+            {
+                item.BaseType = ItemType.GrenadeFlash;
+                if (item.Description == "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow." || item.Description == "Eight-second cloud. Filter or leave it. SCPs are unaffected.")
+                    item.Description = "Flashbang body releasing native SCP-244 smoke only. No flash, blast, custom slow or damage.";
+            }
+
+            Distribution?.UpgradeSmokeBody();
             Brainless.Internal.Tuning.Validate(Tuning, "tuning");
+            Tuning.Supply.PairGasWithFilter = false;
+            Tuning.GasGrenade.Upgrade(CatalogRevision);
+            CatalogRevision = 3;
             GrenadeBalanceRevision = Tuning.UpgradeGrenades(GrenadeBalanceRevision);
             AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
@@ -164,7 +174,7 @@ namespace Brainless.Items
             foreach (var i in Items)
             {
                 bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7104 || i.Id == 7113;
-                if (throwable && i.BaseType != (i.Id == 7103 || i.Id == 7104 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
+                if (throwable && i.BaseType != (i.Id == 7101 || i.Id == 7103 || i.Id == 7104 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
                     throw new InvalidOperationException("Throwable " + i.Id + " must keep its native grenade body.");
             }
         }
@@ -180,7 +190,7 @@ namespace Brainless.Items
         {
             this.owner = owner;
             if (spec.Id == 7101 && spec.Description == "Eight-second cloud. Filter or leave it. SCPs are unaffected.")
-                spec.Description = "Eight seconds of native SCP smoke. Obscures vision and slows humans 20%; no gas damage. Filter blocks the slow.";
+                spec.Description = "Flashbang body releasing native SCP-244 smoke only. No flash, blast, custom slow or damage.";
             if (spec.Id == 7102 && spec.Description == "Three smaller blasts, shared damage cap; keep clear of the beeps.")
                 spec.Description = "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.";
             if (spec.Id == 7102 && spec.Description == "First detonation launches four real grenades outward. Short fuses and a shared damage cap; no recursive clusters.")
@@ -199,6 +209,17 @@ namespace Brainless.Items
             Name = spec.Name;
             Description = spec.Description;
             Weight = spec.Weight;
+        }
+
+        // Stable optional crafting API used by Brainless.SlFixes. A successful
+        // conversion keeps the native serial/body and spends normal supply.
+        public string TryCraftInventory(Player player, Item item) => AdoptItem(player, item);
+        public string TryCraftPickup(Pickup pickup, Vector3 output)
+        {
+            string failure = AdoptPickup(pickup, null);
+            if (failure == null)
+                pickup.Position = output;
+            return failure;
         }
 
         internal string AdoptItem(Player player, Item item)

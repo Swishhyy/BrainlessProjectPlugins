@@ -1,4 +1,4 @@
-# Brainless SCP Proximity Chat 0.1.4
+# Brainless SCP Proximity Chat 0.1.5
 
 Standalone **EXILED 9.15.2 / SCP: SL 14.2.8** plugin. Install **one DLL**, `Brainless.ScpProximityChat.dll`, in `EXILED/Plugins`. No SecretAPI, SecretLabNAudio, AudioPlayer, or separate settings/HUD library is required. EXILED already supplies the framework, Harmony and MEC; the game supplies speakers, Opus playback and Server Specific Settings.
 
@@ -65,7 +65,7 @@ brainless_scp_proximity_chat:
 
 `voice_range` is bounded to 5–30 metres; native receiver visibility checks still apply. Full-volume distance is bounded to the voice radius; volume to 0–10. Four native SSS IDs, base through base+3, are reserved. An existing collision stops only this plugin's enable with an explanatory error; change the base and restart. Other plugins' settings and join filters are not replaced. Disabling this plugin removes only its own settings, speakers and Harmony patch.
 
-Build with `python3 scripts/build.py --plugin ScpProximityChat`. The release tag is `scpproximitychat-v0.1.4`. This is a new Brainless implementation using the game/EXILED APIs, not copied from the unlicensed BoltonDev repository. It has been compiled against the pinned real assemblies and checked headlessly; live microphone playback, CedMod interaction and client rendering still require the [playtest](../docs/PLAYTEST.md).
+Build with `python3 scripts/build.py --plugin ScpProximityChat`. The release tag is `scpproximitychat-v0.1.5`. This is a new Brainless implementation using the game/EXILED APIs, not copied from the unlicensed BoltonDev repository. It has been compiled against the pinned real assemblies and checked headlessly; live microphone playback, CedMod interaction and client rendering still require the [playtest](../docs/PLAYTEST.md).
 
 Version 0.1.1 shows **Proximity chat enabled** after nearby mode successfully acquires a native speaker, and **Proximity chat disabled** when returning to team voice. Key toggles and F1 route commands use this feedback. It briefly replaces the current hint so a persistent role HUD cannot suppress it; that HUD can resume afterward. A failed speaker allocation displays its failure instead of an enabled message. Configure the text/duration above, or disable these messages with `show_hints: false`.
 
@@ -76,3 +76,5 @@ Test with two connected living players within the configured range. You do not h
 Version 0.1.3 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.
 
 Version 0.1.4 raises nearby microphone gain from 1 to 3.5 and full-volume distance from 2m to 6m. Native speaker gain supports amplification above 1; no re-encoding or new dependency is needed. Untouched old YAML values migrate unless `audio_balance_revision: 1`; custom settings survive. Gain is configurable from 0 to 10. Live listening levels still need a two-player check.
+
+Version 0.1.5 adds optional Core update-service delegation and robust component release discovery. Voice routing, controls and louder audio defaults are unchanged.

@@ -1,9 +1,3 @@
-Door Jammer 7105 now uses a keycard. Equip it and interact with an ordinary closed door; existing timings, charges, removal and the tool key remain. Catalog revision 2 migrates the old stock coin body and matching distribution rules.
+Smoke 7101 now uses a flashbang body and full-size native SCP-244 fog only: no flash/bang, custom slow, blast, damage or filter pairing. Fuse, duration and emitter count remain configurable. Native server lifetime updates no longer overwrite the full network size; ordinary fog remains separate. Old stock HE definitions/loot rules and short lifetimes migrate. Public confirmed crafting adapters support SlFixes while keeping body/serial and normal supply. Optional Core update delegation is included.
 
-Cluster keeps four native children, with a 180/500 parent over 6m and 120/300 children over 5.5m, 0.9s child fuse plus 0.06s stagger, 5m/s outward / 3.5m/s upward launches, and shared 300/1200 raw caps. Children start separately when clear of nearby cover. Revision-1 stock configs upgrade; custom values/counts remain.
-
-Custom cue and Echo audio now use gain 2.5 and 6m full-volume distance. General cues are configurable under tuning.audio, with independent Echo audio fields.
-
-Independent DLL for EXILED 9.15.2 / SCP:SL 14.2.8. Retains direct auto_update.token configuration, verified release downloads and .previous rollback backups. Fully restart after downloading an update.
-
-Validation: independent builds, headless gameplay/config/updater regressions and native API contracts. Actual client listening levels, physics and balance still require a server playtest. See docs/TUNING.md and docs/PLAYTEST.md.
+Separate EXILED 9.15.2 / SCP:SL 14.2.8 DLL. Verified component updates and direct auto_update.token remain. Install Core/SlFixes manually once if wanted; no gameplay plugin requires another gameplay DLL. Fully restart after download. Headless tests do not substitute for client smoke, physics and live Discord checks.

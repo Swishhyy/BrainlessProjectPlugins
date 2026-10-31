@@ -126,6 +126,13 @@ internal static class UpdaterTests
             string deniedMessage = await Failure(() => RunClient(denied));
             check(deniedMessage.Contains("Contents: read") && !deniedMessage.Contains("unit-test-token") && !deniedMessage.Contains("No GitHub token was supplied"), "an inaccessible private repo reports token permissions without logging the configured token");
             check(File.ReadAllBytes(target).SequenceEqual(old) && !File.Exists(target + ".previous"), "credential failures leave the installed DLL and backup untouched");
+            var mixedOrder = new FakeGitHub(next)
+            {
+                OldUnrelatedFirst = true
+            };
+            await RunClient(mixedOrder, config: new AutoUpdateConfig { Token = "unit-test-token", TokenEnvironmentVariable = "", ReleasesToScan = 1 });
+            check(File.ReadAllBytes(target).SequenceEqual(next) && mixedOrder.Requests[0].Uri.Query.Contains("per_page=100"), "component discovery fetches a full release page and sorts publication times before applying a short scan limit");
+            Reset();
             var draft = new FakeGitHub(next)
             {
                 Draft = true
@@ -262,7 +269,7 @@ internal static class UpdaterTests
     {
         private readonly byte[] dll;
         internal readonly List<(Uri Uri, string Authorization, bool Conditional)> Requests = new();
-        internal bool Draft, Prerelease, Truncate, Corrupt, WaitForCancellation;
+        internal bool Draft, Prerelease, Truncate, Corrupt, WaitForCancellation, OldUnrelatedFirst;
         internal string PluginId = "Items", Checksum, Redirect = "https://release-assets.githubusercontent.com/file";
         internal HttpStatusCode Status = HttpStatusCode.OK;
         internal FakeGitHub(byte[] dll)
@@ -287,7 +294,52 @@ internal static class UpdaterTests
                     response = new HttpResponseMessage(HttpStatusCode.NotModified);
                 else
                 {
-                    response = Bytes(JsonSerializer.SerializeToUtf8Bytes(new[] { new { id = 1, tag_name = "items-v1.1.0", draft = Draft, prerelease = Prerelease, published_at = "2026-10-29T12:00:00Z", assets = new[] { new { id = 1, name = UpdatePolicy.ManifestName(Assembly), state = "uploaded", size = Manifest.Length, digest = (string)null }, new { id = 2, name = Assembly + ".dll", state = "uploaded", size = dll.Length, digest = "sha256:" + UpdatePolicy.Sha256(dll) } } } }));
+                    object release = new
+                    {
+                        id = 1,
+                        tag_name = "items-v1.1.0",
+                        draft = Draft,
+                        prerelease = Prerelease,
+                        published_at = "2026-10-29T12:00:00Z",
+                        assets = new[]
+                        {
+                            new
+                            {
+                                id = 1,
+                                name = UpdatePolicy.ManifestName(Assembly),
+                                state = "uploaded",
+                                size = Manifest.Length,
+                                digest = (string)null
+                            },
+                            new
+                            {
+                                id = 2,
+                                name = Assembly + ".dll",
+                                state = "uploaded",
+                                size = dll.Length,
+                                digest = "sha256:" + UpdatePolicy.Sha256(dll)
+                            }
+                        }
+                    };
+                    object[] releases = OldUnrelatedFirst ? new object[]
+                    {
+                        new
+                        {
+                            id = 99,
+                            tag_name = "older-other-component",
+                            draft = false,
+                            prerelease = false,
+                            published_at = "2020-01-01T00:00:00Z",
+                            assets = Array.Empty<object>()
+                        },
+                        release
+                    }
+
+                    : new[]
+                    {
+                        release
+                    };
+                    response = Bytes(JsonSerializer.SerializeToUtf8Bytes(releases));
                     response.Headers.ETag = new EntityTagHeaderValue("\"release-list\"");
                 }
             }

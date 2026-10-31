@@ -14,6 +14,20 @@ namespace Brainless.Internal
         internal static T Read<T>(Plugin<T> plugin)
             where T : class, IConfig, new()
         {
+            try
+            {
+                return ReadFile(plugin);
+            }
+            catch (YamlDotNet.Core.YamlException)
+            {
+                // YAML exceptions may quote credential-bearing config lines.
+                throw new InvalidOperationException("Invalid YAML. Check indentation and field types; the active config was not changed.");
+            }
+        }
+
+        private static T ReadFile<T>(Plugin<T> plugin)
+            where T : class, IConfig, new()
+        {
             string raw = File.ReadAllText(LoaderPlugin.Config.ConfigType == ConfigType.Separated ? plugin.ConfigPath : Paths.Config);
             if (LoaderPlugin.Config.ConfigType != ConfigType.Separated)
             {

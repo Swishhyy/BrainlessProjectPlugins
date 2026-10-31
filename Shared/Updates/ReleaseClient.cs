@@ -89,7 +89,8 @@ namespace Brainless.Internal.Updates
         private async Task<GithubRelease[]> GetReleasesAsync(int scan, CancellationToken cancellation)
         {
             string etag = cachedScan == scan ? releasesEtag : null;
-            var response = await GetBytesAsync(new Uri("https://api.github.com/repos/" + UpdatePolicy.Repository + "/releases?per_page=" + scan), 2 * 1024 * 1024, "application/vnd.github+json", etag, cancellation).ConfigureAwait(false);
+            // Fetch a full page before sorting component tags by publication.
+            var response = await GetBytesAsync(new Uri("https://api.github.com/repos/" + UpdatePolicy.Repository + "/releases?per_page=100"), 2 * 1024 * 1024, "application/vnd.github+json", etag, cancellation).ConfigureAwait(false);
             if (response.NotModified)
             {
                 if (cachedReleases == null)
@@ -97,7 +98,7 @@ namespace Brainless.Internal.Updates
                 return cachedReleases;
             }
 
-            cachedReleases = UpdatePolicy.ReadJson<GithubRelease[]>(response.Data) ?? new GithubRelease[0];
+            cachedReleases = (UpdatePolicy.ReadJson<GithubRelease[]>(response.Data) ?? new GithubRelease[0]).Where(r => r != null).OrderByDescending(r => Published(r.PublishedAt)).Take(scan).ToArray();
             releasesEtag = response.Etag;
             cachedScan = scan;
             return cachedReleases;

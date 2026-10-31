@@ -69,7 +69,30 @@ namespace Brainless.Internal.Updates
             });
         }
 
-        internal static PluginUpdates Start(Assembly assembly, string id, AutoUpdateConfig config)
+        internal static IDisposable Start(Assembly assembly, string id, AutoUpdateConfig config)
+        {
+            if (config?.Enabled != true)
+                return null;
+            if (assembly.GetName().Name != "Brainless.Core")
+            {
+                try
+                {
+                    var core = Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetName().Name == "Brainless.Core");
+                    var register = core?.GetType("Brainless.Core.UpdateHub")?.GetMethod("Register", BindingFlags.Public | BindingFlags.Static);
+                    var shared = register?.Invoke(null, new object[] { assembly, id, config.CheckIntervalMinutes, config.IncludePrereleases, config.Token, config.TokenEnvironmentVariable, config.ReleasesToScan }) as IDisposable;
+                    if (shared != null)
+                        return shared;
+                }
+                catch (Exception)
+                {
+                    Log.Warn("[" + assembly.GetName().Name + " updater] Core service unavailable; using the standalone updater.");
+                }
+            }
+
+            return StartStandalone(assembly, id, config);
+        }
+
+        internal static PluginUpdates StartStandalone(Assembly assembly, string id, AutoUpdateConfig config)
         {
             if (config?.Enabled != true)
                 return null;

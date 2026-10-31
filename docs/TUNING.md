@@ -1,6 +1,6 @@
 # Balance and configuration
 
-Project Brainless Roles 0.2.4 and Items/Weapons 0.3.2 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
+Project Brainless Roles 0.2.5 and Items/Weapons 0.4.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
 
 ## Where to edit and apply
 
@@ -30,17 +30,8 @@ brainless_items:
   tuning:
     gas_grenade:
       fuse_seconds: 2.5
-      duration_seconds: 8
-      radius: 4
-      human_slow_percent: 20
-      scp_slow_percent: 0
-      human_damage_per_second: 0
-      scp_damage_per_second: 0
-      affect_allies: false
-      affect_owner: true
-      same_room_only: true
-      require_line_of_sight: true
-      smoke_emitters: 2
+      duration_seconds: 20
+      smoke_emitters: 1
     cluster_grenade:
       fuse_seconds: 3
       grenade_count: 4
@@ -77,9 +68,9 @@ Impact (7113) ignores the thrower's collider and detonates once on a qualifying 
 
 Blast damage is center damage with linear distance falloff; normal friendly-fire, god mode and damage-event rules apply. Custom blasts do not apply native HE burn/deafen/concussion or door damage. Disabling the additional line-of-sight check does not bypass restrictions in native target enumeration or another plugin's denial.
 
-Gas uses native SCP-244 fog with no gas primitives. The custom field applies the configured slow/DPS; all DPS defaults to zero. `smoke_emitters` (1-6) adjusts overlapping native fog density. The visual radius is capped by the installed SCP-244 prefab's maximum diameter even if the custom gameplay radius is larger; keep radius near the default 4m and verify visually before expanding. Walls/rooms also affect native fog. A filter blocks the configured custom slow/damage, not world smoke or ordinary SCP-244. Harmful native cold subeffects from owned clouds are removed on the server while ordinary/forced cold exposure and native immunity remain. Native frost/fog visual cues can remain on clients.
+Smoke 7101 now uses a flashbang body and full-size native SCP-244 particles. Its only tuning fields are fuse, duration and emitter count; legacy gas slow/DPS/radius fields are ignored. It does not flash, explode, apply a custom slow or create a filter. Native server exposure from owned emitters is excluded so they cannot drain HP/Hume shields or apply cold gameplay effects. Native client rendering and room/door fog boundaries remain. The native prefab controls its visual extent; there is no pretend independent server radius. Full size avoids a low emission percentage that can make a short cloud effectively invisible. Default lifetime is 20 seconds, with one emitter. The server lifetime component is disabled only for owned emitters and their network size is held at full; ordinary SCP-244 is not changed. Client smoke still needs an in-game visual check.
 
-`affect_allies` broadens field slowing; optional custom damage still obeys server friendly-fire rules. `same_room_only` and `require_line_of_sight` control custom field checks, independently of the native fog renderer.
+Containment foam retains its independent radius, slow/DPS, ally/owner and cover settings. A Filter Inhaler is no longer paired with smoke; it can suppress native SCP-244 server exposure while active. Legacy pair_gas_with_filter is ignored/forced off. Smoke and matching old HE loot rules migrate to flashbangs; catalog revision 3 also upgrades an untouched eight-second lifetime. Set revision 3 to deliberately retain eight seconds.
 
 ## Every other item
 
@@ -97,13 +88,13 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 | `filter_inhaler` / 7111 | `use_seconds: 2`, `duration_seconds: 12`, `blocks_slow: true`, `blocks_damage: true` |
 | `preserved_specimen` / 7112 | `use_seconds: 4`, `heal_amount: 80`, `reach: 2`, `once_per_player_per_round: true` |
 | `interaction` | `device_reach: 3`, `move_tolerance: 0.6`, `cancel_on_damage: true`, `tick_seconds: 0.1` |
-| `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2` (extra bundles), `pair_gas_with_filter: true` |
+| `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2` (extra bundles), `pair_gas_with_filter: false` (legacy, ignored) |
 
 The item list (`brainless_items.items`) controls each entry's `name`, `description`, `enabled`, `round_cap`, `charges` and `weight`; retain its `id` and native `base_type`. Charges support 1-1000. Throwable behavior is per grenade; multiple tool charges apply to reusable tools, not extra thrown projectiles. Text descriptions/hints are operator-editable strings and do not automatically recalculate when you change numeric tuning.
 
 The old Maintenance Pass (7110) is removed even from existing lists. Impact 7113 is appended when `catalog_revision` is missing/0. Set `catalog_revision: 1` when deliberately removing it, or keep an entry with `enabled: false`. A reload does not save migrations back to disk; use EXILED's normal config save or edit the list/revision yourself when making permanent catalog changes.
 
-Round caps and supply apply to natural role kits/world loot. Administrative `ci give`/`ci spawn` grants bypass these limits without an extra force permission. Gas pairs with a filter by default and uses two utility slots; disabling pairing makes it one. Existing spent counts are never refunded by changing capacities. The normal cluster allowance is the smaller of its item cap and the current lobby's configured cluster cap, with the additional minimum-player gate. World-loot count is an upper bound on additional bundles; a paired filter still spends its own supply slot. Valid loose-loot anchors, room caps and remaining supply may produce fewer items. See [NATURAL_LOOT.md](NATURAL_LOOT.md) for replacement and starting-gear settings.
+Round caps and supply apply to natural role kits/world loot. Administrative `ci give`/`ci spawn` grants bypass these limits without an extra force permission. Smoke uses one utility slot and no paired filter. Existing spent counts are never refunded by changing capacities. The normal cluster allowance is the smaller of its item cap and the current lobby's configured cluster cap, with the additional minimum-player gate. World-loot count is an upper bound on additional bundles; a paired filter still spends its own supply slot. Valid loose-loot anchors, room caps and remaining supply may produce fewer items. See [NATURAL_LOOT.md](NATURAL_LOOT.md) for replacement and starting-gear settings.
 
 ## Explosive zombie (Z04)
 
@@ -132,13 +123,12 @@ Role list entries retain their editable health/shield/speed/stamina/reserve/scal
 
 ## Weapons
 
-`brainless_weapons.weapons` controls each weapon's `name`, `description`, `magazine`, `reserve`, `human_damage`, `scp_damage`, `round_cap`, `weight`, `enabled` and `experimental`. Keep IDs and supported native bodies. Ordinary gun damage values are multipliers. Launcher blast damage is absolute and uses the separate fields below. Magazine 0 leaves a normal weapon's native loaded capacity; positive values set the configured capacity. Last Word and the launcher require 1-255 and use that number as the serial's total finite shot budget. World pickups never recreate reserve ammo.
+`brainless_weapons.weapons` controls each weapon's `name`, `description`, `magazine`, `reserve`, `human_damage`, `scp_damage`, `round_cap`, `weight`, `enabled` and `experimental`. Keep IDs and supported native bodies. Ordinary gun damage values are multipliers. Launcher blast damage is absolute and uses the separate fields below. Magazine 0 leaves a normal weapon's native loaded capacity; positive values set the configured capacity. Last Word accepts 1-255 finite shots; the launcher accepts 1-16 and clamps larger configured values to 16. Launcher reserve is always zero. Each approved native bullet launches one grenade; the old extra launcher_shot_interval is retired. World pickups never recreate reserve ammo.
 
 To make the launcher fire 24 grenades, change only its existing 7207 entry's `magazine: 24`, save and run `bpweapons reload`; grant a new launcher. Existing 16-shot launchers retain their original remaining budget. Neither attachments, transfers, reload nor a config reload refill finite weapons.
 
 | Root field | Default |
 | --- | --- |
-| `launcher_shot_interval` | 0.65 |
 | `launcher_speed` | 18 |
 | `launcher_fuse` | 1.8 |
 | `launcher_blast_radius` | 3.5 |
@@ -194,3 +184,9 @@ Echo and Rattler retain independent `audio_volume: 2.5`, `audio_range: 16` and `
 SCP proximity chat defaults to `volume: 3.5`, `full_volume_range: 6`, `voice_range: 16`. Gain accepts 0-10 through the native speaker's PCM multiplier. Old stock 1/2 values migrate automatically unless `audio_balance_revision: 1`; edited values and receive/mute controls survive. No microphone decoding/re-encoding or additional dependency is added. Confirm actual listening volume with two living clients after a full restart.
 
 Door Jammer 7105 now uses `KeycardJanitor` instead of a coin. Equip it and interact with an ordinary closed door; the existing tool key also works. Timing, removal and duration still use `tuning.door_brace`. Catalog revision 2 migrates the old stock body/name/description and its single-coin distribution rules, without resetting edited timing, supply or removed loot lists. Body changes require a full restart.
+
+## Core and SCP SL Fixes
+
+Core 0.1.0 hosts reusable update services, persistent XP/stat tracking and optional Discord slash commands. SlFixes 0.1.0 adds Rough teleports, configurable SCP-914 recipes and XP action capture. Both are separate optional DLLs. See [Core](../Core/README.md) and [Fixes](../SlFixes/README.md) for complete config and setup. Existing gameplay DLLs remain standalone.
+
+Guard Captain card levels are native Containment 1 / Armory 2 / Administration 1. The retired captain_gate_access toggle cannot raise those levels. Debug with `bprole set G01`; `bprole set explosive_zombie` or `bprole set Z04` tests the explosive zombie.

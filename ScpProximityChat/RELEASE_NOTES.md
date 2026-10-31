@@ -1,5 +1,3 @@
-Nearby microphone gain increases from 1 to 3.5; full-volume distance increases from 2m to 6m. Gain is configurable from 0 to 10 through the native speaker multiplier, with no microphone re-encoding or new dependency. Untouched stock YAML migrates; custom values and receive/mute/toggle controls remain.
+Adds optional Core update delegation and publication-time component discovery. Voice toggle, routing, mute controls and louder gain are unchanged.
 
-Independent DLL for EXILED 9.15.2 / SCP:SL 14.2.8. Retains direct auto_update.token configuration, verified release downloads and .previous rollback backups. Fully restart after downloading an update.
-
-Validation: independent builds, headless gameplay/config/updater regressions and native API contracts. Actual client listening levels, physics and balance still require a server playtest. See docs/TUNING.md and docs/PLAYTEST.md.
+Separate EXILED 9.15.2 / SCP:SL 14.2.8 DLL. Verified component updates and direct auto_update.token remain. Install Core/SlFixes manually once if wanted; no gameplay plugin requires another gameplay DLL. Fully restart after download. Headless tests do not substitute for client smoke, physics and live Discord checks.
