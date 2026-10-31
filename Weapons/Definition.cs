@@ -34,6 +34,8 @@ namespace Brainless.Weapons
         public bool Debug { get; set; }
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
         public bool AllowExperimentalWeapons { get; set; }
+        public bool IndividualItemFiles { get; set; }
+        public bool LauncherDiscardWhenEmpty { get; set; } = true;
         public bool WorldLoot { get; set; }
         public WeaponTuning Tuning { get; set; } = new WeaponTuning();
         public WeaponDistributionConfig Distribution { get; set; } = new WeaponDistributionConfig();
@@ -124,8 +126,19 @@ namespace Brainless.Weapons
                 RoundCap = 1
             },
             CreateLauncher(),
+            CreateRailgun(),
         };
 
+        private static WeaponSpec CreateRailgun() => new WeaponSpec
+        {
+            Id = 7208,
+            Name = "Railgun",
+            Description = "E11 body; charged beam stops at walls and pierces aligned enemies. Three finite charges, no ordinary reload.",
+            BaseType = ItemType.GunE11SR,
+            Magazine = 3,
+            Reserve = 0,
+            RoundCap = 1
+        };
         private static WeaponSpec CreateLauncher() => new WeaponSpec
         {
             Id = 7207,
@@ -142,11 +155,16 @@ namespace Brainless.Weapons
 
         internal void UpgradeCatalog()
         {
-            if (CatalogRevision >= 1)
-                return;
-            if (!Weapons.Any(w => w.Id == 7207))
+            if (CatalogRevision < 1 && !Weapons.Any(w => w.Id == 7207))
                 Weapons.Add(CreateLauncher());
-            CatalogRevision = 1;
+            if (CatalogRevision < 2)
+            {
+                if (!Weapons.Any(w => w.Id == 7208))
+                    Weapons.Add(CreateRailgun());
+                Distribution?.UpgradeSupWeapons();
+            }
+
+            CatalogRevision = Math.Max(2, CatalogRevision);
         }
 
         internal void Prepare()
@@ -162,7 +180,7 @@ namespace Brainless.Weapons
             AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
-            Distribution.Validate(id => id >= 7201 && id <= 7207);
+            Distribution.Validate(id => id >= 7201 && id <= 7208);
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
             foreach (var w in Weapons)
@@ -175,8 +193,16 @@ namespace Brainless.Weapons
                 }
 
             foreach (var w in Weapons)
-                if (w.Id < 7201 || w.Id > 7207 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7205 || w.Id == 7207) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
+                if (w.Id < 7201 || w.Id > 7208 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7205 || w.Id == 7207 || w.Id == 7208) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
                     throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
+            foreach (var w in Weapons)
+                if (w.Id == 7208)
+                {
+                    if (w.BaseType != ItemType.GunE11SR || w.Magazine < 1 || w.Magazine > 16)
+                        throw new InvalidOperationException("Railgun requires E11 body and 1-16 finite charges.");
+                    w.Reserve = 0;
+                }
+
             foreach (var w in Weapons)
                 if (w.Id == 7207 && w.BaseType != ItemType.GunLogicer)
                     throw new InvalidOperationException("The launcher must use the Logicer body.");
@@ -300,7 +326,7 @@ namespace Brainless.Weapons
                 return "The server did not add the weapon to the inventory; check the server log.";
             }
 
-            if (Id != 7207 && Id != 7205)
+            if (Id != 7207 && Id != 7205 && Id != 7208)
                 player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);

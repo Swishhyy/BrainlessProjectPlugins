@@ -157,6 +157,40 @@ namespace Brainless.Internal
     // operator writes only part of a distribution block in existing YAML.
     public sealed class ItemDistributionConfig : DistributionConfig
     {
+        internal void UpgradeSup()
+        {
+            if (MapRules == null || PlayerRules == null)
+                return;
+            foreach (uint id in new uint[]
+            {
+                7114,
+                7115,
+                7116,
+                7117,
+                7122
+            }
+
+            )
+            {
+                AddSup(id, ItemType.SCP500, 1);
+                if (PlayerRules.Count > 0 && !PlayerRules.Any(r => r.CustomId == id))
+                    PlayerRules.Add(new PlayerLootRule { CustomId = id, Weight = 1, Roles = new List<RoleTypeId> { RoleTypeId.ClassD, RoleTypeId.Scientist } });
+            }
+
+            AddSup(7118, ItemType.GrenadeFlash, 1);
+            AddSup(7119, ItemType.KeycardJanitor, 1);
+            AddSup(7120, ItemType.Radio, 1);
+            AddSup(7121, ItemType.Flashlight, 1);
+        }
+
+        private void AddSup(uint id, ItemType body, int weight)
+        {
+            if (MapRules != null && MapRules.Count > 0 && !MapRules.Any(r => r.CustomId == id))
+                MapRules.Add(new MapLootRule { CustomId = id, Weight = weight, SourceTypes = new List<ItemType> { body } });
+            if (PlayerRules != null && PlayerRules.Count > 0 && id >= 7118 && !PlayerRules.Any(r => r.CustomId == id))
+                PlayerRules.Add(new PlayerLootRule { CustomId = id, Weight = weight, ReplaceTypes = new List<ItemType> { body } });
+        }
+
         internal void UpgradeSmokeBody()
         {
             foreach (var rule in MapRules?.Where(r => r != null && r.CustomId == 7101) ?? Enumerable.Empty<MapLootRule>())
@@ -196,6 +230,31 @@ namespace Brainless.Internal
 
     public sealed class WeaponDistributionConfig : DistributionConfig
     {
+        internal void UpgradeSupWeapons()
+        {
+            foreach (var entry in new[]
+            {
+                new
+                {
+                    Id = 7207u,
+                    Body = ItemType.GunLogicer
+                },
+                new
+                {
+                    Id = 7208u,
+                    Body = ItemType.GunE11SR
+                }
+            }
+
+            )
+            {
+                if (MapRules != null && MapRules.Count > 0 && !MapRules.Any(r => r.CustomId == entry.Id))
+                    MapRules.Add(new MapLootRule { CustomId = entry.Id, Weight = 1, SourceTypes = new List<ItemType> { entry.Body } });
+                if (PlayerRules != null && PlayerRules.Count > 0 && !PlayerRules.Any(r => r.CustomId == entry.Id))
+                    PlayerRules.Add(new PlayerLootRule { CustomId = entry.Id, Weight = 1, ReplaceTypes = new List<ItemType> { entry.Body } });
+            }
+        }
+
         public WeaponDistributionConfig() : base(Weapons())
         {
         }

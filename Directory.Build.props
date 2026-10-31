@@ -34,6 +34,7 @@
     <Reference Include="0Harmony" HintPath="$(ReferencesPath)/0Harmony.dll" Private="false" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Runtime.Serialization" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/SupRules.cs" Link="Internal/SupRules.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Rules.cs" Link="Internal/Rules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ExplosionRules.cs" Link="Internal/ExplosionRules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Runtime.cs" Link="Internal/Runtime.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
@@ -42,6 +43,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Shared/AudioRules.cs" Link="Internal/AudioRules.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'">
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ItemFiles.cs" Link="Internal/ItemFiles.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/AdminItems.cs" Link="Internal/AdminItems.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/DistributionRules.cs" Link="Internal/DistributionRules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/DistributionConfig.cs" Link="Internal/DistributionConfig.cs" />

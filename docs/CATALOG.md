@@ -60,6 +60,15 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | I11 | 7111 | Filter Inhaler | Two seconds to gain 12 seconds of custom gas protection. |
 | I12 | 7112 | Preserved Specimen | Not SCP-500. Offer it to a zombie; hold tool key to eat it for 80 HP. |
 | I13 | 7113 | Impact Grenade | Detonates on surface contact after a short arming delay. Configurable blast and safety fuse. |
+| I14 | 7114 | SCP500-A Adrenaline Pills | Timed speed boost and stamina restoration, followed by exhaustion. |
+| I15 | 7115 | SCP500-B Anti-096 Pills | Removes you from SCP-096 target lists. Only consumed when targeted. |
+| I16 | 7116 | SCP500-C Expired Pills | One weighted random positive, negative or SCP effect. A gamble. |
+| I17 | 7117 | SCP500-D Invisibility Pills | Seven seconds of stealth; attacking breaks it. Once per player per round. |
+| I18 | 7118 | Bio Grenade | Native SCP-244 smoke. Sustained unfiltered exposure causes corrosion; leave the cloud. |
+| I19 | 7119 | Hacking Chip | Equip and use the tool key at a door: eight-second hack below access level 3. Cannot bypass hard locks. |
+| I20 | 7120 | Reinforcement Radio | Calls up to three eligible spectators for your faction after 15 seconds. Limited per round. |
+| I21 | 7121 | SCRAMBLE Goggles | Toggle with the tool key or flashlight control. Blocks visual SCP-096 targeting for 60 battery seconds; shooting 096 still angers him. |
+| I22 | 7122 | SCP500-E Volatile Pills | Explodes after use, usually killing the user. Rare survival roll; nearby blast respects cover and friendly fire. |
 
 ## Weapons
 
@@ -72,6 +81,7 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | W05 | 7205 | Last Word | Six shots total. Cannot reload, unload or expand its magazine. |
 | W06 | 7206 | Ricochet Pistol | One bounce from approved static mesh geometry. 85% direct damage; 50% body damage after bouncing. |
 | W07 | 7207 | Grenade Launcher | Logicer body; each bullet launches one grenade. Maximum 16 rounds, no reload. Small configurable blast. |
+| W08 | 7208 | Railgun | E11 body; charged beam stops at walls and pierces aligned enemies. Three finite charges, no ordinary reload. |
 
 ## Initial supply
 
@@ -81,6 +91,6 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | 12 through 23 | 10 | 1 | 1 |
 | 24 or more | 14 | 2 | 2 |
 
-A gas grenade also creates a filter and consumes two utility slots. Guard badges and ordinary coins are outside these utility counts. Limits apply across a whole round, not per wave or per pickup.
+Smoke grenades occupy one slot and create no filter. Guard badges and ordinary coins are outside these utility counts. Limits apply across a whole round, not per wave or per pickup.
 
 Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget excludes that role from the draw; another eligible profile can still be selected. Redline and Ricochet require the experimental weapon switch. Admin give/spawn ignores supply caps. The Grenade Launcher uses 16 grenades total and cannot reload from ordinary ammo.

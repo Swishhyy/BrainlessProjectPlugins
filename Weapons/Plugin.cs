@@ -23,12 +23,12 @@ using FxAudio = Brainless.Internal.Audio;
 
 namespace Brainless.Weapons
 {
-    public sealed class Plugin : Plugin<Config>
+    public sealed partial class Plugin : Plugin<Config>
     {
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 4, 0);
+        public override Version Version => new Version(0, 5, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -46,6 +46,8 @@ namespace Brainless.Weapons
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
+            Config.Prepare();
+            LoadIndividualWeapons(Config);
             Config.Prepare();
             var enabled = Config.Weapons.Where(w => w.Enabled && (!w.Experimental || Config.AllowExperimentalWeapons)).ToArray();
             if (enabled.Select(s => s.Id).Distinct().Count() != enabled.Length || enabled.Select(s => s.Name).Distinct().Count() != enabled.Length)
@@ -105,6 +107,7 @@ namespace Brainless.Weapons
             S.RoundEnded -= Ended;
             S.RoundStarted -= RoundStarted;
             AdminItems.Disable();
+            RailReset();
             lifetime.Clear();
             grenades.Clear();
             foreach (var weapon in registered.Values)
@@ -116,6 +119,7 @@ namespace Brainless.Weapons
         private void Reset()
         {
             distribution?.Reset();
+            RailReset();
             lifetime.Clear();
             grenades.Clear();
             states.Clear();
@@ -205,7 +209,7 @@ namespace Brainless.Weapons
                 InitialCapacity = definition.Spec.Magazine,
                 LastHeat = Time.time
             };
-            if (definition.Id == 7205 || definition.Id == 7207)
+            if (definition.Id == 7205 || definition.Id == 7207 || definition.Id == 7208)
                 shots.Register(serial, definition.Spec.Magazine);
             return true;
         }
@@ -284,6 +288,12 @@ namespace Brainless.Weapons
             var state = Find(ev.Item);
             if (state == null || !ev.IsAllowed)
                 return;
+            if (state.Definition.Id == 7208)
+            {
+                StartRailgun(ev, state);
+                return;
+            }
+
             Clamp(ev.Firearm);
             if (FixedAmmo(state) && shots.Remaining(ev.Item.Serial) < 1)
             {
@@ -342,11 +352,13 @@ namespace Brainless.Weapons
                         if (Physics.Raycast(origin, direction, out var hit, .6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                             muzzle = hit.point - direction * .1f;
                         grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner, armorPenetration: Config.LauncherArmorPenetration);
+                        if (shots.Remaining(gun.Serial) == 0)
+                            lifetime.Later(.5f, () => DiscardEmptyLauncher(gun.Serial));
                     }
                 });
             }
         });
-        private static bool FixedAmmo(WeaponState state) => state != null && (state.Definition.Id == 7205 || state.Definition.Id == 7207);
+        private static bool FixedAmmo(WeaponState state) => state != null && (state.Definition.Id == 7205 || state.Definition.Id == 7207 || state.Definition.Id == 7208);
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Cool(WeaponState state)
         {
@@ -362,7 +374,7 @@ namespace Brainless.Weapons
             var state = Find(damage.Item);
             if (state == null)
                 return;
-            if (state.Definition.Id == 7207)
+            if (state.Definition.Id == 7207 || state.Definition.Id == 7208)
             {
                 ev.IsAllowed = false;
                 ev.Amount = 0;
@@ -406,7 +418,7 @@ namespace Brainless.Weapons
             var state = Find(ev.Item);
             if (state == null)
                 return;
-            if (state.Definition.Id == 7207)
+            if (state.Definition.Id == 7207 || state.Definition.Id == 7208)
             {
                 ev.CanHurt = false;
                 ev.CanSpawnImpactEffects = false;
@@ -518,6 +530,8 @@ namespace Brainless.Weapons
             try
             {
                 var next = ConfigReload.Read(this);
+                next.Prepare();
+                LoadIndividualWeapons(next);
                 next.Prepare();
                 if (!next.IsEnabled || next.AllowExperimentalWeapons != Config.AllowExperimentalWeapons || next.Weapons.Count != Config.Weapons.Count || next.Weapons.Any(w => !Config.Weapons.Any(old => old.Id == w.Id && old.BaseType == w.BaseType && old.Enabled == w.Enabled && old.Experimental == w.Experimental)))
                     throw new InvalidOperationException("Enabled/experimental registration, IDs and native-body changes require a server restart. Tuning was not changed.");

@@ -30,6 +30,7 @@ namespace Brainless.SlFixes
             ["round_survived"] = 10,
             ["death"] = 0
         };
+        public int RecipeRevision { get; set; }
         public List<CraftingRecipe> Recipes { get; set; } = new List<CraftingRecipe>
         {
             new CraftingRecipe
@@ -70,12 +71,42 @@ namespace Brainless.SlFixes
             }
         };
 
+        private static IEnumerable<CraftingRecipe> SupRecipes() => new[]
+        {
+            R("Adrenaline Pills", ItemType.SCP500, Scp914KnobSetting.Fine, 7114, 20),
+            R("Anti-096 Pills", ItemType.SCP500, Scp914KnobSetting.VeryFine, 7115, 15),
+            R("Expired Pills", ItemType.SCP500, Scp914KnobSetting.Coarse, 7116, 40),
+            R("Invisibility Pills", ItemType.SCP500, Scp914KnobSetting.VeryFine, 7117, 10),
+            R("Bio Grenade", ItemType.GrenadeFlash, Scp914KnobSetting.VeryFine, 7118, 20),
+            R("Hacking Chip", ItemType.KeycardJanitor, Scp914KnobSetting.VeryFine, 7119, 15),
+            R("Reinforcement Radio", ItemType.Radio, Scp914KnobSetting.VeryFine, 7120, 10),
+            R("SCRAMBLE Goggles", ItemType.Flashlight, Scp914KnobSetting.Fine, 7121, 20),
+            R("Volatile Pills", ItemType.SCP500, Scp914KnobSetting.Rough, 7122, 10),
+            R("Railgun", ItemType.GunE11SR, Scp914KnobSetting.VeryFine, 7208, 5)
+        };
+        private static CraftingRecipe R(string name, ItemType source, Scp914KnobSetting setting, uint id, double chance) => new CraftingRecipe
+        {
+            Name = name,
+            Source = source,
+            Setting = setting,
+            CustomId = id,
+            Chance = chance,
+            MaxPerRound = id == 7208 || id == 7120 || id == 7122 ? 1 : 2
+        };
         internal void Validate()
         {
             if (double.IsNaN(RoughTeleportChance) || double.IsInfinity(RoughTeleportChance) || RoughTeleportChance < 0 || RoughTeleportChance > 100 || MaxCraftXpAwardsPerPlayerPerRound < 0 || MaxTeleportXpAwardsPerPlayerPerRound < 0 || MinimumRoundSecondsForXp < 0)
                 throw new InvalidOperationException("Invalid teleport/XP limits.");
             if (Recipes == null || XpRewards == null || XpRewards.Any(p => string.IsNullOrWhiteSpace(p.Key) || p.Value < 0 || p.Value > 10000))
                 throw new InvalidOperationException("Recipes and nonnegative XP rewards are required.");
+            if (RecipeRevision < 1)
+            {
+                foreach (var recipe in Recipes.Count > 0 ? SupRecipes() : Enumerable.Empty<CraftingRecipe>())
+                    if (!Recipes.Any(r => r != null && r.CustomId == recipe.CustomId))
+                        Recipes.Add(recipe);
+                RecipeRevision = 1;
+            }
+
             foreach (var recipe in Recipes)
                 if (recipe == null || string.IsNullOrWhiteSpace(recipe.Name) || !Enum.IsDefined(typeof(ItemType), recipe.Source) || recipe.Source == ItemType.None || !Enum.IsDefined(typeof(Scp914KnobSetting), recipe.Setting) || recipe.CustomId < 1 || recipe.MaxPerRound < 0 || double.IsNaN(recipe.Chance) || double.IsInfinity(recipe.Chance) || recipe.Chance < 0 || recipe.Chance > 100)
                     throw new InvalidOperationException("Invalid SCP-914 crafting recipe.");

@@ -1,6 +1,6 @@
-# Project Brainless SCP SL Fixes 0.1.0
+# Project Brainless SCP SL Fixes 0.2.0
 
-Small configurable gameplay additions, in a separate `Brainless.SlFixes.dll` for EXILED 9.15.2 / SCP:SL 14.2.8. Install it in EXILED/Plugins and fully restart. Install `Brainless.Core.dll` for saved XP and optional Discord stats; SCP-914 behavior still runs if Core is absent. Install Items/Weapons 0.4.0 for their crafting adapters. No gameplay plugin depends on another gameplay DLL.
+Small configurable gameplay additions, in a separate `Brainless.SlFixes.dll` for EXILED 9.15.2 / SCP:SL 14.2.8. Install it in EXILED/Plugins and fully restart. Install `Brainless.Core.dll` for saved XP and optional Discord stats; SCP-914 behavior still runs if Core is absent. Install Items/Weapons 0.5.0 for their crafting adapters. No gameplay plugin depends on another gameplay DLL.
 
 ## SCP-914 rough teleport
 
@@ -32,3 +32,5 @@ Player commands are `.pbxp`, `.pbxp top` and `.pblink` in F1. Core owns persiste
 `pbfixes status` lists recipes/current craft counts and Core availability. `pbfixes reload` validates YAML before applying edits, preserving the round ledgers. Both require `projectbrainless.fixes`. Common update configuration supports `auto_update.token` directly; full process restart is needed after a downloaded DLL replacement. See [UPDATES.md](../docs/UPDATES.md).
 
 Headless checks validate configuration, native interfaces, persisted XP, receipt/cap behavior and release files. Safe destination geometry, the actual SCP-914 result, client smoke and Discord connectivity still need a live test on your server.
+
+Version 0.2.0 adds ten SUP recipes once through `recipe_revision: 1`; later removals and explicit empty pools remain respected. See [SUP_MIGRATION.md](../docs/SUP_MIGRATION.md) for their inputs, settings and chances. All crafting uses ordinary provider supply, and the new railgun recipe shares the same firearm limit as map/role kits.

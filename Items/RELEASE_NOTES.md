@@ -1,3 +1,7 @@
-Smoke 7101 now uses a flashbang body and full-size native SCP-244 fog only: no flash/bang, custom slow, blast, damage or filter pairing. Fuse, duration and emitter count remain configurable. Native server lifetime updates no longer overwrite the full network size; ordinary fog remains separate. Old stock HE definitions/loot rules and short lifetimes migrate. Public confirmed crafting adapters support SlFixes while keeping body/serial and normal supply. Optional Core update delegation is included.
+# Items 0.5.0
 
-Separate EXILED 9.15.2 / SCP:SL 14.2.8 DLL. Verified component updates and direct auto_update.token remain. Install Core/SlFixes manually once if wanted; no gameplay plugin requires another gameplay DLL. Fully restart after download. Headless tests do not substitute for client smoke, physics and live Discord checks.
+Rebuilds SUP gameplay without its webhook: four configurable SCP-500 variants, Bio Grenade, Hacking Chip, bounded spectator reinforcement radio, battery-powered SCRAMBLE utility and Volatile Pills. Adds stable IDs 7114–7122, one-time natural map/player loot migrations and old `sci` help/list/give compatibility. Existing Project Brainless grenades and roles keep their behavior.
+
+Optional per-item YAML overrides are generated once and preserve edits; reload validates detached settings. Scoped stealth/boost state, correct SCP-939 target checks, per-round resets, friendly-fire/cover protection and serial battery tracking replace the old bugs. See docs/SUP_MIGRATION.md for defaults, limits and new SCP-914 recipes (Fixes 0.2.0).
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Auto-updates remain supported with optional Core integration. Client fog, effects and live game interactions still need server playtesting.

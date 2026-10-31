@@ -25,7 +25,7 @@ Use Remote Admin's text command box without a leading slash. `ci` is EXILED's al
 | `coinuses set player <playerID> <uses>` | `bc.coinuses.set` | Set uses on another player's held coin. |
 | `coinuses set serial <serial> <uses>` | `bc.coinuses.set` | Set uses by serial. |
 
-Items use IDs 7101-7109 and 7111-7113 (7110 is retired); weapons use 7201-7207. See [CATALOG.md](CATALOG.md). Disabled/experimental entries are not registered until enabled.
+Items use IDs 7101-7109 and 7111-7122 (7110 is retired); weapons use 7201-7208. See [CATALOG.md](CATALOG.md). Disabled/experimental entries are not registered until enabled.
 
 ## Admin grants
 
@@ -98,3 +98,7 @@ Remote Admin, with `brainless.roles`: `bprole set Z04` or `bprole set explosive_
 | Discord | `/pb-stats`, `/pb-top`, `/pb-link code:<code>` | Bot must be configured; stats accounts linked with `.pblink` |
 
 [Core](../Core/README.md) owns persistence/Discord. [Fixes](../SlFixes/README.md) owns SCP-914 rules and XP action capture. Linking never grants staff permissions.
+
+## SUP command compatibility
+
+`sci help`, `sci itemlist` (alias `sci items`), and `sci give <ID> [playerID]` (alias `sci gitem`) are Remote Admin commands. Granting needs `customitems.give` or legacy `sci.admin`, confirms the actual inventory result and bypasses natural supply/population limits. It does not bypass gameplay use conditions such as reinforcement timing. SUP IDs 101–112 map to the current definitions; 103 means Anti-096, and Volatile Pills are 7122. No webhook is called. Standard `ci` commands and existing `bpitems reload` / `bpweapons reload` remain. See [SUP_MIGRATION.md](SUP_MIGRATION.md).
