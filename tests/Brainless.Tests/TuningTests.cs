@@ -27,7 +27,7 @@ internal static class TuningTests
         var zombie = new ExplosiveZombieTuning();
         check(Valid(items) && Valid(weapons) && Valid(zombie), "all shipped tuning defaults validate");
         check(items.ClusterGrenade.GrenadeCount == 4 && items.ClusterGrenade.HumanDamage == 120 && items.ClusterGrenade.Radius == 5.5f && items.ClusterGrenade.ParentHumanDamage == 180, "the stronger cluster retains four children with a stronger six-metre parent and larger child blasts");
-        check(items.GasGrenade.HumanDamagePerSecond == 0 && items.GasGrenade.ScpDamagePerSecond == 0 && items.GasGrenade.HumanSlowPercent == 20, "gas remains non-damaging with a configurable twenty-percent human slow by default");
+        check(typeof(GasTuning).GetProperty("HumanDamagePerSecond") == null && typeof(GasTuning).GetProperty("HumanSlowPercent") == null && items.GasGrenade.DurationSeconds == 20 && !items.Supply.PairGasWithFilter, "smoke-only gas exposes no custom damage or slow fields and needs no paired filter");
         items.ClusterGrenade.GrenadeCount = 32;
         items.ClusterGrenade.HumanDamage = 250;
         items.GasGrenade.DurationSeconds = 40;
@@ -35,9 +35,9 @@ internal static class TuningTests
         items.ClusterGrenade.GrenadeCount = 33;
         check(!Valid(items), "unbounded child-grenade counts are rejected");
         items.ClusterGrenade.GrenadeCount = 4;
-        items.GasGrenade.Radius = float.NaN;
+        items.ContainmentFoam.Radius = float.NaN;
         check(!Valid(items), "nested NaN tuning cannot enter the live simulation");
-        items.GasGrenade.Radius = 4;
+        items.ContainmentFoam.Radius = 4;
         items.FilterInhaler = null;
         check(!Valid(items), "a missing nested tuning section is rejected");
         weapons.Rattler.TagDurationSeconds = float.PositiveInfinity;

@@ -62,7 +62,6 @@ namespace Brainless.Roles
         [Description("Cooldown after a successful lockpick. Interrupted attempts do not spend it.")]
         [Tune(0, 86400)]
         public float LockpickCooldownSeconds { get; set; } = LockpickRules.DefaultCooldown;
-        public bool CaptainGateAccess { get; set; }
         public bool EnableDoctorEvent { get; set; }
         public bool ExtremeMuncherEventPreset { get; set; }
 

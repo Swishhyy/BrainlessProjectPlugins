@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        plugin: [Roles, Items, Weapons, BetterCoinflips, ScpProximityChat]
+        plugin: [Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

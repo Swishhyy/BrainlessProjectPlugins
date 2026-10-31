@@ -52,6 +52,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Shared/FragProjectiles.cs" Link="Internal/FragProjectiles.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.SlFixes'">
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/CoreBridge.cs" Link="Internal/CoreBridge.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />
+  </ItemGroup>
   <Target Name="CheckPluginReferences" BeforeTargets="ResolveReferences" Condition="'$(TargetFramework)' == 'net48'">
     <Error Condition="!Exists('$(ReferencesPath)/Exiled.API.dll')" Text="Run python3 scripts/fetch_references.py first, or set ReferencesPath to your matching EXILED and game assemblies." />
   </Target>

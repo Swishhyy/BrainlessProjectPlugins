@@ -1,5 +1,3 @@
-Custom weapon cues and Rattler tags now use gain 2.5 and 6m full-volume distance. General vent/ricochet cues use tuning.audio; Rattler keeps independent audio fields. Untouched old gain migrates; custom values and native gunshot assets are unchanged.
+Each approved native launcher bullet now launches one grenade. Removed the separate cooldown that desynchronized shooting and grenades; total capacity is hard-capped at 16, smaller custom capacities are preserved, reserve is zero, and reload/unload/refill remain blocked. Empty/duplicate callbacks cannot create extra grenades. Adds confirmed crafting adapters and optional Core update delegation.
 
-Independent DLL for EXILED 9.15.2 / SCP:SL 14.2.8. Retains direct auto_update.token configuration, verified release downloads and .previous rollback backups. Fully restart after downloading an update.
-
-Validation: independent builds, headless gameplay/config/updater regressions and native API contracts. Actual client listening levels, physics and balance still require a server playtest. See docs/TUNING.md and docs/PLAYTEST.md.
+Separate EXILED 9.15.2 / SCP:SL 14.2.8 DLL. Verified component updates and direct auto_update.token remain. Install Core/SlFixes manually once if wanted; no gameplay plugin requires another gameplay DLL. Fully restart after download. Headless tests do not substitute for client smoke, physics and live Discord checks.

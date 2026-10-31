@@ -87,19 +87,22 @@ namespace Brainless.Items
         public bool RequireLineOfSight { get; set; } = true;
     }
 
-    public sealed class GasTuning : FieldTuning
+    public sealed class GasTuning
     {
-        public GasTuning()
+        internal void Upgrade(int catalogRevision)
         {
-            FuseSeconds = 2.5f;
-            DurationSeconds = 8;
-            Radius = 4;
-            HumanSlowPercent = 20;
-            ScpSlowPercent = 0;
+            if (catalogRevision < 3 && DurationSeconds == 8)
+                DurationSeconds = 20;
         }
 
+        [Tune(.05, 120)]
+        public float FuseSeconds { get; set; } = 2.5f;
+
+        [Tune(.1, 3600)]
+        public float DurationSeconds { get; set; } = 20;
+
         [Tune(1, 6)]
-        public int SmokeEmitters { get; set; } = 2;
+        public int SmokeEmitters { get; set; } = 1;
     }
 
     public sealed class FoamTuning : FieldTuning
@@ -334,7 +337,9 @@ namespace Brainless.Items
 
         [Tune(0, 100)]
         public int WorldLootCount { get; set; } = 2;
-        public bool PairGasWithFilter { get; set; } = true;
+
+        [System.ComponentModel.Description("Legacy setting; smoke-only grenades no longer require or create a filter.")]
+        public bool PairGasWithFilter { get; set; }
 
         internal int Capacity(int players) => players < MediumLobbyPlayers ? SmallLobbyCapacity : players < LargeLobbyPlayers ? MediumLobbyCapacity : LargeLobbyCapacity;
         internal int Clusters(int players) => players < MediumLobbyPlayers ? SmallLobbyClusters : players < LargeLobbyPlayers ? MediumLobbyClusters : LargeLobbyClusters;

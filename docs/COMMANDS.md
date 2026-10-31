@@ -46,7 +46,7 @@ bprole set M04 4
 ci spawn 7102 4
 ```
 
-Admin grants do not spend, reset or refill natural supply. Automatic role kits/world loot still use their normal limits: clusters have no natural supply below 12 players and guns share one slot below 24 players/two at 24+. Giving an item still requires an alive, connected, unrestrained recipient with enough inventory room. Gas needs two free slots and an enabled Filter Inhaler. Admin commands do not enable disabled weapons or refill an existing Last Word's six-shot budget.
+Admin grants do not spend, reset or refill natural supply. Automatic role kits/world loot still use their normal limits: clusters have no natural supply below 12 players and guns share one slot below 24 players/two at 24+. Giving an item still requires an alive, connected, unrestrained recipient with enough inventory room. Smoke needs one free slot and no filter. Admin commands do not enable disabled weapons or refill an existing Last Word's six-shot budget.
 
 For CedMod-managed permissions, add `customitems.*` to the staff group's EXILED/plugin permissions in its panel for item administration. No extra permissions are required to use ordinary equipment, see the role HUD, or run automatic release checks.
 
@@ -83,3 +83,18 @@ Quick impact test: `ci give 7113 [playerID]`. Quick explosive zombie test: `bpro
 Natural map loot and occasional spawn gear need no player command or permission. Staff tune the `distribution` section and use the existing provider reload command. Reload preserves issued counts and does not replay the map pass. See [NATURAL_LOOT.md](NATURAL_LOOT.md). SCP voice route controls now display enabled/disabled hints even while the role HUD is present.
 
 SCP proximity chat 0.1.2 uses a tap-to-toggle key only: N enables nearby, release N, then speak with your normal voice key; the next N press restores team. `.scpchat status` displays route checks/audio sends to help diagnose a live test. Candy Man can be tested with `bprole set S04 [playerID]` and inspected with `bprole <playerID>`.
+
+## Core, Fixes and debugging
+
+Remote Admin, with `brainless.roles`: `bprole set Z04` or `bprole set explosive_zombie` makes yourself Explosive; `bprole set Z04 2` targets player 2. `bprole set G01` tests the Guard Captain 1/2/1 card. Use underscores for role names containing spaces. `bprole` inspects yourself and `bproles` audits IDs.
+
+| Where | Command | Permission |
+| --- | --- | --- |
+| F1 | `.pbxp`, `.pbstats`, `.pbxp top` | Everyone; own stats/public leaderboard |
+| F1 | `.pblink` | Everyone; private one-time Discord linking code |
+| Remote Admin | `pbxp <playerID>` | `projectbrainless.stats` |
+| Remote Admin | `pbcore status`, `pbcore save` | `projectbrainless.core` |
+| Remote Admin | `pbfixes status`, `pbfixes reload` | `projectbrainless.fixes` |
+| Discord | `/pb-stats`, `/pb-top`, `/pb-link code:<code>` | Bot must be configured; stats accounts linked with `.pblink` |
+
+[Core](../Core/README.md) owns persistence/Discord. [Fixes](../SlFixes/README.md) owns SCP-914 rules and XP action capture. Linking never grants staff permissions.

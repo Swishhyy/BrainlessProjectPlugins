@@ -3,27 +3,21 @@ using System.Linq;
 using Exiled.API.Features.Pickups;
 using HarmonyLib;
 using InventorySystem.Items.Usables.Scp244;
-using InventorySystem.Items.Usables.Scp244.Hypothermia;
 using Mirror;
 using UnityEngine;
-using ColdEffect = InventorySystem.Items.Usables.Scp244.Hypothermia.Hypothermia;
 
 namespace Brainless.Items
 {
     internal static class NativeSmoke
     {
-        private static readonly Dictionary<Scp244DeployablePickup, byte> owned = new Dictionary<Scp244DeployablePickup, byte>();
-        private static readonly Dictionary<ColdEffect, ExposureSample> exposures = new Dictionary<ColdEffect, ExposureSample>();
+        private static readonly Dictionary<Scp244DeployablePickup, float> owned = new Dictionary<Scp244DeployablePickup, float>();
         private static Harmony harmony;
         internal static void Enable()
         {
             harmony = new Harmony("brainless.items.smoke");
             try
             {
-                // Keep native exposure/visual signalling. Suppress only gameplay
-                // subeffects caused by our clouds, retaining ordinary SCP-244 exposure.
-                harmony.Patch(AccessTools.Method(typeof(ColdEffect), nameof(ColdEffect.UpdateSubEffect)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(GuardSubEffect)));
-                harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), nameof(Scp244DeployablePickup.UpdateRange)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(FixedRadius)));
+                harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), nameof(Scp244DeployablePickup.FogPercentForPoint)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(VisualOnly)));
             }
             catch
             {
@@ -32,28 +26,31 @@ namespace Brainless.Items
             }
         }
 
-        internal static Scp244Pickup Spawn(Vector3 position, float radius)
+        internal static Scp244Pickup Spawn(Vector3 position, float duration)
         {
             var pickup = Pickup.Create<Scp244Pickup>(ItemType.SCP244a);
-            byte size = (byte)Mathf.Clamp(Mathf.RoundToInt(radius * 2 / Mathf.Max(.01f, pickup.MaxDiameter) * 255), 1, 255);
-            owned.Add(pickup.Base, size);
+            owned.Add(pickup.Base, Time.time + duration);
             try
             {
                 pickup.IsLocked = true;
                 pickup.Health = float.MaxValue;
+                // Use the native FULL-size fog instead of a small size percentage
+                // which can sit below the prefab's particle-emission threshold.
                 pickup.State = Scp244State.Active;
-                pickup.Base.CurrentSizePercent = size / 255f;
-                pickup.Base.Network_syncSizePercent = size;
+                pickup.Base.CurrentSizePercent = 1;
+                pickup.Base.Network_syncSizePercent = byte.MaxValue;
+                // Stop only the server's native lifetime from overwriting size.
+                // Clients keep the original renderer, room bounds and particles.
+                pickup.Base.enabled = false;
                 pickup.Spawn(position);
-                // Initialize at its world position instead of waiting for bottle movement.
-                pickup.Base.State = Scp244State.Active;
-                pickup.Base._lifeTime.Restart();
-                pickup.Base._previousPos = Vector3.positiveInfinity;
-                pickup.Base._lastUpdateTime = -100;
-                pickup.Base.UpdateCurrentRoom();
-                pickup.Base.UpdateConditions();
+                pickup.Base.Network_syncState = (byte)Scp244State.Active;
+                pickup.Base.Network_syncSizePercent = byte.MaxValue;
                 if (pickup.Rigidbody != null)
+                {
                     pickup.Rigidbody.isKinematic = true;
+                    pickup.Rigidbody.useGravity = false;
+                }
+
                 return pickup;
             }
             catch
@@ -63,20 +60,22 @@ namespace Brainless.Items
             }
         }
 
+        internal static void Prune()
+        {
+            foreach (var pair in owned.Where(p => p.Key == null || Time.time >= p.Value).ToArray())
+                if (pair.Key == null)
+                    owned.Remove(pair.Key);
+                else if (Pickup.Get(pair.Key)is Scp244Pickup pickup)
+                    Release(pickup);
+        }
+
         internal static void Release(Scp244Pickup pickup)
         {
             if (pickup == null)
                 return;
-            if (pickup.Base != null)
-            {
-                pickup.State = Scp244State.Idle;
-                pickup.Base.CurrentSizePercent = 0;
-                pickup.Base.Network_syncSizePercent = 0;
-                pickup.Destroy();
-            }
-
             owned.Remove(pickup.Base);
-            exposures.Clear();
+            if (pickup.Base != null)
+                pickup.Destroy();
         }
 
         internal static void Clear()
@@ -85,7 +84,6 @@ namespace Brainless.Items
                 if (cloud != null && Pickup.Get(cloud)is Scp244Pickup pickup)
                     Release(pickup);
             owned.Clear();
-            exposures.Clear();
         }
 
         internal static void Disable()
@@ -95,48 +93,14 @@ namespace Brainless.Items
             harmony = null;
         }
 
-        private static void GuardSubEffect(ColdEffect __instance, HypothermiaSubEffectBase __0, ref float __1)
+        private static bool VisualOnly(Scp244DeployablePickup __instance, Vector3 __0, ref float __result)
         {
-            if (!NetworkServer.active || owned.Count == 0)
-                return;
-            if (!(__0 is DamageSubEffect) && !(__0 is HumeShieldSubEffect) && !(__0 is TemperatureSubEffect) && !(__0 is InstantStatusSubEffect) && !(__0 is AttackCooldownSubEffect))
-                return;
-            if (!exposures.TryGetValue(__instance, out var sample) || sample.Frame != Time.frameCount)
-            {
-                float natural = 0;
-                var camera = __instance.Hub.PlayerCameraReference.position;
-                foreach (var cloud in Scp244DeployablePickup.Instances)
-                    if (cloud != null && !owned.ContainsKey(cloud))
-                        natural += cloud.FogPercentForPoint(camera);
-                if (__instance._isForced)
-                    natural += __instance._forcedExposure;
-                sample = new ExposureSample
-                {
-                    Frame = Time.frameCount,
-                    Value = natural
-                };
-                exposures[__instance] = sample;
-            }
-
-            // Never reintroduce exposure that native immunity or another plugin
-            // already removed (for example SCP-939's exemption).
-            __1 = Mathf.Min(__1, sample.Value);
-        }
-
-        private static bool FixedRadius(Scp244DeployablePickup __instance)
-        {
-            if (!owned.TryGetValue(__instance, out byte size))
+            if (!NetworkServer.active || (!owned.ContainsKey(__instance) && !(Plugin.Instance?.FilterProtectsAt(__0) ?? false)))
                 return true;
-            __instance.State = Scp244State.Active;
-            __instance.CurrentSizePercent = size / 255f;
-            __instance.Network_syncSizePercent = size;
+            // This is a server-only exposure query. Native client fog rendering is
+            // untouched; ordinary unfiltered SCP-244 keeps its normal behavior.
+            __result = 0;
             return false;
-        }
-
-        private sealed class ExposureSample
-        {
-            internal int Frame;
-            internal float Value;
         }
     }
 }

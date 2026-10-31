@@ -1,6 +1,6 @@
 # Automatic plugin updates
 
-Roles 0.2.4, Items 0.3.2, Weapons 0.3.2, BetterCoinflips 5.1.5 and ScpProximityChat 0.1.4 include their own updater with direct token configuration. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
+Roles 0.2.5, Items/Weapons 0.4.0, BetterCoinflips 5.1.6, ScpProximityChat 0.1.5, Core 0.1.0 and SlFixes 0.1.0 support verified component release updates with direct token configuration. Install each desired DLL once. Existing updaters never install another plugin automatically.
 
 ## Server setup
 
@@ -16,9 +16,9 @@ auto_update:
   releases_to_scan: 30
 ```
 
-The repository is currently private. Create a fine-grained GitHub personal access token restricted to **Swishhyy/BrainlessProjectPlugins**, with **Contents: read-only**, and paste its value into **`auto_update.token` in each plugin's YAML**. Replace the placeholder above with the actual token. The same token can be used in all five plugin sections; no Bisect environment-variable setup is required. The updater does not write tokens, headers or response bodies to its logs. Keep a config containing a token out of public uploads and commits.
+The repository is currently private. Create a fine-grained GitHub personal access token restricted to **Swishhyy/BrainlessProjectPlugins**, with **Contents: read-only**, and paste its value into **`auto_update.token` in each plugin's YAML**. Replace the placeholder above with the actual token. The same token can be used in all installed plugin sections; no Bisect environment-variable setup is required. The updater does not write tokens, headers or response bodies to its logs. Keep a config containing a token out of public uploads and commits.
 
-If an older DLL cannot authenticate, download and install the five versions listed above manually once, then fully stop/start the server with the updated config. Those versions understand `token`; older versions only read an environment variable. If a token was previously pasted into `token_environment_variable`, move it to `token` and restore the environment-variable name to `BRAINLESS_GITHUB_TOKEN` (or leave that optional field empty). Replace any token that has been exposed.
+If an older DLL cannot authenticate, download and install the desired versions listed above manually once, then fully stop/start the server with the updated config. Those versions understand `token`; older versions only read an environment variable. If a token was previously pasted into `token_environment_variable`, move it to `token` and restore the environment-variable name to `BRAINLESS_GITHUB_TOKEN` (or leave that optional field empty). Replace any token that has been exposed.
 
 The environment variable remains optional for existing installations: leave `token: ""` and set `BRAINLESS_GITHUB_TOKEN` in the server process environment. A nonempty `token` in YAML always takes precedence, including if an unrelated or stale environment value exists. Surrounding whitespace is trimmed. If both sources are empty, requests are anonymous; public repositories can be read without a token. This code does not change repository visibility.
 
@@ -40,9 +40,9 @@ Once these workflows are on `main`, a push/merge to `main` automatically builds 
 
 1. Bump the changed project's `.csproj` version and its `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`.
 2. Commit and merge/push to `main`, or open **Actions → Release plugins → Run workflow** and select the desired plugin or All. Prerelease is optional for manual runs.
-3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.2.4`, `items-v0.3.2`, `weapons-v0.3.2`, `bettercoinflips-v5.1.5` and `scpproximitychat-v0.1.4`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
+3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.2.5`, `items-v0.4.0`, `weapons-v0.4.0`, `bettercoinflips-v5.1.6` and `scpproximitychat-v0.1.5`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
 
-You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all five. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
+You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all seven. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
 
 Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository Contents: write. Downloading servers only need a separate read-only token. The workflow becomes available for manual runs after it is on the default branch. Regular pull-request builds prepare and verify the same release assets without publishing anything.
 
@@ -55,6 +55,8 @@ Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository 
 | Weapons | `Brainless.Weapons.dll` | `Brainless.Weapons.update.json` |
 | BetterCoinflips | `BetterCoinflips.dll` | `BetterCoinflips.update.json` |
 | ScpProximityChat | `Brainless.ScpProximityChat.dll` | `Brainless.ScpProximityChat.update.json` |
+| Core | `Brainless.Core.dll` | `Brainless.Core.update.json` |
+| SlFixes | `Brainless.SlFixes.dll` | `Brainless.SlFixes.update.json` |
 
 Each manifest has schema version 1, repository identity, and a `plugins` array containing the component ID, assembly name, DLL asset name, numeric version, SHA-256, minimum EXILED version, exact SCP: SL version and `net48` target. `scripts/prepare_release.py` generates this from the built project; CI verifies the actual DLL identity/version before publishing. Updating game support also requires reviewing build references and the manifest's compatibility values.
 
@@ -73,3 +75,9 @@ The current builds fix zero armor penetration in the shared explosion handler: t
 Roles 0.2.2 gives Candy Man real SCP-330 candy, with configurable count and registered palette, including when the old allowlist is empty. SCP proximity chat 0.1.2 removes Hold mode, ignores old mode settings and commits the route only after successful speaker allocation. Both retain independent update checks and require a full process restart after downloading their DLLs.
 
 Items 0.3.2 changes Door Jammer 7105 to a keycard and adds the stronger revision-2 cluster preset. Items/Weapons 0.3.2 and chat 0.1.4 raise audio gain/full-volume distance; only untouched old stock values migrate. Roles 0.2.4 and BetterCoinflips 5.1.5 synchronize separately compiled shared helpers without changing role/coin gameplay. All retain direct `auto_update.token` configuration and independent restart-based updates.
+
+## Shared Core service
+
+Core/SlFixes 0.1.0 are new components (`core-v0.1.0`, `slfixes-v0.1.0`) and require a one-time manual install. New builds of the five existing plugins optionally register their update worker with Core through a primitive-data API, with no hard Core DLL reference. Core can supply its configured GitHub token when a component token is empty. Without Core they use the existing standalone engine. One failed component check cannot replace another DLL or stop gameplay. Full process restart is required after downloads or Core removal/hot reload.
+
+Release discovery fetches a full API page (up to 100 records), orders by publication time and then applies releases_to_scan (1-30). This avoids component/tag ordering hiding newer releases on a multi-plugin repo. Stable/prerelease and manifest compatibility checks remain. Build/release workflows now cover all seven independent projects.

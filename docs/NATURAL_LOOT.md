@@ -20,9 +20,9 @@ These are maxima and probabilities. Existing role kits, per-item caps, disabled 
 
 The map pass takes a snapshot at round start, shuffles it and converts eligible native pickups in place. Their serial, physical position, locker membership and access restrictions remain. This includes closed and delayed-spawn locker contents; converted items appear through the native locker behavior. Keycards, ammo, objective items and SCP objects are absent from the default replacement pools.
 
-A converted gas grenade still gets its paired filter. In a locker, the filter is attached to the same native chamber and respects first-opening behavior. A paired gas conversion of an unknown locked/deferred loose spawn is skipped rather than exposing its filter early. Disable pairing only if that is your intended balance choice.
+Smoke grenades use one flashbang body and one inventory/supply slot. They do not receive a paired filter; the native smoke is visual cover only.
 
-The former `world_loot` switch controls **additional** bundles. When enabled, they now scatter beside real accessible loose-loot anchors throughout configured zones, using `tuning.supply.world_loot_count` as their maximum. They also respect room/supply caps and the configured map rule pool. They no longer depend on a room type containing the word Armory. A paired gas bundle spends two utility supply slots. No valid loose anchor or available supply means no extra drop.
+The former `world_loot` switch controls **additional** bundles. When enabled, they now scatter beside real accessible loose-loot anchors throughout configured zones, using `tuning.supply.world_loot_count` as their maximum. They also respect room/supply caps and the configured map rule pool. They no longer depend on a room type containing the word Armory. Smoke bundles spend one utility supply slot. No valid loose anchor or available supply means no extra drop.
 
 `world_loot: false` disables additional bundles; map replacements and player loadouts have their own switches. `distribution.enabled: false` disables all three automatic routes for that provider.
 
@@ -30,7 +30,7 @@ The former `world_loot` switch controls **additional** bundles. When enabled, th
 
 | Route | Eligible content |
 | --- | --- |
-| Item map conversions | Medkit → Field Dressing; painkillers → Filter; coin → Chalk; janitor keycard → Door Jammer; flashbang → Echo or Foam; HE → Gas, Impact or rare Cluster; flashlight → Beacon; radio → Jammer |
+| Item map conversions | Medkit → Field Dressing; painkillers → Filter; coin → Chalk; janitor keycard → Door Jammer; flashbang → Smoke, Echo or Foam; HE → Impact or rare Cluster; flashlight → Beacon; radio → Jammer |
 | Class-D extra spawn gear | Chalk, Door Jammer or Field Dressing |
 | Other human item spawn conversions | A matching native medicine, flashbang or HE grenade can become one of the above custom variants |
 | Weapon map/spawn conversions | E11 → Nullifier; Crossvec → Rattler; Shotgun → Breach Shotgun |
@@ -93,7 +93,7 @@ brainless_items:
 
 `weight` is relative among eligible choices for that particular pickup/player. Zero disables that rule. The outer chance is separate: raising weights does not raise the overall chance of receiving custom loot. Each map rule needs a nonempty `source_types` list. Empty `zones` allows any captured non-pocket room; defaults limit content to LCZ, HCZ and Entrance. Default map pools exclude Surface, but you can explicitly allow it.
 
-For player rules, empty `roles` means any connected living human, and empty `replace_types` means an additional item. A nonempty replacement list converts one matching ordinary native item, preserving the rest of the inventory. Replacements require the custom item to use the same native body; adding a new item can use a different body. Full inventories skip additional items; a gas replacement still needs one free slot for its filter. Existing registered custom items, including other plugins' items, are never converted.
+For player rules, empty `roles` means any connected living human, and empty `replace_types` means an additional item. A nonempty replacement list converts one matching ordinary native item, preserving the rest of the inventory. Replacements require the custom item to use the same native body; adding a new item can use a different body. Full inventories skip additional items; smoke replacements preserve the existing slot. Existing registered custom items, including other plugins' items, are never converted.
 
 Default spawn reasons exclude escapes, SCP resurrection, forced class changes and item-induced respawns. The spawn must assign a native inventory and still be the same living human role when its delayed callback runs. Duplicate callbacks cannot roll a life twice, and successful awards remain tied to the user ID through deaths/reconnects until round reset. Users with custom role kits are skipped by default; the independent providers also see each other's registered custom gear.
 
@@ -101,4 +101,6 @@ Default spawn reasons exclude escapes, SCP resurrection, forced class changes an
 
 Reload changes future decisions without resetting awards, user caps or supply. It does not replay the initial map pass. Change map settings before the next round to see a fresh distribution. Counts set to zero disable that award channel; chances accept 0-100. Registration/native-body changes still need a full server restart.
 
-For a test round, temporarily set the relevant chance to 100, keep enough remaining supply and use `debug: true`. The server logs actual replacement/extra counts and skipped conversions. Use `ci list registered` for availability, `ci list insideinventories` for tracked holders, and `bprole` for role-kit inspection. Restore intended chances after testing. Verify locked/closed lockers, deferred spawns, gas pairing, role-kit overlap, reinforcement waves and cleanup with real clients; headless tests do not simulate Unity physics or clients.
+For a test round, temporarily set the relevant chance to 100, keep enough remaining supply and use `debug: true`. The server logs actual replacement/extra counts and skipped conversions. Use `ci list registered` for availability, `ci list insideinventories` for tracked holders, and `bprole` for role-kit inspection. Restore intended chances after testing. Verify locked/closed lockers, deferred spawns, smoke, role-kit overlap, reinforcement waves and cleanup with real clients; headless tests do not simulate Unity physics or clients.
+
+Items 0.4.0 changes smoke 7101 to the flashbang body and migrates old single-HE smoke conversion rules. It needs one slot and no filter. SCP-914 crafting lives in SlFixes and spends the same Items/Weapons supply; it does not add another random map/spawn roll.

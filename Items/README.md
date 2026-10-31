@@ -2,9 +2,9 @@
 
 Install `Brainless.Items.dll` in `EXILED/Plugins` on EXILED 9.15.2 / SCP: SL 14.2.8, with EXILED's standard CustomItems module enabled. Roles and Weapons are optional.
 
-The `brainless_items` configuration contains the 12 item definitions and their per-round caps. IDs 7101-7109 and 7111-7113 are stable integration IDs; 7110 is retired. Total supply is 6 / 10 / 14 utilities at fewer than 12 / 12-23 / 24+ players. A gas grenade reserves an additional filter. Cluster supply is 0 / 1 / 2 by the same bands.
+The `brainless_items` configuration contains the 12 item definitions and their per-round caps. IDs 7101-7109 and 7111-7113 are stable integration IDs; 7110 is retired. Total supply is 6 / 10 / 14 utilities at fewer than 12 / 12-23 / 24+ players. Smoke occupies one utility slot and creates no filter. Cluster supply is 0 / 1 / 2 by the same bands.
 
-Gas (7101) uses the native SCP-244 fog/particles for eight seconds, with a four-meter radius, no damage ticks and a 20% human slow. Its native fog exposure/visual signal is retained, while harmful server cold subeffects from custom emitters are filtered; ordinary SCP-244 pickups keep their behavior. A filter blocks the custom slow, while the world smoke still obstructs sight. No primitive renders the cloud.
+Smoke (7101) uses a flashbang body and full-size native SCP-244 fog. It applies no flash, blast damage or custom slow. One emitter lasts 20 seconds by default; duration and emitter count are configurable. It needs no paired filter or extra inventory slot. Native client fog remains; server cold exposure from owned clouds is excluded. Ordinary SCP-244 keeps its behavior except while a player deliberately uses a Filter Inhaler.
 
 Cluster (7102) has a parent blast (180 human / 500 SCP peak, 6m radius) and launches four real HE children outward/upward. Children peak at 120 human / 300 SCP over 5.5m, with 0.9-1.08s fuses. Parent and children share a per-target raw damage cap of 300 human / 1200 SCP. They never recursively split or apply native door damage.
 
@@ -12,7 +12,7 @@ Use native throw/consume controls. The server-specific **Use custom item or near
 
 Maintenance Pass (7110) has been removed. Existing generated item lists are filtered on enable, so an old YAML entry cannot register or grant it. The remaining items keep their IDs. Locksmith's replacement door-picking ability is entirely in the Roles DLL and consumes no item or utility supply.
 
-`ci give 7102 [playerID]` gives a cluster even below 12 players with the ordinary `customitems.give` permission. `ci spawn` uses `customitems.spawn`. Admin commands ignore natural supply caps and never spend that supply; gas includes its paired filter. No `--force` flag or extra permission is required. Results report actual deliveries and inventory/recipient failures. Natural role kits and world loot retain population and supply caps. See `docs/COMMANDS.md`.
+`ci give 7102 [playerID]` gives a cluster even below 12 players with the ordinary `customitems.give` permission. `ci spawn` uses `customitems.spawn`. Admin commands ignore natural supply caps and never spend that supply; smoke needs only one inventory slot. No `--force` flag or extra permission is required. Results report actual deliveries and inventory/recipient failures. Natural role kits and world loot retain population and supply caps. See `docs/COMMANDS.md`.
 
 Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Paste a read-only GitHub token into `auto_update.token` in this plugin's YAML for this private repository; `BRAINLESS_GITHUB_TOKEN` remains an optional environment fallback. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
 
@@ -33,3 +33,5 @@ Custom explosions now pass valid native armor penetration (50 by default), fixin
 Version 0.3.1 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.
 
 Version 0.3.2 turns Door Jammer 7105 into a keycard, migrates old stock coin definitions/distribution, strengthens the cluster parent/children while retaining four children and finite caps, and raises custom audio gain/full-volume distance. General cues use `tuning.audio`; Echo keeps its separate audio fields. Old stock settings migrate without resetting edited values. See `TUNING.md`.
+
+Version 0.4.0 simplifies gas to native smoke only, migrates the old HE body and matching loot rules to flashbangs, and exposes confirmed in-place SCP-914 crafting adapters for SlFixes. Optional Core can host this DLL's update checks; standalone operation remains supported.

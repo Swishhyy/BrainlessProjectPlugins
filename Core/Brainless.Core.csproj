@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.Core</AssemblyName>
+    <RootNamespace>Brainless.Core</RootNamespace>
+    <Version>0.1.0</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Authors>Project Brainless</Authors>
+  </PropertyGroup>
+</Project>
