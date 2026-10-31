@@ -108,6 +108,14 @@ internal static class UpdaterTests
             check(good.Requests.Count(r => r.Uri.Host == "api.github.com") == 3 && good.Requests.Where(r => r.Uri.Host == "api.github.com").All(r => r.Authorization == "Bearer unit-test-token"), "private release and asset requests use the configured read-only token");
             check(good.Requests.Single(r => r.Uri.Host == "release-assets.githubusercontent.com").Authorization == null, "GitHub asset redirects never receive the authorization token");
             Reset();
+            var bundle = new FakeGitHub(next)
+            {
+                CombinedRelease = true
+            };
+            await RunClient(bundle);
+            check(File.ReadAllBytes(target).SequenceEqual(next), "a combined release with all eight plugins and an install ZIP updates this component independently");
+            check(bundle.Requests.Count(r => r.Uri.Host == "api.github.com") == 3 && Directory.GetFiles(directory, "*.dll").Length == 1, "a combined release does not download its ZIP, peer manifests or uninstalled plugins");
+            Reset();
             var environment = new FakeGitHub(next);
             await RunClient(environment, config: new AutoUpdateConfig { TokenEnvironmentVariable = "TEST_GITHUB_TOKEN" });
             check(File.ReadAllBytes(target).SequenceEqual(next) && environment.Requests.Where(r => r.Uri.Host == "api.github.com").All(r => r.Authorization == "Bearer environment-test-token"), "existing environment-only server setups can still authenticate and install updates end to end");
@@ -269,7 +277,7 @@ internal static class UpdaterTests
     {
         private readonly byte[] dll;
         internal readonly List<(Uri Uri, string Authorization, bool Conditional)> Requests = new();
-        internal bool Draft, Prerelease, Truncate, Corrupt, WaitForCancellation, OldUnrelatedFirst;
+        internal bool Draft, Prerelease, Truncate, Corrupt, WaitForCancellation, OldUnrelatedFirst, CombinedRelease;
         internal string PluginId = "Items", Checksum, Redirect = "https://release-assets.githubusercontent.com/file";
         internal HttpStatusCode Status = HttpStatusCode.OK;
         internal FakeGitHub(byte[] dll)
@@ -294,32 +302,55 @@ internal static class UpdaterTests
                     response = new HttpResponseMessage(HttpStatusCode.NotModified);
                 else
                 {
+                    var assets = new List<object>
+                    {
+                        new
+                        {
+                            id = 1,
+                            name = UpdatePolicy.ManifestName(Assembly),
+                            state = "uploaded",
+                            size = Manifest.Length,
+                            digest = (string)null
+                        },
+                        new
+                        {
+                            id = 2,
+                            name = Assembly + ".dll",
+                            state = "uploaded",
+                            size = dll.Length,
+                            digest = "sha256:" + UpdatePolicy.Sha256(dll)
+                        }
+                    };
+                    if (CombinedRelease)
+                    {
+                        assets.Insert(0, new { id = 99, name = "ProjectBrainless-Plugins.zip", state = "uploaded", size = 4096, digest = (string)null });
+                        int id = 10;
+                        foreach (string peer in new[]
+                        {
+                            "Brainless.Roles",
+                            "Brainless.Weapons",
+                            "BetterCoinflips",
+                            "Brainless.ScpProximityChat",
+                            "Brainless.Core",
+                            "Brainless.SlFixes",
+                            "Brainless.RoundEvents"
+                        }
+
+                        )
+                        {
+                            assets.Add(new { id = id++, name = peer + ".dll", state = "uploaded", size = 1024, digest = (string)null });
+                            assets.Add(new { id = id++, name = peer + ".update.json", state = "uploaded", size = 512, digest = (string)null });
+                        }
+                    }
+
                     object release = new
                     {
                         id = 1,
-                        tag_name = "items-v1.1.0",
+                        tag_name = CombinedRelease ? "pb-test-snapshot" : "items-v1.1.0",
                         draft = Draft,
                         prerelease = Prerelease,
                         published_at = "2026-10-29T12:00:00Z",
-                        assets = new[]
-                        {
-                            new
-                            {
-                                id = 1,
-                                name = UpdatePolicy.ManifestName(Assembly),
-                                state = "uploaded",
-                                size = Manifest.Length,
-                                digest = (string)null
-                            },
-                            new
-                            {
-                                id = 2,
-                                name = Assembly + ".dll",
-                                state = "uploaded",
-                                size = dll.Length,
-                                digest = "sha256:" + UpdatePolicy.Sha256(dll)
-                            }
-                        }
+                        assets = assets
                     };
                     object[] releases = OldUnrelatedFirst ? new object[]
                     {

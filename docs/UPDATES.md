@@ -1,6 +1,6 @@
 # Automatic plugin updates
 
-Roles 0.2.5, Items/Weapons 0.4.0, BetterCoinflips 5.1.6, ScpProximityChat 0.1.5, Core 0.1.0 and SlFixes 0.1.0 support verified component release updates with direct token configuration. Install each desired DLL once. Existing updaters never install another plugin automatically.
+All eight plugins support verified component updates with direct token configuration. Downloads now share **one Project Brainless release page**. Each DLL keeps its own version and updater manifest. Install each desired DLL once; existing updaters never install another plugin automatically.
 
 ## Server setup
 
@@ -36,15 +36,19 @@ For rollback, stop the server, restore the appropriate `YourPlugin.dll.previous`
 
 ## Publishing releases
 
-Once these workflows are on `main`, a push/merge to `main` automatically builds and publishes component versions that do not already have a release. A push to a `release/**` branch supports a controlled bootstrap release before merging. The **Release plugins** workflow also offers a manual **All** or single-plugin choice. Each plugin builds, validates and publishes independently; one failed project does not cancel another project's release.
+A push/merge to `main` (or a `release/**` branch) builds all eight projects independently and publishes **one combined release**, tagged `pb-<12-character source commit>`. Each page has eight individual DLLs, eight per-plugin updater manifests, and **ProjectBrainless-Plugins.zip** with all DLLs and installation instructions. The bundle is marked Latest when stable. The ZIP contains `Plugins/` and a README; copy only the DLLs you want into EXILED/Plugins.
 
-1. Bump the changed project's `.csproj` version and its `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`.
-2. Commit and merge/push to `main`, or open **Actions → Release plugins → Run workflow** and select the desired plugin or All. Prerelease is optional for manual runs.
-3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.2.5`, `items-v0.4.0`, `weapons-v0.4.0`, `bettercoinflips-v5.1.6` and `scpproximitychat-v0.1.5`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
+The workflow waits for every selected build, regression check and assembly verification before collecting the artifacts. It rechecks complete membership, unique asset names, component versions, compatibility and checksums, then creates a draft. The release becomes visible only after the complete upload succeeds. Builds remain separate matrix jobs with `fail-fast: false`; a failure leaves the combined release unpublished until a successful retry. No plugin project or runtime dependency is combined.
 
-You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all seven. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
+1. Bump each changed plugin's `.csproj` version and `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`. Other plugins keep their own versions.
+2. Merge/push to `main`, or open **Actions → Release plugins → Run workflow** and choose **All**. Manual runs can be prereleases.
+3. The workflow publishes one page with a table of the actual component versions. A failed upload leaves a draft that the same commit can resume. Existing published assets are preserved on reruns.
 
-Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository Contents: write. Downloading servers only need a separate read-only token. The workflow becomes available for manual runs after it is on the default branch. Regular pull-request builds prepare and verify the same release assets without publishing anything.
+The updater already discovers its own DLL and `.update.json` by filename inside any release, so the shared tag needs no server-side config or token changes. It reads the component's version from its manifest, not from the release title/tag. A server running the same component version skips it; a newer compatible component is verified and downloaded on its own. The ZIP is only a manual-install convenience and is never downloaded by the updater.
+
+Existing component releases remain available. Manual single-plugin selection and matching tags such as `items-v0.5.1` still support a standalone component release if needed. Publishing an existing release through GitHub's UI attaches the selected component(s) without clobbering published assets, with DLLs uploaded before manifests; use the automatic draft-first workflow when release immutability is enabled. A shared `pb-*` tag selects all plugins.
+
+Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository Contents: write. Downloading servers only need a separate read-only token. Regular pull-request builds validate the same release policy without publishing anything.
 
 ## Release asset contract
 
@@ -57,6 +61,7 @@ Release publishing uses the workflow's temporary `GITHUB_TOKEN` with repository 
 | ScpProximityChat | `Brainless.ScpProximityChat.dll` | `Brainless.ScpProximityChat.update.json` |
 | Core | `Brainless.Core.dll` | `Brainless.Core.update.json` |
 | SlFixes | `Brainless.SlFixes.dll` | `Brainless.SlFixes.update.json` |
+| RoundEvents | `Brainless.RoundEvents.dll` | `Brainless.RoundEvents.update.json` |
 
 Each manifest has schema version 1, repository identity, and a `plugins` array containing the component ID, assembly name, DLL asset name, numeric version, SHA-256, minimum EXILED version, exact SCP: SL version and `net48` target. `scripts/prepare_release.py` generates this from the built project; CI verifies the actual DLL identity/version before publishing. Updating game support also requires reviewing build references and the manifest's compatibility values.
 
@@ -80,7 +85,7 @@ Items 0.3.2 changes Door Jammer 7105 to a keycard and adds the stronger revision
 
 Core/SlFixes 0.1.0 are new components (`core-v0.1.0`, `slfixes-v0.1.0`) and require a one-time manual install. New builds of the five existing plugins optionally register their update worker with Core through a primitive-data API, with no hard Core DLL reference. Core can supply its configured GitHub token when a component token is empty. Without Core they use the existing standalone engine. One failed component check cannot replace another DLL or stop gameplay. Full process restart is required after downloads or Core removal/hot reload.
 
-Release discovery fetches a full API page (up to 100 records), orders by publication time and then applies releases_to_scan (1-30). This avoids component/tag ordering hiding newer releases on a multi-plugin repo. Stable/prerelease and manifest compatibility checks remain. Build/release workflows now cover all seven independent projects.
+Release discovery fetches a full API page (up to 100 records), orders by publication time and then applies releases_to_scan (1-30). This avoids component/tag ordering hiding newer releases on a multi-plugin repo. Stable/prerelease and manifest compatibility checks remain. Build/release workflows cover all eight independent projects.
 
 ## Unity/Mono configuration errors
 
@@ -88,4 +93,4 @@ A token belongs in `auto_update.token`; `token_environment_variable` is an optio
 
 Old affected updaters may be unable to fetch this fix: stop the server, manually replace the plugin DLLs with their current releases (including Core if installed), and restart. Existing YAML stays valid. If a token was shown in a screenshot, revoke/regenerate it, update `token`, and keep the replacement private. A later HTTP 401/403/404 is a separate token/access/release issue; report the sanitized status if checks still fail after manual replacement. This patch is built/tested against pinned game references; the exact hosting runtime must still be verified live.
 
-RoundEvents has its own `roundevents-v*` release tags, `Brainless.RoundEvents.dll` and manifest, and supports optional Core update delegation like the other seven components. New DLLs require an initial manual installation.
+RoundEvents has its own `Brainless.RoundEvents.dll` and updater manifest on the shared release page, and supports optional Core update delegation like the other seven components. New DLLs require an initial manual installation.
