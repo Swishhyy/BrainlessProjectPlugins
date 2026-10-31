@@ -29,16 +29,16 @@ namespace Brainless.ScpProximityChat
         public float FullVolumeRange { get; set; } = AudioRules.FullVolumeRange;
 
         [Description("Native speaker gain (0-10). Values above 1 amplify the original microphone audio.")]
-        public float Volume { get; set; } = AudioRules.VoiceVolume;
+        public float Volume { get; set; } = VoiceAudio.DefaultVolume;
 
-        [Description("0 upgrades untouched old volume/full-volume defaults; set 1 to keep deliberately configured old values.")]
+        [Description("Values below 2 upgrade old stock voice gains (1 or 3.5) and the old 2m full-volume distance. Set 2 to retain deliberately chosen old values.")]
         public int AudioBalanceRevision { get; set; }
 
         internal void UpgradeAudio()
         {
-            Volume = AudioRules.UpgradeStock(Volume, 1, AudioRules.VoiceVolume, AudioBalanceRevision);
-            FullVolumeRange = AudioRules.UpgradeStock(FullVolumeRange, 2, AudioRules.FullVolumeRange, AudioBalanceRevision);
-            AudioBalanceRevision = System.Math.Max(1, AudioBalanceRevision);
+            Volume = VoiceAudio.UpgradeVolume(Volume, AudioBalanceRevision);
+            FullVolumeRange = VoiceAudio.UpgradeFullVolumeRange(FullVolumeRange, AudioBalanceRevision);
+            AudioBalanceRevision = System.Math.Max(VoiceAudio.Revision, AudioBalanceRevision);
         }
 
         [Description("Only these living roles can use the alternate nearby voice channel. SCP-079 and SCP-3114 keep their native voice mechanics.")]

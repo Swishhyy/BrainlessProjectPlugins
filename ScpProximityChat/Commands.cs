@@ -31,6 +31,7 @@ namespace Brainless.ScpProximityChat
             if (args.Length == 1 && action == "status")
             {
                 response = "SCP voice: " + (plugin.Eligible(player) ? state.Local ? "NEARBY" : "TEAM" : "native voice (role not enabled)") + ". Hear nearby SCPs: " + (state.HearNearby ? "ON" : "OFF") + ". Individual nearby mutes: " + state.MutedUsers.Count + ". Route checks: " + state.RouteChecks + "; nearby audio sends: " + state.AudioSends + ". Tap the nearby key to toggle; use your normal voice key to speak.";
+                response += "\n" + plugin.AudioStatus(player);
                 return true;
             }
 

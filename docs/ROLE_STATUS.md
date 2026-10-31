@@ -52,3 +52,16 @@ All 35 profiles have an implementation and compile against the pinned EXILED/gam
 - Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.
 
 All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.
+
+## Additional Discord concepts not implemented
+
+The 35-profile audit above covers the shipped catalog, not every role in the later Discord screenshot. These 14 additional concepts are not registered, cannot roll and have no `bprole set` IDs yet:
+
+| Native SCP | Missing profiles |
+| --- | --- |
+| SCP-106 | Stalker, Wormhole, Hyper, Poisonous |
+| SCP-173 | Raisian, Escape’s, Cocoon, Boom Boom |
+| SCP-939 | Ambusher, Alpha, Mimic, Venomous |
+| SCP-096 | Anger Issue, Ill Temperature |
+
+Existing Discord profiles use balanced reworks: Armored adds health rather than melee damage; Bomber is Explosive (Z04) and explodes on death. Brute currently has health/shield/speed traits without a taller model; Giant also uses the normal model size by default. Child, Tickler and Muncher remain opt-in; Doctor is disabled/event-only.

@@ -5,6 +5,18 @@ internal static class VoiceTests
 {
     internal static void Run(Action<bool, string> check)
     {
+        check(VoiceAudio.UpgradeVolume(1, 0) == 10 && VoiceAudio.UpgradeVolume(3.5f, 1) == 10, "both older stock SCP speech gains upgrade even after the previous migration already ran");
+        check(VoiceAudio.UpgradeVolume(0, 1) == 0 && VoiceAudio.UpgradeVolume(4.5f, 1) == 4.5f, "voice migration preserves explicitly muted and custom speech gains");
+        check(VoiceAudio.UpgradeVolume(1, 2) == 1 && VoiceAudio.UpgradeVolume(3.5f, 3) == 3.5f, "operators can pin a quieter speech preset with the current revision marker");
+        check(VoiceAudio.UpgradeFullVolumeRange(2, 1) == 6 && VoiceAudio.UpgradeFullVolumeRange(4, 1) == 4 && VoiceAudio.UpgradeFullVolumeRange(2, 2) == 2, "voice distance migration upgrades stock falloff without changing custom or pinned distances");
+#if NATIVE_CONFIG_TESTS
+        var config = new Config { Volume = 3.5f, FullVolumeRange = 2, AudioBalanceRevision = 1 };
+        config.UpgradeAudio();
+        check(config.Volume == 10 && config.FullVolumeRange == 6 && config.AudioBalanceRevision == 2, "existing voice YAML receives the stronger speech preset and advances its migration revision");
+        config.Volume = 1;
+        config.UpgradeAudio();
+        check(config.Volume == 1, "a deliberate volume edit after migration survives later plugin starts");
+#endif
         var state = new VoiceState();
         void Input(bool down)
         {
