@@ -10,7 +10,7 @@ The Grenade Launcher (7207) uses the Logicer LMG body and launches native bounci
 
 `ci give 7201 [playerID]` and `ci spawn` report confirmed results and ignore natural round supply caps using the ordinary `customitems.give`/`customitems.spawn` permissions. No `--force` flag or extra permission is required. Admin grants do not spend or reset natural supply. Disabled experimental entries still need enabling in configuration. See `docs/COMMANDS.md`.
 
-Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Set `BRAINLESS_GITHUB_TOKEN` in the server environment for this private repository. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
+Independent release updates are enabled under `auto_update`, checking every 60 minutes and applying after a full server restart. Paste a read-only GitHub token into `auto_update.token` in this plugin's YAML for this private repository; `BRAINLESS_GITHUB_TOKEN` remains an optional environment fallback. Only this DLL is replaced; the old file is saved as `.previous`. See `docs/UPDATES.md`.
 
 Redline is a disabled heat/vent prototype at the native firing cadence. The design's proposed 20% faster cadence is not implemented pending client prediction validation. Ricochet reflects once from approved solid mesh geometry; it needs focused in-game collision checks.
 
@@ -21,3 +21,5 @@ Version 0.2.0 exposes Nullifier, Rattler, Breach Shotgun, Redline and Ricochet m
 Version 0.3.0 adds `distribution`: default Nullifier/Rattler/Breach replacements, 20% per eligible map gun (max 1), and 15% per eligible human spawn (max 1 successful grant per round). Existing custom gear is skipped by default. Replacements keep the native body/serial and do not grant extra reserve ammo. Last Word, the launcher and experimental prototypes are absent from the default random pools. See packaged `NATURAL_LOOT.md`.
 
 Custom grenade damage now uses valid native armor penetration (50 by default), fixing a zero-damage setup bug. Launcher blast damage/radius defaults are stronger; unchanged old stock fields migrate with `grenade_balance_revision: 0`. Set it to 1 when deliberately keeping older values. Configure `launcher_armor_penetration` from 1-100; use zero damage to disable damage.
+
+Version 0.3.1 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.

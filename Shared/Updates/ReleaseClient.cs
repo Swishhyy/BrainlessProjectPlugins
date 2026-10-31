@@ -164,7 +164,9 @@ namespace Brainless.Internal.Updates
 
                             if (!response.IsSuccessStatusCode)
                             {
-                                string help = status == 401 || status == 403 || status == 404 ? " Check release availability, GitHub rate limits and the configured read-only token for this private repository." : "";
+                                string help = "";
+                                if (api && (status == 401 || status == 403 || status == 404))
+                                    help = request.Headers.Authorization == null ? " No GitHub token was supplied. Set auto_update.token in this plugin's YAML, or use the optional token_environment_variable." : " Check that the configured GitHub token is valid and has Contents: read access to Swishhyy/BrainlessProjectPlugins; also check release availability and GitHub rate limits.";
                                 throw new UpdateException("GitHub release request returned HTTP " + status + "." + help);
                             }
 

@@ -1,3 +1,11 @@
+Paste a read-only GitHub token directly into `auto_update.token` in this plugin's YAML. No Bisect environment-variable setup is required. The config token takes precedence; existing environment-only setups keep working.
+
+Missing-token and permission errors now explain the appropriate fix without echoing credentials. New configs scan up to 30 releases so all five components can be discovered. Configured scan counts are preserved.
+
+Install this DLL manually once if the old updater cannot authenticate, set the token, and fully stop/start the server. Subsequent automatic downloads retain SHA-256/assembly validation, `.previous` backups and full-restart activation.
+
+This release also includes the previous gameplay changes:
+
 - Fix native explosion damage setup: valid armor penetration replaces zero, and world positions are no longer passed as force. This also respects native HE cover masks.
 - Custom utilities now appear naturally: convert a few matching native map pickups and locker contents, and occasionally give/convert gear on human spawns after native/custom role kits finish.
 - Defaults are 25% map chance (max 3 replacements), 30% human-spawn chance (max 3 successful grants / 1 per user), and one map bundle per room. Existing supply/population/item caps remain.

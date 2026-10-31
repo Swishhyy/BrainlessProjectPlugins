@@ -1,3 +1,11 @@
+Paste a read-only GitHub token directly into `auto_update.token` in this plugin's YAML. No Bisect environment-variable setup is required. The config token takes precedence; existing environment-only setups keep working.
+
+Missing-token and permission errors now explain the appropriate fix without echoing credentials. New configs scan up to 30 releases so all five components can be discovered. Configured scan counts are preserved.
+
+Install this DLL manually once if the old updater cannot authenticate, set the token, and fully stop/start the server. Subsequent automatic downloads retain SHA-256/assembly validation, `.previous` backups and full-restart activation.
+
+This release also includes the previous gameplay changes:
+
 - SCP proximity chat is toggle-only: tap N once to enable nearby, release it and use the normal voice key to speak; tap N again for team chat.
 - Removes the Hold setting and legacy hold-mode configuration. Old mode reports cannot switch it back or reset an active route.
 - Speaker allocation succeeds before enabling the route; failures remain on team and show an error. Duplicate key-down reports do not retry a failed allocation.
