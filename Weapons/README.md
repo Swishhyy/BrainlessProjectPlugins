@@ -23,3 +23,5 @@ Version 0.3.0 adds `distribution`: default Nullifier/Rattler/Breach replacements
 Custom grenade damage now uses valid native armor penetration (50 by default), fixing a zero-damage setup bug. Launcher blast damage/radius defaults are stronger; unchanged old stock fields migrate with `grenade_balance_revision: 0`. Set it to 1 when deliberately keeping older values. Configure `launcher_armor_penetration` from 1-100; use zero damage to disable damage.
 
 Version 0.3.1 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.
+
+Version 0.3.2 raises custom cue and Rattler gain to 2.5, with full volume out to 6m. Tune general vent/ricochet sounds under `tuning.audio` and Rattler under its own audio fields. Untouched old gain migrates; custom settings and native gunshot assets remain unchanged.

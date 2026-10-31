@@ -138,7 +138,7 @@ namespace Brainless.Roles
             r.CustomItems.AddRange(new uint[] { 7109, 7109 });
             r.ReserveMultiplier = .75f;
             list.Add(r);
-            r = R("G06", "Maintenance Liaison", RoleTypeId.FacilityGuard, "Door Brace instead of flashbang; less ammo.");
+            r = R("G06", "Maintenance Liaison", RoleTypeId.FacilityGuard, "Door Jammer keycard instead of flashbang; less ammo.");
             r.Remove.Add(ItemType.GrenadeFlash);
             r.CustomItems.Add(7105);
             r.ReserveMultiplier = .75f;

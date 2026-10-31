@@ -15,6 +15,11 @@ namespace Brainless.Internal
         }
     }
 
+    [AttributeUsage(AttributeTargets.Class)]
+    internal sealed class TuningSectionAttribute : Attribute
+    {
+    }
+
     internal static class Tuning
     {
         internal static void Validate(object value, string path)
@@ -31,7 +36,7 @@ namespace Brainless.Internal
                     if (double.IsNaN(number) || double.IsInfinity(number) || number < bound.Min || number > bound.Max)
                         throw new InvalidOperationException(path + "." + property.Name + " must be between " + bound.Min + " and " + bound.Max + ".");
                 }
-                else if (property.PropertyType.Namespace == value.GetType().Namespace && property.PropertyType.IsClass && property.PropertyType != typeof(string))
+                else if ((property.PropertyType.Namespace == value.GetType().Namespace || property.PropertyType.IsDefined(typeof(TuningSectionAttribute), false)) && property.PropertyType.IsClass && property.PropertyType != typeof(string))
                     Validate(current, path + "." + property.Name);
             }
         }

@@ -1,6 +1,6 @@
 # Balance and configuration
 
-Project Brainless Roles 0.2.3 and Items/Weapons 0.3.1 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
+Project Brainless Roles 0.2.4 and Items/Weapons 0.3.2 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
 
 ## Where to edit and apply
 
@@ -44,18 +44,18 @@ brainless_items:
     cluster_grenade:
       fuse_seconds: 3
       grenade_count: 4
-      parent_radius: 4.5
-      parent_human_damage: 90
-      parent_scp_damage: 250
-      child_fuse_seconds: 1.2
-      child_fuse_stagger_seconds: 0.08
-      horizontal_speed: 3
-      upward_speed: 3
-      radius: 4
-      human_damage: 70
-      scp_damage: 180
-      shared_human_damage_cap: 150
-      shared_scp_damage_cap: 500
+      parent_radius: 6
+      parent_human_damage: 180
+      parent_scp_damage: 500
+      child_fuse_seconds: 0.9
+      child_fuse_stagger_seconds: 0.06
+      horizontal_speed: 5
+      upward_speed: 3.5
+      radius: 5.5
+      human_damage: 120
+      scp_damage: 300
+      shared_human_damage_cap: 300
+      shared_scp_damage_cap: 1200
       armor_penetration: 50
       require_line_of_sight: true
       affect_owner: true
@@ -71,7 +71,7 @@ brainless_items:
       affect_owner: true
 ```
 
-Cluster has a controlled parent blast and launches the configured real child grenades; none becomes another cluster. Parent and children share each target's configured raw damage allowance. Zero caps disable damage. Default parent is 90/250 over 4.5m, with four children at 70/180 over 4m and 150/500 total caps. Children launch at 3m/s outward/up and explode after 1.2s plus stagger. Counts support 1-32; all parent/child damage, fuses, spread, radius, caps and penetration are independently editable.
+Cluster has a controlled parent blast and launches the configured real child grenades; none becomes another cluster. Parent and children share each target's configured raw damage allowance. Zero caps disable damage. Default parent is 180/500 over 6m, with four children at 120/300 over 5.5m and 300/1200 total caps. Children launch at 5m/s outward and 3.5m/s upward, starting at separate positions when clear of nearby cover, and explode after 0.9s plus 0.06s stagger. Counts support 1-32; all parent/child damage, fuses, spread, radius, caps and penetration are independently editable.
 
 Impact (7113) ignores the thrower's collider and detonates once on a qualifying physical contact after arming. Continued contact with the ground also qualifies after the delay. Player contacts are optional. The safety fuse prevents an airborne projectile from lasting forever; setting it shorter than the arming delay makes it expire by timer first. Native grenade validation/events still apply.
 
@@ -88,8 +88,8 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 | Section / registry ID | Fields and shipped defaults |
 | --- | --- |
 | `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 6`, `radius: 3`, `human_slow_percent: 10`, `scp_slow_percent: 8`, both `*_damage_per_second: 0`, `affect_allies: false`, `affect_owner: true`, `same_room_only: true`, `require_line_of_sight: true` |
-| `echo_canister` / 7104 | `fuse_seconds: 1`, `duration_seconds: 6`, `audio_range: 16`, `audio_volume: 0.65` |
-| `door_brace` / 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 8`, `reach: 3` |
+| `echo_canister` / 7104 | `fuse_seconds: 1`, `duration_seconds: 6`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
+| `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 8`, `reach: 3` |
 | `signal_jammer` / 7106 | `deploy_seconds: 2`, `arming_seconds: 2`, `active_seconds: 6`, `room_cooldown_seconds: 30`, `remove_seconds: 2`, `max_active: 1` |
 | `survey_beacon` / 7107 | `deploy_seconds: 2`, `duration_seconds: 45`, `scan_seconds: 3`, `scans: 2`, `remove_seconds: 2` |
 | `trace_chalk` / 7108 | `duration_seconds: 45`, `max_markers: 9`; charges come from its item-list entry (default 3) |
@@ -151,7 +151,7 @@ The Logicer body remains mandatory for 7207. These legacy launcher field names r
 | Section under `brainless_weapons.tuning` | Fields and shipped defaults |
 | --- | --- |
 | `nullifier` | `shield_damage_multiplier: 1.2` |
-| `rattler` | `hits_to_tag: 3`, `hit_window_seconds: 2`, `tag_duration_seconds: 3`, `immunity_seconds: 11`, `audio_range: 16`, `audio_volume: 0.65` |
+| `rattler` | `hits_to_tag: 3`, `hit_window_seconds: 2`, `tag_duration_seconds: 3`, `immunity_seconds: 11`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
 | `breach_shotgun` | `shells_per_cycle: 2`, `cycles_to_breach: 3`, `progress_reset_seconds: 6`, `reach: 2` |
 | `redline` | `heat_per_shot: 9`, `max_heat: 100`, `vent_seconds: 3`, `cooling_delay_seconds: 0.6`, `cooling_per_second: 25` |
 | `ricochet` | `range: 20`, `bounce_damage_multiplier: 0.5`, `tracer_seconds: 0.12` |
@@ -171,8 +171,26 @@ Items/Weapons 0.3.0 add `distribution` for weighted native pickup/locker replace
 
 This game build's native explosion constructor returns before setting damage/attacker when armor penetration is zero. Custom explosions now use valid penetration, default 50 to match native HE. Configure `armor_penetration` for Impact/Cluster and `explosive_zombie`, or root `launcher_armor_penetration` for the launcher. Valid range is 1-100; set the damage fields to zero when disabling damage. The force passed to the handler is now zero rather than world coordinates. Additional blast cover checks use the native HE blocker mask, allowing its normal wall/door cover behavior without treating loose pickup/ragdoll bodies as walls.
 
-Under Items/Weapons, `grenade_balance_revision: 0` (including a missing marker) upgrades individual fields that still exactly equal the former stock damage/radius/cap/timing values. Edited values and grenade counts survive. Runtime upgrade sets revision 1 without overwriting the YAML file. When intentionally retaining/restoring old numeric values, save `grenade_balance_revision: 1` in that provider's root section. New cluster parent-blast fields default to the values above; set parent damage to zero to disable that stage. Queued projectiles keep captured tuning. Normal native armor, friendly-fire, god mode, spawn protection and damage-event rules remain.
+Under Items/Weapons, `grenade_balance_revision: 0` (including a missing marker) upgrades individual fields that still exactly equal the former stock damage/radius/cap/timing values. Edited values and grenade counts survive. Items now migrates old cluster defaults through revision 2, including configs already at revision 1; Weapons retains revision 1 for its launcher. Migrations do not overwrite the YAML file. To deliberately retain old numeric values, save `grenade_balance_revision: 2` under Items or `grenade_balance_revision: 1` under Weapons. New cluster parent-blast fields default to the values above; set parent damage to zero to disable that stage. Queued projectiles keep captured tuning. Normal native armor, friendly-fire, god mode, spawn protection and damage-event rules remain.
 
 ## Candy roles
 
 Under `brainless_roles`, `candy_man_candy_count: 3` controls the number of actual SCP-330 candies (1-6). `approved_candy: []` uses registered Rainbow/Yellow/Purple/Red/Green/Blue candies. An explicit list selects only those registered colors, including special colors if deliberately listed. No pill fallback is used; unavailable explicit colors do not silently become medicine. Native random seed candy is cleared before filling the bag, preserving the configured count. Save and run `bprole reload`; new assignments use the new count/pool.
+
+## Louder custom audio
+
+Items and Weapons have `tuning.audio` for general device/vent/ricochet cues:
+
+```yaml
+tuning:
+  audio:
+    volume: 2.5
+    full_volume_range: 6
+    range: 20
+```
+
+Echo and Rattler retain independent `audio_volume: 2.5`, `audio_range: 16` and `audio_full_volume_range: 6` in their tuning sections. Gain accepts 0-10, with 0 muting that sound. The full-volume distance is clamped to the selected hearing radius. Existing untouched 0.65 Echo/Rattler gains migrate; custom values remain. Save `audio_balance_revision: 1` in the provider root when deliberately keeping an old gain. Native gunshot assets and client master/speaker sliders are unchanged.
+
+SCP proximity chat defaults to `volume: 3.5`, `full_volume_range: 6`, `voice_range: 16`. Gain accepts 0-10 through the native speaker's PCM multiplier. Old stock 1/2 values migrate automatically unless `audio_balance_revision: 1`; edited values and receive/mute controls survive. No microphone decoding/re-encoding or additional dependency is added. Confirm actual listening volume with two living clients after a full restart.
+
+Door Jammer 7105 now uses `KeycardJanitor` instead of a coin. Equip it and interact with an ordinary closed door; the existing tool key also works. Timing, removal and duration still use `tuning.door_brace`. Catalog revision 2 migrates the old stock body/name/description and its single-coin distribution rules, without resetting edited timing, supply or removed loot lists. Body changes require a full restart.

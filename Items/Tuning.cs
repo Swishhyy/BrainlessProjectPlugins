@@ -18,10 +18,17 @@ namespace Brainless.Items
         public SpecimenTuning PreservedSpecimen { get; set; } = new SpecimenTuning();
         public InteractionTuning Interaction { get; set; } = new InteractionTuning();
         public SupplyTuning Supply { get; set; } = new SupplyTuning();
+        public EffectAudioTuning Audio { get; set; } = new EffectAudioTuning();
+
+        internal int UpgradeAudio(int revision)
+        {
+            EchoCanister.AudioVolume = AudioRules.UpgradeStock(EchoCanister.AudioVolume, .65f, AudioRules.EffectVolume, revision);
+            return System.Math.Max(1, revision);
+        }
 
         internal int UpgradeGrenades(int revision)
         {
-            if (revision >= 1)
+            if (revision >= 2)
                 return revision;
             var c = ClusterGrenade;
             c.Radius = ExplosionRules.UpgradeStock(c.Radius, 2.75f, 4, revision);
@@ -36,7 +43,19 @@ namespace Brainless.Items
             impact.Radius = ExplosionRules.UpgradeStock(impact.Radius, 3.5f, 5, revision);
             impact.HumanDamage = ExplosionRules.UpgradeStock(impact.HumanDamage, 80, 140, revision);
             impact.ScpDamage = ExplosionRules.UpgradeStock(impact.ScpDamage, 180, 350, revision);
-            return 1;
+            c.Radius = ExplosionRules.UpgradeStock(c.Radius, 4, 5.5f, revision - 1);
+            c.HumanDamage = ExplosionRules.UpgradeStock(c.HumanDamage, 70, 120, revision - 1);
+            c.ScpDamage = ExplosionRules.UpgradeStock(c.ScpDamage, 180, 300, revision - 1);
+            c.ParentRadius = ExplosionRules.UpgradeStock(c.ParentRadius, 4.5f, 6, revision - 1);
+            c.ParentHumanDamage = ExplosionRules.UpgradeStock(c.ParentHumanDamage, 90, 180, revision - 1);
+            c.ParentScpDamage = ExplosionRules.UpgradeStock(c.ParentScpDamage, 250, 500, revision - 1);
+            c.SharedHumanDamageCap = ExplosionRules.UpgradeStock(c.SharedHumanDamageCap, 150, 300, revision - 1);
+            c.SharedScpDamageCap = ExplosionRules.UpgradeStock(c.SharedScpDamageCap, 500, 1200, revision - 1);
+            c.ChildFuseSeconds = ExplosionRules.UpgradeStock(c.ChildFuseSeconds, 1.2f, .9f, revision - 1);
+            c.ChildFuseStaggerSeconds = ExplosionRules.UpgradeStock(c.ChildFuseStaggerSeconds, .08f, .06f, revision - 1);
+            c.HorizontalSpeed = ExplosionRules.UpgradeStock(c.HorizontalSpeed, 3, 5, revision - 1);
+            c.UpwardSpeed = ExplosionRules.UpgradeStock(c.UpwardSpeed, 3, 3.5f, revision - 1);
+            return 2;
         }
     }
 
@@ -107,19 +126,19 @@ namespace Brainless.Items
     public sealed class ClusterTuning : BlastTuning
     {
         [Tune(.1, 60)]
-        public float ParentRadius { get; set; } = 4.5f;
+        public float ParentRadius { get; set; } = 6;
 
         [Tune(0, 100000)]
-        public float ParentHumanDamage { get; set; } = 90;
+        public float ParentHumanDamage { get; set; } = 180;
 
         [Tune(0, 100000)]
-        public float ParentScpDamage { get; set; } = 250;
+        public float ParentScpDamage { get; set; } = 500;
 
         public ClusterTuning()
         {
-            Radius = 4;
-            HumanDamage = 70;
-            ScpDamage = 180;
+            Radius = 5.5f;
+            HumanDamage = 120;
+            ScpDamage = 300;
         }
 
         [Tune(.05, 120)]
@@ -129,22 +148,22 @@ namespace Brainless.Items
         public int GrenadeCount { get; set; } = 4;
 
         [Tune(.05, 120)]
-        public float ChildFuseSeconds { get; set; } = 1.2f;
+        public float ChildFuseSeconds { get; set; } = .9f;
 
         [Tune(0, 10)]
-        public float ChildFuseStaggerSeconds { get; set; } = .08f;
+        public float ChildFuseStaggerSeconds { get; set; } = .06f;
 
         [Tune(0, 50)]
-        public float HorizontalSpeed { get; set; } = 3;
+        public float HorizontalSpeed { get; set; } = 5;
 
         [Tune(0, 50)]
-        public float UpwardSpeed { get; set; } = 3;
+        public float UpwardSpeed { get; set; } = 3.5f;
 
         [Tune(0, 100000)]
-        public float SharedHumanDamageCap { get; set; } = 150;
+        public float SharedHumanDamageCap { get; set; } = 300;
 
         [Tune(0, 100000)]
-        public float SharedScpDamageCap { get; set; } = 500;
+        public float SharedScpDamageCap { get; set; } = 1200;
     }
 
     public sealed class ImpactTuning : BlastTuning
@@ -168,8 +187,11 @@ namespace Brainless.Items
         [Tune(1, 100)]
         public float AudioRange { get; set; } = 16;
 
-        [Tune(0, 2)]
-        public float AudioVolume { get; set; } = .65f;
+        [Tune(0, 10)]
+        public float AudioVolume { get; set; } = AudioRules.EffectVolume;
+
+        [Tune(.1, 100)]
+        public float AudioFullVolumeRange { get; set; } = AudioRules.FullVolumeRange;
     }
 
     public sealed class BraceTuning

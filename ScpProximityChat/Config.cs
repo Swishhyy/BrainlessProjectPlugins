@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using Brainless.Internal;
 using Brainless.Internal.Updates;
 using Exiled.API.Interfaces;
 using PlayerRoles;
@@ -23,8 +24,22 @@ namespace Brainless.ScpProximityChat
 
         [Description("Maximum nearby voice radius in metres (5-30). Native receiver visibility checks still apply.")]
         public float VoiceRange { get; set; } = 16;
-        public float FullVolumeRange { get; set; } = 2;
-        public float Volume { get; set; } = 1;
+
+        [Description("Distance in metres before nearby voice starts fading. Clamped to voice_range.")]
+        public float FullVolumeRange { get; set; } = AudioRules.FullVolumeRange;
+
+        [Description("Native speaker gain (0-10). Values above 1 amplify the original microphone audio.")]
+        public float Volume { get; set; } = AudioRules.VoiceVolume;
+
+        [Description("0 upgrades untouched old volume/full-volume defaults; set 1 to keep deliberately configured old values.")]
+        public int AudioBalanceRevision { get; set; }
+
+        internal void UpgradeAudio()
+        {
+            Volume = AudioRules.UpgradeStock(Volume, 1, AudioRules.VoiceVolume, AudioBalanceRevision);
+            FullVolumeRange = AudioRules.UpgradeStock(FullVolumeRange, 2, AudioRules.FullVolumeRange, AudioBalanceRevision);
+            AudioBalanceRevision = System.Math.Max(1, AudioBalanceRevision);
+        }
 
         [Description("Only these living roles can use the alternate nearby voice channel. SCP-079 and SCP-3114 keep their native voice mechanics.")]
         public List<RoleTypeId> AllowedRoles { get; set; } = new List<RoleTypeId>

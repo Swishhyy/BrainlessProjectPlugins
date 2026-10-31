@@ -84,7 +84,7 @@ namespace Brainless.Internal
                 Map(7109, 6, ItemType.Medkit),
                 Map(7111, 3, ItemType.Painkillers),
                 Map(7108, 3, ItemType.Coin),
-                Map(7105, 2, ItemType.Coin),
+                Map(7105, 2, ItemType.KeycardJanitor),
                 Map(7104, 3, ItemType.GrenadeFlash),
                 Map(7103, 2, ItemType.GrenadeFlash),
                 Map(7101, 3, ItemType.GrenadeHE),
@@ -157,6 +157,22 @@ namespace Brainless.Internal
     // operator writes only part of a distribution block in existing YAML.
     public sealed class ItemDistributionConfig : DistributionConfig
     {
+        internal void UpgradeDoorJammerBody()
+        {
+            foreach (var rule in MapRules?.Where(r => r != null && r.CustomId == 7105) ?? Enumerable.Empty<MapLootRule>())
+                if (rule.SourceTypes?.SequenceEqual(new[] { ItemType.Coin }) == true)
+                    rule.SourceTypes = new List<ItemType>
+                    {
+                        ItemType.KeycardJanitor
+                    };
+            foreach (var rule in PlayerRules?.Where(r => r != null && r.CustomId == 7105) ?? Enumerable.Empty<PlayerLootRule>())
+                if (rule.ReplaceTypes?.SequenceEqual(new[] { ItemType.Coin }) == true)
+                    rule.ReplaceTypes = new List<ItemType>
+                    {
+                        ItemType.KeycardJanitor
+                    };
+        }
+
         public ItemDistributionConfig() : base(Items())
         {
         }

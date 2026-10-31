@@ -59,6 +59,7 @@ namespace Brainless.Weapons
         [Tune(1, 100)]
         public int LauncherArmorPenetration { get; set; } = ExplosionRules.DefaultPenetration;
         public int GrenadeBalanceRevision { get; set; }
+        public int AudioBalanceRevision { get; set; }
         public bool LauncherRequireLineOfSight { get; set; } = true;
         public bool LauncherAffectOwner { get; set; } = true;
         public List<WeaponSpec> Weapons { get; set; } = new List<WeaponSpec>
@@ -161,6 +162,7 @@ namespace Brainless.Weapons
             LauncherScpDamage = ExplosionRules.UpgradeStock(LauncherScpDamage, 90, 150, GrenadeBalanceRevision);
             GrenadeBalanceRevision = Math.Max(1, GrenadeBalanceRevision);
             Brainless.Internal.Tuning.Validate(this, "brainless_weapons");
+            AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.Validate(id => id >= 7201 && id <= 7207);

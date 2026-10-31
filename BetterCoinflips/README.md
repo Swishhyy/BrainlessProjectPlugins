@@ -1,6 +1,6 @@
 # BetterCoinflips BP
 
-This is the imported BetterCoinflips plugin, updated to **5.1.4** for **EXILED 9.15.2 / SCP: SL 14.2.8**. It builds separately as `BetterCoinflips.dll` and does not depend on any Brainless plugin DLL.
+This is the imported BetterCoinflips plugin, updated to **5.1.5** for **EXILED 9.15.2 / SCP: SL 14.2.8**. It builds separately as `BetterCoinflips.dll` and does not depend on any Brainless plugin DLL.
 
 Independent release updates are enabled under `auto_update`. They check GitHub Releases every 60 minutes, verify this DLL's checksum and identity, keep a `.previous` backup, and apply the new version after a full server restart. Paste a read-only GitHub token into `auto_update.token` in this plugin's YAML for this private repository; the environment variable remains optional; see `docs/UPDATES.md`.
 
@@ -19,3 +19,5 @@ Version 5.1.2 rebuilds the maintained shared helpers with the rest of the suite;
 Version 5.1.3 synchronizes the corrected explosion helper compiled into the suite; coin-effect weights/settings are unchanged.
 
 Version 5.1.4 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.
+
+Version 5.1.5 synchronizes the separately compiled shared audio helper. Coin-effect weights and settings are unchanged.

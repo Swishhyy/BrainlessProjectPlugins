@@ -3,6 +3,8 @@
   <ItemGroup>
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
     <Compile Include="../../Shared/ExplosionRules.cs" Link="ExplosionRules.cs" />
+    <Compile Include="../../Shared/AudioRules.cs" Link="AudioRules.cs" />
+    <Compile Include="../../Shared/EffectAudioTuning.cs" Link="EffectAudioTuning.cs" />
     <Compile Include="../../Shared/Tuning.cs" Link="Tuning.cs" />
     <Compile Include="../../Shared/DistributionRules.cs" Link="DistributionRules.cs" />
     <Compile Include="../../Items/Tuning.cs" Link="ItemTuning.cs" />
@@ -27,6 +29,7 @@
   </PropertyGroup>
   <ItemGroup Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
     <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />
+    <Compile Include="../../ScpProximityChat/Config.cs" Link="ScpChatConfig.cs" />
     <Reference Include="Assembly-CSharp" HintPath="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" Private="true" />
     <Reference Include="Exiled.API" HintPath="$(ReferencesPath)/Exiled.API.dll" Private="true" />
     <Reference Include="YamlDotNet" HintPath="$(ReferencesPath)/YamlDotNet.dll" Private="true" />

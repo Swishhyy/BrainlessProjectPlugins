@@ -24,7 +24,7 @@ Stable IDs map the design document into independent plugins. All values are play
 | G03 | Trained Agent | FacilityGuard | Combat armor, 5% speed, less ammo. Heavy armor suspends speed. |
 | G04 | Coward | FacilityGuard | 30% longer sprint with no armor. Armor suspends the benefit. |
 | G05 | Quartermaster | FacilityGuard | Two Field Dressings instead of the medkit; less ammo. |
-| G06 | Maintenance Liaison | FacilityGuard | Door Brace instead of flashbang; less ammo. |
+| G06 | Maintenance Liaison | FacilityGuard | Door Jammer keycard instead of flashbang; less ammo. |
 | M01 | Field Medic | MTF with original rank | Two Field Dressings instead of medkit; less ammo. |
 | M02 | Signal Officer | MTF with original rank | Jammer and Survey Beacon instead of grenade; less ammo. |
 | M03 | Containment Specialist | MTF with original rank | Nullifier and foam; weaker against human targets and SCP health. |
@@ -52,7 +52,7 @@ Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ord
 | I02 | 7102 | Cluster Grenade | Parent blast plus four real grenades launched outward. Shared damage cap; no recursive clusters. |
 | I03 | 7103 | Containment Foam Canister | Six-second floor patch slows humans 10% and SCPs 8%. |
 | I04 | 7104 | Echo Canister | Six seconds of synthetic footsteps; no damage or flash. |
-| I05 | 7105 | Door Brace | Hold tool key at an ordinary closed door. Others can remove it. |
+| I05 | 7105 | Door Jammer | Equip this keycard and interact with a closed ordinary door to jam it. Others can remove it. |
 | I06 | 7106 | Signal Jammer | Hold tool key to deploy a short, noisy SCP-079 room jammer. |
 | I07 | 7107 | Survey Beacon | Deploy with tool key; two audible scans in this room. |
 | I08 | 7108 | Trace Chalk | Three numbered floor markers, visible to everyone for 45 seconds. |

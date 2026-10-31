@@ -156,12 +156,12 @@ namespace Brainless.Internal
     internal static class Audio
     {
         // Uses the codec and speaker supplied with the game. No audio plugin DLL.
-        internal static void Play(Lifetime lifetime, Vector3 position, float seconds, string kind, Func<Vector3> follow = null, float volume = .65f, float range = 16)
+        internal static void Play(Lifetime lifetime, Vector3 position, float seconds, string kind, Func<Vector3> follow = null, float volume = AudioRules.EffectVolume, float range = AudioRules.EffectRange, float fullVolumeRange = AudioRules.FullVolumeRange)
         {
-            Safe.Run(() => lifetime.Run(Stream(lifetime, position, seconds, kind, follow, volume, range)));
+            Safe.Run(() => lifetime.Run(Stream(lifetime, position, seconds, kind, follow, volume, range, fullVolumeRange)));
         }
 
-        private static IEnumerator<float> Stream(Lifetime lifetime, Vector3 position, float seconds, string kind, Func<Vector3> follow, float volume, float range)
+        private static IEnumerator<float> Stream(Lifetime lifetime, Vector3 position, float seconds, string kind, Func<Vector3> follow, float volume, float range, float fullVolumeRange)
         {
             var occupied = new HashSet<byte>(Exiled.API.Features.Toys.AdminToy.List.OfType<Speaker>().Select(s => s.ControllerId));
             byte id = 0;
@@ -178,7 +178,7 @@ namespace Brainless.Internal
             speaker.ControllerId = id;
             speaker.IsSpatial = true;
             speaker.Volume = volume;
-            speaker.MinDistance = 1;
+            speaker.MinDistance = AudioRules.FullVolumeDistance(fullVolumeRange, range);
             speaker.MaxDistance = range;
             speaker.Spawn();
             var random = new System.Random();

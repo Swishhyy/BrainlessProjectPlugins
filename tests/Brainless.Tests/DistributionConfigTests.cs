@@ -12,6 +12,21 @@ internal static class DistributionConfigTests
     {
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
+        var voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\n");
+        voice.UpgradeAudio();
+        check(voice.Volume == 3.5f && voice.FullVolumeRange == 6 && voice.AudioBalanceRevision == 1, "old SCP voice YAML receives the audible preset without deleting the server config");
+        voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 0.5\nfull_volume_range: 4\n");
+        voice.UpgradeAudio();
+        check(voice.Volume == .5f && voice.FullVolumeRange == 4, "edited SCP voice gain and full-volume range survive the audio migration");
+        voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\naudio_balance_revision: 1\n");
+        voice.UpgradeAudio();
+        check(voice.Volume == 1 && voice.FullVolumeRange == 2, "SCP voice owners can explicitly retain the old quieter preset");
+        var door = reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7105\n  source_types: [Coin]\n- custom_id: 7108\n  source_types: [Coin]\nplayer_rules:\n- custom_id: 7105\n  replace_types: [Coin]\n");
+        door.UpgradeDoorJammerBody();
+        check(door.MapRules[0].SourceTypes.SequenceEqual(new[] { ItemType.KeycardJanitor }) && door.PlayerRules.Single().ReplaceTypes.SequenceEqual(new[] { ItemType.KeycardJanitor }) && door.MapRules[1].SourceTypes.SequenceEqual(new[] { ItemType.Coin }), "Door Jammer distribution migrates its old coin body to a keycard without changing chalk loot");
+        var emptyDoor = reader.Deserialize<ItemDistributionConfig>("map_rules: []\nplayer_rules: []\n");
+        emptyDoor.UpgradeDoorJammerBody();
+        check(emptyDoor.MapRules.Count == 0 && emptyDoor.PlayerRules.Count == 0, "the Door Jammer body migration does not reintroduce removed loot or loadout rules");
         var updater = reader.Deserialize<AutoUpdateConfig>("token: ' yaml-test-token '\ntoken_environment_variable: ''\n");
         check(updater.ResolveToken(_ => throw new Exception("YAML token should not read the environment.")) == "yaml-test-token", "real EXILED YAML accepts a directly configured updater token");
         var updaterRoundtrip = reader.Deserialize<AutoUpdateConfig>(writer.Serialize(updater));

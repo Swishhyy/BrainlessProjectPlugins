@@ -1,15 +1,5 @@
-Paste a read-only GitHub token directly into `auto_update.token` in this plugin's YAML. No Bisect environment-variable setup is required. The config token takes precedence; existing environment-only setups keep working.
+Nearby microphone gain increases from 1 to 3.5; full-volume distance increases from 2m to 6m. Gain is configurable from 0 to 10 through the native speaker multiplier, with no microphone re-encoding or new dependency. Untouched stock YAML migrates; custom values and receive/mute/toggle controls remain.
 
-Missing-token and permission errors now explain the appropriate fix without echoing credentials. New configs scan up to 30 releases so all five components can be discovered. Configured scan counts are preserved.
+Independent DLL for EXILED 9.15.2 / SCP:SL 14.2.8. Retains direct auto_update.token configuration, verified release downloads and .previous rollback backups. Fully restart after downloading an update.
 
-Install this DLL manually once if the old updater cannot authenticate, set the token, and fully stop/start the server. Subsequent automatic downloads retain SHA-256/assembly validation, `.previous` backups and full-restart activation.
-
-This release also includes the previous gameplay changes:
-
-- SCP proximity chat is toggle-only: tap N once to enable nearby, release it and use the normal voice key to speak; tap N again for team chat.
-- Removes the Hold setting and legacy hold-mode configuration. Old mode reports cannot switch it back or reset an active route.
-- Speaker allocation succeeds before enabling the route; failures remain on team and show an error. Duplicate key-down reports do not retry a failed allocation.
-- Enabled/disabled hints remain visible over the role HUD. `.scpchat status` adds route-check/audio-send counters for live troubleshooting.
-- Existing native voice events, spatial audio, mute controls and independent updater are retained.
-
-Built against EXILED 9.15.2 / SCP:SL 14.2.8, with input/recipient/native API checks. Live microphone and client playback require a two-player server test; server send counters do not prove audible client playback.
+Validation: independent builds, headless gameplay/config/updater regressions and native API contracts. Actual client listening levels, physics and balance still require a server playtest. See docs/TUNING.md and docs/PLAYTEST.md.

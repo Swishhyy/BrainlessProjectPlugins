@@ -30,8 +30,8 @@ The former `world_loot` switch controls **additional** bundles. When enabled, th
 
 | Route | Eligible content |
 | --- | --- |
-| Item map conversions | Medkit → Field Dressing; painkillers → Filter; coin → Chalk or Brace; flashbang → Echo or Foam; HE → Gas, Impact or rare Cluster; flashlight → Beacon; radio → Jammer |
-| Class-D extra spawn gear | Chalk, Brace or Field Dressing |
+| Item map conversions | Medkit → Field Dressing; painkillers → Filter; coin → Chalk; janitor keycard → Door Jammer; flashbang → Echo or Foam; HE → Gas, Impact or rare Cluster; flashlight → Beacon; radio → Jammer |
+| Class-D extra spawn gear | Chalk, Door Jammer or Field Dressing |
 | Other human item spawn conversions | A matching native medicine, flashbang or HE grenade can become one of the above custom variants |
 | Weapon map/spawn conversions | E11 → Nullifier; Crossvec → Rattler; Shotgun → Breach Shotgun |
 

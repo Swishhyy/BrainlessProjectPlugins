@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 3);
+        public override Version Version => new Version(0, 1, 4);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public static Plugin Instance { get; private set; }
 
@@ -42,9 +42,10 @@ namespace Brainless.ScpProximityChat
             var existing = ServerSpecificSettingsSync.DefinedSettings ?? Array.Empty<ServerSpecificSettingBase>();
             if (existing.Any(s => s != null && s.SettingId >= Config.SettingsIdBase && s.SettingId <= Config.SettingsIdBase + 3))
                 throw new InvalidOperationException("Nearby chat setting IDs collide with another plugin. Change settings_id_base.");
+            Config.UpgradeAudio();
             Config.VoiceRange = Bounded(Config.VoiceRange, 5, 30, 16);
-            Config.FullVolumeRange = Bounded(Config.FullVolumeRange, .1f, Config.VoiceRange, 2);
-            Config.Volume = Bounded(Config.Volume, 0, 2, 1);
+            Config.FullVolumeRange = Bounded(Config.FullVolumeRange, .1f, Config.VoiceRange, Brainless.Internal.AudioRules.FullVolumeRange);
+            Config.Volume = Bounded(Config.Volume, 0, 10, Brainless.Internal.AudioRules.VoiceVolume);
             Config.HintDurationSeconds = Bounded(Config.HintDurationSeconds, .5f, 10, 2);
             harmony = new Harmony("brainless.scp-proximity-chat");
             try

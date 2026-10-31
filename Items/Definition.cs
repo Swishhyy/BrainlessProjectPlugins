@@ -35,6 +35,7 @@ namespace Brainless.Items
         public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
         public int CatalogRevision { get; set; }
         public int GrenadeBalanceRevision { get; set; }
+        public int AudioBalanceRevision { get; set; }
         public List<ItemSpec> Items { get; set; } = new List<ItemSpec>
         {
             new ItemSpec
@@ -68,9 +69,9 @@ namespace Brainless.Items
             new ItemSpec
             {
                 Id = 7105,
-                Name = "Door Brace",
-                Description = "Hold tool key at an ordinary closed door. Others can remove it.",
-                BaseType = ItemType.Coin
+                Name = "Door Jammer",
+                Description = "Equip this keycard and interact with a closed ordinary door to jam it. Others can remove it.",
+                BaseType = ItemType.KeycardJanitor
             },
             new ItemSpec
             {
@@ -134,9 +135,23 @@ namespace Brainless.Items
             Items.RemoveAll(item => item.Id == 7110);
             if (CatalogRevision < 1 && !Items.Any(i => i.Id == 7113))
                 Items.Add(CreateImpact());
-            CatalogRevision = 1;
+            if (CatalogRevision < 2)
+                foreach (var item in Items.Where(i => i.Id == 7105))
+                {
+                    if (item.BaseType == ItemType.Coin)
+                        item.BaseType = ItemType.KeycardJanitor;
+                    if (item.Name == "Door Brace")
+                        item.Name = "Door Jammer";
+                    if (item.Description == "Hold tool key at an ordinary closed door. Others can remove it.")
+                        item.Description = "Equip this keycard and interact with a closed ordinary door to jam it. Others can remove it.";
+                    if (item.BaseType == ItemType.KeycardJanitor)
+                        Distribution?.UpgradeDoorJammerBody();
+                }
+
+            CatalogRevision = 2;
             Brainless.Internal.Tuning.Validate(Tuning, "tuning");
             GrenadeBalanceRevision = Tuning.UpgradeGrenades(GrenadeBalanceRevision);
+            AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.Validate(id => id >= 7101 && id <= 7113 && id != 7110);
