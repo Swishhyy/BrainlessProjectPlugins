@@ -1,6 +1,6 @@
 # Automatic plugin updates
 
-Roles 0.2.3, Items 0.3.1, Weapons 0.3.1, BetterCoinflips 5.1.4 and ScpProximityChat 0.1.3 include their own updater with direct token configuration. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
+Roles 0.2.4, Items 0.3.2, Weapons 0.3.2, BetterCoinflips 5.1.5 and ScpProximityChat 0.1.4 include their own updater with direct token configuration. Install these builds once. Each then independently checks published releases in [Swishhyy/BrainlessProjectPlugins](https://github.com/Swishhyy/BrainlessProjectPlugins/releases) for its own DLL.
 
 ## Server setup
 
@@ -40,7 +40,7 @@ Once these workflows are on `main`, a push/merge to `main` automatically builds 
 
 1. Bump the changed project's `.csproj` version and its `Plugin.Version`. BetterCoinflips also keeps its version in `Properties/AssemblyInfo.cs`.
 2. Commit and merge/push to `main`, or open **Actions → Release plugins → Run workflow** and select the desired plugin or All. Prerelease is optional for manual runs.
-3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.2.3`, `items-v0.3.1`, `weapons-v0.3.1`, `bettercoinflips-v5.1.4` and `scpproximitychat-v0.1.3`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
+3. The workflow creates a draft, uploads that plugin's DLL plus its own checksum manifest, then publishes. Component tags look like `roles-v0.2.4`, `items-v0.3.2`, `weapons-v0.3.2`, `bettercoinflips-v5.1.5` and `scpproximitychat-v0.1.4`. Already-published component versions are skipped, preserving their original assets. Changed code needs a version bump, even if the rebuild produces different bytes due to commit/build metadata.
 
 You can also push one of those component tags matching its project version. Alternatively, publishing a release through GitHub's Releases UI triggers attachment builds. A component tag selects that plugin; a general tag selects all five. Each uses its actual project version in its manifest, so a release title/tag cannot manufacture a higher DLL version. Per-plugin manifests prevent upload races on a shared release. The DLL is uploaded before its manifest, and identical existing assets permit safe retries. If immutable releases are enabled, use the draft-first workflow rather than trying to attach files after publication.
 
@@ -71,3 +71,5 @@ Items/Weapons 0.3.0 add configurable natural map/locker replacements, scattered 
 The current builds fix zero armor penetration in the shared explosion handler: this native constructor otherwise returns before setting damage/attacker. Explosions use valid penetration (default 50) and zero force instead of a world position as force. Items/Weapons also ship stronger explosive defaults and migrate unchanged old stock values when `grenade_balance_revision` is 0/missing. Set it to 1 when deliberately keeping old numerical values. Roles 0.2.1 includes the same fix for zombie blasts; BetterCoinflips 5.1.3 synchronizes shared helpers without changing coin-effect weights.
 
 Roles 0.2.2 gives Candy Man real SCP-330 candy, with configurable count and registered palette, including when the old allowlist is empty. SCP proximity chat 0.1.2 removes Hold mode, ignores old mode settings and commits the route only after successful speaker allocation. Both retain independent update checks and require a full process restart after downloading their DLLs.
+
+Items 0.3.2 changes Door Jammer 7105 to a keycard and adds the stronger revision-2 cluster preset. Items/Weapons 0.3.2 and chat 0.1.4 raise audio gain/full-volume distance; only untouched old stock values migrate. Roles 0.2.4 and BetterCoinflips 5.1.5 synchronize separately compiled shared helpers without changing role/coin gameplay. All retain direct `auto_update.token` configuration and independent restart-based updates.

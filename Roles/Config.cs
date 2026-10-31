@@ -103,6 +103,8 @@ namespace Brainless.Roles
                 role.Id = role.Id.ToUpperInvariant();
                 if (role.Id == "S04" && role.Hint == "Three approved candies; painkillers if the allowlist is empty.")
                     role.Hint = "A bag of real SCP-330 candy; candy count and colors are configurable.";
+                if (role.Id == "G06" && role.Hint == "Door Brace instead of flashbang; less ammo.")
+                    role.Hint = "Door Jammer keycard instead of flashbang; less ammo.";
                 role.CustomItems.RemoveAll(id => id == 7110);
             }
         }

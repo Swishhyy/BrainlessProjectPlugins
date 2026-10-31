@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 1);
+        public override Version Version => new Version(0, 3, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -312,7 +312,7 @@ namespace Brainless.Weapons
                 {
                     state.VentUntil = Time.time + Config.Tuning.Redline.VentSeconds;
                     state.Heat = 0;
-                    FxAudio.Play(lifetime, ev.Player.Position, 1, "beep");
+                    PlayAudio(ev.Player.Position, 1, "beep");
                 }
             }
 
@@ -401,7 +401,7 @@ namespace Brainless.Weapons
                 if (target.IsConnected && target.IsAlive && target.Role.Base == role)
                     position = target.Position;
                 return position;
-            }, Config.Tuning.Rattler.AudioVolume, Config.Tuning.Rattler.AudioRange);
+            }, Config.Tuning.Rattler.AudioVolume, Config.Tuning.Rattler.AudioRange, Config.Tuning.Rattler.AudioFullVolumeRange);
         });
         private void Shot(ShotEventArgs ev) => Safe.Run(() =>
         {
@@ -506,7 +506,13 @@ namespace Brainless.Weapons
             var marker = World.Marker(lifetime, (from + to) * .5f, Color.yellow, new Vector3(.018f, .018f, delta.magnitude), PrimitiveType.Cube);
             marker.Rotation = Quaternion.LookRotation(delta);
             lifetime.Later(Config.Tuning.Ricochet.TracerSeconds, () => lifetime.Release(marker));
-            FxAudio.Play(lifetime, from, Config.Tuning.Ricochet.TracerSeconds, "beep");
+            PlayAudio(from, Config.Tuning.Ricochet.TracerSeconds, "beep");
+        }
+
+        private void PlayAudio(Vector3 position, float seconds, string kind)
+        {
+            var audio = Config.Tuning.Audio;
+            FxAudio.Play(lifetime, position, seconds, kind, volume: audio.Volume, range: audio.Range, fullVolumeRange: audio.FullVolumeRange);
         }
 
         internal bool ReloadTuning(out string response)

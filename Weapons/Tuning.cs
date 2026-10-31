@@ -10,6 +10,13 @@ namespace Brainless.Weapons
         public RedlineTuning Redline { get; set; } = new RedlineTuning();
         public RicochetTuning Ricochet { get; set; } = new RicochetTuning();
         public WeaponSupplyTuning Supply { get; set; } = new WeaponSupplyTuning();
+        public EffectAudioTuning Audio { get; set; } = new EffectAudioTuning();
+
+        internal int UpgradeAudio(int revision)
+        {
+            Rattler.AudioVolume = AudioRules.UpgradeStock(Rattler.AudioVolume, .65f, AudioRules.EffectVolume, revision);
+            return System.Math.Max(1, revision);
+        }
     }
 
     public sealed class NullifierTuning
@@ -35,8 +42,11 @@ namespace Brainless.Weapons
         [Tune(.1, 100)]
         public float AudioRange { get; set; } = 16;
 
-        [Tune(0, 2)]
-        public float AudioVolume { get; set; } = .65f;
+        [Tune(0, 10)]
+        public float AudioVolume { get; set; } = AudioRules.EffectVolume;
+
+        [Tune(.1, 100)]
+        public float AudioFullVolumeRange { get; set; } = AudioRules.FullVolumeRange;
     }
 
     public sealed class BreachTuning

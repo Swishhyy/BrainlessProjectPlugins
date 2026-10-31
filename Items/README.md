@@ -6,7 +6,7 @@ The `brainless_items` configuration contains the 12 item definitions and their p
 
 Gas (7101) uses the native SCP-244 fog/particles for eight seconds, with a four-meter radius, no damage ticks and a 20% human slow. Its native fog exposure/visual signal is retained, while harmful server cold subeffects from custom emitters are filtered; ordinary SCP-244 pickups keep their behavior. A filter blocks the custom slow, while the world smoke still obstructs sight. No primitive renders the cloud.
 
-Cluster (7102) has a parent blast (90 human / 250 SCP peak, 4.5m radius) and launches four real HE children outward/upward. Children peak at 70 human / 180 SCP over 4m, with 1.2-1.44s fuses. Parent and children share a per-target raw damage cap of 150 human / 500 SCP. They never recursively split or apply native door damage.
+Cluster (7102) has a parent blast (180 human / 500 SCP peak, 6m radius) and launches four real HE children outward/upward. Children peak at 120 human / 300 SCP over 5.5m, with 0.9-1.08s fuses. Parent and children share a per-target raw damage cap of 300 human / 1200 SCP. They never recursively split or apply native door damage.
 
 Use native throw/consume controls. The server-specific **Use custom item or nearby device** key defaults to **V**. Hold it for a channel. Look at a device to scan/remove it, look at a closed ordinary door for a brace, or use it while holding a deployable. Zombies look at a dropped specimen and hold the same key. The binding is editable in server-specific settings.
 
@@ -31,3 +31,5 @@ Version 0.3.0 enables map/locker replacements and occasional starting gear throu
 Custom explosions now pass valid native armor penetration (50 by default), fixing a zero-damage setup bug. Stock grenade values from older configs migrate to the stronger preset when `grenade_balance_revision` is 0/missing; edited values are retained. Set that marker to 1 before deliberately restoring old numbers. All parent/child damage, caps, radius, spread, fuse and penetration settings remain configurable.
 
 Version 0.3.1 accepts a read-only GitHub token directly in `auto_update.token`; no hosting-panel environment setup is required. A nonempty config token takes precedence over the optional environment fallback. Install this DLL manually once if the old updater cannot authenticate, then fully restart. Subsequent updates retain checksum/assembly checks and `.previous` rollback backups.
+
+Version 0.3.2 turns Door Jammer 7105 into a keycard, migrates old stock coin definitions/distribution, strengthens the cluster parent/children while retaining four children and finite caps, and raises custom audio gain/full-volume distance. General cues use `tuning.audio`; Echo keeps its separate audio fields. Old stock settings migrate without resetting edited values. See `TUNING.md`.

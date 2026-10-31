@@ -32,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 1);
+        public override Version Version => new Version(0, 3, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -421,7 +421,7 @@ namespace Brainless.Items
                         player.ShowHint($"Survey: other humans {(humans ? "YES" : "NO")}; physical SCPs {(scps ? "YES" : "NO")}", 6);
                         World.Cue(nearby.Position, "Survey scan complete");
                     });
-                    FxAudio.Play(lifetime, nearby.Position, Config.Tuning.SurveyBeacon.ScanSeconds, "beep");
+                    PlayAudio(nearby.Position, Config.Tuning.SurveyBeacon.ScanSeconds, "beep");
                     return;
                 }
 
@@ -575,7 +575,7 @@ namespace Brainless.Items
                 device.Marker = World.Marker(lifetime, door.Position + Vector3.up, Color.yellow, new Vector3(.65f, .08f, .08f), PrimitiveType.Cube);
                 devices.Add(device);
             });
-            FxAudio.Play(lifetime, door.Position, Config.Tuning.DoorBrace.DeploySeconds, "beep");
+            PlayAudio(door.Position, Config.Tuning.DoorBrace.DeploySeconds, "beep");
         }
 
         private void Deploy(Player player, Item held, RegisteredItem item)
@@ -608,7 +608,7 @@ namespace Brainless.Items
             {
                 jamCooldown[room] = d.Expires + Config.Tuning.SignalJammer.RoomCooldownSeconds;
                 World.Cue(point, "Jammer arming - hold tool key to deactivate");
-                FxAudio.Play(lifetime, point, Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds, "beep");
+                PlayAudio(point, Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds, "beep");
             }
         }
 
@@ -742,10 +742,16 @@ namespace Brainless.Items
                     Cluster(position, payload.Source, payload.Cluster, ev.TargetsToAffect);
                     break;
                 case 7104:
-                    FxAudio.Play(lifetime, position, payload.Echo.DurationSeconds, "steps", volume: payload.Echo.AudioVolume, range: payload.Echo.AudioRange);
+                    FxAudio.Play(lifetime, position, payload.Echo.DurationSeconds, "steps", volume: payload.Echo.AudioVolume, range: payload.Echo.AudioRange, fullVolumeRange: payload.Echo.AudioFullVolumeRange);
                     break;
             }
         });
+        private void PlayAudio(Vector3 position, float seconds, string kind)
+        {
+            var audio = Config.Tuning.Audio;
+            FxAudio.Play(lifetime, position, seconds, kind, volume: audio.Volume, range: audio.Range, fullVolumeRange: audio.FullVolumeRange);
+        }
+
         private void Cluster(Vector3 position, DamageSource source, ClusterTuning tuning, IEnumerable<Player> targets)
         {
             var blastBudget = new BlastBudget(tuning.SharedHumanDamageCap, tuning.SharedScpDamageCap);
@@ -764,7 +770,11 @@ namespace Brainless.Items
             {
                 float angle = rotation + i * Mathf.PI * 2 / tuning.GrenadeCount;
                 Vector3 outward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle));
-                fragments.Launch(position + Vector3.up * .15f, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration);
+                Vector3 start = position + Vector3.up * .15f;
+                Vector3 separated = start + outward * .25f;
+                if (!Physics.Linecast(start, separated, InventorySystem.Items.ThrowableProjectiles.ExplosionGrenade.HitBlockerMask, QueryTriggerInteraction.Ignore))
+                    start = separated;
+                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration);
             }
         }
 

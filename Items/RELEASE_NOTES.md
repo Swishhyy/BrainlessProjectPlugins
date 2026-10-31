@@ -1,21 +1,9 @@
-Paste a read-only GitHub token directly into `auto_update.token` in this plugin's YAML. No Bisect environment-variable setup is required. The config token takes precedence; existing environment-only setups keep working.
+Door Jammer 7105 now uses a keycard. Equip it and interact with an ordinary closed door; existing timings, charges, removal and the tool key remain. Catalog revision 2 migrates the old stock coin body and matching distribution rules.
 
-Missing-token and permission errors now explain the appropriate fix without echoing credentials. New configs scan up to 30 releases so all five components can be discovered. Configured scan counts are preserved.
+Cluster keeps four native children, with a 180/500 parent over 6m and 120/300 children over 5.5m, 0.9s child fuse plus 0.06s stagger, 5m/s outward / 3.5m/s upward launches, and shared 300/1200 raw caps. Children start separately when clear of nearby cover. Revision-1 stock configs upgrade; custom values/counts remain.
 
-Install this DLL manually once if the old updater cannot authenticate, set the token, and fully stop/start the server. Subsequent automatic downloads retain SHA-256/assembly validation, `.previous` backups and full-restart activation.
+Custom cue and Echo audio now use gain 2.5 and 6m full-volume distance. General cues are configurable under tuning.audio, with independent Echo audio fields.
 
-This release also includes the previous gameplay changes:
+Independent DLL for EXILED 9.15.2 / SCP:SL 14.2.8. Retains direct auto_update.token configuration, verified release downloads and .previous rollback backups. Fully restart after downloading an update.
 
-- Fix native explosion damage setup: valid armor penetration replaces zero, and world positions are no longer passed as force. This also respects native HE cover masks.
-- Custom utilities now appear naturally: convert a few matching native map pickups and locker contents, and occasionally give/convert gear on human spawns after native/custom role kits finish.
-- Defaults are 25% map chance (max 3 replacements), 30% human-spawn chance (max 3 successful grants / 1 per user), and one map bundle per room. Existing supply/population/item caps remain.
-- Class-D can start with chalk, a brace or dressing. Other human medicine/grenades can become matching custom variants. Registered custom gear is skipped by default.
-- Gas conversions still include their filter; locker filters respect the original chamber and deferred opening. Keycards/objectives/SCP objects are absent from default pools.
-- Optional extra world loot now scatters at real loose-loot anchors instead of one hard-coded armory location.
-- Tune distribution switches, chances, weighted pools, zones, roles, spawn reasons, limits and delays in YAML; `bpitems reload` preserves awards/supply and does not replay the map pass.
-
-Validation: independent builds against EXILED 9.15.2 / SCP: SL 14.2.8, headless gameplay/updater regression checks and native API contracts. Live loot/locker behavior and client hints/audio still require a server playtest.
-
-See [natural loot](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/NATURAL_LOOT.md), [configuration](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/TUNING.md) and [updates](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/UPDATES.md).
-
-Stronger grenade defaults: Impact 140/350 peak over 5m; Cluster parent 90/250 over 4.5m plus four 70/180 children over 4m, sharing 150/500 raw caps. Old untouched stock fields migrate; custom values/counts remain.
+Validation: independent builds, headless gameplay/config/updater regressions and native API contracts. Actual client listening levels, physics and balance still require a server playtest. See docs/TUNING.md and docs/PLAYTEST.md.

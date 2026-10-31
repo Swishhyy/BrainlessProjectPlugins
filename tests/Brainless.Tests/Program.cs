@@ -39,6 +39,7 @@ var random = new Random(731);
 LockpickTests.Run(Check);
 VoiceTests.Run(Check);
 CandyTests.Run(Check);
+AudioTests.Run(Check);
 TuningTests.Run(Check);
 DistributionTests.Run(Check);
 Check(Rules.WeightedIndex(new[] { 0, 0, 0 }, random) == -1, "zero weights leave a plain coin flip");
