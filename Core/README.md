@@ -1,4 +1,4 @@
-# Project Brainless Core 0.1.0
+# Project Brainless Core 0.1.1
 
 Shared services for the Project Brainless EXILED plugins: persistent XP/stat storage, an optional in-process Discord bot, account linking and a reusable update service. Framework: EXILED 9.15.2 / SCP:SL 14.2.8 / net48.
 

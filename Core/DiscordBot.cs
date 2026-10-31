@@ -22,7 +22,7 @@ namespace Brainless.Core
         private readonly int step;
         private readonly Action<string> log;
         private readonly CancellationTokenSource stop = new CancellationTokenSource();
-        private readonly HttpClient http = new HttpClient
+        private readonly HttpClient http = new HttpClient(new HttpClientHandler { UseProxy = false })
         {
             Timeout = TimeSpan.FromSeconds(15)
         };

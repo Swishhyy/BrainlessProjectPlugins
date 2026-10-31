@@ -102,3 +102,7 @@ Remote Admin, with `brainless.roles`: `bprole set Z04` or `bprole set explosive_
 ## SUP command compatibility
 
 `sci help`, `sci itemlist` (alias `sci items`), and `sci give <ID> [playerID]` (alias `sci gitem`) are Remote Admin commands. Granting needs `customitems.give` or legacy `sci.admin`, confirms the actual inventory result and bypasses natural supply/population limits. It does not bypass gameplay use conditions such as reinforcement timing. SUP IDs 101–112 map to the current definitions; 103 means Anti-096, and Volatile Pills are 7122. No webhook is called. Standard `ci` commands and existing `bpitems reload` / `bpweapons reload` remain. See [SUP_MIGRATION.md](SUP_MIGRATION.md).
+
+## Round Events
+
+Remote Admin commands require `projectbrainless.events`: `bpevent list`, `bpevent status`, `bpevent infection next`, `bpevent infection start`, `bpevent stop`, and `bpevent reload`. Alias: `bpevents`. Minimum default population is four living participants; automatic random events are disabled until enabled. See [Round Events](../RoundEvents/README.md).

@@ -46,4 +46,4 @@ Version 0.2.3 accepts a read-only GitHub token directly in `auto_update.token`; 
 
 Version 0.2.4 synchronizes the separately compiled shared audio helper and updates the stock Maintenance Liaison hint to name its Door Jammer keycard. Role traits and edited hints/settings are unchanged.
 
-Version 0.2.5 corrects captain badge levels and adds readable admin role names: `bprole set explosive_zombie` or `bprole set Z04` targets yourself; append a player ID to target another player. Permission: `brainless.roles`, Remote Admin only. Optional Core provides shared update services without becoming a hard dependency.
+Version 0.2.6 corrects captain badge levels and adds readable admin role names: `bprole set explosive_zombie` or `bprole set Z04` targets yourself; append a player ID to target another player. Permission: `brainless.roles`, Remote Admin only. Optional Core provides shared update services without becoming a hard dependency.

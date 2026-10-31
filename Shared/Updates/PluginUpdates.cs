@@ -51,7 +51,7 @@ namespace Brainless.Internal.Updates
                         // Do not echo credentials, headers, signed URLs or raw HTTP exception messages.
                         catch (Exception exception)
                         {
-                            status = "Update check failed (" + exception.GetType().Name + "); the plugin keeps running and will retry.";
+                            status = UpdateDiagnostics.Failure(exception);
                         }
 
                         if (status != last)

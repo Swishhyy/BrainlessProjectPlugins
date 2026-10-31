@@ -96,6 +96,7 @@ namespace Brainless.Roles
             Tuning.Validate(this, "brainless_roles");
             if (ApprovedCandy == null || Roles == null || Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name) || r.CustomItems == null || r.Add == null || r.Remove == null) || Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Roles.Count)
                 throw new InvalidOperationException("Role profiles need unique IDs, nonempty names and non-null equipment/candy lists.");
+            var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             foreach (var role in Roles)
             {
                 Tuning.Validate(role, "roles." + role.Id);
@@ -104,6 +105,7 @@ namespace Brainless.Roles
                     role.Hint = "A bag of real SCP-330 candy; candy count and colors are configurable.";
                 if (role.Id == "G06" && role.Hint == "Door Brace instead of flashbang; less ammo.")
                     role.Hint = "Door Jammer keycard instead of flashbang; less ammo.";
+                role.Hint = GameplayText.Clean(role.Hint, descriptions.TryGetValue(role.Id, out string shortText) ? shortText : "");
                 role.CustomItems.RemoveAll(id => id == 7110);
             }
         }

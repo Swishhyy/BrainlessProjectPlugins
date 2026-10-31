@@ -67,7 +67,7 @@ namespace Brainless.Weapons
             {
                 Id = 7201,
                 Name = "Nullifier Rifle",
-                Description = "120% Hume damage, 70% SCP health damage, 85% human damage.",
+                Description = "Deals extra shield damage, but less health damage.",
                 BaseType = ItemType.GunE11SR,
                 HumanDamage = .85f,
                 ScpDamage = .7f
@@ -76,7 +76,7 @@ namespace Brainless.Weapons
             {
                 Id = 7202,
                 Name = "Rattler",
-                Description = "Three hits in two seconds create a public three-second audible tag. 80% damage.",
+                Description = "Repeated hits make your target give off a tracking sound.",
                 BaseType = ItemType.GunCrossvec,
                 HumanDamage = .8f,
                 ScpDamage = .8f
@@ -85,7 +85,7 @@ namespace Brainless.Weapons
             {
                 Id = 7203,
                 Name = "Breach Shotgun",
-                Description = "Three firing cycles and six shells to breach an ordinary door. 90% human damage.",
+                Description = "Repeated close-range shots can break ordinary doors.",
                 BaseType = ItemType.GunShotgun,
                 Magazine = 0,
                 Reserve = 18,
@@ -95,7 +95,7 @@ namespace Brainless.Weapons
             {
                 Id = 7204,
                 Name = "Redline SMG",
-                Description = "Heat prototype: short bursts; 12 shots overheat for three seconds. Native cadence pending client validation.",
+                Description = "Builds heat while firing. Overheating forces a brief cooldown.",
                 BaseType = ItemType.GunFSP9,
                 HumanDamage = .85f,
                 ScpDamage = .85f,
@@ -106,7 +106,7 @@ namespace Brainless.Weapons
             {
                 Id = 7205,
                 Name = "Last Word",
-                Description = "Six shots total. Cannot reload, unload or expand its magazine.",
+                Description = "A powerful pistol with six shots and no reload.",
                 BaseType = ItemType.GunCOM15,
                 Magazine = 6,
                 Reserve = 0,
@@ -116,7 +116,7 @@ namespace Brainless.Weapons
             {
                 Id = 7206,
                 Name = "Ricochet Pistol",
-                Description = "One bounce from approved static mesh geometry. 85% direct damage; 50% body damage after bouncing.",
+                Description = "Shots can bounce once off solid surfaces.",
                 BaseType = ItemType.GunCOM18,
                 Magazine = 10,
                 Reserve = 20,
@@ -133,7 +133,7 @@ namespace Brainless.Weapons
         {
             Id = 7208,
             Name = "Railgun",
-            Description = "E11 body; charged beam stops at walls and pierces aligned enemies. Three finite charges, no ordinary reload.",
+            Description = "Charge a piercing energy beam. Limited shots; cannot reload.",
             BaseType = ItemType.GunE11SR,
             Magazine = 3,
             Reserve = 0,
@@ -143,7 +143,7 @@ namespace Brainless.Weapons
         {
             Id = 7207,
             Name = "Grenade Launcher",
-            Description = "Logicer body; each bullet launches one grenade. Maximum 16 rounds, no reload. Small configurable blast.",
+            Description = "Fires a grenade with each shot. Holds up to 16; cannot reload.",
             BaseType = ItemType.GunLogicer,
             Magazine = 16,
             Reserve = 0,
@@ -206,6 +206,9 @@ namespace Brainless.Weapons
             foreach (var w in Weapons)
                 if (w.Id == 7207 && w.BaseType != ItemType.GunLogicer)
                     throw new InvalidOperationException("The launcher must use the Logicer body.");
+            var descriptions = new Config().Weapons.ToDictionary(i => i.Id, i => i.Description);
+            foreach (var entry in Weapons)
+                entry.Description = GameplayText.Clean(entry.Description, descriptions.TryGetValue(entry.Id, out string shortText) ? shortText : "");
         }
     }
 

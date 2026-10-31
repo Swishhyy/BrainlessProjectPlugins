@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
@@ -131,10 +130,9 @@ namespace Brainless.Internal.Updates
         {
             try
             {
-                using (var stream = new MemoryStream(data))
-                    return (T)new DataContractJsonSerializer(typeof(T)).ReadObject(stream);
+                return JsonContract.Read<T>(data);
             }
-            catch (Exception exception)when (exception is SerializationException || exception is System.Xml.XmlException || exception is InvalidCastException)
+            catch (Exception exception)when (exception is FormatException || exception is System.Text.DecoderFallbackException || exception is InvalidCastException)
             {
                 throw new UpdateException("Release metadata is not valid JSON for the updater schema.");
             }

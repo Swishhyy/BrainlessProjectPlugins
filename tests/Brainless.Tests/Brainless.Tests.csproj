@@ -2,6 +2,9 @@
   <PropertyGroup><TargetFramework>net8.0</TargetFramework><OutputType>Exe</OutputType><PlatformTarget>AnyCPU</PlatformTarget></PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Shared/SupRules.cs" Link="SupRules.cs" />
+    <Compile Include="../../Shared/GameplayText.cs" Link="GameplayText.cs" />
+    <Compile Include="../../RoundEvents/InfectionRules.cs" Link="InfectionRules.cs" />
+    <Compile Include="../../Shared/Updates/UpdateDiagnostics.cs" Link="Updates/UpdateDiagnostics.cs" />
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
     <Compile Include="../../Shared/ExplosionRules.cs" Link="ExplosionRules.cs" />
     <Compile Include="../../Shared/AudioRules.cs" Link="AudioRules.cs" />
@@ -20,6 +23,7 @@
     <Compile Include="../../Roles/LockpickRules.cs" Link="LockpickRules.cs" />
     <Compile Include="../../Roles/RoleLookup.cs" Link="RoleLookup.cs" />
     <Compile Include="../../ScpProximityChat/VoiceState.cs" Link="VoiceState.cs" />
+    <Compile Include="../../Shared/Updates/JsonContract.cs" Link="Updates/JsonContract.cs" />
     <Compile Include="../../Shared/Updates/UpdateModels.cs" Link="Updates/UpdateModels.cs" />
     <Compile Include="../../Shared/Updates/UpdateFiles.cs" Link="Updates/UpdateFiles.cs" />
     <Compile Include="../../Shared/Updates/ReleaseClient.cs" Link="Updates/ReleaseClient.cs" />
@@ -33,6 +37,8 @@
     <NativeConfigReferencesPath>$(MSBuildProjectDirectory)/obj/native-config-references</NativeConfigReferencesPath>
   </PropertyGroup>
   <ItemGroup Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
+    <Compile Include="../../RoundEvents/Config.cs" Link="RoundEventsConfig.cs" />
+    <Compile Include="../../RoundEvents/NativeAttack.cs" Link="RoundEventsNativeAttack.cs" />
     <Compile Include="../../Shared/ItemFiles.cs" Link="ItemFiles.cs" />
     <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />
     <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />

@@ -64,3 +64,13 @@ Keep a record of server version, enabled entries, player count, cause of death, 
 45. Charge railgun, cancel by switching/dropping/dying, transfer it and try ordinary reload/unload/attachments. Only completed shots consume finite charges. Verify targets behind shooter or beyond walls take no beam damage, allies/god mode follow policy, impact damage is separate, and effects disappear on reset.
 46. Fire launcher to 16 and try a seventeenth shot. Test empty disposal on/off and rapid item switching/drop at the last shot; another weapon must never be removed and pickup must never refill.
 47. Enable individual item files, edit damage/counts and reload. Restart must preserve byte-for-byte file edits. Invalid YAML/IDs/registration edits must retain active settings; disabled per-item mode must use main YAML again.
+
+## Infection and updater compatibility
+
+48. Install Round Events, grant `projectbrainless.events`, and run `bpevent infection next` with at least four living players. Check starting seed limits, fresh survivor kits, low HP/zero shields and status counts.
+49. Kill a survivor with native 3114 slap and strangulation. Confirm exactly one conversion at the pre-death point with reduced health. Repeat with newly converted skeletons.
+50. Test falls/Teslas/decontamination/warhead, poison, firearms, explosives credited to SCP players, other SCPs and infected deaths: none may infect. Cancel a Dying event and confirm no conversion.
+51. During the conversion delay, disconnect, force-class, stop the event and restart the round. Old callbacks must never overwrite a later life. Check last-human deaths hold round end until conversion completes.
+52. Check normal and radio reinforcement blocking, late-join policy, survivor friendly fire, disguise blocking/opt-in, human/infected wins, draw, round lock and stop cleanup. Actual client placement, strangle attacks and summary are live checks.
+53. Replace all updater DLLs manually once, including Core if present. Keep YAML, regenerate any exposed token and check for a successful update/no-new-release message. Induce bad access and confirm sanitized HTTP errors. Do not post credentials.
+54. Inspect every role/item/weapon tooltip and role HUD with old YAML/per-item files. Descriptions should explain abilities briefly, without config/prototype/native-body placeholders. Short custom gameplay text should remain.

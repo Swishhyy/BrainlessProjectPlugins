@@ -17,6 +17,7 @@ PROJECTS = {
     'BetterCoinflips': ('BetterCoinflips', 'BetterCoinflips/BetterCoinflips.csproj'),
     'ScpProximityChat': ('Brainless.ScpProximityChat', 'ScpProximityChat/Brainless.ScpProximityChat.csproj'),
     'Core': ('Brainless.Core', 'Core/Brainless.Core.csproj'),
+    'RoundEvents': ('Brainless.RoundEvents', 'RoundEvents/Brainless.RoundEvents.csproj'),
     'SlFixes': ('Brainless.SlFixes', 'SlFixes/Brainless.SlFixes.csproj'),
 }
 

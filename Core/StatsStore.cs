@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
+using Brainless.Internal.Updates;
 using System.Security.Cryptography;
 
 namespace Brainless.Core
@@ -70,15 +70,18 @@ namespace Brainless.Core
             database = Load(this.path);
         }
 
-        private static DataContractJsonSerializer Serializer() => new DataContractJsonSerializer(typeof(StatsDatabase), new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true, MaxItemsInObjectGraph = 1000000 });
         private static StatsDatabase Read(string file)
         {
             using (var stream = File.OpenRead(file))
             {
-                var value = (StatsDatabase)Serializer().ReadObject(stream);
-                if (value == null || value.Schema != 1 || value.Players == null || value.Players.Any(p => p.Value == null || p.Key != p.Value.UserId || p.Value.Actions == null || p.Value.Xp < 0))
-                    throw new SerializationException("Invalid XP data schema.");
-                return value;
+                using (var buffer = new MemoryStream())
+                {
+                    stream.CopyTo(buffer);
+                    var value = JsonContract.Read<StatsDatabase>(buffer.ToArray());
+                    if (value == null || value.Schema != 1 || value.Players == null || value.Players.Any(p => p.Value == null || p.Key != p.Value.UserId || p.Value.Actions == null || p.Value.Xp < 0))
+                        throw new SerializationException("Invalid XP data schema.");
+                    return value;
+                }
             }
         }
 
@@ -90,7 +93,7 @@ namespace Brainless.Core
             {
                 return Read(file);
             }
-            catch (Exception failure)when (failure is IOException || failure is SerializationException || failure is System.Xml.XmlException)
+            catch (Exception failure)when (failure is IOException || failure is SerializationException || failure is System.Xml.XmlException || failure is FormatException || failure is System.Text.DecoderFallbackException)
             {
                 if (!File.Exists(file + ".backup"))
                     throw new InvalidDataException("XP data could not be read. The existing file was preserved.", failure);
@@ -224,7 +227,8 @@ namespace Brainless.Core
                 {
                     using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
-                        Serializer().WriteObject(stream, snapshot);
+                        byte[] data = JsonContract.Write(snapshot);
+                        stream.Write(data, 0, data.Length);
                         stream.Flush(true);
                     }
 

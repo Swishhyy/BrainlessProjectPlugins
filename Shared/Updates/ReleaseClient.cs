@@ -24,9 +24,16 @@ namespace Brainless.Internal.Updates
         {
             this.getToken = getToken;
             ownsHttp = http == null;
-            this.http = http ?? new HttpClient(new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false, AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate });
+            this.http = http ?? new HttpClient(CreateHttpHandler());
         }
 
+        internal static HttpClientHandler CreateHttpHandler() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            UseCookies = false,
+            UseProxy = false,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+        };
         internal async Task<string> CheckAndInstallAsync(string id, string assemblyName, string targetPath, Version runningVersion, Version exiled, Version game, AutoUpdateConfig config, CancellationToken cancellation)
         {
             int scan = Math.Max(1, Math.Min(30, config.ReleasesToScan));

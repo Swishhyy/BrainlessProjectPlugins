@@ -18,6 +18,7 @@ PROJECTS = {
     'BetterCoinflips': ('BetterCoinflips/BetterCoinflips.csproj', 'BetterCoinflips.dll'),
     'ScpProximityChat': ('ScpProximityChat/Brainless.ScpProximityChat.csproj', 'Brainless.ScpProximityChat.dll'),
     'Core': ('Core/Brainless.Core.csproj', 'Brainless.Core.dll'),
+    'RoundEvents': ('RoundEvents/Brainless.RoundEvents.csproj', 'Brainless.RoundEvents.dll'),
     'SlFixes': ('SlFixes/Brainless.SlFixes.csproj', 'Brainless.SlFixes.dll'),
 }
 parser = argparse.ArgumentParser()
