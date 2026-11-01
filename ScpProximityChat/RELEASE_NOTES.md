@@ -1,7 +1,7 @@
-# ScpProximityChat 0.1.7
+# ScpProximityChat 0.2.0
 
-Raises nearby SCP speech gain from 3.5 to 10 (about +9.1 dB) to address quiet playback. Both old stock gains (1 and 3.5) migrate at audio revision 2, including configs previously marked revision 1. Old 2m full-volume distance upgrades to 6m. Explicit mute, custom levels and revision-2 pinned values are preserved. Item/weapon sound levels do not change.
+Keeps the stronger 10x native speech gain and extends the stock full-volume area from 6m to 12m within the 16m hearing radius. Gain accepts 0-20. Stock distance migration preserves custom or explicitly pinned values and mute settings; migrated fields save with a config backup.
 
-The F1 `.scpchat status` command now reports plugin version, configured/active speaker gain and distances, so staff can confirm the loaded preset. Toggle controls, native Opus packets, spatial playback, receiver/mute restrictions and independent automatic updates remain.
+Adds Remote Admin/server-console commands `bpscpchat status`, `bpscpchat volume <0-20>` and `bpscpchat reload`, requiring `brainless.scpchat.configure`. Live gain changes update active speakers immediately; save the chosen volume in YAML to retain it after restart.
 
-Target: EXILED 9.15.2 / SCP:SL 14.2.8. Load by fully restarting after the DLL update; keep existing YAML. Exact perceived parity with normal human voice needs a live A/B test because native speakers and human voice use different playback/settings paths.
+Toggle controls, native Opus packets, receiver/mute restrictions, independent updates and the single-DLL installation remain. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart to load this build; compare the same microphone in-game because client speaker and human voice mixer settings can affect perceived loudness.
