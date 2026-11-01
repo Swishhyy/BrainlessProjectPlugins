@@ -30,4 +30,6 @@ New role tests: `bprole set C05` Cowboy, `G07` Rogue Guard, `S03` Head Scientist
 7. **Stats:** players use F1 `.pbxp` / `.pbxp top`. Link with `.pblink`, then Discord `/pb-link`. `/pb-stats [user]` and `/pb-playtime [user]` show your own or another linked player's stats; `/pb-top` shows the top 10. Staff check services with `pbcore status` or `pbfixes status`.
 8. **Privacy:** F1 `.pbprivacy optout` or Discord `/pb-optout` deletes your tracked stats/link and stops collection. In-game DNT does the same. F1 `.pbprivacy optin` starts fresh once DNT is off. These commands affect only the player using them.
 
+Door Jammer holds for 25 seconds by default. Cluster and launcher explosions can damage native breakable doors and props; immune doors remain protected.
+
 Save configuration edits, then use the matching reload command in the [command table](COMMANDS.md). A newly installed DLL needs a full server restart. For chance settings, use [Owner Settings](CONFIGURATION.md).

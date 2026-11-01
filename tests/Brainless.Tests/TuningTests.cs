@@ -26,6 +26,19 @@ internal static class TuningTests
         var weapons = new WeaponTuning();
         var zombie = new ExplosiveZombieTuning();
         check(Valid(items) && Valid(weapons) && Valid(zombie), "all shipped tuning defaults validate");
+        check(items.ClusterGrenade.DamageEnvironment && items.DoorBrace.DurationSeconds == 25, "clusters enable native environment damage and Door Jammer lasts 25 seconds by default");
+        var brace = new BraceTuning
+        {
+            DurationSeconds = 8
+        };
+        brace.Upgrade(5);
+        check(brace.DurationSeconds == 25, "the previous eight-second Door Jammer preset upgrades to 25 seconds");
+        brace.DurationSeconds = 40;
+        brace.Upgrade(5);
+        check(brace.DurationSeconds == 40, "Door Jammer migration preserves an edited lifetime");
+        brace.DurationSeconds = 8;
+        brace.Upgrade(6);
+        check(brace.DurationSeconds == 8, "the current catalog marker allows deliberately retaining an eight-second brace");
         var foam = new FoamTuning
         {
             DurationSeconds = 6,

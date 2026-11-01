@@ -146,6 +146,8 @@ namespace Brainless.Items
 
     public sealed class ClusterTuning : BlastTuning
     {
+        public bool DamageEnvironment { get; set; } = true;
+
         [Tune(.1, 60)]
         public float ParentRadius { get; set; } = 6;
 
@@ -217,6 +219,12 @@ namespace Brainless.Items
 
     public sealed class BraceTuning
     {
+        internal void Upgrade(int catalogRevision)
+        {
+            if (catalogRevision < 6 && DurationSeconds == 8)
+                DurationSeconds = 25;
+        }
+
         [Tune(0, 120)]
         public float DeploySeconds { get; set; } = 2;
 
@@ -224,7 +232,7 @@ namespace Brainless.Items
         public float RemoveSeconds { get; set; } = 3;
 
         [Tune(.1, 3600)]
-        public float DurationSeconds { get; set; } = 8;
+        public float DurationSeconds { get; set; } = 25;
 
         [Tune(.5, 10)]
         public float Reach { get; set; } = 3;

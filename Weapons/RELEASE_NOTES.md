@@ -1,4 +1,10 @@
-# Weapons 0.6.0
+# Weapons 0.6.1
+
+Launcher grenades now preserve native environment damage: breakable doors, destructible props and physics within the configured blast radius. `launcher_damage_environment` defaults to true. Native player targets are cleared before custom damage to prevent duplicate HE damage. Existing reduced player damage, sixteen-shot cap, fuses, radius and independent updater remain. Railgun impact blasts retain their previous behavior.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after installing. Native interface/regression checks pass; actual door/prop destruction still requires a live playtest.
+
+## Previous: 0.6.0
 
 Adds direct `chance_percent` on map and starting-gear distribution rules, including optional extra-drop anchors. Matching pools cannot exceed 100%; unused or blocked shares remain ordinary loot/no grant. Global chance gates and rule weights are legacy migration inputs only. Missing/null fields derive bounded two-decimal shares; explicit values take precedence. Previously unlisted content receives editable zero-percent entries in nonempty routes, while intentionally empty routes remain empty. Natural supply, inventory, native-body, room, round and player caps remain. Role kits, admin grants and SCP-914 recipe chances are separate.
 
