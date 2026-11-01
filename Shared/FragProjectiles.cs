@@ -16,7 +16,7 @@ namespace Brainless.Internal
         private readonly Dictionary<int, Frag> active = new Dictionary<int, Frag>();
         internal int Count => active.Count;
 
-        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50)
+        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false)
         {
             var grenade = Projectile.Create<ExplosionGrenadeProjectile>(ProjectileType.FragGrenade);
             grenade.FuseTime = fuse;
@@ -24,7 +24,7 @@ namespace Brainless.Internal
             grenade.BurnDuration = 0;
             grenade.DeafenDuration = 0;
             grenade.ConcussDuration = 0;
-            Track(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration);
+            Track(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration, damageEnvironment);
             try
             {
                 grenade.Spawn(position, shouldBeActive: false, previousOwner: source.Owner ?? Server.Host);
@@ -48,11 +48,11 @@ namespace Brainless.Internal
             }
         }
 
-        internal void Track(ExplosionGrenadeProjectile grenade, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50)
+        internal void Track(ExplosionGrenadeProjectile grenade, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false)
         {
             grenade.MaxRadius = radius;
             grenade.BurnDuration = grenade.DeafenDuration = grenade.ConcussDuration = 0;
-            active[grenade.Serial] = new Frag(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration);
+            active[grenade.Serial] = new Frag(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration, damageEnvironment);
         }
 
         internal bool Exploding(ExplodingGrenadeEventArgs ev)
@@ -66,7 +66,17 @@ namespace Brainless.Internal
             // and removes the projectile, even when EXILED's damage event is denied.
             if (!allowed)
                 return true;
-            foreach (var target in ev.TargetsToAffect.Where(frag.Source.CanAffect).ToArray())
+            var targets = ev.TargetsToAffect.ToArray();
+            if (frag.DamageEnvironment)
+            {
+                // EXILED trims only player hitboxes from the native overlap set.
+                // Keep doors, glass and prop physics without a second player hit.
+                // Clear before custom damage, including when a damage hook fails.
+                ev.TargetsToAffect.Clear();
+                ev.IsAllowed = true;
+            }
+
+            foreach (var target in targets.Where(frag.Source.CanAffect))
             {
                 float amount = Rules.Falloff(Vector3.Distance(ev.Position, target.Position), frag.Radius, target.IsScp ? frag.ScpPeak : frag.HumanPeak);
                 if (amount <= 0 || (!frag.AffectOwner && target == frag.Source.Owner) || (frag.RequireLineOfSight && !ClearBlast(ev.Position, target)))
@@ -104,10 +114,10 @@ namespace Brainless.Internal
             internal readonly DamageSource Source;
             internal readonly float Radius, HumanPeak, ScpPeak;
             internal readonly BlastBudget Budget;
-            internal readonly bool RequireLineOfSight, AffectOwner;
+            internal readonly bool RequireLineOfSight, AffectOwner, DamageEnvironment;
             internal readonly float Expires;
             internal readonly int ArmorPenetration;
-            internal Frag(ExplosionGrenadeProjectile projectile, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget, bool requireLineOfSight, bool affectOwner, int armorPenetration)
+            internal Frag(ExplosionGrenadeProjectile projectile, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget, bool requireLineOfSight, bool affectOwner, int armorPenetration, bool damageEnvironment)
             {
                 Projectile = projectile;
                 Source = source;
@@ -117,6 +127,7 @@ namespace Brainless.Internal
                 Budget = budget;
                 RequireLineOfSight = requireLineOfSight;
                 AffectOwner = affectOwner;
+                DamageEnvironment = damageEnvironment;
                 ArmorPenetration = armorPenetration;
                 Expires = Time.time + Math.Max(.05f, projectile.FuseTime) + 5;
             }

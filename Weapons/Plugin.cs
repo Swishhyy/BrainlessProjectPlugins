@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 0);
+        public override Version Version => new Version(0, 6, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -351,7 +351,7 @@ namespace Brainless.Weapons
                         Vector3 muzzle = origin + direction * .55f;
                         if (Physics.Raycast(origin, direction, out var hit, .6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                             muzzle = hit.point - direction * .1f;
-                        grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner, armorPenetration: Config.LauncherArmorPenetration);
+                        grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner, armorPenetration: Config.LauncherArmorPenetration, damageEnvironment: Config.LauncherDamageEnvironment);
                         if (shots.Remaining(gun.Serial) == 0)
                             lifetime.Later(.5f, () => DiscardEmptyLauncher(gun.Serial));
                     }

@@ -32,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 1);
+        public override Version Version => new Version(0, 6, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -59,7 +59,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 5;
+            bool migrateConfig = Config.CatalogRevision < 6;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -719,9 +719,12 @@ namespace Brainless.Items
             if (ev.Projectile == null || !thrown.TryGet(ev.Projectile.Serial, out var payload) || payload.Item.Id != 7102)
                 return;
             bool allowed = ev.IsAllowed;
-            ev.IsAllowed = false;
+            var targets = ev.TargetsToAffect.ToArray();
+            ev.IsAllowed = allowed && payload.Cluster.DamageEnvironment;
+            if (ev.IsAllowed)
+                ev.TargetsToAffect.Clear();
             // HE grenades reach this callback after native visual/target setup.
-            thrown.Resolve(ev.Projectile.Serial, allowed, p => Cluster(ev.Position, p.Source, p.Cluster, ev.TargetsToAffect), p => RetireSerial(ev.Projectile.Serial));
+            thrown.Resolve(ev.Projectile.Serial, allowed, p => Cluster(ev.Position, p.Source, p.Cluster, targets), p => RetireSerial(ev.Projectile.Serial));
         });
         private void GrenadeEffect(SpawningGrenadeEffectEventArgs ev) => Safe.Run(() =>
         {
@@ -809,7 +812,7 @@ namespace Brainless.Items
                 Vector3 separated = start + outward * .25f;
                 if (!Physics.Linecast(start, separated, InventorySystem.Items.ThrowableProjectiles.ExplosionGrenade.HitBlockerMask, QueryTriggerInteraction.Ignore))
                     start = separated;
-                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration);
+                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration, tuning.DamageEnvironment);
             }
         }
 

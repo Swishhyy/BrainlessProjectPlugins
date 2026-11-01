@@ -67,7 +67,7 @@ Cluster has a controlled parent blast and launches the configured real child gre
 
 Impact (7113) ignores the thrower's collider and detonates once on a qualifying physical contact after arming. Continued contact with the ground also qualifies after the delay. Player contacts are optional. The safety fuse prevents an airborne projectile from lasting forever; setting it shorter than the arming delay makes it expire by timer first. Native grenade validation/events still apply.
 
-Blast damage is center damage with linear distance falloff; normal friendly-fire, god mode and damage-event rules apply. Custom blasts do not apply native HE burn/deafen/concussion or door damage. Disabling the additional line-of-sight check does not bypass restrictions in native target enumeration or another plugin's denial.
+Blast damage is center damage with linear distance falloff; normal friendly-fire, god mode and damage-event rules apply. Custom player damage does not add native HE burn/deafen/concussion. Cluster parent/children and launcher blasts preserve native door, destructible-prop and physics effects within their configured blast radius. Native door immunity, damage curves, destruction events and any prior explosion cancellation remain active. Native environment damage is separate from the shared player-damage cap. Set `damage_environment: false` under `tuning.cluster_grenade`, or root `launcher_damage_environment: false`, to disable it. Disabling the additional line-of-sight check does not bypass restrictions in native target enumeration or another plugin's denial.
 
 Smoke 7101 now uses a flashbang body and full-size native SCP-244 particles. Its only tuning fields are fuse, duration and emitter count; legacy gas slow/DPS/radius fields are ignored. It does not flash, explode, apply a custom slow or create a filter. Native server exposure from owned emitters is excluded so they cannot drain HP/Hume shields or apply cold gameplay effects. Native client rendering and room/door fog boundaries remain. The native prefab controls its visual extent; there is no pretend independent server radius. Full size avoids a low emission percentage that can make a short cloud effectively invisible. Default lifetime is 20 seconds, with one emitter. The server lifetime component is disabled only for owned emitters and their network size is held at full; ordinary SCP-244 is not changed. Client smoke still needs an in-game visual check.
 
@@ -81,7 +81,7 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 | --- | --- |
 | `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 8`, `radius: 3`, `human_slow_percent: 25`, `scp_slow_percent: 15`, both `*_damage_per_second: 0`, `affect_allies: false`, `affect_owner: true`, `same_room_only: true`, `require_line_of_sight: true` |
 | `echo_canister` / 7104 | `fuse_seconds: 1`, `duration_seconds: 6`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
-| `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 8`, `reach: 3` |
+| `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 25`, `reach: 3` |
 | `signal_jammer` / 7106 | `deploy_seconds: 2`, `arming_seconds: 2`, `active_seconds: 6`, `room_cooldown_seconds: 30`, `remove_seconds: 2`, `max_active: 1` |
 | `survey_beacon` / 7107 | `deploy_seconds: 2`, `duration_seconds: 45`, `scan_seconds: 3`, `scans: 2`, `remove_seconds: 2` |
 | `trace_chalk` / 7108 | `duration_seconds: 45`, `max_markers: 9`; charges come from its item-list entry (default 3) |
@@ -205,3 +205,5 @@ Roles 0.5.0 includes 53 profiles. Each role has a `traits` section for recall/at
 The HUD defaults to `role_hud_edge_padding_percent: 0.5`; use `0` for the literal edge. `role_hud_layout_revision: 2` preserves deliberate old insets. Left/right, width, vertical position and description visibility remain editable.
 
 Startup migrations for Roles 0.5.0, Items 0.6.1 and SCP voice 0.2.0 save their new fields automatically and create a `.before-brainless-migration` backup. Peer-plugin sections remain verbatim. New SCP profiles append once at revision 1; revision 2 adds the four new human profiles using available pool space without changing existing percentages. A full pool leaves a new entry at 0%. Save settings and use `bprole reload`; existing assigned stats keep their captured values until reassignment.
+
+Items 0.6.2 uses catalog revision 6 to upgrade an untouched eight-second Door Jammer hold to 25 seconds. Edited lifetimes are preserved; current-revision values and explicit per-item file overrides remain authoritative. Deployment/removal stay at two/three seconds. Existing deployed braces keep their captured expiry.

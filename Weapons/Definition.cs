@@ -67,6 +67,7 @@ namespace Brainless.Weapons
         public int AudioBalanceRevision { get; set; }
         public bool LauncherRequireLineOfSight { get; set; } = true;
         public bool LauncherAffectOwner { get; set; } = true;
+        public bool LauncherDamageEnvironment { get; set; } = true;
         public List<WeaponSpec> Weapons { get; set; } = new List<WeaponSpec>
         {
             new WeaponSpec
