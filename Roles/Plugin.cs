@@ -33,7 +33,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 4, 0);
+        public override Version Version => new Version(0, 5, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -60,7 +60,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 1 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 2 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -125,7 +125,13 @@ namespace Brainless.Roles
             U.UpgradingPickup -= UpgradePickup;
             U.UpgradingInventoryItem -= UpgradeInventory;
             foreach (var player in active.Keys.ToArray())
+            {
+                var definition = active[player].Definition;
                 Remove(player);
+                if (definition.Neutral && player.IsConnected && player.IsAlive && player.Role.Type == RoleTypeId.Tutorial)
+                    player.Role.Set(definition.BaseRole, SpawnReason.ForceClass, RoleSpawnFlags.None);
+            }
+
             bursts.Clear();
             pendingBursts.Clear();
             poisons.Clear();
@@ -159,6 +165,7 @@ namespace Brainless.Roles
             doctorSpent.Clear();
             badges.Clear();
             doctorRolled = false;
+            rogueAlertQueued = false;
             waveCount = 0;
             if (Config.IsEnabled)
                 lifetime.Run(Tick());
@@ -268,6 +275,8 @@ namespace Brainless.Roles
                 return "per-round role cap reached";
             if (player != null && !Matches(definition, player))
                 return "requires " + definition.BaseRole + " or matching faction";
+            if (player != null && definition.SpawnArea != RoleSpawnArea.Normal && !TryProfileSpawn(player, definition.SpawnArea, out _))
+                return "no safe " + definition.SpawnArea + " spawn is available";
             if (player != null && definition.Id == "C03" && !player.Items.Any(i => i.Type == ItemType.GunAK))
                 return "requires a Chaos subtype with an AK";
             if (!admin && player != null && player.IsHuman)
@@ -310,12 +319,12 @@ namespace Brainless.Roles
             if (player != null)
             {
                 int removed = player.Items.Count(i => definition.Remove.Contains(i.Type));
-                int added = definition.Add.Count + definition.CustomItems.Count;
+                int extra = 0;
                 if (definition.Id == "D03")
-                    added++;
+                    extra++;
                 if (definition.Id == "S04")
-                    added += Config.ApprovedCandy.Count == 0 ? 3 : 1;
-                if (player.Items.Count - removed + added > 8)
+                    extra += Config.ApprovedCandy.Count == 0 ? 3 : 1;
+                if (definition.InventorySlots(player.Items.Count, removed, extra) > 8)
                     return "insufficient inventory space for the complete role kit";
             }
 
@@ -386,12 +395,30 @@ namespace Brainless.Roles
 
         private void Apply(Player player, RoleDefinition definition, bool revived, bool admin = false)
         {
+            RoleTypeId fallbackRole = player.Role.Type;
+            Vector3? customSpawn = null;
+            if (!revived && definition.SpawnArea != RoleSpawnArea.Normal)
+            {
+                if (!TryProfileSpawn(player, definition.SpawnArea, out Vector3 destination))
+                    throw new InvalidOperationException("No safe spawn is available for " + definition.Name + ".");
+                customSpawn = destination;
+            }
+
+            if (definition.Neutral)
+            {
+                player.Role.Set(RoleTypeId.Tutorial, SpawnReason.ForceClass, RoleSpawnFlags.None);
+                if (player.Role.Type != RoleTypeId.Tutorial)
+                    throw new InvalidOperationException("The neutral role change was blocked.");
+            }
+
             var state = new ActiveRole(player, definition);
             active[player] = state;
             try
             {
                 if (!revived)
                 {
+                    if (definition.ReplaceInventory)
+                        player.ClearInventory();
                     foreach (var type in definition.Remove)
                         foreach (var item in player.Items.Where(i => i.Type == type).ToArray())
                             player.RemoveItem(item);
@@ -443,6 +470,13 @@ namespace Brainless.Roles
                             player.SetAmmo(gun.AmmoType, (ushort)gun.MaxMagazineAmmo);
                     }
 
+                    if (definition.FillAmmoToLimit)
+                        foreach (var gun in player.Items.OfType<Firearm>())
+                        {
+                            gun.MagazineAmmo = gun.MaxMagazineAmmo;
+                            player.SetAmmo(gun.AmmoType, player.GetAmmoLimit(gun.AmmoType));
+                        }
+
                     if (player.Role.Type == RoleTypeId.FacilityGuard)
                         GiveBadge(player, definition.Id);
                     if (!admin)
@@ -482,6 +516,10 @@ namespace Brainless.Roles
                 if (player.Role.Type == RoleTypeId.Scp0492)
                     zombieHistory[player.UserId] = definition;
                 player.CustomInfo = $"{definition.Name} [{definition.Id}]";
+                if (definition.Neutral)
+                    ConfigureRogue(player, state);
+                if (customSpawn.HasValue)
+                    player.Position = customSpawn.Value;
                 assignmentNotes[player] = admin ? "Assigned by admin test command." : revived ? "Restored after resurrection." : "Assigned by normal spawn roll.";
                 player.ShowHint($"<b>{definition.Name}</b>\n{definition.Hint}", 10);
             }
@@ -491,7 +529,7 @@ namespace Brainless.Roles
                 // A provider can be disabled after preflight. Restore a complete native
                 // kit instead of leaving a partially modified inventory behind.
                 if (player.IsConnected && player.IsAlive)
-                    player.Role.Set(player.Role.Type, RoleSpawnFlags.AssignInventory);
+                    player.Role.Set(fallbackRole, RoleSpawnFlags.AssignInventory);
                 throw;
             }
         }
@@ -582,6 +620,7 @@ namespace Brainless.Roles
             if (!active.TryGetValue(player, out var state))
                 return;
             active.Remove(player);
+            RemoveRogue(player, state);
             if (!player.IsConnected || player.Role != state.Role)
                 return;
             state.QuietSteps.Clear();
@@ -789,6 +828,8 @@ namespace Brainless.Roles
             internal float MaxHealth, MaxShield, Shield, Stamina, StaminaApplied = 1, Start;
             internal float? RegenCooldown, RegenRate;
             internal QuietStepLayer QuietSteps = new QuietStepLayer();
+            internal Func<Player, Exiled.API.Structs.RoleData> RogueAppearance;
+            internal float? TutorialDamage;
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();

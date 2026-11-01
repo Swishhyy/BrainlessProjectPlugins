@@ -10,7 +10,8 @@ namespace Brainless.Roles
         internal const float DefaultCooldown = 120;
         private readonly Dictionary<string, float> started = new Dictionary<string, float>();
         private readonly Dictionary<string, float> readyAt = new Dictionary<string, float>();
-        internal static bool IsLevelThree(int required, int containmentThree, int armoryThree) => (required & (containmentThree | armoryThree)) != 0;
+        internal static float Duration(int level, float basis, float perLevel) => basis + Math.Max(0, Math.Min(3, level) - 1) * perLevel;
+        internal static float Cooldown(int level, float basis, float perLevel) => basis + Math.Max(0, Math.Min(3, level) - 1) * perLevel;
         internal float Remaining(string user, float now) => readyAt.TryGetValue(user, out float time) ? Math.Max(0, time - now) : 0;
         internal float Elapsed(string user, float now) => started.TryGetValue(user, out float time) ? Math.Max(0, now - time) : 0;
         internal bool TryBegin(string user, float now)

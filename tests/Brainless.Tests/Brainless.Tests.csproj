@@ -4,11 +4,13 @@
     <Compile Include="../../Shared/SupRules.cs" Link="SupRules.cs" />
     <Compile Include="../../Shared/GameplayText.cs" Link="GameplayText.cs" />
     <Compile Include="../../RoundEvents/InfectionRules.cs" Link="InfectionRules.cs" />
+    <Compile Include="../../SlFixes/CaptureRules.cs" Link="CaptureRules.cs" />
     <Compile Include="../../Shared/Updates/UpdateDiagnostics.cs" Link="Updates/UpdateDiagnostics.cs" />
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
     <Compile Include="../../Shared/ExplosionRules.cs" Link="ExplosionRules.cs" />
     <Compile Include="../../Shared/AudioRules.cs" Link="AudioRules.cs" />
     <Compile Include="../../Core/StatsStore.cs" Link="StatsStore.cs" />
+    <Compile Include="../../Core/StatsPrivacy.cs" Link="StatsPrivacy.cs" />
     <Compile Include="../../Shared/CoreBridge.cs" Link="CoreBridge.cs" />
     <Compile Include="../../Shared/EffectAudioTuning.cs" Link="EffectAudioTuning.cs" />
     <Compile Include="../../Shared/Tuning.cs" Link="Tuning.cs" />

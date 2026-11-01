@@ -11,12 +11,12 @@ using MEC;
 
 namespace Brainless.Core
 {
-    public sealed class Plugin : Plugin<Config>
+    public sealed partial class Plugin : Plugin<Config>
     {
         public override string Name => "ProjectBrainlessCore";
         public override string Prefix => "project_brainless_core";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 2, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Highest;
         public static Plugin Instance { get; private set; }
@@ -40,6 +40,7 @@ namespace Brainless.Core
             {
                 string directory = string.IsNullOrWhiteSpace(Config.DataDirectory) ? Path.Combine(Paths.Configs, "ProjectBrainless", Server.Port.ToString()) : Path.GetFullPath(Config.DataDirectory);
                 Store = new StatsStore(Path.Combine(directory, "stats.json"), Config.MaxXpPerPlayerPerRound);
+                StartPrivacy();
                 if (Store.RecoveredBackup)
                     Log.Warn("[Project Brainless Core] Restored XP data from backup; the damaged file was preserved.");
                 stop = new CancellationTokenSource();
@@ -80,6 +81,8 @@ namespace Brainless.Core
             }
             catch (Exception failure)
             {
+                StopPrivacy(false);
+                Store = null;
                 Log.Error("[Project Brainless Core] Stats unavailable (" + failure.GetType().Name + "). Existing data was preserved; shared update service remains enabled.");
             }
 
@@ -100,6 +103,7 @@ namespace Brainless.Core
 
         public override void OnDisabled()
         {
+            StopPrivacy();
             Exiled.Events.Handlers.Server.RoundStarted -= RoundStarted;
             Bot?.Dispose();
             Bot = null;

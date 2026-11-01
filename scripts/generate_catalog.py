@@ -29,7 +29,7 @@ usage = json.loads((root/'docs/content_usage.json').read_text())
 assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
 lines = ['# Project Brainless — What We Have', '',
          '[Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)', '',
-         'Current shipped content: **21 items, 8 weapons, 49 role profiles and 1 round event**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **21 items, 8 weapons, 53 role profiles and 1 round event**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
@@ -62,8 +62,9 @@ lines += ['', 'Model sizes apply when allow_model_scaling is enabled. The extrem
           'Infection defaults: 150 HP, zero shield, four living players minimum, automatic selection off. `bpevent status` checks it; `bpevent stop` stops rules, then restart the round for normal roles.', '',
           '## Other features', '', '| Feature | What it does | How to use |', '| --- | --- | --- |',
           '| SCP nearby voice | Lets enabled SCPs speak to nearby living players. | Tap N or use F1 `.scpchat`; hold the normal voice key to talk. |',
-          '| XP and stats | Tracks completed actions and survival. | F1 `.pbxp` or `.pbxp top`. |',
-          '| Discord stats | Links in-game stats to Discord when the bot is enabled. | F1 `.pblink`, then Discord `/pb-link`; use `/pb-stats` or `/pb-top`. |',
+          '| XP and stats | Tracks completed actions and connected playtime. DNT and opt-out erase stats. | F1 `.pbxp`, `.pbxp top` or `.pbprivacy`. |',
+          '| Discord stats | Shows your or another linked player’s level, XP and playtime; top 10 and opt-out. | `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-optout`. Link first with `.pblink` → `/pb-link`. |',
+          '| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. Either can recruit Rogues. | Escort the captive to the normal surface escape area. |',
           '| BetterCoinflips | Gives configured random outcomes from ordinary coin flips. | Equip a normal coin and flip it. |',
           '| SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |',
           '| Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |',
@@ -82,20 +83,20 @@ for body, setting, ident, name in recipes:
     setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
     lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
-assert len(roles) == 49
+assert len(roles) == 53
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 21 items, 8 weapons, 49 roles, 1 event and 14 recipes; all have usage instructions.')
+print('Content page written: 21 items, 8 weapons, 53 roles, 1 event and 14 recipes; all have usage instructions.')
 
 # A separate operator-facing audit records why a correctly installed profile may
 # not appear. Runtime bproles remains the authority for edited server configs.
 source = (root/'Roles/RoleDefinition.cs').read_text()
 blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
 status = ['# Role availability audit', '',
-          'All 49 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
+          'All 53 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
           '## Shipped defaults', '',
           '| ID | Role | Chance % | Default status | Required custom equipment | Minimum players |',
           '| --- | --- | --- | --- | --- | --- |']
-assert len(blocks) == 49
+assert len(blocks) == 53
 known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
 for block in blocks:
     match = re.search(r'R\("([A-Z]\d\d)",\s*"([^"]+)"', block)
@@ -113,12 +114,14 @@ for block in blocks:
 status += ['', '## Why a role can be absent', '',
            '- Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults above are two-decimal allocations of the old nominal family budgets.',
            '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. These restrictions do not redistribute a blocked profile\'s percentage to another role.',
-           '- Chief Scientist and Demolitionist require 12 players. Interceptor needs a Chaos subtype with an AK. MTF/Chaos profiles preserve their matching native rank/subtype.',
+           '- Head Scientist and Demolitionist require 12 players. Interceptor needs a Chaos subtype with an AK. MTF/Chaos profiles preserve their matching native rank/subtype.',
            '- Child, Tickler and Muncher require the experimental role switch. Doctor also needs its disabled profile enabled and enable_doctor_event; its separate configurable event roll (default 1%) never enters ordinary zombie draws. Redline and Ricochet are weapon prototypes and do not gate the normal role roster.',
            '- Candy roles use real SCP-330 candy; approved_candy can select colors and candy_man_candy_count controls the Candy Man count. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.',
+           '- Rogue Guard/Scientist are neutral internally, hostile to all factions, and keep their Guard/Scientist appearance. They spawn separately in Entrance and queue an early CASSIE warning. Containment Engineer starts by the HCZ Micro H.I.D.; map geometry must provide a safe point. Head Scientist reuses S03 with its research-coordinator keycard.',
+           '- Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks and non-interactable doors keep their native restrictions.',
            '- Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.', '',
            'All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.', '']
 audit = root/'docs/ROLE_STATUS.md'
 status += ['## SCP variants', '', 'The SCP-106, SCP-173, SCP-939 and SCP-096 profiles are now included. Their skills use normal SCP controls. Stalker and Ambusher reduce footsteps; they keep native ambient sounds. Mimic has a short sound cooldown and intercom access; normal intercom distance, mute and timing restrictions apply. Poison refreshes one effect, does not stack, and medical supplies cure it. Boom Boom uses its separate explosive_scp173 settings.', '', 'Brute, Giant, Muncher, Raisian and Alpha apply their configured model sizes when allow_model_scaling is true. Child, Tickler and Muncher remain opt-in; Doctor remains disabled/event-only.', '']
 audit.write_text('\n'.join(status))
-print('Role availability audit written with all 49 profiles and validated equipment IDs.')
+print('Role availability audit written with all 53 profiles and validated equipment IDs.')

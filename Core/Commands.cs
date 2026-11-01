@@ -57,6 +57,12 @@ namespace Brainless.Core
                 UserId = target.UserId,
                 Name = target.Nickname
             };
+            if (!plugin.CanTrack(target))
+            {
+                response = "Stats tracking is disabled for this player.";
+                return false;
+            }
+
             response = DiscordProtocol.Describe(stats, plugin.Config.XpPerLevelSquared);
             return true;
         }
@@ -88,6 +94,12 @@ namespace Brainless.Core
             if (!plugin.Config.Discord.Enabled)
             {
                 response = "The Project Brainless Discord bot is not enabled yet.";
+                return false;
+            }
+
+            if (!plugin.CanTrack(player))
+            {
+                response = "Tracking is disabled. Turn off DNT and use .pbprivacy optin before linking.";
                 return false;
             }
 

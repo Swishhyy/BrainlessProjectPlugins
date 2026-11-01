@@ -16,6 +16,7 @@ namespace Brainless.SlFixes
         public double RoughTeleportChance { get; set; } = 100;
         public bool EnableCrafting { get; set; } = true;
         public bool EnableXp { get; set; } = true;
+        public CaptureConversionConfig CaptureConversions { get; set; } = new CaptureConversionConfig();
         public int MaxCraftXpAwardsPerPlayerPerRound { get; set; } = 3;
         public int MaxTeleportXpAwardsPerPlayerPerRound { get; set; } = 3;
         public int MinimumRoundSecondsForXp { get; set; } = 120;
@@ -95,6 +96,8 @@ namespace Brainless.SlFixes
         };
         internal void Validate()
         {
+            if (CaptureConversions == null || double.IsNaN(CaptureConversions.MinimumAliveSeconds) || double.IsInfinity(CaptureConversions.MinimumAliveSeconds) || CaptureConversions.MinimumAliveSeconds < 0 || CaptureConversions.MinimumAliveSeconds > 3600 || !(CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosConscript || CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosRifleman || CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosMarauder || CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosRepressor) || !(CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfPrivate || CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfSergeant || CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfSpecialist || CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfCaptain))
+                throw new InvalidOperationException("Invalid capture conversion role or minimum_alive_seconds.");
             if (double.IsNaN(RoughTeleportChance) || double.IsInfinity(RoughTeleportChance) || RoughTeleportChance < 0 || RoughTeleportChance > 100 || MaxCraftXpAwardsPerPlayerPerRound < 0 || MaxTeleportXpAwardsPerPlayerPerRound < 0 || MinimumRoundSecondsForXp < 0)
                 throw new InvalidOperationException("Invalid teleport/XP limits.");
             if (Recipes == null || XpRewards == null || XpRewards.Any(p => string.IsNullOrWhiteSpace(p.Key) || p.Value < 0 || p.Value > 10000))
@@ -113,6 +116,14 @@ namespace Brainless.SlFixes
             if (Recipes.GroupBy(r => r.CustomId).Any(g => g.Count() > 1))
                 throw new InvalidOperationException("Use one recipe per custom ID; recipe IDs must be unique.");
         }
+    }
+
+    public sealed class CaptureConversionConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public double MinimumAliveSeconds { get; set; } = 10;
+        public PlayerRoles.RoleTypeId ChaosRole { get; set; } = PlayerRoles.RoleTypeId.ChaosConscript;
+        public PlayerRoles.RoleTypeId MtfRole { get; set; } = PlayerRoles.RoleTypeId.NtfPrivate;
     }
 
     public sealed class CraftingRecipe

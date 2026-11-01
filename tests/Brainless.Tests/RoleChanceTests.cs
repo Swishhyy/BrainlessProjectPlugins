@@ -58,7 +58,7 @@ internal static class RoleChanceTests
         var writer = new YamlDotNet.Serialization.SerializerBuilder().WithNamingConvention(YamlDotNet.Serialization.NamingConventions.UnderscoredNamingConvention.Instance).Build();
         var config = new Config();
         config.Prepare();
-        check(config.Roles.Count == 49 && config.Roles.All(r => r.ChancePercent.HasValue), "every shipped role has a numeric default percentage");
+        check(config.Roles.Count == 53 && config.Roles.All(r => r.ChancePercent.HasValue), "every shipped role has a numeric default percentage");
         check(config.Roles.Where(r => r.Id != "Z05").GroupBy(Catalog.ChanceGroup).All(g => g.Sum(r => (decimal)r.ChancePercent.Value) <= 100), "all default role groups fit within their 100-percent budget including experimental profiles");
         var legacy = reader.Deserialize<Config>("class_d_chance: 40\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 1\n- id: D02\n  name: Second\n  base_role: ClassD\n  weight: 3\n");
         legacy.Prepare();

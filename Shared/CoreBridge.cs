@@ -36,5 +36,19 @@ namespace Brainless.Internal
                 return false;
             }
         }
+
+        internal static bool CanTrack(string userId)
+        {
+            try
+            {
+                var assembly = Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetName().Name == "Brainless.Core");
+                var method = assembly?.GetType("Brainless.Core.Api")?.GetMethod("CanTrack", BindingFlags.Public | BindingFlags.Static);
+                return method != null && (bool)method.Invoke(null, new object[] { userId });
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }

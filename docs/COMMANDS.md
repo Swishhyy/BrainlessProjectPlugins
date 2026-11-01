@@ -56,5 +56,18 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.pbxp` / `.pbstats` | Shows your stats |
 | `.pbxp top` | Shows the leaderboard |
 | `.pblink` | Gets a private Discord linking code when enabled |
+| `.pbprivacy [status]` | Shows whether your stats are tracked |
+| `.pbprivacy optout` | Stops tracking and deletes your saved stats and Discord link |
+| `.pbprivacy optin` | Starts fresh; requires native DNT off |
 
-**Discord, when configured:** `/pb-stats`, `/pb-top`, `/pb-link code:<code>`. Prefix `pb` is the default.
+**Discord, when configured:** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
+
+| Command | What it does |
+| --- | --- |
+| `/pb-stats [user]` | Level, XP, action counts and playtime; omit user for yourself |
+| `/pb-playtime [user]` | Server playtime; omit user for yourself |
+| `/pb-top` | Top 10 players by XP |
+| `/pb-link code:<code>` | Links your game account using `.pblink` |
+| `/pb-optout` | Deletes your linked stats and stops tracking; affects only you |
+
+An unlinked player can opt out in-game. Turning DNT off does not cancel a separate manual opt-out. Use `.pbprivacy optin` to rejoin tracking; old progress and links are not restored.

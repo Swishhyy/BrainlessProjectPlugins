@@ -120,13 +120,13 @@ brainless_roles:
 
 Only a confirmed death of an assigned Z04 arms a native explosion. Capturing its identity before native role cleanup prevents losing the trait when the player becomes Spectator. A canceled Dying event, role swap or disconnect does not independently trigger one. Default settings allow gun, explosion and environmental deaths. `require_enemy_kill` is an optional additional filter. Zero limits mean unlimited here; positive limits restrict the captured user or simultaneous pending corpse bursts. A zero warning still uses a minimum 0.05s native fuse.
 
-Role list entries retain their editable health/shield/speed/stamina/reserve/scale multipliers, kit lists, spawn weights, population gates and round caps. Chance fields are percentages (0-100). Existing role safety/experimental gates and native constraints still apply. Locksmith uses root `lockpick_duration_seconds: 15` and `lockpick_cooldown_seconds: 120`; level-three exclusion remains mandatory.
+Role list entries retain their editable health/shield/speed/stamina/reserve/scale multipliers, kit lists, spawn weights, population gates and round caps. Chance fields are percentages (0-100). Existing role safety/experimental gates and native constraints still apply. Locksmith uses `lockpick_duration_seconds: 15`, `lockpick_extra_seconds_per_level: 15`, `lockpick_cooldown_seconds: 120` and `lockpick_extra_cooldown_per_level: 60`. The highest native containment/armory/administration tier sets the timing: levels 1/2/3 take 15/30/45 seconds and earn 120/180/240-second cooldowns. Mechanical locks and interruptions still apply.
 
 ## Weapons
 
 `brainless_weapons.weapons` controls each weapon's `name`, `description`, `magazine`, `reserve`, `human_damage`, `scp_damage`, `round_cap`, `weight`, `enabled` and `experimental`. Keep IDs and supported native bodies. Ordinary gun damage values are multipliers. Launcher blast damage is absolute and uses the separate fields below. Magazine 0 leaves a normal weapon's native loaded capacity; positive values set the configured capacity. Last Word accepts 1-255 finite shots; the launcher accepts 1-16 and clamps larger configured values to 16. Launcher reserve is always zero. Each approved native bullet launches one grenade; the old extra launcher_shot_interval is retired. World pickups never recreate reserve ammo.
 
-To make the launcher fire 24 grenades, change only its existing 7207 entry's `magazine: 24`, save and run `bpweapons reload`; grant a new launcher. Existing 16-shot launchers retain their original remaining budget. Neither attachments, transfers, reload nor a config reload refill finite weapons.
+Set the launcher entry 7207 to `magazine: 16` for the maximum sixteen grenades, or a lower value to reduce it. Save and run `bpweapons reload`, then grant a new launcher. Existing launchers retain their original remaining budget. Neither attachments, transfers, reload nor a config reload refill finite weapons.
 
 | Root field | Default |
 | --- | --- |
@@ -198,10 +198,10 @@ Roles 0.3.0 uses each entry's `chance_percent` directly, not legacy weight/famil
 
 ## SCP variants and role HUD
 
-Roles 0.4.0 includes 49 profiles. Each role has a `traits` section for recall/attack timings, attack damage, shield recharge rate/delay, vigor gain, quiet footsteps, poison, calm movement, rage windup, mimic cooldown, intercom access, explosion immunity and breakneck refresh. Multipliers default to 1; zero poison disables it. `quiet_footstep_stacks` reduces native footstep volume by 10% per stack (0-10); ambient SCP sounds remain native. Poison refreshes one effect and medical supplies cure it.
+Roles 0.5.0 includes 53 profiles. Each role has a `traits` section for recall/attack timings, attack damage, shield recharge rate/delay, vigor gain, quiet footsteps, poison, calm movement, rage windup, mimic cooldown, intercom access, explosion immunity and breakneck refresh. Multipliers default to 1; zero poison disables it. `quiet_footstep_stacks` reduces native footstep volume by 10% per stack (0-10); ambient SCP sounds remain native. Poison refreshes one effect and medical supplies cure it.
 
 `allow_model_scaling: true` applies each profile's `scale`; experimental profile gates remain separate. `explosive_scp173` controls Boom Boom's death burst, using the same fields as `explosive_zombie`. These profiles use normal SCP controls; test them with `bprole set <ID>`.
 
 The HUD defaults to `role_hud_edge_padding_percent: 0.5`; use `0` for the literal edge. `role_hud_layout_revision: 2` preserves deliberate old insets. Left/right, width, vertical position and description visibility remain editable.
 
-Startup migrations for Roles 0.4.0, Items 0.6.1 and SCP voice 0.2.0 save their new fields automatically and create a `.before-brainless-migration` backup. Peer-plugin sections remain verbatim. New SCP profiles append once (`role_catalog_revision: 1`); custom chance pools for those native SCPs are preserved by adding the new profiles at 0%. Save settings and use `bprole reload`; existing assigned stats keep their captured values until reassignment.
+Startup migrations for Roles 0.5.0, Items 0.6.1 and SCP voice 0.2.0 save their new fields automatically and create a `.before-brainless-migration` backup. Peer-plugin sections remain verbatim. New SCP profiles append once at revision 1; revision 2 adds the four new human profiles using available pool space without changing existing percentages. A full pool leaves a new entry at 0%. Save settings and use `bprole reload`; existing assigned stats keep their captured values until reassignment.

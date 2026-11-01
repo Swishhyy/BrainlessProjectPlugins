@@ -22,12 +22,12 @@ using U = Exiled.Events.Handlers.Scp914;
 
 namespace Brainless.SlFixes
 {
-    public sealed class Plugin : Plugin<Config>
+    public sealed partial class Plugin : Plugin<Config>
     {
         public override string Name => "Project Brainless SCP SL Fixes";
         public override string Prefix => "project_brainless_sl_fixes";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 2, 1);
+        public override Version Version => new Version(0, 3, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Last;
         public static Plugin Instance { get; private set; }
@@ -56,6 +56,7 @@ namespace Brainless.SlFixes
             P.Left += Left;
             P.Died += Died;
             P.Escaped += Escaped;
+            P.Escaping.Subscribe(CaptiveEscaping, 1000);
             U.UpgradingPlayer.Subscribe(UpgradePlayer, -500);
             U.UpgradingPickup.Subscribe(UpgradePickup, -500);
             U.UpgradingInventoryItem.Subscribe(UpgradeInventory, -500);
@@ -75,6 +76,7 @@ namespace Brainless.SlFixes
             P.Left -= Left;
             P.Died -= Died;
             P.Escaped -= Escaped;
+            P.Escaping -= CaptiveEscaping;
             U.UpgradingPlayer -= UpgradePlayer;
             U.UpgradingPickup -= UpgradePickup;
             U.UpgradingInventoryItem -= UpgradeInventory;
@@ -95,6 +97,8 @@ namespace Brainless.SlFixes
             roundId = Guid.NewGuid().ToString("N");
             nextLife = 0;
             started = Time.time;
+            if (Config.IsEnabled)
+                lifetime.Run(PrivacyCleanup());
         }
 
         private static bool Real(Player player) => player != null && player.IsConnected && !player.IsHost && !string.IsNullOrWhiteSpace(player.UserId);
@@ -107,6 +111,8 @@ namespace Brainless.SlFixes
 
         private void Track(Player player)
         {
+            if (!Trackable(player))
+                return;
             lives[player] = ++nextLife;
             participants[player.UserId] = player.Nickname;
         }
@@ -117,21 +123,27 @@ namespace Brainless.SlFixes
                 Track(ev.Player);
         }
 
-        private void Left(LeftEventArgs ev) => lives.Remove(ev.Player);
+        private void Left(LeftEventArgs ev)
+        {
+            lives.Remove(ev.Player);
+            if (ev.Player.DoNotTrack || !CoreBridge.CanTrack(ev.Player.UserId))
+                ForgetTracking(ev.Player);
+        }
+
         private string Life(Player player)
         {
             if (!lives.TryGetValue(player, out int life))
             {
                 Track(player);
-                life = lives[player];
+                life = lives.TryGetValue(player, out int tracked) ? tracked : ++nextLife;
             }
 
-            return player.UserId + ":" + life;
+            return life.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private void Award(Player player, string action, string receipt, int limit = int.MaxValue)
         {
-            if (!Config.EnableXp || !Round.IsStarted || !Real(player))
+            if (!Config.EnableXp || !Round.IsStarted || !Trackable(player))
                 return;
             string key = player.UserId + ":" + action;
             xpAwards.TryGetValue(key, out int before);
@@ -161,6 +173,8 @@ namespace Brainless.SlFixes
             bool longEnough = Time.time - started >= Config.MinimumRoundSecondsForXp;
             foreach (var participant in participants)
             {
+                if (!CoreBridge.CanTrack(participant.Key))
+                    continue;
                 Config.XpRewards.TryGetValue("round_played", out int xp);
                 CoreBridge.Record(participant.Key, participant.Value, "round_played", longEnough ? xp : 0, roundId + ":round");
                 var player = Player.Get(participant.Key);

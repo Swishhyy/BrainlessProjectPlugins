@@ -7,6 +7,13 @@ using PlayerRoles;
 
 namespace Brainless.Roles
 {
+    public enum RoleSpawnArea
+    {
+        Normal,
+        Entrance,
+        MicroRoom
+    }
+
     public sealed class RoleDefinition
     {
         public string Id { get; set; }
@@ -16,6 +23,10 @@ namespace Brainless.Roles
         public ScpTraits Traits { get; set; } = new ScpTraits();
         public bool Enabled { get; set; } = true;
         public bool Experimental { get; set; }
+        public bool Neutral { get; set; }
+        public bool ReplaceInventory { get; set; }
+        public bool FillAmmoToLimit { get; set; }
+        public RoleSpawnArea SpawnArea { get; set; }
 
         [Description("Chance out of 100 on a matching new spawn. Group totals must be at most 100; unused or blocked shares keep the normal role. Null uses legacy settings for migration. Doctor uses its separate event roll.")]
         [Tune(0, 100)]
@@ -54,6 +65,8 @@ namespace Brainless.Roles
         public List<ItemType> Remove { get; set; } = new List<ItemType>();
         public List<ItemType> Add { get; set; } = new List<ItemType>();
         public List<uint> CustomItems { get; set; } = new List<uint>();
+
+        internal int InventorySlots(int current, int removed, int extra) => (ReplaceInventory ? 0 : current - removed) + Add.Count + CustomItems.Count + extra;
     }
 
     public static class Catalog
@@ -116,7 +129,7 @@ namespace Brainless.Roles
             r.Health = 85;
             r.Add.AddRange(new[] { ItemType.KeycardZoneManager, ItemType.Painkillers });
             list.Add(r);
-            r = R("D06", "Locksmith", RoleTypeId.ClassD, "Picks doors below level 3. Lockpicking takes time and has a cooldown.");
+            r = R("D06", "Locksmith", RoleTypeId.ClassD, "Picks any keycard door. Higher access takes longer.");
             r.Health = 90;
             list.Add(r);
             r = R("D07", "Noise Complaint", RoleTypeId.ClassD, "Carries an Echo Canister to distract enemies with fake footsteps.");
@@ -131,7 +144,7 @@ namespace Brainless.Roles
             r.Remove.Add(ItemType.Medkit);
             r.Add.AddRange(new[] { ItemType.Medkit, ItemType.Medkit, ItemType.Painkillers });
             list.Add(r);
-            r = R("S03", "Chief Scientist", RoleTypeId.Scientist, "Has better research access, but no medical supplies.");
+            r = R("S03", "Head Scientist", RoleTypeId.Scientist, "Carries a head scientist keycard with improved research access.");
             r.Weight = 1;
             r.MinPlayers = 12;
             r.MaxPerRound = 1;
@@ -332,6 +345,37 @@ namespace Brainless.Roles
             list.Add(r);
             r = R("R02", "Ill Temperature", RoleTypeId.Scp096, "Moves faster while calm.");
             r.Traits.CalmSpeedMultiplier = 1.25f;
+            list.Add(r);
+            r = R("C05", "Cowboy", RoleTypeId.ChaosRifleman, "Carries a fully supplied revolver, light armor, stims and painkillers.");
+            r.ReplaceInventory = true;
+            r.FillAmmoToLimit = true;
+            r.Add.AddRange(new[] { ItemType.KeycardChaosInsurgency, ItemType.GunRevolver, ItemType.ArmorLight, ItemType.Adrenaline, ItemType.Adrenaline, ItemType.Painkillers });
+            list.Add(r);
+            r = R("G07", "Rogue Guard", RoleTypeId.FacilityGuard, "An unaffiliated guard, hostile to everyone. Can be captured and recruited.");
+            r.Neutral = true;
+            r.ReplaceInventory = true;
+            r.SpawnArea = RoleSpawnArea.Entrance;
+            r.Health = 100;
+            r.Weight = 2;
+            r.MaxPerRound = 1;
+            r.Add.AddRange(new[] { ItemType.KeycardGuard, ItemType.GunFSP9, ItemType.ArmorLight, ItemType.Medkit, ItemType.Radio });
+            r.FillAmmoToLimit = true;
+            list.Add(r);
+            r = R("S07", "Containment Engineer", RoleTypeId.Scientist, "Starts in HCZ's Micro room with a containment engineer keycard.");
+            r.Remove.Add(ItemType.KeycardScientist);
+            r.Add.Add(ItemType.KeycardContainmentEngineer);
+            r.SpawnArea = RoleSpawnArea.MicroRoom;
+            r.Weight = 5;
+            r.MaxPerRound = 1;
+            list.Add(r);
+            r = R("S08", "Rogue Scientist", RoleTypeId.Scientist, "An unaffiliated scientist, hostile to everyone. Can be captured and recruited.");
+            r.Neutral = true;
+            r.ReplaceInventory = true;
+            r.SpawnArea = RoleSpawnArea.Entrance;
+            r.Health = 100;
+            r.Weight = 2;
+            r.MaxPerRound = 1;
+            r.Add.AddRange(new[] { ItemType.KeycardScientist, ItemType.Medkit, ItemType.Flashlight });
             list.Add(r);
             FillMissingChances(list, DefaultFamilyChance);
             return list;
