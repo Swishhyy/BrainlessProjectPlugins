@@ -1,4 +1,14 @@
-# Core 0.1.1
+# Core 0.2.0
+
+Adds saved server playtime and Discord commands for self/other-player level, XP and playtime, the top 10 by XP, and self opt-out. Existing XP databases migrate without resetting progress. Discord queries require linked accounts; replies stay private.
+
+Adds F1 `.pbprivacy status`, `.pbprivacy optout` and `.pbprivacy optin`. Native game DNT also suppresses collection. Opt-out/DNT remove the stored name, game ID, XP, playtime and Discord link from the database, its backups and plugin-created corrupt archives, and revoke pending link codes. Salted HMAC suppression markers retain the preference across restarts without storing the raw identity. Manual opt-out stays active when DNT is disabled. Explicit opt-in starts fresh and requires DNT off.
+
+Privacy changes serialize with saves and Discord linking, preventing a concurrent save from restoring erased profiles. Playtime includes connected lobby/spectator time and grants no XP. Failure to read privacy preferences disables tracking instead of resetting consent. Gameplay and standalone updates remain independent.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after installing. Storage/concurrency checks pass; the Discord gateway and authenticated DNT behavior need a live test.
+
+## Previous: 0.1.1
 
 Updater compatibility patch: removes DataContract JSON initialization and machine proxy discovery, adds strict metadata parsing and sanitized failure diagnostics, and retains credential isolation, TLS/checksum/assembly validation and atomic replacement. An affected old updater needs one manual DLL replacement and a full restart; existing token YAML remains valid.
 

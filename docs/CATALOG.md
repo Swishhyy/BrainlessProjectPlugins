@@ -2,7 +2,7 @@
 
 [Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)
 
-Current shipped content: **21 items, 8 weapons, 49 role profiles and 1 round event**. Values below are defaults; server settings can differ.
+Current shipped content: **21 items, 8 weapons, 53 role profiles and 1 round event**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -58,11 +58,11 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | D03 | Child | A smaller Class-D with less health and a piece of candy. | Use the candy bag; smaller model is opt-in. | Opt-in |
 | D04 | Thief | Starts with one random stolen item. | Use the random starting item. | Enabled |
 | D05 | Survivor | Carries a Zone Manager keycard and painkillers, but has less health. | Use the starting keycard/medicine. | Enabled |
-| D06 | Locksmith | Picks doors below level 3. Lockpicking takes time and has a cooldown. | Interact with a denied closed door; stay nearby for 15s. Success has a 120s cooldown. | Enabled |
+| D06 | Locksmith | Picks any keycard door. Higher access takes longer. | Interact with a denied keycard door and stay nearby; higher access takes longer. | Enabled |
 | D07 | Noise Complaint | Carries an Echo Canister to distract enemies with fake footsteps. | Throw the starting Echo Canister. | Enabled |
 | S01 | Mad Scientist | An armed scientist with a six-shot pistol and an SCP specimen. | Use the pistol; drop the specimen for a zombie. | Enabled |
 | S02 | Pharmacist | Carries extra medkits and painkillers to share. | Use or share the starting medicine. | Enabled |
-| S03 | Chief Scientist | Has better research access, but no medical supplies. | Use the improved keycard. | Enabled |
+| S03 | Head Scientist | Carries a head scientist keycard with improved research access. | Use the head scientist keycard for research access. | Enabled |
 | S04 | Candy Man | Carries a bag of SCP-330 candy. | Open the SCP-330 bag and choose candy. | Enabled |
 | S05 | Auditor | Uses a Survey Beacon to check a room for humans and SCPs. | Deploy the beacon, then use it to scan. | Enabled |
 | S06 | Anomaly Handler | Carries a gas filter and a specimen that heals zombies. | Use the filter; drop the specimen for a zombie. | Enabled |
@@ -102,6 +102,10 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | H04 | Venomous | Claws and amnestic clouds poison humans. Medical supplies cure it. | Claw humans or place an amnestic cloud. | Enabled |
 | R01 | Anger Issue | Enrages immediately, but has less health and shields. | Use the normal rage control when targets are available. | Enabled |
 | R02 | Ill Temperature | Moves faster while calm. | Move normally while calm. | Enabled |
+| C05 | Cowboy | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | Enabled |
+| G07 | Rogue Guard | An unaffiliated guard, hostile to everyone. Can be captured and recruited. | Fight independently, or surrender and get escorted to escape for recruitment. | Enabled |
+| S07 | Containment Engineer | Starts in HCZ's Micro room with a containment engineer keycard. | Use the containment engineer keycard; you start in the HCZ Micro room. | Enabled |
+| S08 | Rogue Scientist | An unaffiliated scientist, hostile to everyone. Can be captured and recruited. | Fight independently, or surrender and get escorted to escape for recruitment. | Enabled |
 
 Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. New SCP-106/173/939/096 profiles have editable traits; see [role settings](CONFIGURATION.md).
 
@@ -118,8 +122,9 @@ Infection defaults: 150 HP, zero shield, four living players minimum, automatic 
 | Feature | What it does | How to use |
 | --- | --- | --- |
 | SCP nearby voice | Lets enabled SCPs speak to nearby living players. | Tap N or use F1 `.scpchat`; hold the normal voice key to talk. |
-| XP and stats | Tracks completed actions and survival. | F1 `.pbxp` or `.pbxp top`. |
-| Discord stats | Links in-game stats to Discord when the bot is enabled. | F1 `.pblink`, then Discord `/pb-link`; use `/pb-stats` or `/pb-top`. |
+| XP and stats | Tracks completed actions and connected playtime. DNT and opt-out erase stats. | F1 `.pbxp`, `.pbxp top` or `.pbprivacy`. |
+| Discord stats | Shows your or another linked player’s level, XP and playtime; top 10 and opt-out. | `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-optout`. Link first with `.pblink` → `/pb-link`. |
+| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. Either can recruit Rogues. | Escort the captive to the normal surface escape area. |
 | BetterCoinflips | Gives configured random outcomes from ordinary coin flips. | Equip a normal coin and flip it. |
 | SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |
 | Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |

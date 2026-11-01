@@ -54,7 +54,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds the SCP-106/173/939/096 profiles once and restores their editable traits.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer once without changing existing percentages.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -67,13 +67,23 @@ namespace Brainless.Roles
             HumanDamage = 100
         };
 
-        [Description("Seconds a Locksmith must stay at the door control to complete a lockpick.")]
+        [Description("Lockpick channel time for a level-one door. Higher requirements add lockpick_extra_seconds_per_level.")]
         [Tune(.05, 3600)]
         public float LockpickDurationSeconds { get; set; } = LockpickRules.DefaultDuration;
 
-        [Description("Cooldown after a successful lockpick. Interrupted attempts do not spend it.")]
+        [Description("Cooldown after a successful level-one lockpick. Higher requirements add lockpick_extra_cooldown_per_level. Interruptions do not spend it.")]
         [Tune(0, 86400)]
         public float LockpickCooldownSeconds { get; set; } = LockpickRules.DefaultCooldown;
+
+        [Tune(0, 3600)]
+        public float LockpickExtraSecondsPerLevel { get; set; } = 15;
+
+        [Tune(0, 86400)]
+        public float LockpickExtraCooldownPerLevel { get; set; } = 60;
+
+        [Tune(0, 100)]
+        public float RogueSpawnSeparation { get; set; } = 12;
+        public bool AnnounceRogue { get; set; } = true;
         public bool EnableDoctorEvent { get; set; }
         public bool ExtremeMuncherEventPreset { get; set; }
 
@@ -115,12 +125,17 @@ namespace Brainless.Roles
             if (ApprovedCandy == null || Roles == null || Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name) || r.CustomItems == null || r.Add == null || r.Remove == null) || Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Roles.Count)
                 throw new InvalidOperationException("Role profiles need unique IDs, nonempty names and non-null equipment/candy lists.");
             UpgradeCatalog();
+            UpgradeHumanProfiles();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
             {
                 Tuning.Validate(role, "roles." + role.Id);
                 role.Id = role.Id.ToUpperInvariant();
+                if (role.Id == "D06" && (role.Hint == "Picks doors below level 3. Lockpicking takes time and has a cooldown." || role.Hint?.Contains("Level 3 excluded") == true))
+                    role.Hint = "Picks any keycard door. Higher access takes longer.";
+                if (!Enum.IsDefined(typeof(RoleSpawnArea), role.SpawnArea) || (role.Neutral && role.BaseRole != PlayerRoles.RoleTypeId.FacilityGuard && role.BaseRole != PlayerRoles.RoleTypeId.Scientist))
+                    throw new InvalidOperationException("Invalid spawn area or neutral profile base role: " + role.Id);
                 if (role.Id == "S04" && role.Hint == "Three approved candies; painkillers if the allowlist is empty.")
                     role.Hint = "A bag of real SCP-330 candy; candy count and colors are configurable.";
                 if (role.Id == "G06" && role.Hint == "Door Brace instead of flashbang; less ammo.")
@@ -132,6 +147,32 @@ namespace Brainless.Roles
             foreach (var native in Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Distinct())
                 if (Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, native)).Sum(r => (decimal)r.ChancePercent.Value) > 100m)
                     throw new InvalidOperationException("chance_percent totals for " + native + " exceed 100. Reduce that group's percentages; disabled profiles also reserve their share.");
+        }
+
+        private void UpgradeHumanProfiles()
+        {
+            if (RoleCatalogRevision >= 2)
+                return;
+            Catalog.FillMissingChances(Roles, LegacyFamilyChance);
+            foreach (var profile in Catalog.Create().Where(r => r.Id == "C05" || r.Id == "G07" || r.Id == "S07" || r.Id == "S08"))
+            {
+                if (Roles.Any(r => r.Id.Equals(profile.Id, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                decimal used = Roles.Where(r => Catalog.MatchesNative(r, profile.BaseRole)).Sum(r => (decimal)r.ChancePercent.Value);
+                profile.ChancePercent = (double)Math.Min((decimal)profile.ChancePercent.Value, Math.Max(0, 100m - used));
+                Roles.Add(profile);
+            }
+
+            var chief = Roles.FirstOrDefault(r => r.Id.Equals("S03", StringComparison.OrdinalIgnoreCase));
+            if (chief != null)
+            {
+                if (chief.Name == "Chief Scientist")
+                    chief.Name = "Head Scientist";
+                if (chief.Hint == "Has better research access, but no medical supplies.")
+                    chief.Hint = "Carries a head scientist keycard with improved research access.";
+            }
+
+            RoleCatalogRevision = 2;
         }
 
         private void UpgradeCatalog()

@@ -39,9 +39,17 @@ internal static class MetadataContracts
         check(resync.GetParameters().Count == 0, "launcher rejected shots can resynchronize the native LMG ammo");
         var interaction = Method("Interactables.Interobjects.DoorUtils", "DoorVariant", "ServerInteract");
         check(interaction.GetParameters().Count == 2 && interaction.RelativeVirtualAddress != 0, "Locksmith completion targets the native door interaction with collider identity");
+        var escape = Method("", "Escape", "ServerHandlePlayer");
+        var escapeCalls = VoiceNativeContracts.Calls(pe.GetMethodBody(escape.RelativeVirtualAddress).GetILBytes(), md).ToArray();
+        check(Array.IndexOf(escapeCalls, "CanEscape") < Array.IndexOf(escapeCalls, "OnEscaping") && Array.IndexOf(escapeCalls, "get_EscapeScenario") > Array.IndexOf(escapeCalls, "OnEscaping") && Array.IndexOf(escapeCalls, "ServerSetRole") > Array.IndexOf(escapeCalls, "get_NewRole"), "the pinned escape handler checks the actual zone and accepts custom role/scenario before native respawn");
+        var escapeZone = Method("", "Escape", "CanEscape");
+        var zoneCalls = VoiceNativeContracts.Calls(pe.GetMethodBody(escapeZone.RelativeVirtualAddress).GetILBytes(), md, true).ToArray();
+        check(zoneCalls.Contains("EscapeZones") && zoneCalls.Contains("Contains") && !zoneCalls.Contains("get_RoleTypeId"), "military and neutral first-person roles can reach the native escape event inside a real escape zone");
         using var exiled = File.OpenRead(Path.Combine(root, ".build", "references", "Exiled.API.dll"));
         using var exiledPe = new PEReader(exiled);
         var api = exiledPe.GetMetadataReader();
+        var dnt = api.TypeDefinitions.Select(api.GetTypeDefinition).Single(t => api.GetString(t.Namespace) == "Exiled.API.Features" && api.GetString(t.Name) == "Player").GetMethods().Select(api.GetMethodDefinition).Single(m => api.GetString(m.Name) == "get_DoNotTrack");
+        check(VoiceNativeContracts.Calls(exiledPe.GetMethodBody(dnt.RelativeVirtualAddress).GetILBytes(), api, true).Contains("get_DoNotTrack"), "Core reads the authenticated native DNT property through the pinned EXILED wrapper");
         var flags = api.TypeDefinitions.Select(h => api.GetTypeDefinition(h)).Single(t => api.GetString(t.Namespace) == "Exiled.API.Enums" && api.GetString(t.Name) == "KeycardPermissions");
         int Flag(string name)
         {
@@ -50,8 +58,10 @@ internal static class MetadataContracts
         }
 
         int containment = Flag("ContainmentLevelThree"), armory = Flag("ArmoryLevelThree");
-        check(Brainless.Roles.LockpickRules.IsLevelThree(containment, containment, armory) && Brainless.Roles.LockpickRules.IsLevelThree(armory, containment, armory), "Locksmith excludes both level-three categories from the actual EXILED enum");
-        check(!Brainless.Roles.LockpickRules.IsLevelThree(Flag("Checkpoints") | Flag("ExitGates") | Flag("ContainmentLevelTwo") | Flag("ArmoryLevelTwo"), containment, armory), "native checkpoint, gate and level-two permissions remain eligible for Locksmith");
+        check(containment > 0 && armory > 0 && containment != armory, "Locksmith recognizes both actual level-three permission categories without excluding them");
+        var highest = Method("Interactables.Interobjects.DoorUtils", "KeycardLevels", "get_HighestLevelValue");
+        var levelMembers = VoiceNativeContracts.Calls(pe.GetMethodBody(highest.RelativeVirtualAddress).GetILBytes(), md, true).ToArray();
+        check(levelMembers.Contains("Containment") && levelMembers.Contains("Armory") && levelMembers.Contains("Admin"), "Locksmith timing uses the highest native containment, armory or administration requirement");
         string rolePath = Path.Combine(root, "Roles/bin/Release/Brainless.Roles.dll");
         if (File.Exists(rolePath))
         {

@@ -57,6 +57,7 @@ namespace Brainless.Roles
         private void Begin(InteractingDoorEventArgs ev)
         {
             Player player = ev.Player;
+            int level = RequiredLevel(ev.Door);
             var collider = ev.Collider != null ? ev.Collider.GetComponent<Collider>() : null;
             var attempt = new Attempt
             {
@@ -66,8 +67,9 @@ namespace Brainless.Roles
                 Door = ev.Door,
                 ColliderId = ev.ColliderId,
                 Point = collider != null ? collider.ClosestPoint(player.CameraTransform.position) : ev.Collider != null ? ev.Collider.transform.position : ev.Door.Position + Vector3.up,
-                Duration = config.LockpickDurationSeconds,
-                Cooldown = config.LockpickCooldownSeconds
+                Level = level,
+                Duration = LockpickRules.Duration(level, config.LockpickDurationSeconds, config.LockpickExtraSecondsPerLevel),
+                Cooldown = LockpickRules.Cooldown(level, config.LockpickCooldownSeconds, config.LockpickExtraCooldownPerLevel)
             };
             string failure = Failure(attempt);
             if (failure != null)
@@ -125,9 +127,8 @@ namespace Brainless.Roles
                 return "role changed, restrained, or no longer alive";
             if (door == null || door.Base == null)
                 return "door no longer exists";
-            int required = (int)door.KeycardPermissions | (int)(door.ParentCheckpointDoor?.KeycardPermissions ?? KeycardPermissions.None);
-            if (LockpickRules.IsLevelThree(required, (int)KeycardPermissions.ContainmentLevelThree, (int)KeycardPermissions.ArmoryLevelThree))
-                return "level-3 containment or armory access is excluded";
+            if (RequiredLevel(door) != attempt.Level)
+                return "door access requirement changed; try again";
             if (door.IsNonInteractable)
                 return "door has no interaction mechanism";
             if (door.IsOpen || door.IsMoving)
@@ -135,6 +136,14 @@ namespace Brainless.Roles
             if (!InReach(attempt))
                 return "stay within reach of the door control";
             return null;
+        }
+
+        private static int RequiredLevel(Door door)
+        {
+            if (door == null)
+                return 0;
+            int permissions = (int)door.KeycardPermissions | (int)(door.ParentCheckpointDoor?.KeycardPermissions ?? KeycardPermissions.None);
+            return new KeycardLevels((DoorPermissionFlags)permissions).HighestLevelValue;
         }
 
         private static bool InReach(Attempt attempt)
@@ -220,6 +229,7 @@ namespace Brainless.Roles
             internal byte ColliderId;
             internal Vector3 Point;
             internal float Duration, Cooldown;
+            internal int Level;
             internal Hint Hint;
         }
     }

@@ -1,8 +1,14 @@
 > Detailed owner notes. For staff, use [the quick guide](../STAFF_GUIDE.md) and [content page](../CATALOG.md). Older version notes below are historical; current spawn percentages are explained in [configuration](../CONFIGURATION.md).
 
-# Project Brainless SCP SL Fixes 0.2.1
+# Project Brainless SCP SL Fixes 0.3.0
 
 Small configurable gameplay additions, in a separate `Brainless.SlFixes.dll` for EXILED 9.15.2 / SCP:SL 14.2.8. Install it in EXILED/Plugins and fully restart. Install `Brainless.Core.dll` for saved XP and optional Discord stats; SCP-914 behavior still runs if Core is absent. Install Items/Weapons 0.5.0 for their crafting adapters. No gameplay plugin depends on another gameplay DLL.
+
+## Captured military recruitment
+
+Cuff enemy military personnel and escort them to the normal surface escape zone. A living Chaos captor recruits Guards/MTF as `ChaosConscript`; a living Guard/MTF captor recruits Chaos as `NtfPrivate`. Roles 0.5.0 Rogues can be recruited by either faction. The prisoner must be alive for ten seconds by default. Uncuffing, losing the living captor or remaining inside the facility does not convert them. Ordinary Class-D/Scientist escape scenarios remain native.
+
+Under `project_brainless_sl_fixes.capture_conversions`, edit `enabled`, `minimum_alive_seconds`, `chaos_role` and `mtf_role`. Destination roles must be native Chaos/MTF ranks. Reload with `pbfixes reload`. Later escape handlers can still cancel; this feature does not grant permissions or bypass another plugin's cuffing/escape restrictions.
 
 ## SCP-914 rough teleport
 
@@ -27,7 +33,7 @@ Random map/locker replacements and starting gear remain owned by Items/Weapons `
 
 Enable with `enable_xp: true`. Default `xp_rewards`: enemy human kill 10, SCP kill 50, escape 35, craft 5, rough teleport 2, round played 5, round survived 10, death 0. Deaths still count as statistics. There is no XP for friendly kills or self-kills. Craft and teleport XP is limited to three rewarded actions per player per round; further successful actions still count. Round rewards require 120 seconds by default. Core applies its independent overall XP cap and deduplicates event receipts.
 
-Player commands are `.pbxp`, `.pbxp top` and `.pblink` in F1. Core owns persistence, levels, Discord linking and bot hosting; see [Core](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/Core/README.md).
+Player commands are `.pbxp`, `.pbxp top`, `.pblink` and `.pbprivacy` in F1. DNT or manual opt-out prevents collection and clears local stat ledgers; gameplay continues. Core owns persistence, levels, playtime, privacy preferences, Discord linking and bot hosting; see [Core](Core.md).
 
 ## Admin and updates
 

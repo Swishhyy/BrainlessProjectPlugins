@@ -38,11 +38,11 @@
     "D03": "Use the candy bag; smaller model is opt-in.",
     "D04": "Use the random starting item.",
     "D05": "Use the starting keycard/medicine.",
-    "D06": "Interact with a denied closed door; stay nearby for 15s. Success has a 120s cooldown.",
+    "D06": "Interact with a denied keycard door and stay nearby; higher access takes longer.",
     "D07": "Throw the starting Echo Canister.",
     "S01": "Use the pistol; drop the specimen for a zombie.",
     "S02": "Use or share the starting medicine.",
-    "S03": "Use the improved keycard.",
+    "S03": "Use the head scientist keycard for research access.",
     "S04": "Open the SCP-330 bag and choose candy.",
     "S05": "Deploy the beacon, then use it to scan.",
     "S06": "Use the filter; drop the specimen for a zombie.",
@@ -81,6 +81,10 @@
     "H03": "Use mimic sound controls; stand at the intercom microphone and hold the normal voice key.",
     "H04": "Claw humans or place an amnestic cloud.",
     "R01": "Use the normal rage control when targets are available.",
-    "R02": "Move normally while calm."
+    "R02": "Move normally while calm.",
+    "C05": "Shoot the revolver; use the stims and painkillers normally.",
+    "G07": "Fight independently, or surrender and get escorted to escape for recruitment.",
+    "S07": "Use the containment engineer keycard; you start in the HCZ Micro room.",
+    "S08": "Fight independently, or surrender and get escorted to escape for recruitment."
   }
 }

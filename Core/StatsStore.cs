@@ -26,6 +26,9 @@ namespace Brainless.Core
         [DataMember]
         public Dictionary<string, long> Actions { get; set; } = new Dictionary<string, long>();
 
+        [DataMember]
+        public long PlaytimeSeconds { get; set; }
+
         public int Level(int step) => (int)Math.Min(int.MaxValue, Math.Floor(Math.Sqrt(Xp / (double)Math.Max(1, step))));
         internal PlayerStats Copy() => new PlayerStats
         {
@@ -33,6 +36,7 @@ namespace Brainless.Core
             Name = Name,
             Xp = Xp,
             DiscordUserId = DiscordUserId,
+            PlaytimeSeconds = PlaytimeSeconds,
             Actions = new Dictionary<string, long>(Actions)
         };
     }
@@ -41,7 +45,7 @@ namespace Brainless.Core
     internal sealed class StatsDatabase
     {
         [DataMember]
-        public int Schema { get; set; } = 1;
+        public int Schema { get; set; } = 2;
 
         [DataMember]
         public Dictionary<string, PlayerStats> Players { get; set; } = new Dictionary<string, PlayerStats>();
@@ -49,7 +53,7 @@ namespace Brainless.Core
 
     // No game objects are stored here. Gateway, persistence and gameplay calls
     // share this lock; disk serialization happens on immutable copies.
-    public sealed class StatsStore
+    public sealed partial class StatsStore
     {
         private readonly object gate = new object ();
         private readonly object saveGate = new object ();
@@ -67,7 +71,16 @@ namespace Brainless.Core
             this.path = Path.GetFullPath(path);
             this.maxRoundXp = Math.Max(0, maxRoundXp);
             Directory.CreateDirectory(Path.GetDirectoryName(this.path));
+            LoadPrivacy();
             database = Load(this.path);
+            foreach (var id in database.Players.Keys.Where(id => !CanTrack(id)).ToArray())
+            {
+                database.Players.Remove(id);
+                purgeBackups = true;
+            }
+
+            if (purgeBackups)
+                Save();
         }
 
         private static StatsDatabase Read(string file)
@@ -78,7 +91,7 @@ namespace Brainless.Core
                 {
                     stream.CopyTo(buffer);
                     var value = JsonContract.Read<StatsDatabase>(buffer.ToArray());
-                    if (value == null || value.Schema != 1 || value.Players == null || value.Players.Any(p => p.Value == null || p.Key != p.Value.UserId || p.Value.Actions == null || p.Value.Xp < 0))
+                    if (value == null || (value.Schema != 1 && value.Schema != 2) || value.Players == null || value.Players.Any(p => p.Value == null || p.Key != p.Value.UserId || p.Value.Actions == null || p.Value.Xp < 0 || p.Value.PlaytimeSeconds < 0))
                         throw new SerializationException("Invalid XP data schema.");
                     return value;
                 }
@@ -121,6 +134,8 @@ namespace Brainless.Core
                 return false;
             lock (gate)
             {
+                if (!CanTrackLocked(userId))
+                    return false;
                 string receipt = userId + "\n" + action + "\n" + eventId;
                 if (receipts.Count >= 100000 || !receipts.Add(receipt))
                     return false;
@@ -143,25 +158,27 @@ namespace Brainless.Core
         public PlayerStats Get(string userId)
         {
             lock (gate)
-                return userId != null && database.Players.TryGetValue(userId, out var stats) ? stats.Copy() : null;
+                return CanTrackLocked(userId) && database.Players.TryGetValue(userId, out var stats) ? stats.Copy() : null;
         }
 
         public PlayerStats FindDiscord(string discordId)
         {
             lock (gate)
-                return string.IsNullOrWhiteSpace(discordId) ? null : database.Players.Values.FirstOrDefault(p => p.DiscordUserId == discordId)?.Copy();
+                return string.IsNullOrWhiteSpace(discordId) ? null : database.Players.Values.FirstOrDefault(p => p.DiscordUserId == discordId && CanTrackLocked(p.UserId))?.Copy();
         }
 
         public PlayerStats[] Top(int count = 10)
         {
             lock (gate)
-                return database.Players.Values.OrderByDescending(p => p.Xp).ThenBy(p => p.Name, StringComparer.Ordinal).Take(Math.Max(1, Math.Min(25, count))).Select(p => p.Copy()).ToArray();
+                return database.Players.Values.Where(p => CanTrackLocked(p.UserId)).OrderByDescending(p => p.Xp).ThenBy(p => p.Name, StringComparer.Ordinal).Take(Math.Max(1, Math.Min(25, count))).Select(p => p.Copy()).ToArray();
         }
 
         public string CreateLinkCode(string userId, string name, DateTime now)
         {
             lock (gate)
             {
+                if (!CanTrackLocked(userId))
+                    return null;
                 if (linkIssued.TryGetValue(userId, out var last) && now - last < TimeSpan.FromSeconds(30))
                     return null;
                 foreach (var key in codes.Where(p => p.Value.Expires <= now || p.Value.UserId == userId).Select(p => p.Key).ToArray())
@@ -202,7 +219,7 @@ namespace Brainless.Core
             lock (gate)
             {
                 string key = code.Trim().ToUpperInvariant();
-                if (!codes.TryGetValue(key, out var link) || link.Expires <= now)
+                if (!codes.TryGetValue(key, out var link) || link.Expires <= now || !CanTrackLocked(link.UserId) || !database.Players.ContainsKey(link.UserId))
                     return false;
                 codes.Remove(key);
                 foreach (var old in database.Players.Values.Where(p => p.DiscordUserId == discordId))
@@ -217,31 +234,60 @@ namespace Brainless.Core
             lock (saveGate)
             {
                 StatsDatabase snapshot;
+                byte[] privacySnapshot;
+                bool scrub;
                 lock (gate)
+                {
                     snapshot = new StatsDatabase
                     {
-                        Players = database.Players.ToDictionary(p => p.Key, p => p.Value.Copy())
+                        Players = database.Players.Where(p => CanTrackLocked(p.Key)).ToDictionary(p => p.Key, p => p.Value.Copy())
                     };
-                string temporary = path + ".pending";
-                try
-                {
-                    using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        byte[] data = JsonContract.Write(snapshot);
-                        stream.Write(data, 0, data.Length);
-                        stream.Flush(true);
-                    }
+                    privacySnapshot = privacyDirty ? JsonContract.Write(new PrivacyPreferences { Key = Convert.ToBase64String(privacyKey), Manual = manualSuppression.ToList(), Dnt = dntSuppression.ToList() }) : null;
+                    scrub = purgeBackups;
+                }
 
-                    if (File.Exists(path))
-                        File.Replace(temporary, path, path + ".backup");
-                    else
-                        File.Move(temporary, path);
-                }
-                finally
+                // Persist suppression before writing stats, so even recovery of
+                // an older backup cannot expose or resume an opted-out profile.
+                if (privacySnapshot != null)
                 {
-                    if (File.Exists(temporary))
-                        File.Delete(temporary);
+                    WriteAtomic(path + ".privacy", privacySnapshot);
+                    File.Copy(path + ".privacy", path + ".privacy.backup", true);
+                    lock (gate)
+                        privacyDirty = false;
                 }
+
+                WriteAtomic(path, JsonContract.Write(snapshot));
+                if (scrub)
+                {
+                    File.Copy(path, path + ".backup", true);
+                    foreach (string archive in Directory.GetFiles(Path.GetDirectoryName(path), Path.GetFileName(path) + ".corrupt-*"))
+                        File.Delete(archive);
+                    lock (gate)
+                        purgeBackups = false;
+                }
+            }
+        }
+
+        private static void WriteAtomic(string destination, byte[] data)
+        {
+            string temporary = destination + ".pending";
+            try
+            {
+                using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    stream.Write(data, 0, data.Length);
+                    stream.Flush(true);
+                }
+
+                if (File.Exists(destination))
+                    File.Replace(temporary, destination, destination + ".backup");
+                else
+                    File.Move(temporary, destination);
+            }
+            finally
+            {
+                if (File.Exists(temporary))
+                    File.Delete(temporary);
             }
         }
 

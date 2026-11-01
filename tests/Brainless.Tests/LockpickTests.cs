@@ -28,12 +28,9 @@ internal static class LockpickTests
         check(rules.Remaining("picker", 151) == 0, "a blocked native door interaction can cancel without spending cooldown");
         rules.Clear();
         check(rules.TryBegin("other player", 152), "a new round clears the prior round's cooldowns");
-        check(!LockpickRules.IsLevelThree(16 | 32 | 128 | 256, 64, 512), "containment and armory levels one and two remain pickable");
-        check(!LockpickRules.IsLevelThree(1 | 2 | 4 | 8, 64, 512), "checkpoint, exit, intercom and warhead flags are not misread as numeric level three");
-        check(!LockpickRules.IsLevelThree(0, 64, 512), "an ordinary door denied by a lock has no level-three restriction");
-        check(LockpickRules.IsLevelThree(64, 64, 512), "containment level three is excluded");
-        check(LockpickRules.IsLevelThree(512, 64, 512), "armory level three is excluded");
-        check(LockpickRules.IsLevelThree(1 | 32 | 512, 64, 512), "combined permissions cannot hide a level-three requirement");
-        check(LockpickRules.IsLevelThree(0 | 64, 64, 512), "a checkpoint parent's level-three requirement also excludes its subdoor");
+        check(LockpickRules.Duration(1, 15, 15) == 15 && LockpickRules.Duration(2, 15, 15) == 30 && LockpickRules.Duration(3, 15, 15) == 45, "all keycard tiers are pickable with progressively longer attempts");
+        check(LockpickRules.Cooldown(1, 120, 60) == 120 && LockpickRules.Cooldown(2, 120, 60) == 180 && LockpickRules.Cooldown(3, 120, 60) == 240, "successful higher-tier picks receive progressively longer cooldowns");
+        check(LockpickRules.Duration(3, 8, 4) == 16 && LockpickRules.Cooldown(3, 60, 30) == 120, "operators can tune base and per-level lockpick timing independently");
+        check(LockpickRules.Duration(0, 15, 15) == 15 && LockpickRules.Duration(99, 15, 15) == 45, "unknown access levels remain within the supported timing tiers");
     }
 }

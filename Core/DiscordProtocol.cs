@@ -33,7 +33,38 @@ namespace Brainless.Core
             if (player == null)
                 return "No linked stats yet. Use .pblink in the game's F1 console, then /pb-link code in Discord.";
             string actions = string.Join(", ", player.Actions.OrderBy(x => x.Key).Select(x => x.Key.Replace('_', ' ') + ": " + x.Value));
-            return SafeName(player.Name) + " — level " + player.Level(step) + ", " + player.Xp + " XP\n" + (actions.Length == 0 ? "No recorded actions yet." : actions);
+            return SafeName(player.Name) + " — level " + player.Level(step) + ", " + player.Xp + " XP\nServer playtime: " + Playtime(player.PlaytimeSeconds) + "\n" + (actions.Length == 0 ? "No recorded actions yet." : actions);
+        }
+
+        internal static string Playtime(long seconds) => (seconds / 3600).ToString(CultureInfo.InvariantCulture) + "h " + ((seconds % 3600) / 60).ToString(CultureInfo.InvariantCulture) + "m";
+        internal static string Option(object command, string name) => At(command, "options")is IEnumerable options ? options.Cast<object>().Where(o => Text(At(o, "name")) == name).Select(o => Text(At(o, "value"))).FirstOrDefault() : null;
+        internal static IEnumerable<Dictionary<string, object>> Commands(string prefix)
+        {
+            foreach (string suffix in new[]
+            {
+                "stats",
+                "playtime",
+                "top",
+                "link",
+                "optout"
+            }
+
+            )
+            {
+                string description = suffix == "stats" ? "Check your or another linked player's level and XP" : suffix == "playtime" ? "Check time played on Project Brainless" : suffix == "top" ? "Top 10 Project Brainless players by XP" : suffix == "optout" ? "Stop tracking and erase your linked game stats" : "Link your game account with a pblink code";
+                var command = Object("name", prefix + "-" + suffix, "description", description, "type", 1);
+                if (suffix == "link")
+                    command["options"] = new[]
+                    {
+                        Object("type", 3, "name", "code", "description", "One-time code from the game's pblink command", "required", true)
+                    };
+                if (suffix == "stats" || suffix == "playtime")
+                    command["options"] = new[]
+                    {
+                        Object("type", 6, "name", "user", "description", "Leave empty for yourself; choose a linked Discord user for others", "required", false)
+                    };
+                yield return command;
+            }
         }
     }
 }

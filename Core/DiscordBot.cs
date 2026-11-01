@@ -249,25 +249,12 @@ namespace Brainless.Core
             if (!Regex.IsMatch(application, "^[0-9]{1,24}$"))
                 throw new InvalidDataException("Missing application ID.");
             string route = "applications/" + application + (string.IsNullOrEmpty(config.GuildId) ? "" : "/guilds/" + config.GuildId) + "/commands";
-            foreach (var suffix in new[]
+            foreach (var command in DiscordProtocol.Commands(config.CommandPrefix))
             {
-                "stats",
-                "top",
-                "link"
-            }
-
-            )
-            {
-                var command = DiscordProtocol.Object("name", config.CommandPrefix + "-" + suffix, "description", suffix == "stats" ? "Your linked Project Brainless stats" : suffix == "top" ? "Project Brainless XP leaderboard" : "Link your game account with a pblink code", "type", 1);
-                if (suffix == "link")
-                    command["options"] = new[]
-                    {
-                        DiscordProtocol.Object("type", 3, "name", "code", "description", "One-time code from the game's pblink command", "required", true)
-                    };
                 await Request(HttpMethod.Post, route, command).ConfigureAwait(false);
             }
 
-            log("Discord slash commands registered: /" + config.CommandPrefix + "-stats, /" + config.CommandPrefix + "-top, /" + config.CommandPrefix + "-link.");
+            log("Discord slash commands registered: stats, playtime, top, link and optout (prefix " + config.CommandPrefix + ").");
         }
 
         private async Task HandleInteraction(object data)
@@ -310,11 +297,17 @@ namespace Brainless.Core
             if (user.Length == 0)
                 return;
             string answer;
-            if (name == config.CommandPrefix + "-stats")
-                answer = DiscordProtocol.Describe(store.FindDiscord(user), step);
+            if (name == config.CommandPrefix + "-stats" || name == config.CommandPrefix + "-playtime")
+            {
+                string selected = DiscordProtocol.Option(command, "user");
+                var stats = store.FindDiscord(string.IsNullOrWhiteSpace(selected) ? user : selected);
+                answer = name.EndsWith("-playtime", StringComparison.Ordinal) && stats != null ? DiscordProtocol.SafeName(stats.Name) + " — server playtime: " + DiscordProtocol.Playtime(stats.PlaytimeSeconds) : DiscordProtocol.Describe(stats, step);
+            }
+            else if (name == config.CommandPrefix + "-optout")
+                answer = store.OptOutDiscord(user) ? "Tracking disabled. Your game XP, playtime, name and Discord link were erased, including stored stats backups. Only a salted opt-out marker is retained. Use .pbprivacy optin in-game to start fresh." : "No linked stats are stored for this Discord account. Use .pbprivacy optout in-game to disable tracking for your game account.";
             else if (name == config.CommandPrefix + "-top")
             {
-                var top = store.Top();
+                var top = store.Top(10);
                 answer = top.Length == 0 ? "No recorded XP yet." : string.Join("\n", top.Select((p, i) => (i + 1) + ". " + DiscordProtocol.SafeName(p.Name) + " — " + p.Xp + " XP (level " + p.Level(step) + ")"));
             }
             else if (name == config.CommandPrefix + "-link")
