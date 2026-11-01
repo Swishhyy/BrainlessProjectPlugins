@@ -1,7 +1,7 @@
-# Items 0.6.0
+# Items 0.6.1
 
-Adds direct `chance_percent` on map and starting-gear distribution rules, including optional extra-drop anchors. Matching pools cannot exceed 100%; unused or blocked shares remain ordinary loot/no grant. Global chance gates and rule weights are legacy migration inputs only. Missing/null fields derive bounded two-decimal shares; explicit values take precedence. Previously unlisted content receives editable zero-percent entries in nonempty routes, while intentionally empty routes remain empty. Natural supply, inventory, native-body, room, round and player caps remain. Role kits, admin grants and SCP-914 recipe chances are separate.
+Fixes gas, containment foam, bio and echo grenade activation at the early native fuse event. Cancelling the native flash/bang no longer prevents the custom effect. Payloads resolve once, and spent projectiles are cleaned up even if effect creation fails. Native SCP-244 stays enabled for room/fog boundaries while owned growth/decay and server exposure are controlled separately.
 
-Adds `bpitems chances` to inspect active percentages. Save edits and use the existing reload command. A full restart loads the new DLL.
+Foam now places its field on the floor. Untouched defaults upgrade to an eight-second field with 25% human and 15% SCP slowdown; custom values remain editable. Gas remains smoke only, without primitive fog, a flash, custom slow or damage. Startup saves pending catalog migrations with retained backups.
 
-Documentation is reorganized into a content/controls page, a short staff guide, a one-row-per-command reference and owner settings. Detailed plugin notes are separated under docs/owner. The ZIP and per-plugin packages include the complete Markdown docs tree. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Live map/locker/spawn testing remains required.
+Natural loot percentages, supply limits, independent automatic updates and SCP-914 crafting remain. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart to load the DLL; confirm native smoke rendering and field behavior in-game.

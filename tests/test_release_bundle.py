@@ -59,6 +59,14 @@ class BundleTests(unittest.TestCase):
         self.assertTrue(all(p.suffix == '.dll' for p in files[1:9]))
         self.assertTrue(all(p.name.endswith('.update.json') for p in files[9:]))
 
+    def test_component_release_note_headings_match_project_versions(self):
+        for plugin, (_, project) in bundle.PROJECTS.items():
+            with self.subTest(plugin=plugin):
+                version = ET.parse(ROOT/project).findtext('.//Version')
+                heading = (ROOT/plugin/'RELEASE_NOTES.md').read_text().splitlines()[0]
+                self.assertTrue(heading.startswith('# ') and heading.endswith(' '+version),
+                                f'{plugin} release notes must describe version {version}')
+
     def test_archive_is_repeatable_without_timestamp_changes(self):
         files, _ = bundle.prepare_bundle(self.assets, self.output, self.repo)
         original = files[0].read_bytes()

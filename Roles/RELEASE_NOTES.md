@@ -1,7 +1,7 @@
-# Roles 0.3.0
+# Roles 0.4.0
 
-Adds `chance_percent` to every role. Percentages are direct shares of matching new spawns, with no extra family gate or automatic normalization. Unused/blocked shares remain native roles; group totals over 100 or invalid values are rejected. Admin assignments bypass percentages, existing availability limits remain, and zombie revivals retain their profile. Doctor uses its configured percentage for the separate opt-in event attempt.
+Adds the fourteen SCP-106, SCP-173, SCP-939 and SCP-096 variants: 49 profiles total. Each profile has editable traits for shield recovery, vigor, quiet footsteps, poison, rage timing, calm movement, mimic sounds, intercom access and breakneck refresh. Poison refreshes one bounded effect and medical supplies cure it. Brute, Giant and Muncher now apply their advertised model sizes; experimental gates remain.
 
-New defaults contain numeric values for all 35 profiles. Missing/null legacy fields derive an allocation from the old nominal family budget and weights; explicit percentages take precedence. Existing kits and traits remain. `bproles` shows active percentages and blocked reasons. Save YAML and use `bprole reload` to apply changes.
+Moves the default HUD inset from 3% to 0.5%. Adds separate Boom Boom death-burst tuning and preserves direct per-role percentages. New profiles append once; custom SCP chance pools remain unchanged. Startup saves migrated fields with retained backups and preserves peer config sections verbatim.
 
-Adds a simple staff guide covering equipment, role testing, Infection, reloads, player support and CedMod permission nodes. The guide is included in the combined download ZIP and per-plugin packages. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Live spawn/playtesting is still required.
+The staff catalog and command tables cover all profiles with short descriptions. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Load the DLL with a full server restart; native movement, HUD and ability behavior still need an in-game playtest.
