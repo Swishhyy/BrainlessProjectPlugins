@@ -94,10 +94,10 @@ namespace Brainless.Roles
                 return false;
             }
 
-            response = "Availability for " + (player == null ? "the current server" : player.Nickname + " (" + player.Id + ")") + ". READY means eligible; spawn chance and other listed caps still apply.\n" + string.Join("\n", plugin.Config.Roles.Select(role =>
+            response = "Availability for " + (player == null ? "the current server" : player.Nickname + " (" + player.Id + ")") + ". Percentages are per matching new spawn; blocked shares keep the normal role. Z05 uses a separate event roll. READY is not guaranteed.\n" + string.Join("\n", plugin.Config.Roles.Select(role =>
             {
                 string reason = plugin.Availability(role, player);
-                return role.Id + ": " + role.Name + " - " + (reason == null ? "READY" : "BLOCKED: " + reason);
+                return role.Id + ": " + role.Name + " - " + role.ChancePercent.Value.ToString("0.######") + "% - " + (reason == null ? "READY" : "BLOCKED: " + reason);
             }));
             return true;
         }

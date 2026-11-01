@@ -33,7 +33,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 6);
+        public override Version Version => new Version(0, 3, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -190,17 +190,7 @@ namespace Brainless.Roles
             });
         }
 
-        private bool Matches(RoleDefinition role, Player player)
-        {
-            RoleTypeId type = player.Role.Type;
-            if (role.Id.StartsWith("M"))
-                return type == RoleTypeId.NtfPrivate || type == RoleTypeId.NtfSergeant || type == RoleTypeId.NtfSpecialist || type == RoleTypeId.NtfCaptain;
-            if (role.Id.StartsWith("C"))
-                return type == RoleTypeId.ChaosConscript || type == RoleTypeId.ChaosRifleman || type == RoleTypeId.ChaosMarauder || type == RoleTypeId.ChaosRepressor;
-            return role.BaseRole == type;
-        }
-
-        private float Chance(Player player) => player.Role.Type == RoleTypeId.ClassD ? Config.ClassDChance : player.Role.Type == RoleTypeId.Scientist ? Config.ScientistChance : player.Role.Type == RoleTypeId.FacilityGuard ? Config.GuardChance : player.Role.Type == RoleTypeId.Scp049 ? Config.DoctorVariantChance : player.Role.Type == RoleTypeId.Scp0492 ? Config.ZombieChance : Config.ReinforcementChance;
+        private bool Matches(RoleDefinition role, Player player) => Catalog.MatchesNative(role, player.Role.Type);
         private void Assign(Player player)
         {
             if (active.ContainsKey(player) || !Round.IsStarted)
@@ -222,26 +212,28 @@ namespace Brainless.Roles
                 }
             }
 
-            if (player.Role.Type == RoleTypeId.Scp0492 && Config.EnableDoctorEvent && Config.AllowExperimentalRoles && Config.Roles.Any(r => r.Id == "Z05" && r.Enabled) && !doctorRolled && Player.List.Count >= 12 && Player.List.Any(p => p.Role.Type == RoleTypeId.Scp049))
+            var doctorEvent = Config.Roles.FirstOrDefault(r => r.Id == "Z05" && r.Enabled && r.ChancePercent > 0);
+            if (player.Role.Type == RoleTypeId.Scp0492 && Config.EnableDoctorEvent && Config.AllowExperimentalRoles && doctorEvent != null && !doctorRolled && Player.List.Count >= 12 && Player.List.Any(p => p.Role.Type == RoleTypeId.Scp049))
             {
                 doctorRolled = true;
-                if (random.NextDouble() < .01)
+                if (random.NextDouble() * 100 < doctorEvent.ChancePercent.Value)
                 {
                     ConvertDoctor(player);
                     return;
                 }
             }
 
-            if (random.NextDouble() * 100 >= Chance(player))
+            var selected = RoleChances.Choose(Config.Roles.Where(r => r.Id != "Z05" && Matches(r, player)), r => r.ChancePercent.Value, random.NextDouble() * 100);
+            if (selected == null)
             {
-                assignmentNotes[player] = "Normal role: custom-role chance roll did not pass (" + Chance(player) + "%).";
+                assignmentNotes[player] = "Normal role: the roll landed in the unused percentage. Run bproles " + player.Id + " for configured chances.";
                 return;
             }
 
-            var selected = Rules.ChooseEligible(Config.Roles.Where(r => Matches(r, player)), r => Availability(r, player) == null, r => r.Weight, random);
-            if (selected == null)
+            string blocked = Availability(selected, player);
+            if (blocked != null)
             {
-                assignmentNotes[player] = "No eligible role profile. Run bproles " + player.Id + " to inspect requirements.";
+                assignmentNotes[player] = "Normal role: rolled " + selected.Id + " (" + selected.ChancePercent.Value.ToString("0.######") + "%), but " + blocked + ".";
                 return;
             }
 
@@ -258,8 +250,8 @@ namespace Brainless.Roles
                 return "requires enable_doctor_event";
             if (!admin && definition.Id == "Z05")
                 return "event only: excluded from normal role draws";
-            if (!admin && definition.Weight <= 0)
-                return "zero spawn weight";
+            if (!admin && definition.ChancePercent <= 0)
+                return "chance_percent is 0";
             int population = Player.List.Count(p => p.IsConnected && !p.IsHost);
             if (!admin && population < definition.MinPlayers)
                 return "requires " + definition.MinPlayers + " players; currently " + population;

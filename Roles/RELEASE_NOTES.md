@@ -1,7 +1,7 @@
-# Roles 0.2.6
+# Roles 0.3.0
 
-Updater compatibility patch: removes DataContract JSON initialization and machine proxy discovery, adds strict metadata parsing and sanitized failure diagnostics, and retains credential isolation, TLS/checksum/assembly validation and atomic replacement. An affected old updater needs one manual DLL replacement and a full restart; existing token YAML remains valid.
+Adds `chance_percent` to every role. Percentages are direct shares of matching new spawns, with no extra family gate or automatic normalization. Unused/blocked shares remain native roles; group totals over 100 or invalid values are rejected. Admin assignments bypass percentages, existing availability limits remain, and zombie revivals retain their profile. Doctor uses its configured percentage for the separate opt-in event attempt.
 
-Shortens every default gameplay description and cleans old generated/config-oriented text when loaded, including per-item overrides. Descriptions explain equipment and abilities; short custom gameplay text is retained. Existing mechanics and IDs remain.
+New defaults contain numeric values for all 35 profiles. Missing/null legacy fields derive an allocation from the old nominal family budget and weights; explicit percentages take precedence. Existing kits and traits remain. `bproles` shows active percentages and blocked reasons. Save YAML and use `bprole reload` to apply changes.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Round Events 0.1.0 adds Infection as a separate optional DLL. Full live hosting/gameplay verification is still required.
+Adds a simple staff guide covering equipment, role testing, Infection, reloads, player support and CedMod permission nodes. The guide is included in the combined download ZIP and per-plugin packages. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Live spawn/playtesting is still required.

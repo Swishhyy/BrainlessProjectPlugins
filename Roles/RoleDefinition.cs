@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System;
+using System.ComponentModel;
+using System.Linq;
 using Brainless.Internal;
 using PlayerRoles;
 
@@ -13,6 +16,11 @@ namespace Brainless.Roles
         public bool Enabled { get; set; } = true;
         public bool Experimental { get; set; }
 
+        [Description("Chance out of 100 on a matching new spawn. Group totals must be at most 100; unused or blocked shares keep the normal role. Null uses legacy settings for migration. Doctor uses its separate event roll.")]
+        [Tune(0, 100)]
+        public double? ChancePercent { get; set; }
+
+        [Description("Legacy migration only when chance_percent is missing/null. Explicit chance_percent takes precedence.")]
         [Tune(0, int.MaxValue)]
         public int Weight { get; set; } = 10;
 
@@ -49,6 +57,33 @@ namespace Brainless.Roles
 
     public static class Catalog
     {
+        internal static string ChanceGroup(RoleDefinition role) => role.Id.StartsWith("M", StringComparison.OrdinalIgnoreCase) ? "MTF" : role.Id.StartsWith("C", StringComparison.OrdinalIgnoreCase) ? "Chaos" : role.BaseRole.ToString();
+        internal static bool MatchesNative(RoleDefinition role, RoleTypeId type)
+        {
+            if (role.Id.StartsWith("M", StringComparison.OrdinalIgnoreCase))
+                return type == RoleTypeId.NtfPrivate || type == RoleTypeId.NtfSergeant || type == RoleTypeId.NtfSpecialist || type == RoleTypeId.NtfCaptain;
+            if (role.Id.StartsWith("C", StringComparison.OrdinalIgnoreCase))
+                return type == RoleTypeId.ChaosConscript || type == RoleTypeId.ChaosRifleman || type == RoleTypeId.ChaosMarauder || type == RoleTypeId.ChaosRepressor;
+            return role.BaseRole == type;
+        }
+
+        internal static void FillMissingChances(IEnumerable<RoleDefinition> roles, Func<RoleDefinition, double> legacyChance)
+        {
+            var list = roles.ToArray();
+            foreach (var group in list.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase)).GroupBy(ChanceGroup))
+            {
+                long total = group.Sum(r => (long)Math.Max(0, r.Weight));
+                foreach (var role in group)
+                    if (!role.ChancePercent.HasValue)
+                        role.ChancePercent = RoleChances.FromLegacy(legacyChance(role), role.Weight, total);
+            }
+
+            foreach (var doctor in list.Where(r => r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase)))
+                if (!doctor.ChancePercent.HasValue)
+                    doctor.ChancePercent = 1;
+        }
+
+        private static double DefaultFamilyChance(RoleDefinition role) => role.BaseRole == RoleTypeId.ClassD || role.BaseRole == RoleTypeId.Scientist || role.BaseRole == RoleTypeId.Scp0492 ? 45 : role.BaseRole == RoleTypeId.FacilityGuard || role.BaseRole == RoleTypeId.Scp049 ? 50 : 30;
         private static RoleDefinition R(string id, string name, RoleTypeId baseRole, string hint) => new RoleDefinition
         {
             Id = id,
@@ -221,6 +256,7 @@ namespace Brainless.Roles
             r.HealthMultiplier = .4f;
             r.ShieldMultiplier = .5f;
             list.Add(r);
+            FillMissingChances(list, DefaultFamilyChance);
             return list;
         }
     }

@@ -65,21 +65,27 @@ namespace Brainless.Roles
         public bool EnableDoctorEvent { get; set; }
         public bool ExtremeMuncherEventPreset { get; set; }
 
+        [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float ClassDChance { get; set; } = 45;
 
+        [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float ScientistChance { get; set; } = 45;
 
+        [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float GuardChance { get; set; } = 50;
 
+        [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float ReinforcementChance { get; set; } = 30;
 
+        [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float DoctorVariantChance { get; set; } = 50;
 
+        [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float ZombieChance { get; set; } = 45;
 
@@ -97,6 +103,7 @@ namespace Brainless.Roles
             if (ApprovedCandy == null || Roles == null || Roles.Any(r => r == null || string.IsNullOrWhiteSpace(r.Id) || string.IsNullOrWhiteSpace(r.Name) || r.CustomItems == null || r.Add == null || r.Remove == null) || Roles.Select(r => r.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count() != Roles.Count)
                 throw new InvalidOperationException("Role profiles need unique IDs, nonempty names and non-null equipment/candy lists.");
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
+            Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
             {
                 Tuning.Validate(role, "roles." + role.Id);
@@ -108,6 +115,12 @@ namespace Brainless.Roles
                 role.Hint = GameplayText.Clean(role.Hint, descriptions.TryGetValue(role.Id, out string shortText) ? shortText : "");
                 role.CustomItems.RemoveAll(id => id == 7110);
             }
+
+            foreach (var native in Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Distinct())
+                if (Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, native)).Sum(r => (decimal)r.ChancePercent.Value) > 100m)
+                    throw new InvalidOperationException("chance_percent totals for " + native + " exceed 100. Reduce that group's percentages; disabled profiles also reserve their share.");
         }
+
+        private double LegacyFamilyChance(RoleDefinition role) => role.BaseRole == PlayerRoles.RoleTypeId.ClassD ? ClassDChance : role.BaseRole == PlayerRoles.RoleTypeId.Scientist ? ScientistChance : role.BaseRole == PlayerRoles.RoleTypeId.FacilityGuard ? GuardChance : role.BaseRole == PlayerRoles.RoleTypeId.Scp049 ? DoctorVariantChance : role.BaseRole == PlayerRoles.RoleTypeId.Scp0492 ? ZombieChance : ReinforcementChance;
     }
 }

@@ -22,6 +22,7 @@
     <Compile Include="../../Roles/CandyPool.cs" Link="CandyPool.cs" />
     <Compile Include="../../Roles/LockpickRules.cs" Link="LockpickRules.cs" />
     <Compile Include="../../Roles/RoleLookup.cs" Link="RoleLookup.cs" />
+    <Compile Include="../../Roles/RoleChances.cs" Link="RoleChances.cs" />
     <Compile Include="../../ScpProximityChat/VoiceState.cs" Link="VoiceState.cs" />
     <Compile Include="../../ScpProximityChat/VoiceAudio.cs" Link="VoiceAudio.cs" />
     <Compile Include="../../Shared/Updates/JsonContract.cs" Link="Updates/JsonContract.cs" />
@@ -39,6 +40,8 @@
   </PropertyGroup>
   <ItemGroup Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
     <Compile Include="../../RoundEvents/Config.cs" Link="RoundEventsConfig.cs" />
+    <Compile Include="../../Roles/RoleDefinition.cs" Link="RoleDefinition.cs" />
+    <Compile Include="../../Roles/Config.cs" Link="RolesConfig.cs" />
     <Compile Include="../../RoundEvents/NativeAttack.cs" Link="RoundEventsNativeAttack.cs" />
     <Compile Include="../../Shared/ItemFiles.cs" Link="ItemFiles.cs" />
     <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />
