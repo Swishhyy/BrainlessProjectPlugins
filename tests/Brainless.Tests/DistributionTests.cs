@@ -42,6 +42,23 @@ internal static class DistributionTests
         check(ledger.BeginMap() && ledger.BeginLife(life) && ledger.MapAwards == 0 && ledger.ExtraAwards == 0 && ledger.PlayerAwards == 0, "a new round clears map, room, life and user distribution state together");
         check(ledger.TryGive("user", 1, 1, () => true) && ledger.TryPlace(firstRoom, 1, 1, false, () => true), "new-round users and rooms regain their configured allowances");
         var random = new Random(9137);
+        var percentages = new[]
+        {
+            new
+            {
+                Id = "gas",
+                Chance = 10d
+            },
+            new
+            {
+                Id = "blocked",
+                Chance = 20d
+            }
+        };
+        var shares = Enumerable.Range(0, 10000).Select(i => DistributionRules.ChoosePercent(percentages, p => p.Chance, i / 100.0)?.Id ?? "native").GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
+        check(shares["gas"] == 1000 && shares["blocked"] == 2000 && shares["native"] == 7000, "item percentages reserve exact shares and leave unused/blocked rolls native instead of redistributing them");
+        check(DistributionRules.ChoosePercent(new[] { new { Chance = 0d }, new { Chance = 100d } }, p => p.Chance, 99.999).Chance == 100, "zero-percent loot cannot win while a single 100-percent rule covers its full pool");
+        check(DistributionRules.LegacyPercent(25, 3, 8) == 9.37 && DistributionRules.LegacyPercent(0, 3, 8) == 0 && DistributionRules.LegacyPercent(25, 1, 0) == 0, "old loot gates/weights convert to bounded two-decimal percentages including disabled legacy budgets");
         check(Enumerable.Range(0, 1000).All(_ => !DistributionRules.Roll(0, random)), "zero-percent distribution never grants loot");
         check(Enumerable.Range(0, 1000).All(_ => DistributionRules.Roll(100, random)), "one-hundred-percent distribution always reaches eligibility checks");
         check(!DistributionRules.Roll(float.NaN, random) && !DistributionRules.Roll(float.PositiveInfinity, random), "nonfinite chances cannot issue loot");

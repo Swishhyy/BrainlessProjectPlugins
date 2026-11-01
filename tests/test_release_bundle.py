@@ -47,10 +47,11 @@ class BundleTests(unittest.TestCase):
         self.assertEqual(sum(p.suffix == '.dll' for p in files), 8)
         self.assertEqual(sum(p.name.endswith('.update.json') for p in files), 8)
         with zipfile.ZipFile(files[0]) as archive:
-            expected = {'Plugins/'+a+'.dll' for a, _ in bundle.PROJECTS.values()} | {'README.md', 'STAFF_GUIDE.md', 'COMMANDS.md'}
+            expected = {'Plugins/'+a+'.dll' for a, _ in bundle.PROJECTS.values()} | {'README.md'} | {'docs/'+str(p.relative_to(ROOT/'docs')) for p in (ROOT/'docs').rglob('*.md')}
             self.assertEqual(set(archive.namelist()), expected)
-            self.assertEqual(archive.read('STAFF_GUIDE.md'), (ROOT/'docs/STAFF_GUIDE.md').read_bytes())
-            self.assertEqual(archive.read('COMMANDS.md'), (ROOT/'docs/COMMANDS.md').read_bytes())
+            self.assertEqual(archive.read('docs/STAFF_GUIDE.md'), (ROOT/'docs/STAFF_GUIDE.md').read_bytes())
+            self.assertEqual(archive.read('docs/COMMANDS.md'), (ROOT/'docs/COMMANDS.md').read_bytes())
+            self.assertEqual(archive.read('docs/CATALOG.md'), (ROOT/'docs/CATALOG.md').read_bytes())
             for component in bundle.collect(self.assets, self.repo):
                 self.assertEqual(archive.read('Plugins/'+component['dll'].name), component['dll'].read_bytes())
                 self.assertIn(component['version'], notes)

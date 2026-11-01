@@ -9,7 +9,7 @@ namespace Brainless.Items
     {
         public string Command => "bpitems";
         public string[] Aliases => Array.Empty<string>();
-        public string Description => "Reload Project Brainless item tuning from YAML: bpitems reload.";
+        public string Description => "Inspect spawn chances or reload Project Brainless item tuning from YAML: bpitems reload.";
 
         public bool Execute(ArraySegment<string> args, ICommandSender sender, out string response)
         {
@@ -19,9 +19,9 @@ namespace Brainless.Items
                 return false;
             }
 
-            if (args.Count != 1 || args.Array[args.Offset].ToLowerInvariant() != "reload")
+            if (args.Count != 1 || !(args.Array[args.Offset].Equals("reload", StringComparison.OrdinalIgnoreCase) || args.Array[args.Offset].Equals("chances", StringComparison.OrdinalIgnoreCase)))
             {
-                response = "Usage: bpitems reload";
+                response = "Usage: bpitems reload | chances";
                 return false;
             }
 
@@ -29,6 +29,12 @@ namespace Brainless.Items
             {
                 response = "Items is not enabled.";
                 return false;
+            }
+
+            if (args.Array[args.Offset].Equals("chances", StringComparison.OrdinalIgnoreCase))
+            {
+                response = Plugin.Instance.Config.Distribution.DescribeChances();
+                return true;
             }
 
             return Plugin.Instance.ReloadTuning(out response);

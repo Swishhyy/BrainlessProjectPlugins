@@ -49,15 +49,14 @@ def prepare_bundle(assets, output, repository):
                '3. Keep existing configuration and start the server. New settings are generated.\n\n'
                'Each plugin is optional and keeps its own version/configuration. The manifests on the release '
                'page are for automatic updates; they do not go in the Plugins directory.\n'
-               'Staff: open STAFF_GUIDE.md for everyday commands and permissions; COMMANDS.md has the complete reference.\n'
+               'Staff: open docs/README.md to start, docs/CATALOG.md for all content/controls, or docs/STAFF_GUIDE.md for commands.\n'
                'Affected old updaters require this manual replacement once, including Core if installed. '
                'Future updates load after a full server restart.\n\n'
                f'Instructions: https://github.com/{repository}/blob/main/README.md\n')
     archive_path = output/'ProjectBrainless-Plugins.zip'
     with zipfile.ZipFile(archive_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         entries = {'README.md': install.encode('utf-8')}
-        entries['STAFF_GUIDE.md'] = (ROOT/'docs/STAFF_GUIDE.md').read_bytes()
-        entries['COMMANDS.md'] = (ROOT/'docs/COMMANDS.md').read_bytes()
+        entries.update({'docs/'+str(p.relative_to(ROOT/'docs')): p.read_bytes() for p in (ROOT/'docs').rglob('*.md')})
         entries.update({'Plugins/'+c['dll'].name: c['dll'].read_bytes() for c in components})
         for name, content in sorted(entries.items()):
             info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
@@ -78,6 +77,7 @@ def prepare_bundle(assets, output, repository):
              'Stop the server, replace your selected DLLs, keep existing configs, then start it. '
              'If the old updater fails, replace every installed component once, including Core if installed.\n\n'
              '**Target:** EXILED 9.15.2 / SCP:SL 14.2.8. Automatic updates still replace only each installed component.\n\n'
+             f'[Staff documentation](https://github.com/{repository}/blob/main/docs/README.md) · [All content and controls](https://github.com/{repository}/blob/main/docs/CATALOG.md). Also included under docs/ in the ZIP.\n\n'
              '| Plugin | Version | DLL |\n| --- | --- | --- |\n')
     notes += ''.join(f'| {c["plugin"]} | {c["version"]} | `{c["dll"].name}` |\n' for c in components)
     for component in components:
