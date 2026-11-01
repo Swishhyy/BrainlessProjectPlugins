@@ -128,7 +128,7 @@ namespace Brainless.Roles
             if (ev.Player == ev.Attacker || !IsScpAttack(ev.DamageHandler.Type) || Traits(ev.Attacker)?.RefreshBreakneckOnKill != true || !(ev.Attacker.Role is Exiled.API.Features.Roles.Scp173Role statue))
                 return;
             if (statue.BreakneckActive)
-                statue.BreakneckSpeedsAbility._duration.Restart();
+                ScpPrivateAccess.RestartBreakneck(statue.BreakneckSpeedsAbility);
             statue.RemainingBreakneckCooldown = 0;
         }
 

@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 1);
+        public override Version Version => new Version(0, 6, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -566,14 +566,14 @@ namespace Brainless.Weapons
             {
                 var pickup = Pickup.CreateAndSpawn(ItemType.Coin, ev.Pickup.Position);
                 ev.Pickup.Destroy();
-                Scp914.Scp914Upgrader.ProcessPickup(pickup.Base, true, ev.KnobSetting);
+                Native914.ProcessPickup(pickup.Base, true, ev.KnobSetting);
             }
             else
             {
                 // Keep the original serial and native serialized magazine/chamber data.
                 if (ev.Pickup is FirearmPickup gun)
                     gun.MaxAmmo = Item.Create<Firearm>(state.Definition.Type).MaxMagazineAmmo;
-                Scp914.Scp914Upgrader.ProcessPickup(ev.Pickup.Base, true, ev.KnobSetting);
+                Native914.ProcessPickup(ev.Pickup.Base, true, ev.KnobSetting);
             }
         });
         private void UpgradeInventory(UpgradingInventoryItemEventArgs ev) => Safe.Run(() =>
@@ -598,11 +598,7 @@ namespace Brainless.Weapons
                     gun.MaxMagazineAmmo = Item.Create<Firearm>(state.Definition.Type).MaxMagazineAmmo;
             }
 
-            if (Scp914.Scp914Upgrader.TryGetProcessor(replacement.Type, out var processor))
-            {
-                var result = processor.UpgradeInventoryItem(ev.KnobSetting, replacement.Base);
-                Scp914.Processors.Scp914ItemProcessor.ProcessResultingItem(replacement.Base, result, ev.KnobSetting);
-            }
+            Native914.ProcessInventory(replacement.Base, ev.KnobSetting);
         });
         private sealed class WeaponState
         {

@@ -1,4 +1,12 @@
-# Core 0.2.0
+# Core 0.2.1
+
+Gameplay behavior is unchanged; this build includes the runtime-visibility build guard and clearer updater diagnostics.
+
+All projects now compile against the original game assembly rather than the publicized reference, so unsupported direct private access fails during compilation. Native private patch targets are located by reflection. Updater mismatch messages report both the release target and running SCP:SL version; the exact-version compatibility guard remains.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. If the old updater is blocked by a version mismatch, this patch needs a manual download; confirm the actual game version before selecting a differently targeted build. Native smoke/role/SCP-914 behavior still requires live verification.
+
+## Previous: 0.2.0
 
 Adds saved server playtime and Discord commands for self/other-player level, XP and playtime, the top 10 by XP, and self opt-out. Existing XP databases migrate without resetting progress. Discord queries require linked accounts; replies stay private.
 

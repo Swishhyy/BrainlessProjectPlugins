@@ -159,7 +159,7 @@ namespace Brainless.Internal.Updates
             if (exiled.Major != minimum.Major || Normalize(exiled) < minimum)
                 return "The release needs a different or newer EXILED version.";
             if (Normalize(game) != ParseVersion(entry.GameVersion))
-                return "The release targets a different SCP: SL version.";
+                return "The release targets SCP:SL " + ParseVersion(entry.GameVersion).ToString(3) + "; this server is running " + Normalize(game).ToString(3) + ". Update skipped because the game versions differ.";
             return null;
         }
 

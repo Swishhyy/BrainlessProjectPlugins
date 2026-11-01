@@ -32,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 2);
+        public override Version Version => new Version(0, 6, 3);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -931,7 +931,7 @@ namespace Brainless.Items
             charges.Remove(old.Serial);
             var replacement = Pickup.CreateAndSpawn(Conversion(item.Id, old.Type), old.Position);
             old.Destroy();
-            Scp914.Scp914Upgrader.ProcessPickup(replacement.Base, true, ev.KnobSetting);
+            Native914.ProcessPickup(replacement.Base, true, ev.KnobSetting);
         });
         private void UpgradeInventory(UpgradingInventoryItemEventArgs ev) => Safe.Run(() =>
         {
@@ -944,11 +944,7 @@ namespace Brainless.Items
             var type = Conversion(item.Id, ev.Item.Type);
             ev.Player.RemoveItem(ev.Item);
             var replacement = ev.Player.AddItem(type);
-            if (Scp914.Scp914Upgrader.TryGetProcessor(type, out var processor))
-            {
-                var result = processor.UpgradeInventoryItem(ev.KnobSetting, replacement.Base);
-                Scp914.Processors.Scp914ItemProcessor.ProcessResultingItem(replacement.Base, result, ev.KnobSetting);
-            }
+            Native914.ProcessInventory(replacement.Base, ev.KnobSetting);
         });
         private sealed class Payload
         {

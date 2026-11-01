@@ -13,7 +13,7 @@ using NativeIntercom = PlayerRoles.Voice.Intercom;
 
 namespace Brainless.Roles
 {
-    [HarmonyPatch(typeof(Scp106VigorAbilityBase), nameof(Scp106VigorAbilityBase.VigorAmount), MethodType.Setter)]
+    [HarmonyPatch(typeof(Scp106VigorAbilityBase), "VigorAmount", MethodType.Setter)]
     internal static class VariantVigor
     {
         private static void Prefix(Scp106VigorAbilityBase __instance, ref float __0)
@@ -22,11 +22,11 @@ namespace Brainless.Roles
                 return;
             float multiplier = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.VigorGainMultiplier ?? 1;
             if (multiplier != 1)
-                __0 = ScpTraitRules.Vigor(__instance.VigorAmount, __0, multiplier);
+                __0 = ScpTraitRules.Vigor(((Exiled.API.Features.Roles.Scp106Role)Player.Get(__instance.Owner).Role).Vigor, __0, multiplier);
         }
     }
 
-    [HarmonyPatch(typeof(Scp096RageCycleAbility), nameof(Scp096RageCycleAbility.UpdateServerside))]
+    [HarmonyPatch(typeof(Scp096RageCycleAbility), "UpdateServerside")]
     internal static class VariantRageWindup
     {
         private static void Prefix(Scp096RageCycleAbility __instance)
@@ -35,11 +35,11 @@ namespace Brainless.Roles
                 return;
             float? seconds = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.RageWindupSeconds;
             if (seconds.HasValue)
-                __instance._timeToChangeState = Math.Min(__instance._timeToChangeState, seconds.Value);
+                ScpPrivateAccess.ShortenRageWindup(__instance, seconds.Value);
         }
     }
 
-    [HarmonyPatch(typeof(NativeIntercom), nameof(NativeIntercom.CheckPlayer))]
+    [HarmonyPatch(typeof(NativeIntercom), "CheckPlayer")]
     internal static class MimicIntercomAccess
     {
         // Extend only the human eligibility predicate. Keep native distance,
@@ -76,7 +76,10 @@ namespace Brainless.Roles
         {
             // Never upgrade an invalid/muted stream or replace recorded mimicry.
             // The native intercom first has to grant this SCP the microphone.
-            if (__result == VoiceChatChannel.ScpChat && Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.UseIntercom == true && NativeIntercom.CheckPerms(__instance.Owner))
+            if (__result != VoiceChatChannel.ScpChat)
+                return;
+            var hub = ScpPrivateAccess.VoiceOwner(__instance);
+            if (Plugin.Instance?.Traits(Player.Get(hub))?.UseIntercom == true && NativeIntercom.CheckPerms(hub))
                 __result = VoiceChatChannel.Intercom;
         }
     }

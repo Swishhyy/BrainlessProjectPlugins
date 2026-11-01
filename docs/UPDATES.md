@@ -94,3 +94,7 @@ A token belongs in `auto_update.token`; `token_environment_variable` is an optio
 Old affected updaters may be unable to fetch this fix: stop the server, manually replace the plugin DLLs with their current releases (including Core if installed), and restart. Existing YAML stays valid. If a token was shown in a screenshot, revoke/regenerate it, update `token`, and keep the replacement private. A later HTTP 401/403/404 is a separate token/access/release issue; report the sanitized status if checks still fail after manual replacement. This patch is built/tested against pinned game references; the exact hosting runtime must still be verified live.
 
 RoundEvents has its own `Brainless.RoundEvents.dll` and updater manifest on the shared release page, and supports optional Core update delegation like the other seven components. New DLLs require an initial manual installation.
+
+## Game-version mismatch diagnostics
+
+Runtime-access patch builds show both numbers when refusing an update: `The release targets SCP:SL 14.2.8; this server is running X.Y.Z`. This is separate from token/repository access. The release must match the running game version. Check the dedicated server startup version before choosing a build or retargeting the plugins. An already installed updater with the old message needs a manual DLL replacement to receive the clearer diagnostic; restart fully afterward.

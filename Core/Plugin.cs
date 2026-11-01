@@ -16,7 +16,7 @@ namespace Brainless.Core
         public override string Name => "ProjectBrainlessCore";
         public override string Prefix => "project_brainless_core";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 2, 0);
+        public override Version Version => new Version(0, 2, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Highest;
         public static Plugin Instance { get; private set; }

@@ -12,7 +12,7 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'Brainless.Tests'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-    <Reference Include="Assembly-CSharp" HintPath="$(ReferencesPath)/Assembly-CSharp-Publicized.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(ReferencesPath)/Assembly-CSharp.dll" Private="false" />
     <Reference Include="Assembly-CSharp-firstpass" HintPath="$(ReferencesPath)/Assembly-CSharp-firstpass.dll" Private="false" />
     <Reference Include="CommandSystem.Core" HintPath="$(ReferencesPath)/CommandSystem.Core.dll" Private="false" />
     <Reference Include="Mirror" HintPath="$(ReferencesPath)/Mirror.dll" Private="false" />
@@ -43,6 +43,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Updates/*.cs" Link="Internal/Updates/%(Filename)%(Extension)" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/AudioRules.cs" Link="Internal/AudioRules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/RoleMarkers.cs" Link="Internal/RoleMarkers.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.SlFixes'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Native914.cs" Link="Internal/Native914.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigDocument.cs" Link="Internal/ConfigDocument.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigMigration.cs" Link="Internal/ConfigMigration.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />

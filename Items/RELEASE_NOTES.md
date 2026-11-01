@@ -1,4 +1,12 @@
-# Items 0.6.2
+# Items 0.6.3
+
+Fixes smoke and Bio Grenade creation by using EXILED's public SCP-244 size setter in both spawn and maintenance. Native private SCP-914 normalization calls use cached reflection. Cluster environment damage and the 25-second Door Jammer remain.
+
+All projects now compile against the original game assembly rather than the publicized reference, so unsupported direct private access fails during compilation. Native private patch targets are located by reflection. Updater mismatch messages report both the release target and running SCP:SL version; the exact-version compatibility guard remains.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. If the old updater is blocked by a version mismatch, this patch needs a manual download; confirm the actual game version before selecting a differently targeted build. Native smoke/role/SCP-914 behavior still requires live verification.
+
+## Previous: 0.6.2
 
 Cluster parent and child blasts now preserve native door, destructible-prop and physics damage without adding a second player hit. The player target set is cleared before custom damage; original explosion cancellation and native door immunity/events remain. `tuning.cluster_grenade.damage_environment` defaults to true. Player damage, caps, count and radius are unchanged.
 

@@ -87,6 +87,8 @@ internal static class UpdaterTests
             check(UpdatePolicy.Validate(entry, "Items", Assembly, new Version(9, 14, 0), new Version(14, 2, 8)) != null, "updater blocks a release requiring newer EXILED");
             check(UpdatePolicy.Validate(entry, "Items", Assembly, new Version(10, 0, 0), new Version(14, 2, 8)) != null, "updater blocks an incompatible EXILED major version");
             check(UpdatePolicy.Validate(entry, "Items", Assembly, new Version(9, 15, 2), new Version(14, 3, 0)) != null, "updater blocks a different game build");
+            var mismatch = UpdatePolicy.Validate(entry, "Items", Assembly, new Version(9, 15, 2), new Version(14, 3, 0));
+            check(mismatch.Contains("14.2.8") && mismatch.Contains("14.3.0"), "game mismatch diagnostics show both the manifest target and running server version without bypassing the guard");
             entry.Asset = "../Other.dll";
             check(Rejects(() => UpdatePolicy.Validate(entry, "Items", Assembly, new Version(9, 15, 2), new Version(14, 2, 8))), "manifest paths cannot redirect installation to another DLL");
             async Task<string> RunClient(FakeGitHub fake, bool prereleases = false, AutoUpdateConfig config = null)

@@ -1,4 +1,12 @@
-# Roles 0.5.0
+# Roles 0.5.1
+
+Fixes private access in SCP-173 breakneck refresh and SCP-096 rage timing, and uses the public SCP-106 vigor API. Breakneck refresh errors are isolated so they cannot stop pending explosive-death bursts. Native CustomInfo validation now checks role-name-only overhead labels; IDs remain in the HUD/admin output. Guard-card SCP-914 normalization uses cached reflection for native private upgrade methods.
+
+All projects now compile against the original game assembly rather than the publicized reference, so unsupported direct private access fails during compilation. Native private patch targets are located by reflection. Updater mismatch messages report both the release target and running SCP:SL version; the exact-version compatibility guard remains.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. If the old updater is blocked by a version mismatch, this patch needs a manual download; confirm the actual game version before selecting a differently targeted build. Native smoke/role/SCP-914 behavior still requires live verification.
+
+## Previous: 0.5.0
 
 Adds Cowboy (C05), Rogue Guard (G07), Containment Engineer (S07) and Rogue Scientist (S08), bringing the catalog to 53 profiles. S03 is now Head Scientist with the native research-coordinator card. Cowboy replaces the Chaos kit with a loaded revolver, full light-armor reserve ammo, two adrenaline shots and painkillers.
 
