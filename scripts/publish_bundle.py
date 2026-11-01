@@ -49,12 +49,15 @@ def prepare_bundle(assets, output, repository):
                '3. Keep existing configuration and start the server. New settings are generated.\n\n'
                'Each plugin is optional and keeps its own version/configuration. The manifests on the release '
                'page are for automatic updates; they do not go in the Plugins directory.\n'
+               'Staff: open STAFF_GUIDE.md for everyday commands and permissions; COMMANDS.md has the complete reference.\n'
                'Affected old updaters require this manual replacement once, including Core if installed. '
                'Future updates load after a full server restart.\n\n'
                f'Instructions: https://github.com/{repository}/blob/main/README.md\n')
     archive_path = output/'ProjectBrainless-Plugins.zip'
     with zipfile.ZipFile(archive_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         entries = {'README.md': install.encode('utf-8')}
+        entries['STAFF_GUIDE.md'] = (ROOT/'docs/STAFF_GUIDE.md').read_bytes()
+        entries['COMMANDS.md'] = (ROOT/'docs/COMMANDS.md').read_bytes()
         entries.update({'Plugins/'+c['dll'].name: c['dll'].read_bytes() for c in components})
         for name, content in sorted(entries.items()):
             info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))

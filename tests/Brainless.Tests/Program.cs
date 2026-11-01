@@ -39,6 +39,7 @@ var random = new Random(731);
 Check(Brainless.Weapons.LauncherRules.Capacity(100) == 16 && Brainless.Weapons.LauncherRules.Capacity(16) == 16 && Brainless.Weapons.LauncherRules.Capacity(8) == 8, "launcher capacity never exceeds sixteen while smaller custom capacities remain valid");
 LockpickTests.Run(Check);
 VoiceTests.Run(Check);
+RoleChanceTests.Run(Check);
 CandyTests.Run(Check);
 AudioTests.Run(Check);
 StatsTests.Run(Check);

@@ -190,3 +190,7 @@ Door Jammer 7105 now uses `KeycardJanitor` instead of a coin. Equip it and inter
 Core 0.1.0 hosts reusable update services, persistent XP/stat tracking and optional Discord slash commands. SlFixes 0.1.0 adds Rough teleports, configurable SCP-914 recipes and XP action capture. Both are separate optional DLLs. See [Core](../Core/README.md) and [Fixes](../SlFixes/README.md) for complete config and setup. Existing gameplay DLLs remain standalone.
 
 Guard Captain card levels are native Containment 1 / Armory 2 / Administration 1. The retired captain_gate_access toggle cannot raise those levels. Debug with `bprole set G01`; `bprole set explosive_zombie` or `bprole set Z04` tests the explosive zombie.
+
+## Role percentages
+
+Roles 0.3.0 uses each entry's `chance_percent` directly, not legacy weight/family multiplication. Groups total at most 100 including disabled/experimental profiles; unused/blocked shares remain native. Doctor is a separate event roll. Missing/null old fields derive a nominal allocation from legacy settings. `bproles` shows active values; `bprole reload` validates and applies edits. See [STAFF_GUIDE.md](STAFF_GUIDE.md) for an example and [Roles](../Roles/README.md) for migration details.

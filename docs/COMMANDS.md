@@ -1,5 +1,7 @@
 # Commands and permissions
 
+For everyday use, start with the [short staff guide](STAFF_GUIDE.md).
+
 Use Remote Admin's text command box without a leading slash. `ci` is EXILED's alias for `customitems`. `<argument>` is required; `[argument]` is optional.
 
 | Command | Permission | Purpose |

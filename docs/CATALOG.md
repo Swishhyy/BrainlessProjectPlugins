@@ -4,45 +4,45 @@ Stable IDs map the design document into independent plugins. All values are play
 
 ## Roles
 
-| ID | Name | Base role or faction | Specialty and cost |
-| --- | --- | --- | --- |
-| D01 | Athletic | ClassD | Runs for longer, but has less health. Starts with painkillers. |
-| D02 | Janitor | ClassD | Carries a janitor keycard and flashlight. |
-| D03 | Child | ClassD | A smaller Class-D with less health and a piece of candy. |
-| D04 | Thief | ClassD | Starts with one random stolen item. |
-| D05 | Survivor | ClassD | Carries a Zone Manager keycard and painkillers, but has less health. |
-| D06 | Locksmith | ClassD | Picks doors below level 3. Lockpicking takes time and has a cooldown. |
-| D07 | Noise Complaint | ClassD | Carries an Echo Canister to distract enemies with fake footsteps. |
-| S01 | Mad Scientist | Scientist | An armed scientist with a six-shot pistol and an SCP specimen. |
-| S02 | Pharmacist | Scientist | Carries extra medkits and painkillers to share. |
-| S03 | Chief Scientist | Scientist | Has better research access, but no medical supplies. |
-| S04 | Candy Man | Scientist | Carries a bag of SCP-330 candy. |
-| S05 | Auditor | Scientist | Uses a Survey Beacon to check a room for humans and SCPs. |
-| S06 | Anomaly Handler | Scientist | Carries a gas filter and a specimen that heals zombies. |
-| G01 | Guard Captain | FacilityGuard | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. |
-| G02 | New Hire | FacilityGuard | A lightly equipped guard with a pistol and extra flashbangs. |
-| G03 | Trained Agent | FacilityGuard | A faster guard with combat armor. Heavy armor removes the speed bonus. |
-| G04 | Coward | FacilityGuard | Sprints for longer without armor. Wearing armor removes the bonus. |
-| G05 | Quartermaster | FacilityGuard | Carries extra bandages, but less spare ammo. |
-| G06 | Maintenance Liaison | FacilityGuard | Carries a Door Jammer keycard, but less spare ammo. |
-| M01 | Field Medic | MTF with original rank | Carries extra bandages to heal the squad, but less spare ammo. |
-| M02 | Signal Officer | MTF with original rank | Carries a room jammer and a beacon to locate enemies. |
-| M03 | Containment Specialist | MTF with original rank | Uses a shield-breaking rifle and slowing foam to contain SCPs. |
-| M04 | Breacher | MTF with original rank | Uses a shotgun to breach doors and a flashbang to clear rooms. |
-| C01 | Saboteur | Chaos with original subtype | Carries a jammer to disrupt SCP-079, but less spare ammo. |
-| C02 | Courier | Chaos with original subtype | A lightly armored runner with extra stamina and trail markers. |
-| C03 | Interceptor | Chaos with original subtype | Repeated shots reveal targets with an audible tracking sound. |
-| C04 | Demolitionist | Chaos with original subtype | Carries a Cluster Grenade, but less spare ammo. |
-| P01 | Surgeon | Scp049 | Revives zombies faster and recovers shields sooner, but has less health. |
-| P02 | Brute | Scp049 | A tougher, slower SCP-049 with more health and shields. |
-| P03 | Tickler | Scp049 | A faster SCP-049 with quicker attacks, but less health and shields. |
-| Z01 | Giant | Scp0492 | A larger, tougher zombie that moves more slowly. |
-| Z02 | Muncher | Scp0492 | A small, fast zombie with less health and weaker attacks. |
-| Z03 | Armored | Scp0492 | A heavily built zombie with more health, but less speed. |
-| Z04 | Explosive | Scp0492 | Explodes after death. Has less health than a normal zombie. |
-| Z05 | Doctor | Scp0492 | Becomes a weaker SCP-049 who can revive one zombie. |
+| ID | Name | Base role or faction | Chance % | Specialty and cost |
+| --- | --- | --- | --- | --- |
+| D01 | Athletic | ClassD | 6.42 | Runs for longer, but has less health. Starts with painkillers. |
+| D02 | Janitor | ClassD | 6.42 | Carries a janitor keycard and flashlight. |
+| D03 | Child | ClassD | 6.42 | A smaller Class-D with less health and a piece of candy. |
+| D04 | Thief | ClassD | 6.42 | Starts with one random stolen item. |
+| D05 | Survivor | ClassD | 6.42 | Carries a Zone Manager keycard and painkillers, but has less health. |
+| D06 | Locksmith | ClassD | 6.42 | Picks doors below level 3. Lockpicking takes time and has a cooldown. |
+| D07 | Noise Complaint | ClassD | 6.42 | Carries an Echo Canister to distract enemies with fake footsteps. |
+| S01 | Mad Scientist | Scientist | 8.82 | An armed scientist with a six-shot pistol and an SCP specimen. |
+| S02 | Pharmacist | Scientist | 8.82 | Carries extra medkits and painkillers to share. |
+| S03 | Chief Scientist | Scientist | 0.88 | Has better research access, but no medical supplies. |
+| S04 | Candy Man | Scientist | 8.82 | Carries a bag of SCP-330 candy. |
+| S05 | Auditor | Scientist | 8.82 | Uses a Survey Beacon to check a room for humans and SCPs. |
+| S06 | Anomaly Handler | Scientist | 8.82 | Carries a gas filter and a specimen that heals zombies. |
+| G01 | Guard Captain | FacilityGuard | 8.33 | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. |
+| G02 | New Hire | FacilityGuard | 8.33 | A lightly equipped guard with a pistol and extra flashbangs. |
+| G03 | Trained Agent | FacilityGuard | 8.33 | A faster guard with combat armor. Heavy armor removes the speed bonus. |
+| G04 | Coward | FacilityGuard | 8.33 | Sprints for longer without armor. Wearing armor removes the bonus. |
+| G05 | Quartermaster | FacilityGuard | 8.33 | Carries extra bandages, but less spare ammo. |
+| G06 | Maintenance Liaison | FacilityGuard | 8.33 | Carries a Door Jammer keycard, but less spare ammo. |
+| M01 | Field Medic | MTF with original rank | 7.5 | Carries extra bandages to heal the squad, but less spare ammo. |
+| M02 | Signal Officer | MTF with original rank | 7.5 | Carries a room jammer and a beacon to locate enemies. |
+| M03 | Containment Specialist | MTF with original rank | 7.5 | Uses a shield-breaking rifle and slowing foam to contain SCPs. |
+| M04 | Breacher | MTF with original rank | 7.5 | Uses a shotgun to breach doors and a flashbang to clear rooms. |
+| C01 | Saboteur | Chaos with original subtype | 7.5 | Carries a jammer to disrupt SCP-079, but less spare ammo. |
+| C02 | Courier | Chaos with original subtype | 7.5 | A lightly armored runner with extra stamina and trail markers. |
+| C03 | Interceptor | Chaos with original subtype | 7.5 | Repeated shots reveal targets with an audible tracking sound. |
+| C04 | Demolitionist | Chaos with original subtype | 7.5 | Carries a Cluster Grenade, but less spare ammo. |
+| P01 | Surgeon | Scp049 | 16.66 | Revives zombies faster and recovers shields sooner, but has less health. |
+| P02 | Brute | Scp049 | 16.66 | A tougher, slower SCP-049 with more health and shields. |
+| P03 | Tickler | Scp049 | 16.66 | A faster SCP-049 with quicker attacks, but less health and shields. |
+| Z01 | Giant | Scp0492 | 11.25 | A larger, tougher zombie that moves more slowly. |
+| Z02 | Muncher | Scp0492 | 11.25 | A small, fast zombie with less health and weaker attacks. |
+| Z03 | Armored | Scp0492 | 11.25 | A heavily built zombie with more health, but less speed. |
+| Z04 | Explosive | Scp0492 | 11.25 | Explodes after death. Has less health than a normal zombie. |
+| Z05 | Doctor | Scp0492 | 1 (event) | Becomes a weaker SCP-049 who can revive one zombie. |
 
-Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy roles use real SCP-330 candy; an empty allowlist selects registered standard colors.
+Percentages are direct matching-spawn shares; blocked/unused shares keep the native role. Group totals include experimental/disabled profiles. Doctor is a separate event roll. See STAFF_GUIDE.md for editing. Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy roles use real SCP-330 candy; an empty allowlist selects registered standard colors.
 
 ## Items
 

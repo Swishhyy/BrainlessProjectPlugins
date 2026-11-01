@@ -49,6 +49,7 @@ for name, (project, assembly) in PROJECTS.items():
     shutil.copy2(ROOT/name/'README.md', folder/'README.md')
     shutil.copy2(ROOT/'docs/UPDATES.md', folder/'UPDATES.md')
     shutil.copy2(ROOT/'docs/COMMANDS.md', folder/'COMMANDS.md')
+    shutil.copy2(ROOT/'docs/STAFF_GUIDE.md', folder/'STAFF_GUIDE.md')
     if name in ('Roles', 'Items', 'Weapons'):
         shutil.copy2(ROOT/'docs/TUNING.md', folder/'TUNING.md')
         shutil.copy2(ROOT/'docs/NATURAL_LOOT.md', folder/'NATURAL_LOOT.md')
