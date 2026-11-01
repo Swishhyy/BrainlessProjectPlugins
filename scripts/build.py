@@ -44,18 +44,17 @@ for name, (project, assembly) in PROJECTS.items():
         failed.append(name)
         continue
     folder = output/name
+    if folder.exists(): shutil.rmtree(folder)
     folder.mkdir(exist_ok=True)
     shutil.copy2(source, folder/assembly)
-    shutil.copy2(ROOT/name/'README.md', folder/'README.md')
-    shutil.copy2(ROOT/'docs/UPDATES.md', folder/'UPDATES.md')
-    shutil.copy2(ROOT/'docs/COMMANDS.md', folder/'COMMANDS.md')
-    shutil.copy2(ROOT/'docs/STAFF_GUIDE.md', folder/'STAFF_GUIDE.md')
-    if name in ('Roles', 'Items', 'Weapons'):
-        shutil.copy2(ROOT/'docs/TUNING.md', folder/'TUNING.md')
-        shutil.copy2(ROOT/'docs/NATURAL_LOOT.md', folder/'NATURAL_LOOT.md')
+    (folder/'README.md').write_text((ROOT/name/'README.md').read_text().replace('../docs/', 'docs/'))
+    for page in (ROOT/'docs').rglob('*.md'):
+        destination = folder/'docs'/page.relative_to(ROOT/'docs')
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(page, destination)
     with zipfile.ZipFile(output/(name+'.zip'), 'w', compression=zipfile.ZIP_DEFLATED) as archive:
-        for file in folder.iterdir():
-            archive.write(file, file.name)
+        for file in sorted(folder.rglob('*')):
+            if file.is_file(): archive.write(file, str(file.relative_to(folder)))
     manifest['plugins'].append({'plugin': name, 'file': f'{name}/{assembly}', 'sha256': hashlib.sha256(source.read_bytes()).hexdigest()})
 (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
 if failed:

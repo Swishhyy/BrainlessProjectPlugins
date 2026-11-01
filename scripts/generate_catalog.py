@@ -2,6 +2,7 @@
 import pathlib
 import re
 import math
+import json
 from collections import defaultdict
 
 root = pathlib.Path(__file__).resolve().parents[1]
@@ -24,37 +25,67 @@ def percentage(role_id, base):
     value = math.floor(budget * weights[role_id] / totals[groups[role_id]] * 100) / 100
     return f'{value:g}'
 
-lines = ['# Content catalog', '', 'Stable IDs map the design document into independent plugins. All values are playtest defaults; see each generated configuration for tuning.', '',
-         '## Roles', '', '| ID | Name | Base role or faction | Chance % | Specialty and cost |', '| --- | --- | --- | --- | --- |']
-for role_id, name, base, hint in roles:
-    chance = percentage(role_id, base)
-    if role_id.startswith('M'): base = 'MTF with original rank'
-    elif role_id.startswith('C'): base = 'Chaos with original subtype'
-    lines.append(f'| {role_id} | {name} | {base} | {chance} | {hint} |')
-lines += ['', 'Percentages are direct matching-spawn shares; blocked/unused shares keep the native role. Group totals include experimental/disabled profiles. Doctor is a separate event roll. See STAFF_GUIDE.md for editing. Child, Tickler, Muncher and Doctor are experimental. Doctor is excluded from ordinary zombie draws. Candy roles use real SCP-330 candy; an empty allowlist selects registered standard colors.', '']
+usage = json.loads((root/'docs/content_usage.json').read_text())
+assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
+lines = ['# Project Brainless — What We Have', '',
+         '[Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)', '',
+         'Current shipped content: **21 items, 8 weapons, 35 role profiles and 1 round event**. Values below are defaults; server settings can differ.', '',
+         '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
+         '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
-    source = (root/folder/'Definition.cs').read_text()
-    if folder == 'Items': source += (root/folder/'SupCatalog.cs').read_text()
-    blocks = re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{([^{}]+)\}', source)
+    content_source = (root/folder/'Definition.cs').read_text()
+    if folder == 'Items': content_source += (root/folder/'SupCatalog.cs').read_text()
     entries = []
-    for block in blocks:
+    for block in re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{([^{}]+)\}', content_source):
         fields = [re.search(pattern, block) for pattern in (r'\bId\s*=\s*(\d+)', r'\bName\s*=\s*"([^"]+)"', r'\bDescription\s*=\s*"([^"]+)"')]
         if all(fields): entries.append(tuple(field.group(1) for field in fields))
-    entries.sort(key=lambda entry: int(entry[0]))
-    assert len(entries) == (21 if folder == 'Items' else 8), f'Incomplete {label} catalog: {len(entries)} entries'
-    lines += [f'## {label}', '', '| Design ID | Registry ID | Name | Behavior |', '| --- | --- | --- | --- |']
-    prefix = 'I' if folder == 'Items' else 'W'
-    for index, (item_id, name, description) in enumerate(entries, 1):
-        design_id = int(item_id) - (7100 if folder == 'Items' else 7200)
-        lines.append(f'| {prefix}{design_id:02d} | {item_id} | {name} | {description} |')
-    lines.append('')
-lines += ['## Initial supply', '', '| Population | Utility items including kits and loot | Custom firearms | Cluster maximum |',
-          '| --- | --- | --- | --- |', '| Below 12 | 6 | 1 | 0 |', '| 12 through 23 | 10 | 1 | 1 |', '| 24 or more | 14 | 2 | 2 |', '',
-          'Smoke grenades occupy one slot and create no filter. Guard badges and ordinary coins are outside these utility counts. Limits apply across a whole round, not per wave or per pickup.', '',
-          'Registered item IDs can be used with EXILED CustomItems Remote Admin commands. A missing provider or spent supply budget excludes that role from the draw; another eligible profile can still be selected. Redline and Ricochet require the experimental weapon switch. Admin give/spawn ignores supply caps. The Grenade Launcher uses 16 grenades total and cannot reload from ordinary ammo.', '']
-assert len(roles) == 35, f'Expected 35 roles; got {len(roles)}'
+    entries.sort(key=lambda e: int(e[0]))
+    assert len(entries) == (21 if folder == 'Items' else 8)
+    controls = usage[folder.lower()]
+    assert set(controls) == {e[0] for e in entries}, f'Usage coverage missing for {folder}'
+    if folder == 'Weapons':
+        lines += ['', '## Weapons', '', '| ID | Weapon | What it does | How to use |', '| --- | --- | --- | --- |']
+    for item_id, name, description in entries:
+        if item_id in ('7204', '7206'): name += ' **(opt-in)**'
+        if item_id == '7121': description = 'Blocks visual SCP-096 targeting while powered; can fail.'
+        lines.append(f'| {item_id} | {name} | {description} | {controls[item_id]} |')
+lines += ['', 'Redline and Ricochet require experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.', '',
+          '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
+          '| ID | Role | What it does | How to use | Default status |', '| --- | --- | --- | --- | --- |']
+for role_id, name, base, hint in roles:
+    if role_id == 'Z01': hint = 'Extra health, but slower movement.'
+    if role_id == 'Z02': hint = 'Faster zombie with less health and weaker attacks.'
+    status = 'Off / event only' if role_id == 'Z05' else 'Opt-in' if role_id in ('D03', 'P03', 'Z02') else 'Enabled'
+    lines.append(f'| {role_id} | {name} | {hint} | {usage["roles"][role_id]} | {status} |')
+lines += ['', 'Brute and Giant use normal-sized models by default. The extreme Muncher size/speed preset is optional. The additional Discord SCP-106/173/939/096 concepts are not shipped yet; see [role availability](ROLE_STATUS.md).', '',
+          '## Round events', '', '| Event | What happens | Staff controls |', '| --- | --- | --- |',
+          '| Infection | Low-health SCP-3114 hunt humans. Their direct kills convert victims at the death point. Other deaths stay dead. | `bpevent infection next` or `bpevent infection start` |', '',
+          'Infection defaults: 150 HP, zero shield, four living players minimum, automatic selection off. `bpevent status` checks it; `bpevent stop` stops rules, then restart the round for normal roles.', '',
+          '## Other features', '', '| Feature | What it does | How to use |', '| --- | --- | --- |',
+          '| SCP nearby voice | Lets enabled SCPs speak to nearby living players. | Tap N or use F1 `.scpchat`; hold the normal voice key to talk. |',
+          '| XP and stats | Tracks completed actions and survival. | F1 `.pbxp` or `.pbxp top`. |',
+          '| Discord stats | Links in-game stats to Discord when the bot is enabled. | F1 `.pblink`, then Discord `/pb-link`; use `/pb-stats` or `/pb-top`. |',
+          '| BetterCoinflips | Gives configured random outcomes from ordinary coin flips. | Equip a normal coin and flip it. |',
+          '| SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |',
+          '| Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |',
+          '| Automatic updates | Downloads verified updates for installed plugins. | Staff load downloaded updates with a full server restart. |', '',
+          '## SCP-914 crafting', '', 'Put the input in SCP-914 and run the listed setting. Recipes are chance-based and share natural supply limits.', '',
+          '| Input | Setting | Possible output |', '| --- | --- | --- |']
+recipes = []
+recipe_source = (root/'SlFixes/Config.cs').read_text()
+for block in re.findall(r'new CraftingRecipe\s*\{([^{}]+)\}', recipe_source):
+    fields = [re.search(pattern, block) for pattern in (r'Source = ItemType\.(\w+)', r'Setting = Scp914KnobSetting\.(\w+)', r'CustomId = (\d+)', r'Name = "([^"]+)"')]
+    if all(fields): recipes.append(tuple(f.group(1) for f in fields))
+for name, body, setting, ident in re.findall(r'R\("([^"]+)", ItemType\.(\w+), Scp914KnobSetting\.(\w+), (\d+),', recipe_source): recipes.append((body, setting, ident, name))
+assert len(recipes) == 14
+bodies = {'GrenadeFlash':'Flashbang','GrenadeHE':'HE grenade','SCP500':'SCP-500','KeycardJanitor':'Janitor keycard','GunE11SR':'E11-SR'}
+for body, setting, ident, name in recipes:
+    setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
+    lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
+lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
+assert len(roles) == 35
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Catalog written with 35 roles, 21 items and 8 weapon definitions.')
+print('Content page written: 21 items, 8 weapons, 35 roles, 1 event and 14 recipes; all have usage instructions.')
 
 # A separate operator-facing audit records why a correctly installed profile may
 # not appear. Runtime bproles remains the authority for edited server configs.

@@ -30,6 +30,12 @@ namespace Brainless.Weapons
 
     public sealed class Config : Exiled.API.Interfaces.IConfig
     {
+        public Config()
+        {
+            Distribution.EnsureEntries(Weapons.Select(w => new KeyValuePair<uint, ItemType>(w.Id, w.BaseType)));
+            Distribution.PrepareChances();
+        }
+
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
@@ -180,6 +186,7 @@ namespace Brainless.Weapons
             AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
+            Distribution.EnsureEntries(Weapons.Select(w => new KeyValuePair<uint, ItemType>(w.Id, w.BaseType)));
             Distribution.Validate(id => id >= 7201 && id <= 7208);
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");

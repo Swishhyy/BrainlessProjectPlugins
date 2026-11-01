@@ -28,6 +28,10 @@ jobs:
       existing_release: ${{ steps.select.outputs.existing_release }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate staff content coverage
+        run: |
+          python3 scripts/generate_catalog.py
+          git diff --exit-code -- docs/CATALOG.md docs/ROLE_STATUS.md
       - id: select
         env:
           REQUESTED_PLUGIN: ${{ inputs.plugin || 'All' }}

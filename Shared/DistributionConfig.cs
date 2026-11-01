@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ComponentModel;
 using Exiled.API.Enums;
 using PlayerRoles;
 
@@ -21,6 +22,7 @@ namespace Brainless.Internal
         public bool Enabled { get; set; } = true;
         public bool MapReplacements { get; set; } = true;
 
+        [Description("Legacy migration budget for map rules with missing/null chance_percent. Explicit rule percentages are not multiplied by this.")]
         [Tune(0, 100)]
         public float MapChancePercent { get; set; } = 25;
 
@@ -34,6 +36,7 @@ namespace Brainless.Internal
         public float MapDelaySeconds { get; set; } = 1.5f;
         public bool PlayerLoadouts { get; set; } = true;
 
+        [Description("Legacy migration budget for player rules with missing/null chance_percent. Explicit rule percentages are not multiplied by this.")]
         [Tune(0, 100)]
         public float PlayerChancePercent { get; set; } = 30;
 
@@ -75,8 +78,48 @@ namespace Brainless.Internal
                     throw new InvalidOperationException("Invalid player distribution rule. Use a supported custom ID, role list and replacement bodies.");
                 Tuning.Validate(rule, "distribution.player_rules." + rule.CustomId);
             }
+
+            PrepareChances();
+            foreach (var source in MapRules.SelectMany(r => r.SourceTypes).Distinct())
+                foreach (var zone in Enum.GetValues(typeof(ZoneType)).Cast<ZoneType>().Distinct())
+                    if (MapRules.Where(r => r.SourceTypes.Contains(source) && InZone(r, zone)).Sum(r => (decimal)r.ChancePercent.Value) > 100m)
+                        throw new InvalidOperationException("Map chance_percent exceeds 100 for " + source + " in " + zone + ".");
+            foreach (var role in Enum.GetValues(typeof(RoleTypeId)).Cast<RoleTypeId>().Distinct())
+                if (PlayerRules.Where(r => ForRole(r, role)).Sum(r => (decimal)r.ChancePercent.Value) > 100m)
+                    throw new InvalidOperationException("Player chance_percent exceeds 100 for " + role + ".");
         }
 
+        private static bool InZone(MapLootRule rule, ZoneType zone) => rule.Zones.Count == 0 || rule.Zones.Contains(zone);
+        private static bool ForRole(PlayerLootRule rule, RoleTypeId role) => rule.Roles.Count == 0 || rule.Roles.Contains(role);
+        internal void PrepareChances()
+        {
+            var zones = Enum.GetValues(typeof(ZoneType)).Cast<ZoneType>().Distinct().ToArray();
+            var roles = Enum.GetValues(typeof(RoleTypeId)).Cast<RoleTypeId>().Distinct().ToArray();
+            foreach (var rule in MapRules.Where(r => !r.ChancePercent.HasValue))
+            {
+                long total = rule.SourceTypes.SelectMany(source => zones.Where(zone => InZone(rule, zone)).Select(zone => MapRules.Where(other => other.SourceTypes.Contains(source) && InZone(other, zone)).Sum(other => (long)Math.Max(0, other.Weight)))).DefaultIfEmpty(0).Max();
+                rule.ChancePercent = DistributionRules.LegacyPercent(MapChancePercent, rule.Weight, total);
+            }
+
+            foreach (var rule in PlayerRules.Where(r => !r.ChancePercent.HasValue))
+            {
+                long total = roles.Where(role => ForRole(rule, role)).Select(role => PlayerRules.Where(other => ForRole(other, role)).Sum(other => (long)Math.Max(0, other.Weight))).DefaultIfEmpty(0).Max();
+                rule.ChancePercent = DistributionRules.LegacyPercent(PlayerChancePercent, rule.Weight, total);
+            }
+        }
+
+        internal void EnsureEntries(IEnumerable<KeyValuePair<uint, ItemType>> entries)
+        {
+            foreach (var entry in entries)
+            {
+                if (MapRules?.Count > 0 && !MapRules.Any(r => r != null && r.CustomId == entry.Key))
+                    MapRules.Add(new MapLootRule { CustomId = entry.Key, ChancePercent = 0, Weight = 0, SourceTypes = new List<ItemType> { entry.Value } });
+                if (PlayerRules?.Count > 0 && !PlayerRules.Any(r => r != null && r.CustomId == entry.Key))
+                    PlayerRules.Add(new PlayerLootRule { CustomId = entry.Key, ChancePercent = 0, Weight = 0, ReplaceTypes = new List<ItemType> { entry.Value } });
+            }
+        }
+
+        internal string DescribeChances() => "Map loot (per matching source/zone):\n" + string.Join("\n", MapRules.Select(r => r.CustomId + ": " + r.ChancePercent.Value.ToString("0.######") + "%; " + string.Join(", ", r.SourceTypes))) + "\nStarting gear (per matching human spawn):\n" + string.Join("\n", PlayerRules.Select(r => r.CustomId + ": " + r.ChancePercent.Value.ToString("0.######") + "%; " + (r.Roles.Count == 0 ? "any human" : string.Join(", ", r.Roles)) + "; " + (r.ReplaceTypes.Count == 0 ? "extra item" : "replaces " + string.Join(", ", r.ReplaceTypes))));
         public static DistributionConfig Items() => new DistributionConfig
         {
             MapRules = new List<MapLootRule>
@@ -225,6 +268,7 @@ namespace Brainless.Internal
 
         public ItemDistributionConfig() : base(Items())
         {
+            UpgradeSup();
         }
     }
 
@@ -257,6 +301,7 @@ namespace Brainless.Internal
 
         public WeaponDistributionConfig() : base(Weapons())
         {
+            UpgradeSupWeapons();
         }
     }
 
@@ -264,6 +309,11 @@ namespace Brainless.Internal
     {
         public uint CustomId { get; set; }
 
+        [Description("Direct percentage per matching map pickup/extra-loot anchor. Matching source/zone totals must be at most 100. Null migrates old weights; 0 disables this route.")]
+        [Tune(0, 100)]
+        public double? ChancePercent { get; set; }
+
+        [Description("Legacy selection weight, used only when chance_percent is missing/null.")]
         [Tune(0, 1000000)]
         public int Weight { get; set; } = 1;
         public List<ItemType> SourceTypes { get; set; } = new List<ItemType>();
@@ -279,6 +329,11 @@ namespace Brainless.Internal
     {
         public uint CustomId { get; set; }
 
+        [Description("Direct percentage per matching human spawn. Matching role totals must be at most 100. Null migrates old weights; 0 disables this route.")]
+        [Tune(0, 100)]
+        public double? ChancePercent { get; set; }
+
+        [Description("Legacy selection weight, used only when chance_percent is missing/null.")]
         [Tune(0, 1000000)]
         public int Weight { get; set; } = 1;
         // Empty Roles means any living human; empty ReplaceTypes gives an extra item.

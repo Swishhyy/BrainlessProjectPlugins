@@ -58,6 +58,27 @@ namespace Brainless.Internal
 
     internal static class DistributionRules
     {
+        internal static double LegacyPercent(double budget, int weight, long total) => total <= 0 ? 0 : Math.Floor(budget * Math.Max(0, weight) / total * 100) / 100;
+        internal static T ChoosePercent<T>(IEnumerable<T> pool, Func<T, double> chance, double roll)
+            where T : class
+        {
+            if (double.IsNaN(roll) || double.IsInfinity(roll) || roll < 0 || roll >= 100)
+                throw new ArgumentOutOfRangeException(nameof(roll));
+            double cursor = 0;
+            foreach (var entry in pool)
+            {
+                double value = chance(entry);
+                if (double.IsNaN(value) || double.IsInfinity(value) || value < 0 || value > 100)
+                    throw new InvalidOperationException("Loot chance_percent must be between 0 and 100.");
+                double end = cursor + value;
+                if (roll >= cursor && roll < end)
+                    return entry;
+                cursor = end;
+            }
+
+            return null;
+        }
+
         internal static bool Roll(float percent, Random random) => !float.IsNaN(percent) && !float.IsInfinity(percent) && percent > 0 && random.NextDouble() * 100 < percent;
         internal static void Shuffle<T>(IList<T> values, Random random)
         {

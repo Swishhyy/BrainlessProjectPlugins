@@ -10,6 +10,7 @@ internal static class DistributionConfigTests
 {
     internal static void Run(Action<bool, string> check)
     {
+        LootChanceConfigTests.Run(check);
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var gateway = Brainless.Core.DiscordProtocol.Read("{\"op\":10,\"d\":{\"heartbeat_interval\":41250}}");
@@ -55,7 +56,7 @@ internal static class DistributionConfigTests
         check(oldUpdater.Token == "" && oldUpdater.ResolveToken(_ => "old-environment-test-token") == "old-environment-test-token" && oldUpdater.ReleasesToScan == 10, "old updater YAML retains its environment token and configured scan count");
         bool Valid(DistributionConfig value, bool weapon = false)
         {
-            try { value.Validate(id => weapon ? id >= 7201 && id <= 7207 : id >= 7101 && id <= 7113 && id != 7110); return true; }
+            try { value.Validate(id => weapon ? id >= 7201 && id <= 7208 : id >= 7101 && id <= 7122 && id != 7110); return true; }
             catch (InvalidOperationException) { return false; }
         }
         var items = reader.Deserialize<ItemDistributionConfig>("map_chance_percent: 60\n");
@@ -64,7 +65,7 @@ internal static class DistributionConfigTests
         var weapons = reader.Deserialize<WeaponDistributionConfig>("map_chance_percent: 55\n");
         check(weapons.MapChancePercent == 55 && weapons.MaxMapReplacements == 1 && weapons.MaxPlayerGrants == 1 && weapons.PlayerChancePercent == 15 && weapons.PlayerDelaySeconds == 1,
             "partial weapon YAML cannot fall back to the more generous item limits");
-        check(weapons.MapRules.Select(r => r.CustomId).SequenceEqual(new uint[] { 7201, 7202, 7203 }) && Valid(weapons, true), "partial weapon YAML retains its safe native firearm pool");
+        check(weapons.MapRules.Select(r => r.CustomId).SequenceEqual(new uint[] { 7201, 7202, 7203, 7207, 7208 }) && Valid(weapons, true), "partial weapon YAML retains its safe native firearm pool");
         var empty = reader.Deserialize<ItemDistributionConfig>("map_rules: []\nplayer_rules: []\n");
         check(empty.MapRules.Count == 0 && empty.PlayerRules.Count == 0 && Valid(empty), "explicit empty YAML pools remain empty rather than being repopulated");
         var custom = reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7113\n  source_types: [GrenadeHE]\nplayer_rules:\n- custom_id: 7108\n  roles: [ClassD]\n  replace_types: []\n");
@@ -79,7 +80,7 @@ internal static class DistributionConfigTests
         check(!Valid(reader.Deserialize<WeaponDistributionConfig>("player_rules:\n- custom_id: 7109\n"), true), "a weapon config cannot issue another provider's custom IDs");
         check(!Valid(reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7109\n  source_types: []\n")), "map rules require explicit native source bodies");
         items.MapRules.Clear();
-        check(new ItemDistributionConfig().MapRules.Count > 0 && new WeaponDistributionConfig().MapRules.Count == 3, "provider defaults never share mutable rule-list instances");
+        check(new ItemDistributionConfig().MapRules.Count > 0 && new WeaponDistributionConfig().MapRules.Count == 5, "provider defaults never share mutable rule-list instances");
     }
 }
 #endif

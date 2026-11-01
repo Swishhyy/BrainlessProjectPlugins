@@ -26,6 +26,12 @@ namespace Brainless.Items
 
     public sealed class Config : Exiled.API.Interfaces.IConfig
     {
+        public Config()
+        {
+            Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
+            Distribution.PrepareChances();
+        }
+
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
@@ -177,6 +183,7 @@ namespace Brainless.Items
             AudioBalanceRevision = Tuning.UpgradeAudio(AudioBalanceRevision);
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
+            Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
             Distribution.Validate(id => id >= 7101 && id <= 7122 && id != 7110);
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");

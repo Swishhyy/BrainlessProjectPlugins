@@ -74,13 +74,14 @@ namespace Brainless.Internal
         private void GiveSpawn(Player player, PlayerRoles.PlayerRoleBase life)
         {
             var settings = config();
-            if (disposed || !Round.IsStarted || !settings.Enabled || !settings.PlayerLoadouts || !player.IsConnected || !player.IsAlive || !player.IsHuman || player.IsCuffed || player.Role.Base != life || !ledger.CanGive(player.UserId, settings.MaxPlayerGrants, settings.MaxGrantsPerPlayer) || (settings.SkipPlayersWithCustomItems && player.Items.Any(i => IsCustom(i.Serial))) || !DistributionRules.Roll(settings.PlayerChancePercent, random))
+            if (disposed || !Round.IsStarted || !settings.Enabled || !settings.PlayerLoadouts || !player.IsConnected || !player.IsAlive || !player.IsHuman || player.IsCuffed || player.Role.Base != life || !ledger.CanGive(player.UserId, settings.MaxPlayerGrants, settings.MaxGrantsPerPlayer) || (settings.SkipPlayersWithCustomItems && player.Items.Any(i => IsCustom(i.Serial))))
                 return;
             var providers = content().ToDictionary(c => c.Id);
-            var rule = Rules.ChooseEligible(settings.PlayerRules, r => providers.TryGetValue(r.CustomId, out var c) && c.CanIssue() && (r.Roles.Count == 0 || r.Roles.Contains(player.Role.Type)) && (r.ReplaceTypes.Count == 0 ? player.Items.Count + c.RequiredSlots <= 8 : player.Items.Count + c.RequiredSlots - 1 <= 8 && player.Items.Any(i => i.Type == c.Body && r.ReplaceTypes.Contains(i.Type) && !IsCustom(i.Serial))), r => r.Weight, random);
-            if (rule == null)
+            var rule = DistributionRules.ChoosePercent(settings.PlayerRules.Where(r => r.Roles.Count == 0 || r.Roles.Contains(player.Role.Type)), r => r.ChancePercent.Value, random.NextDouble() * 100);
+            if (rule == null || !providers.TryGetValue(rule.CustomId, out var selected) || !selected.CanIssue())
                 return;
-            var selected = providers[rule.CustomId];
+            if (player.Items.Count + selected.RequiredSlots - (rule.ReplaceTypes.Count > 0 ? 1 : 0) > 8)
+                return;
             Item original = rule.ReplaceTypes.Count == 0 ? null : player.Items.FirstOrDefault(i => i.Type == selected.Body && rule.ReplaceTypes.Contains(i.Type) && !IsCustom(i.Serial));
             if (rule.ReplaceTypes.Count > 0 && original == null)
                 return;
@@ -108,12 +109,11 @@ namespace Brainless.Internal
                 {
                     if (ledger.MapAwards >= settings.MaxMapReplacements)
                         break;
-                    if (!slot.Available || !ledger.CanPlace(slot.Room, settings.MaxMapItemsPerRoom) || !DistributionRules.Roll(settings.MapChancePercent, random))
+                    if (!slot.Available || !ledger.CanPlace(slot.Room, settings.MaxMapItemsPerRoom))
                         continue;
-                    var rule = Rules.ChooseEligible(settings.MapRules, r => providers.TryGetValue(r.CustomId, out var c) && c.Body == slot.Pickup.Type && c.CanIssue() && Matches(r, slot), r => r.Weight, random);
-                    if (rule == null)
+                    var rule = DistributionRules.ChoosePercent(settings.MapRules.Where(r => Matches(r, slot)), r => r.ChancePercent.Value, random.NextDouble() * 100);
+                    if (rule == null || !providers.TryGetValue(rule.CustomId, out var selected) || selected.Body != slot.Pickup.Type || !selected.CanIssue())
                         continue;
-                    var selected = providers[rule.CustomId];
                     string failure = null;
                     ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, settings.MaxMapReplacements, false, () =>
                     {
@@ -134,10 +134,10 @@ namespace Brainless.Internal
                     break;
                 if (!slot.Available || slot.Chamber != null || !slot.Pickup.IsSpawned || slot.Pickup.IsLocked || !ledger.CanPlace(slot.Room, settings.MaxMapItemsPerRoom))
                     continue;
-                var rule = Rules.ChooseEligible(settings.MapRules, r => providers.TryGetValue(r.CustomId, out var c) && c.CanIssue() && Matches(r, slot), r => r.Weight, random);
-                if (rule == null)
+                var rule = DistributionRules.ChoosePercent(settings.MapRules.Where(r => Matches(r, slot)), r => r.ChancePercent.Value, random.NextDouble() * 100);
+                if (rule == null || !providers.TryGetValue(rule.CustomId, out var selected) || !selected.CanIssue())
                     continue;
-                ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, extras, true, () => providers[rule.CustomId].Spawn(slot.Pickup.Position + Vector3.up * .12f) != null);
+                ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, extras, true, () => selected.Spawn(slot.Pickup.Position + Vector3.up * .12f) != null);
             }
 
             if (debug())

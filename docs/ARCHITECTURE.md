@@ -52,3 +52,7 @@ The shared updater uses a bounded internal JSON codec rather than DataContractJs
 ## Combined release packaging
 
 All eight projects build in separate jobs and upload separate verified artifacts. One publication job waits for the complete successful selection, checks every component pair, then uploads the individual DLLs/manifests and an optional all-plugins install ZIP to a single draft release. Publication happens only after all uploads succeed. Shared release tags identify source commits; each component retains its numeric assembly version. Existing updaters select their own named assets and never download the ZIP or install another plugin.
+
+## Direct equipment percentages
+
+Items/Weapons 0.6.0 compile their own source copy of the distribution percentage selector. One roll allocates fixed shares per map source/zone or matching human spawn; eligibility/supply is checked after selection so unavailable entries do not inflate peers. Matching pools are validated at 100% maximum. Null legacy fields use a conservative largest-overlap weight denominator; explicit entries bypass old global gates. Extra-drop anchors use the map-rule shares. These rules do not change fixed role kits, admin issuance or separate crafting rolls. No other plugin gains a runtime dependency.
