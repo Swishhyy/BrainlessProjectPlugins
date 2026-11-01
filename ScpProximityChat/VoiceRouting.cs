@@ -9,7 +9,7 @@ using VoiceChat.Networking;
 
 namespace Brainless.ScpProximityChat
 {
-    [HarmonyPatch(typeof(VoiceTransceiver), nameof(VoiceTransceiver.ServerReceiveMessage))]
+    [HarmonyPatch(typeof(VoiceTransceiver), "ServerReceiveMessage")]
     internal static class VoiceRouting
     {
         // Replace only the final, already-validated send. Sender identity, rate limit,

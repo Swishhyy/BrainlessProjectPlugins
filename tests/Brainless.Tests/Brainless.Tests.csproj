@@ -61,7 +61,7 @@
   </ItemGroup>
   <Target Name="PrepareNativeConfigReferences" BeforeTargets="ResolveAssemblyReferences" Condition="Exists('$(ReferencesPath)/YamlDotNet.dll')">
     <MakeDir Directories="$(NativeConfigReferencesPath)" />
-    <Copy SourceFiles="$(ReferencesPath)/Assembly-CSharp-Publicized.dll" DestinationFiles="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" />
+    <Copy SourceFiles="$(ReferencesPath)/Assembly-CSharp.dll" DestinationFiles="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" />
   </Target>
   <Target Name="CopyUpdateFixtures" AfterTargets="Build">
     <Copy SourceFiles="../Fixtures/Old/bin/$(Configuration)/net8.0/Brainless.UpdateFixture.dll" DestinationFolder="$(OutDir)Fixtures/Old" />

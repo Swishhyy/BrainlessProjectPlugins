@@ -33,7 +33,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 5, 0);
+        public override Version Version => new Version(0, 5, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -515,7 +515,7 @@ namespace Brainless.Roles
 
                 if (player.Role.Type == RoleTypeId.Scp0492)
                     zombieHistory[player.UserId] = definition;
-                player.CustomInfo = $"{definition.Name} [{definition.Id}]";
+                player.CustomInfo = ValidCustomInfo(definition.Name);
                 if (definition.Neutral)
                     ConfigureRogue(player, state);
                 if (customSpawn.HasValue)
@@ -597,7 +597,7 @@ namespace Brainless.Roles
             ev.IsAllowed = false;
             var replacement = Exiled.API.Features.Pickups.Pickup.CreateAndSpawn(ItemType.KeycardGuard, ev.Pickup.Position);
             ev.Pickup.Destroy();
-            Scp914.Scp914Upgrader.ProcessPickup(replacement.Base, true, ev.KnobSetting);
+            Native914.ProcessPickup(replacement.Base, true, ev.KnobSetting);
         }
 
         private void UpgradeInventory(UpgradingInventoryItemEventArgs ev)
@@ -607,11 +607,7 @@ namespace Brainless.Roles
             ev.IsAllowed = false;
             ev.Player.RemoveItem(ev.Item);
             var replacement = ev.Player.AddItem(ItemType.KeycardGuard);
-            if (Scp914.Scp914Upgrader.TryGetProcessor(replacement.Type, out var processor))
-            {
-                var result = processor.UpgradeInventoryItem(ev.KnobSetting, replacement.Base);
-                Scp914.Processors.Scp914ItemProcessor.ProcessResultingItem(replacement.Base, result, ev.KnobSetting);
-            }
+            Native914.ProcessInventory(replacement.Base, ev.KnobSetting);
         }
 
         private void Remove(Player player)
@@ -643,9 +639,10 @@ namespace Brainless.Roles
             player.Health = Math.Min(player.Health, player.MaxHealth);
             player.MaxHumeShield = state.MaxShield;
             player.Scale = state.Scale;
-            player.CustomInfo = state.Info;
+            player.CustomInfo = ValidCustomInfo(state.Info);
         }
 
+        private static string ValidCustomInfo(string value) => string.IsNullOrEmpty(value) || NicknameSync.ValidateCustomInfo(value, out _) ? value ?? "" : "";
         private IEnumerator<float> Tick()
         {
             while (true)
@@ -864,8 +861,8 @@ namespace Brainless.Roles
         {
             var player = Player.Get(__instance.Owner);
             float factor = Plugin.Instance?.Traits(player)?.AttackCooldownMultiplier ?? 1;
-            if (factor != 1 && player.Role is Scp049Role doctor && doctor.RemainingAttackCooldown > Scp049AttackAbility.CooldownTime - .1f)
-                doctor.RemainingAttackCooldown = Scp049AttackAbility.CooldownTime * factor;
+            if (factor != 1 && player.Role is Scp049Role doctor && doctor.RemainingAttackCooldown > ScpPrivateAccess.AttackCooldown - .1f)
+                doctor.RemainingAttackCooldown = ScpPrivateAccess.AttackCooldown * factor;
         }
     }
 }

@@ -8,6 +8,7 @@ internal static class MetadataContracts
 {
     internal static void Run(string root, Action<bool, string> check)
     {
+        RuntimeAccessContracts.Run(root, check);
         using var stream = File.OpenRead(Path.Combine(root, ".build", "references", "Assembly-CSharp-Publicized.dll"));
         using var pe = new PEReader(stream);
         var md = pe.GetMetadataReader();

@@ -57,13 +57,14 @@ internal static class InfectionTests
         invalid = false; try { config.Validate(); } catch (InvalidOperationException) { invalid = true; }
         check(invalid, "the survivor side cannot be configured as another SCP faction");
         var native = (PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler));
-        native.Subtype = PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Slap;
+        typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler).GetProperty("Subtype").SetValue(native, PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Slap);
         check(NativeAttack.Classify(native) == InfectionAttack.Slap, "the actual game slap handler is recognized as an infection source");
-        native.Subtype = PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Strangulation;
+        typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler).GetProperty("Subtype").SetValue(native, PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Strangulation);
         check(NativeAttack.Classify(native) == InfectionAttack.Strangulation, "the actual game strangulation handler is recognized as an infection source");
-        native.Subtype = PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.SkinSteal;
+        typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler).GetProperty("Subtype").SetValue(native, PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.SkinSteal);
         check(NativeAttack.Classify(native) == InfectionAttack.Other && NativeAttack.Classify(null) == InfectionAttack.Other, "skin stealing and absent damage handlers do not count as killing attacks");
-        native.Subtype = PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Slap; native.StartingRagdoll = true;
+        typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler).GetProperty("Subtype").SetValue(native, PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Slap);
+        typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler).GetProperty("StartingRagdoll").SetValue(native, true);
         check(NativeAttack.Classify(native) == InfectionAttack.Other, "synthetic starting-ragdoll data cannot infect a player");
     }
 #endif

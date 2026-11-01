@@ -1,4 +1,12 @@
-# Weapons 0.6.1
+# Weapons 0.6.2
+
+Native private SCP-914 weapon normalization methods now use cached reflection. Launcher environment damage and finite-ammo behavior remain.
+
+All projects now compile against the original game assembly rather than the publicized reference, so unsupported direct private access fails during compilation. Native private patch targets are located by reflection. Updater mismatch messages report both the release target and running SCP:SL version; the exact-version compatibility guard remains.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. If the old updater is blocked by a version mismatch, this patch needs a manual download; confirm the actual game version before selecting a differently targeted build. Native smoke/role/SCP-914 behavior still requires live verification.
+
+## Previous: 0.6.1
 
 Launcher grenades now preserve native environment damage: breakable doors, destructible props and physics within the configured blast radius. `launcher_damage_environment` defaults to true. Native player targets are cleared before custom damage to prevent duplicate HE damage. Existing reduced player damage, sixteen-shot cap, fuses, radius and independent updater remain. Railgun impact blasts retain their previous behavior.
 

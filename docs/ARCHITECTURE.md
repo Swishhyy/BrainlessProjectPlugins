@@ -66,3 +66,9 @@ Roles 0.4.0 adds the fourteen SCP variants through per-profile typed traits. Nat
 Items 0.6.1 resolves utility grenades at the early native fuse event, before native flash/visual suppression. Payloads are consumed before dispatch and explicitly destroyed after cancellation, including failed effects. SCP-244 components stay enabled for native room/door bounds while only owned server growth/decay and exposure queries are overridden.
 
 Roles/Items/voice startup migrations atomically save only their YAML section, retaining peer sections verbatim and backing up the previous file. Concurrent file edits prevent replacement. Voice 0.2.0 exposes live gain/reload controls and extends the full-volume region without re-encoding or adding dependencies.
+
+## Runtime member access
+
+Server projects compile against the pinned original `Assembly-CSharp.dll`, retaining its actual public/private visibility. The publicized file is used only for metadata inspection of native behavior. Smoke writes size through the public EXILED pickup wrapper; private role timers and SCP-914 normalization methods use cached reflection. Native patch targets are resolved by name through Harmony rather than called directly. Regression checks inspect the original private setter/field shapes and compiled wrapper calls. This prevents a successful build against publicized members from hiding a later MethodAccessException or FieldAccessException.
+
+Overhead role text uses the role name and native CustomInfo validation before assignment/restoration. The custom ID remains in the side HUD and admin inspection output. A server regex that rejects the role name suppresses that overhead label without changing role behavior.

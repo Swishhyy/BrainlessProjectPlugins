@@ -107,3 +107,11 @@ Keep a record of server version, enabled entries, player count, cause of death, 
 - Detonate Cluster 7102 near ordinary breakable doors and glass. Check the parent and all children can damage the environment within their own radius. Launcher 7207 must do the same while retaining sixteen shots and its reduced player damage. Test SCP/armor, cover, owner damage and shared cluster caps; no second vanilla player hit or native HE status effects should appear. Native immune gates/elevators stay protected.
 - Cancel the native early/EXILED explosion event and verify no custom blast or environment damage. Cancel door damage separately; native vetoes/ignored damage must remain. Disable each environment toggle and confirm player damage remains unchanged while environment effects stop. Railgun/Impact/Z04 behavior should remain as before.
 - Start from Items catalog revision 5 with the stock eight-second brace. After restart, confirm revision 6, a config backup and a 25-second hold. Edited lifetimes and per-item overrides must remain. Deployment/removal still take two/three seconds; expiry/reset/unload must release only the brace's own restriction.
+
+## Runtime access hotfix
+
+- On an unmodified dedicated server, throw Smoke 7101 and Bio 7118. Confirm full-size native SCP-244 fog appears, expires and cleans up, without `set_CurrentSizePercent` access errors. Test existing and late-joining clients, filter exposure, reset and unload.
+- Test Escape's 173 kill refresh, Anger Issue rage transition, Wormhole/Hyper vigor and Mimic intercom. No private-field/Owner access exceptions should appear, and native cancellation/mute checks must remain.
+- Run Guard badge, utility and finite/custom weapon items through SCP-914 as inventory and pickups. Normalization must preserve the intended recipe/serial/ammo behavior without private-method exceptions or recursive upgrade loops.
+- Inspect every role overhead label with the stock and a stricter CustomInfo regex. Rejected names must hide only that label; the side HUD and role IDs in admin output remain. Death/role change restores only native-valid prior text.
+- Confirm the updater still refuses a genuinely different game version, now showing both target and running numbers. Test matching versions, bad tokens and server restart independently. CedMod verification is outside these plugin access fixes.

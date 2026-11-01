@@ -18,7 +18,7 @@ namespace Brainless.Items
             try
             {
                 harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), nameof(Scp244DeployablePickup.FogPercentForPoint)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(VisualOnly)));
-                harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), nameof(Scp244DeployablePickup.UpdateRange)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(KeepFullSize)));
+                harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), "UpdateRange"), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(KeepFullSize)));
             }
             catch
             {
@@ -38,7 +38,7 @@ namespace Brainless.Items
                 // Use the native FULL-size fog instead of a small size percentage
                 // which can sit below the prefab's particle-emission threshold.
                 pickup.State = Scp244State.Active;
-                pickup.Base.CurrentSizePercent = 1;
+                pickup.CurrentSizePercent = 1;
                 pickup.Base.Network_syncSizePercent = byte.MaxValue;
                 // Leave the component enabled: native UpdateCurrentRoom and
                 // UpdateConditions must initialize the fog bounds on both ends.
@@ -108,7 +108,8 @@ namespace Brainless.Items
         {
             if (!NetworkServer.active || !owned.ContainsKey(__instance))
                 return true;
-            __instance.CurrentSizePercent = 1;
+            if (Pickup.Get(__instance)is Scp244Pickup pickup)
+                pickup.CurrentSizePercent = 1;
             __instance.Network_syncSizePercent = byte.MaxValue;
             return false;
         }

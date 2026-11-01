@@ -38,7 +38,7 @@ def fetch(destination):
                     if member.isfile() and member.name.endswith('.dll'):
                         stream = archive.extractfile(member)
                         (destination/pathlib.PurePosixPath(member.name).name).write_bytes(stream.read())
-    for required in ['Exiled.API.dll', 'Exiled.Events.dll', 'Exiled.CustomItems.dll', 'Assembly-CSharp-Publicized.dll']:
+    for required in ['Exiled.API.dll', 'Exiled.Events.dll', 'Exiled.CustomItems.dll', 'Assembly-CSharp.dll', 'Assembly-CSharp-Publicized.dll']:
         if not (destination/required).is_file():
             raise RuntimeError(f'Missing build input: {required}')
     (destination/'versions.txt').write_text('EXILED 9.15.2\nSCP SL 14.2.8 reference snapshot\n')

@@ -1,4 +1,12 @@
-# SlFixes 0.3.0
+# SlFixes 0.3.1
+
+Gameplay behavior is unchanged; this build includes the runtime-visibility build guard and clearer updater diagnostics.
+
+All projects now compile against the original game assembly rather than the publicized reference, so unsupported direct private access fails during compilation. Native private patch targets are located by reflection. Updater mismatch messages report both the release target and running SCP:SL version; the exact-version compatibility guard remains.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. If the old updater is blocked by a version mismatch, this patch needs a manual download; confirm the actual game version before selecting a differently targeted build. Native smoke/role/SCP-914 behavior still requires live verification.
+
+## Previous: 0.3.0
 
 Adds escorted military recruitment at the normal surface escape zone. A living Chaos captor can convert cuffed MTF/Guards to Chaos Conscript; a living Guard/MTF captor can convert cuffed Chaos to MTF Private. Roles 0.5.0 Rogues can be recruited by either side. Default minimum time alive is ten seconds. Enable state, delay and destination military roles are configurable; ordinary Class-D/Scientist escape rules remain native. Later escape-event handlers can still cancel a conversion.
 
