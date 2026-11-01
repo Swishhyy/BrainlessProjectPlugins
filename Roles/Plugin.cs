@@ -751,7 +751,7 @@ namespace Brainless.Roles
         private void Died(DiedEventArgs ev) => Safe.Run(() =>
         {
             poisons.Remove(ev.Player);
-            RefreshBreakneck(ev);
+            Safe.Run(() => RefreshBreakneck(ev));
             if (!pendingBursts.Confirm(ev.Player, p => p.Event.IsAllowed && ev.TargetOldRole == p.NativeRole, out var pending))
                 return;
             var tuning = pending.Tuning;

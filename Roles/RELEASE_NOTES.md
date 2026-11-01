@@ -1,6 +1,6 @@
 # Roles 0.5.1
 
-Fixes private access in SCP-173 breakneck refresh and SCP-096 rage timing, and uses the public SCP-106 vigor API. Native CustomInfo validation now checks role-name-only overhead labels; IDs remain in the HUD/admin output. Guard-card SCP-914 normalization uses cached reflection for native private upgrade methods.
+Fixes private access in SCP-173 breakneck refresh and SCP-096 rage timing, and uses the public SCP-106 vigor API. Breakneck refresh errors are isolated so they cannot stop pending explosive-death bursts. Native CustomInfo validation now checks role-name-only overhead labels; IDs remain in the HUD/admin output. Guard-card SCP-914 normalization uses cached reflection for native private upgrade methods.
 
 All projects now compile against the original game assembly rather than the publicized reference, so unsupported direct private access fails during compilation. Native private patch targets are located by reflection. Updater mismatch messages report both the release target and running SCP:SL version; the exact-version compatibility guard remains.
 
