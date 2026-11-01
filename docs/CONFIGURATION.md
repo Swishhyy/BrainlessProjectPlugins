@@ -33,6 +33,14 @@ Edit existing entries to retain your other settings. Replacing a whole list with
 
 Missing/null old percentages derive two-decimal values from old budgets/selection weights. Explicit percentages override those legacy settings. The `weight` on the catalog item itself is carrying weight, not spawn chance. Item/weapon chance fields affect natural map loot, extra drops and starting gear; role kits, admin grants and SCP-914 recipe chances are separate.
 
+## Role traits, HUD and voice
+
+Each role now has editable `traits` beside its `chance_percent`. Use the [content page](CATALOG.md) for the 49 role IDs. `allow_model_scaling` controls model size; `explosive_scp173` controls Boom Boom. The HUD uses `role_hud_edge_padding_percent: 0.5`; set `0` for the border.
+
+SCP voice uses `volume: 10`, `full_volume_range: 12` and `voice_range: 16`. Try `bpscpchat volume <0-20>` live; save the chosen `volume` in YAML and run `bpscpchat reload` to retain it. Permission: `brainless.scpchat.configure`.
+
+This update saves migrated Roles, Items and voice fields into your existing file with a `.before-brainless-migration` backup. Other plugin sections remain verbatim. New SCP profiles append once; existing custom chance pools are preserved.
+
 ## Reloads and updates
 
 Save YAML, then run the matching reload command. Rejected edits leave the active config intact. Changing registered enabled states, IDs or native bodies requires a full restart. Updates download automatically when configured and load on the next full server restart; they do not force a restart.

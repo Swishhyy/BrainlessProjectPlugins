@@ -18,6 +18,7 @@ namespace Brainless.Items
             try
             {
                 harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), nameof(Scp244DeployablePickup.FogPercentForPoint)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(VisualOnly)));
+                harmony.Patch(AccessTools.Method(typeof(Scp244DeployablePickup), nameof(Scp244DeployablePickup.UpdateRange)), prefix: new HarmonyMethod(typeof(NativeSmoke), nameof(KeepFullSize)));
             }
             catch
             {
@@ -39,9 +40,9 @@ namespace Brainless.Items
                 pickup.State = Scp244State.Active;
                 pickup.Base.CurrentSizePercent = 1;
                 pickup.Base.Network_syncSizePercent = byte.MaxValue;
-                // Stop only the server's native lifetime from overwriting size.
-                // Clients keep the original renderer, room bounds and particles.
-                pickup.Base.enabled = false;
+                // Leave the component enabled: native UpdateCurrentRoom and
+                // UpdateConditions must initialize the fog bounds on both ends.
+                // Only its server-side growth/decay is replaced for owned clouds.
                 pickup.Spawn(position);
                 pickup.Base.Network_syncState = (byte)Scp244State.Active;
                 pickup.Base.Network_syncSizePercent = byte.MaxValue;
@@ -100,6 +101,15 @@ namespace Brainless.Items
             // This is a server-only exposure query. Native client fog rendering is
             // untouched; ordinary unfiltered SCP-244 keeps its normal behavior.
             __result = 0;
+            return false;
+        }
+
+        private static bool KeepFullSize(Scp244DeployablePickup __instance)
+        {
+            if (!NetworkServer.active || !owned.ContainsKey(__instance))
+                return true;
+            __instance.CurrentSizePercent = 1;
+            __instance.Network_syncSizePercent = byte.MaxValue;
             return false;
         }
     }

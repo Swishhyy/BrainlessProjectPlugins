@@ -175,7 +175,8 @@ namespace Brainless.Items
             Brainless.Internal.Tuning.Validate(Tuning, "tuning");
             Tuning.Supply.PairGasWithFilter = false;
             Tuning.GasGrenade.Upgrade(CatalogRevision);
-            CatalogRevision = Math.Max(4, CatalogRevision);
+            Tuning.ContainmentFoam.Upgrade(CatalogRevision);
+            CatalogRevision = Math.Max(5, CatalogRevision);
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();

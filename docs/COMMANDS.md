@@ -17,6 +17,9 @@
 | `bproles [playerID]` | Lists roles, active percentages and blocked reasons | `brainless.roles` |
 | `bprole set <roleID> [playerID]` | Assigns a custom profile for testing | `brainless.roles` |
 | `bprole reload` | Applies role config edits | `brainless.roles` |
+| `bpscpchat status` | Shows active speech gain and range | `brainless.scpchat.configure` |
+| `bpscpchat volume <0-20>` | Changes speech volume immediately; default 10 | `brainless.scpchat.configure` |
+| `bpscpchat reload` | Applies saved voice settings to active speakers | `brainless.scpchat.configure` |
 | `bpitems chances` | Shows map/starting-gear item percentages | `brainless.items.configure` |
 | `bpitems reload` | Applies item config edits | `brainless.items.configure` |
 | `bpweapons chances` | Shows map/starting-gear weapon percentages | `brainless.weapons.configure` |

@@ -107,6 +107,24 @@ namespace Brainless.Items
 
     public sealed class FoamTuning : FieldTuning
     {
+        public FoamTuning()
+        {
+            DurationSeconds = 8;
+            HumanSlowPercent = 25;
+            ScpSlowPercent = 15;
+        }
+
+        internal void Upgrade(int catalogRevision)
+        {
+            if (catalogRevision >= 5)
+                return;
+            if (DurationSeconds == 6)
+                DurationSeconds = 8;
+            if (HumanSlowPercent == 10)
+                HumanSlowPercent = 25;
+            if (ScpSlowPercent == 8)
+                ScpSlowPercent = 15;
+        }
     }
 
     public class BlastTuning

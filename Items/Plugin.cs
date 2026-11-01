@@ -32,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 0);
+        public override Version Version => new Version(0, 6, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -42,8 +42,7 @@ namespace Brainless.Items
         private readonly FragProjectiles fragments = new FragProjectiles();
         private readonly Dictionary<uint, RegisteredItem> registered = new Dictionary<uint, RegisteredItem>();
         private readonly Dictionary<int, int> charges = new Dictionary<int, int>();
-        private readonly Dictionary<int, Payload> thrown = new Dictionary<int, Payload>();
-        private readonly HashSet<int> smokeProjectiles = new HashSet<int>();
+        private readonly GrenadeFuses<Payload> thrown = new GrenadeFuses<Payload>();
         private readonly Dictionary<Player, Channel> channels = new Dictionary<Player, Channel>();
         private readonly HashSet<Player> keyHeld = new HashSet<Player>();
         private readonly Dictionary<Player, float> filters = new Dictionary<Player, float>();
@@ -60,6 +59,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
+            bool migrateConfig = Config.CatalogRevision < 5;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -90,8 +90,8 @@ namespace Brainless.Items
             P.ChangingRole += RoleChanged;
             P.Left += Left;
             P.ChangingItem += Selected;
-            M.ExplodingGrenade += Exploding;
-            M.SpawningGrenadeEffect += GrenadeEffect;
+            M.ExplodingGrenade.Subscribe(Exploding, -1000);
+            M.SpawningGrenadeEffect.Subscribe(GrenadeEffect, -1000);
             M.ChangedIntoGrenade += ChangedIntoGrenade;
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
@@ -107,6 +107,8 @@ namespace Brainless.Items
             NativeSmoke.Enable();
             distribution = new NaturalDistribution("Items", lifetime, () => Config.Distribution, NaturalContent, () => Config.WorldLoot ? Config.Tuning.Supply.WorldLootCount : 0, () => Config.Debug);
             Instance = this;
+            if (migrateConfig)
+                ConfigMigration.Save(this);
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Items", Config.AutoUpdate);
         }
@@ -169,7 +171,6 @@ namespace Brainless.Items
             devices.Clear();
             filters.Clear();
             thrown.Clear();
-            smokeProjectiles.Clear();
         }
 
         private void Reset()
@@ -691,13 +692,6 @@ namespace Brainless.Items
 
         private void Arm(RegisteredItem item, Projectile projectile, Player owner)
         {
-            if (item.Id == 7101 || item.Id == 7118)
-            {
-                int serial = projectile.Serial;
-                smokeProjectiles.Add(serial);
-                lifetime.Later((item.Id == 7118 ? Config.Sup.BioGrenade.FuseSeconds : Config.Tuning.GasGrenade.FuseSeconds) + 5, () => smokeProjectiles.Remove(serial));
-            }
-
             if (item.Id == 7113 && projectile is ExplosionGrenadeProjectile impact)
             {
                 var tuning = Config.Tuning.ImpactGrenade;
@@ -709,17 +703,7 @@ namespace Brainless.Items
 
             if (item.Id == 7102 && projectile is ExplosionGrenadeProjectile parent)
                 parent.MaxRadius = Config.Tuning.ClusterGrenade.ParentRadius;
-            thrown[projectile.Serial] = new Payload
-            {
-                Item = item,
-                Projectile = projectile,
-                Source = new DamageSource(owner),
-                Field = Config.Tuning.ContainmentFoam,
-                Gas = Config.Tuning.GasGrenade,
-                Cluster = Config.Tuning.ClusterGrenade,
-                Bio = Config.Sup.BioGrenade,
-                Echo = Config.Tuning.EchoCanister
-            };
+            thrown.Arm(projectile.Serial, new Payload { Item = item, Projectile = projectile, Source = new DamageSource(owner), Field = Config.Tuning.ContainmentFoam, Gas = Config.Tuning.GasGrenade, Cluster = Config.Tuning.ClusterGrenade, Bio = Config.Sup.BioGrenade, Echo = Config.Tuning.EchoCanister });
             if (projectile is TimeGrenadeProjectile timed)
                 timed.FuseTime = item.Id == 7118 ? Config.Sup.BioGrenade.FuseSeconds : item.Id == 7101 ? Config.Tuning.GasGrenade.FuseSeconds : item.Id == 7102 ? Config.Tuning.ClusterGrenade.FuseSeconds : item.Id == 7104 ? Config.Tuning.EchoCanister.FuseSeconds : Config.Tuning.ContainmentFoam.FuseSeconds;
         }
@@ -732,16 +716,37 @@ namespace Brainless.Items
                 return;
             }
 
-            if (ev.Projectile == null || !thrown.TryGetValue(ev.Projectile.Serial, out var payload))
+            if (ev.Projectile == null || !thrown.TryGet(ev.Projectile.Serial, out var payload) || payload.Item.Id != 7102)
                 return;
             bool allowed = ev.IsAllowed;
             ev.IsAllowed = false;
-            thrown.Remove(ev.Projectile.Serial);
-            RetireSerial(ev.Projectile.Serial);
-            Vector3 position = ev.Position;
-            // Native EffectGrenade.ServerFuseEnd already destroys the projectile.
-            if (!allowed)
+            // HE grenades reach this callback after native visual/target setup.
+            thrown.Resolve(ev.Projectile.Serial, allowed, p => Cluster(ev.Position, p.Source, p.Cluster, ev.TargetsToAffect), p => RetireSerial(ev.Projectile.Serial));
+        });
+        private void GrenadeEffect(SpawningGrenadeEffectEventArgs ev) => Safe.Run(() =>
+        {
+            if (ev.Projectile == null || !thrown.TryGet(ev.Projectile.Serial, out var payload))
                 return;
+            if (payload.Item.Id == 7102 && ev.IsAllowed)
+                return;
+            bool allowed = ev.IsAllowed;
+            ev.IsAllowed = false;
+            // ProjectileExploding is raised BEFORE native effects and before
+            // EXILED's flashbang ExplodingGrenade callback. Suppressing it and
+            // waiting for the latter silently prevented smoke from ever spawning.
+            // Resolve every utility grenade here, without a native flash or bang.
+            thrown.Resolve(ev.Projectile.Serial, allowed, p => DetonateUtility(p, ev.Position), p =>
+            {
+                RetireSerial(ev.Projectile.Serial);
+                // The cancelled native path does not destroy its projectile.
+                // Network destruction is safe here: native fuse handling returns
+                // immediately after the cancelled event, without reading it again.
+                if (p.Projectile.Base != null)
+                    p.Projectile.Destroy();
+            });
+        });
+        private void DetonateUtility(Payload payload, Vector3 position)
+        {
             switch (payload.Item.Id)
             {
                 case 7118:
@@ -751,35 +756,28 @@ namespace Brainless.Items
                     for (int i = 0; i < payload.Gas.SmokeEmitters; i++)
                         NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f + Vector3.right * (i % 2 == 0 ? .08f : -.08f), payload.Gas.DurationSeconds);
                     if (Config.Debug)
-                        Log.Info($"[Smoke 7101] Serial {ev.Projectile.Serial}: {payload.Gas.SmokeEmitters} full-size native emitters for {payload.Gas.DurationSeconds}s.");
+                        Log.Info($"[Smoke 7101] Serial {payload.Projectile.Serial}: {payload.Gas.SmokeEmitters} full-size native emitters for {payload.Gas.DurationSeconds}s.");
                     break;
                 case 7103:
                     float radius = payload.Field.Radius;
+                    Vector3 floor = Ground(position);
                     var field = new Field
                     {
-                        Position = position,
-                        Room = Room.Get(position),
+                        Position = floor,
+                        Room = Room.Get(floor + Vector3.up * .2f),
                         Source = payload.Source,
                         Expires = Time.time + payload.Field.DurationSeconds,
                         Radius = radius,
                         Tuning = payload.Field
                     };
                     fields.Add(field);
-                    field.Marker = World.Marker(lifetime, position + Vector3.up * .025f, new Color(.1f, .65f, .15f, .35f), new Vector3(radius * 2, .02f, radius * 2));
-                    World.Cue(position, "Containment foam - slow floor", 10);
-                    break;
-                case 7102:
-                    Cluster(position, payload.Source, payload.Cluster, ev.TargetsToAffect);
+                    field.Marker = World.Marker(lifetime, floor + Vector3.up * .025f, new Color(.1f, .65f, .15f, .35f), new Vector3(radius * 2, .02f, radius * 2));
+                    World.Cue(floor, "Containment foam - slow floor", 10);
                     break;
                 case 7104:
                     FxAudio.Play(lifetime, position, payload.Echo.DurationSeconds, "steps", volume: payload.Echo.AudioVolume, range: payload.Echo.AudioRange, fullVolumeRange: payload.Echo.AudioFullVolumeRange);
                     break;
             }
-        });
-        private void GrenadeEffect(SpawningGrenadeEffectEventArgs ev)
-        {
-            if (smokeProjectiles.Contains(ev.Projectile.Serial))
-                ev.IsAllowed = false;
         }
 
         internal bool FilterProtectsAt(Vector3 point) => filters.Any(pair => pair.Value > Time.time && pair.Key.IsConnected && pair.Key.IsAlive && (pair.Key.CameraTransform.position - point).sqrMagnitude < .001f);

@@ -29,7 +29,7 @@ usage = json.loads((root/'docs/content_usage.json').read_text())
 assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
 lines = ['# Project Brainless — What We Have', '',
          '[Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)', '',
-         'Current shipped content: **21 items, 8 weapons, 35 role profiles and 1 round event**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **21 items, 8 weapons, 49 role profiles and 1 round event**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
@@ -53,11 +53,10 @@ lines += ['', 'Redline and Ricochet require experimental weapons to be enabled. 
           '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
           '| ID | Role | What it does | How to use | Default status |', '| --- | --- | --- | --- | --- |']
 for role_id, name, base, hint in roles:
-    if role_id == 'Z01': hint = 'Extra health, but slower movement.'
     if role_id == 'Z02': hint = 'Faster zombie with less health and weaker attacks.'
     status = 'Off / event only' if role_id == 'Z05' else 'Opt-in' if role_id in ('D03', 'P03', 'Z02') else 'Enabled'
     lines.append(f'| {role_id} | {name} | {hint} | {usage["roles"][role_id]} | {status} |')
-lines += ['', 'Brute and Giant use normal-sized models by default. The extreme Muncher size/speed preset is optional. The additional Discord SCP-106/173/939/096 concepts are not shipped yet; see [role availability](ROLE_STATUS.md).', '',
+lines += ['', 'Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. New SCP-106/173/939/096 profiles have editable traits; see [role settings](CONFIGURATION.md).', '',
           '## Round events', '', '| Event | What happens | Staff controls |', '| --- | --- | --- |',
           '| Infection | Low-health SCP-3114 hunt humans. Their direct kills convert victims at the death point. Other deaths stay dead. | `bpevent infection next` or `bpevent infection start` |', '',
           'Infection defaults: 150 HP, zero shield, four living players minimum, automatic selection off. `bpevent status` checks it; `bpevent stop` stops rules, then restart the round for normal roles.', '',
@@ -83,20 +82,20 @@ for body, setting, ident, name in recipes:
     setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
     lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
-assert len(roles) == 35
+assert len(roles) == 49
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 21 items, 8 weapons, 35 roles, 1 event and 14 recipes; all have usage instructions.')
+print('Content page written: 21 items, 8 weapons, 49 roles, 1 event and 14 recipes; all have usage instructions.')
 
 # A separate operator-facing audit records why a correctly installed profile may
 # not appear. Runtime bproles remains the authority for edited server configs.
 source = (root/'Roles/RoleDefinition.cs').read_text()
 blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
 status = ['# Role availability audit', '',
-          'All 35 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
+          'All 49 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
           '## Shipped defaults', '',
           '| ID | Role | Chance % | Default status | Required custom equipment | Minimum players |',
           '| --- | --- | --- | --- | --- | --- |']
-assert len(blocks) == 35
+assert len(blocks) == 49
 known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
 for block in blocks:
     match = re.search(r'R\("([A-Z]\d\d)",\s*"([^"]+)"', block)
@@ -120,8 +119,6 @@ status += ['', '## Why a role can be absent', '',
            '- Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.', '',
            'All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.', '']
 audit = root/'docs/ROLE_STATUS.md'
-previous = audit.read_text() if audit.exists() else ''
-extra = previous.partition('## Additional Discord concepts not implemented')[2]
-if extra: status += ['## Additional Discord concepts not implemented'+extra]
+status += ['## SCP variants', '', 'The SCP-106, SCP-173, SCP-939 and SCP-096 profiles are now included. Their skills use normal SCP controls. Stalker and Ambusher reduce footsteps; they keep native ambient sounds. Mimic has a short sound cooldown and intercom access; normal intercom distance, mute and timing restrictions apply. Poison refreshes one effect, does not stack, and medical supplies cure it. Boom Boom uses its separate explosive_scp173 settings.', '', 'Brute, Giant, Muncher, Raisian and Alpha apply their configured model sizes when allow_model_scaling is true. Child, Tickler and Muncher remain opt-in; Doctor remains disabled/event-only.', '']
 audit.write_text('\n'.join(status))
-print('Role availability audit written with all 35 profiles and validated equipment IDs.')
+print('Role availability audit written with all 49 profiles and validated equipment IDs.')

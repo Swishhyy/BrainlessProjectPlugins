@@ -1,6 +1,6 @@
 # Role availability audit
 
-All 35 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.
+All 49 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.
 
 ## Shipped defaults
 
@@ -41,6 +41,20 @@ All 35 profiles have an implementation and compile against the pinned EXILED/gam
 | Z03 | Armored | 11.25 | Enabled; normal spawn roll | None | 0 |
 | Z04 | Explosive | 11.25 | Enabled; normal spawn roll | None | 0 |
 | Z05 | Doctor | 1 (event) | Disabled; event only; enable profile + both event/experimental switches | None | 12 |
+| L01 | Stalker | 7.5 | Enabled; normal spawn roll | None | 0 |
+| L02 | Wormhole | 7.5 | Enabled; normal spawn roll | None | 0 |
+| L03 | Hyper | 7.5 | Enabled; normal spawn roll | None | 0 |
+| L04 | Poisonous | 7.5 | Enabled; normal spawn roll | None | 0 |
+| B01 | Raisian | 7.5 | Enabled; normal spawn roll | None | 0 |
+| B02 | Escape's | 7.5 | Enabled; normal spawn roll | None | 0 |
+| B03 | Cocoon | 7.5 | Enabled; normal spawn roll | None | 0 |
+| B04 | Boom Boom | 7.5 | Enabled; normal spawn roll | None | 0 |
+| H01 | Ambusher | 7.5 | Enabled; normal spawn roll | None | 0 |
+| H02 | Alpha | 7.5 | Enabled; normal spawn roll | None | 0 |
+| H03 | Mimic | 7.5 | Enabled; normal spawn roll | None | 0 |
+| H04 | Venomous | 7.5 | Enabled; normal spawn roll | None | 0 |
+| R01 | Anger Issue | 15 | Enabled; normal spawn roll | None | 0 |
+| R02 | Ill Temperature | 15 | Enabled; normal spawn roll | None | 0 |
 
 ## Why a role can be absent
 
@@ -53,15 +67,8 @@ All 35 profiles have an implementation and compile against the pinned EXILED/gam
 
 All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.
 
-## Additional Discord concepts not implemented
+## SCP variants
 
-The 35-profile audit above covers the shipped catalog, not every role in the later Discord screenshot. These 14 additional concepts are not registered, cannot roll and have no `bprole set` IDs yet:
+The SCP-106, SCP-173, SCP-939 and SCP-096 profiles are now included. Their skills use normal SCP controls. Stalker and Ambusher reduce footsteps; they keep native ambient sounds. Mimic has a short sound cooldown and intercom access; normal intercom distance, mute and timing restrictions apply. Poison refreshes one effect, does not stack, and medical supplies cure it. Boom Boom uses its separate explosive_scp173 settings.
 
-| Native SCP | Missing profiles |
-| --- | --- |
-| SCP-106 | Stalker, Wormhole, Hyper, Poisonous |
-| SCP-173 | Raisian, Escape’s, Cocoon, Boom Boom |
-| SCP-939 | Ambusher, Alpha, Mimic, Venomous |
-| SCP-096 | Anger Issue, Ill Temperature |
-
-Existing Discord profiles use balanced reworks: Armored adds health rather than melee damage; Bomber is Explosive (Z04) and explodes on death. Brute currently has health/shield/speed traits without a taller model; Giant also uses the normal model size by default. Child, Tickler and Muncher remain opt-in; Doctor is disabled/event-only.
+Brute, Giant, Muncher, Raisian and Alpha apply their configured model sizes when allow_model_scaling is true. Child, Tickler and Muncher remain opt-in; Doctor remains disabled/event-only.

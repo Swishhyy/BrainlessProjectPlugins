@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 7);
+        public override Version Version => new Version(0, 2, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public static Plugin Instance { get; private set; }
 
@@ -42,10 +42,11 @@ namespace Brainless.ScpProximityChat
             var existing = ServerSpecificSettingsSync.DefinedSettings ?? Array.Empty<ServerSpecificSettingBase>();
             if (existing.Any(s => s != null && s.SettingId >= Config.SettingsIdBase && s.SettingId <= Config.SettingsIdBase + 3))
                 throw new InvalidOperationException("Nearby chat setting IDs collide with another plugin. Change settings_id_base.");
+            bool migrateConfig = Config.AudioBalanceRevision < VoiceAudio.Revision;
             Config.UpgradeAudio();
             Config.VoiceRange = Bounded(Config.VoiceRange, 5, 30, 16);
-            Config.FullVolumeRange = Bounded(Config.FullVolumeRange, .1f, Config.VoiceRange, Brainless.Internal.AudioRules.FullVolumeRange);
-            Config.Volume = Bounded(Config.Volume, 0, 10, VoiceAudio.DefaultVolume);
+            Config.FullVolumeRange = Bounded(Config.FullVolumeRange, .1f, Config.VoiceRange, VoiceAudio.DefaultFullVolumeRange);
+            Config.Volume = Bounded(Config.Volume, 0, VoiceAudio.MaximumVolume, VoiceAudio.DefaultVolume);
             Config.HintDurationSeconds = Bounded(Config.HintDurationSeconds, .5f, 10, 2);
             harmony = new Harmony("brainless.scp-proximity-chat");
             try
@@ -72,6 +73,8 @@ namespace Brainless.ScpProximityChat
                 tracker = Timing.RunCoroutine(TrackSpeakers());
                 ServerSpecificSettingsSync.SendToAll();
                 updates = PluginUpdates.Start(typeof(Plugin).Assembly, "ScpProximityChat", Config.AutoUpdate);
+                if (migrateConfig)
+                    Brainless.Internal.ConfigMigration.Save(this);
                 base.OnEnabled();
             }
             catch
@@ -126,8 +129,62 @@ namespace Brainless.ScpProximityChat
         private bool IsLocal(Player player) => Eligible(player) && states.TryGetValue(player, out var state) && state.Local;
         internal string AudioStatus(Player player)
         {
-            string active = speakers.TryGetValue(player, out var speaker) && speaker.Base != null ? speaker.Volume.ToString("0.##") + "x" : "inactive";
-            return $"Plugin {Version}; configured gain: {Config.Volume:0.##}x; active speaker gain: {active}; full-volume distance: {Config.FullVolumeRange:0.#}m; range: {Config.VoiceRange:0.#}m.";
+            string active = player == null ? "active speakers: " + speakers.Count : "active speaker gain: " + (speakers.TryGetValue(player, out var speaker) && speaker.Base != null ? speaker.Volume.ToString("0.##") + "x" : "inactive");
+            return $"Plugin {Version}; configured gain: {Config.Volume:0.##}x; {active}; full-volume distance: {Config.FullVolumeRange:0.#}m; range: {Config.VoiceRange:0.#}m.";
+        }
+
+        internal bool SetVolume(float volume, out string response)
+        {
+            if (float.IsNaN(volume) || float.IsInfinity(volume) || volume < 0 || volume > VoiceAudio.MaximumVolume)
+            {
+                response = "Use a volume from 0 to 20. Default: 10.";
+                return false;
+            }
+
+            Config.Volume = volume;
+            RefreshAudio();
+            response = AudioStatus(null) + " Live change only; put volume in the config to keep it after restart.";
+            return true;
+        }
+
+        internal bool ReloadAudio(out string response)
+        {
+            try
+            {
+                var next = Brainless.Internal.ConfigReload.Read(this);
+                if (!next.IsEnabled || next.SettingsIdBase != Config.SettingsIdBase || next.SuggestedKey != Config.SuggestedKey)
+                    throw new InvalidOperationException("Enabled state and keybind registration changes require a restart.");
+                next.UpgradeAudio();
+                if (float.IsNaN(next.Volume) || float.IsInfinity(next.Volume) || next.Volume < 0 || next.Volume > VoiceAudio.MaximumVolume || float.IsNaN(next.VoiceRange) || float.IsInfinity(next.VoiceRange) || next.VoiceRange < 5 || next.VoiceRange > 30 || float.IsNaN(next.FullVolumeRange) || float.IsInfinity(next.FullVolumeRange) || next.FullVolumeRange < .1f || next.FullVolumeRange > next.VoiceRange)
+                    throw new InvalidOperationException("Volume must be 0-20, range 5-30m, and full_volume_range between 0.1 and voice_range.");
+                Brainless.Internal.ConfigReload.Apply(Config, next);
+                RefreshAudio();
+                updates?.Dispose();
+                updates = PluginUpdates.Start(typeof(Plugin).Assembly, "ScpProximityChat", Config.AutoUpdate);
+                response = "SCP voice reloaded. " + AudioStatus(null);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                response = "Voice reload rejected: " + exception.Message;
+                return false;
+            }
+        }
+
+        private void RefreshAudio()
+        {
+            foreach (var pair in speakers.ToArray())
+            {
+                if (!IsLocal(pair.Key) || pair.Value.Base == null)
+                {
+                    ForgetSpeaker(pair.Key);
+                    continue;
+                }
+
+                pair.Value.Volume = Config.Volume;
+                pair.Value.MinDistance = Config.FullVolumeRange;
+                pair.Value.MaxDistance = Config.VoiceRange;
+            }
         }
 
         internal bool Select(Player player, bool local, out string response)

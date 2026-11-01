@@ -26,12 +26,12 @@ namespace Brainless.ScpProximityChat
         public float VoiceRange { get; set; } = 16;
 
         [Description("Distance in metres before nearby voice starts fading. Clamped to voice_range.")]
-        public float FullVolumeRange { get; set; } = AudioRules.FullVolumeRange;
+        public float FullVolumeRange { get; set; } = VoiceAudio.DefaultFullVolumeRange;
 
-        [Description("Native speaker gain (0-10). Values above 1 amplify the original microphone audio.")]
+        [Description("Native speaker gain (0-20). Default 10 amplifies nearby speech. bpscpchat volume changes it live; 0 mutes it.")]
         public float Volume { get; set; } = VoiceAudio.DefaultVolume;
 
-        [Description("Values below 2 upgrade old stock voice gains (1 or 3.5) and the old 2m full-volume distance. Set 2 to retain deliberately chosen old values.")]
+        [Description("Stock preset migration: revision 2 raises old gains; revision 3 extends full-volume speech to 12m. Set 3 to pin old distances.")]
         public int AudioBalanceRevision { get; set; }
 
         internal void UpgradeAudio()

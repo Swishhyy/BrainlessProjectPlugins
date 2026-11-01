@@ -39,7 +39,7 @@ namespace Brainless.Roles
                 string name = Escape(SingleLine(role?.Name ?? player.Role.Name));
                 string color = ColorUtility.ToHtmlStringRGB(player.Role.Color);
                 bool right = config.RoleHudSide == HudSide.Right;
-                float padding = Bounded(config.RoleHudEdgePaddingPercent, 0, 12, 3);
+                float padding = Bounded(config.RoleHudEdgePaddingPercent, 0, 12, .5f);
                 float width = Bounded(config.RoleHudWidthPercent, 20, 40, 30);
                 float opposite = 100 - width - padding;
                 float offset = Bounded(config.RoleHudVerticalOffset, -18, 8, 0) * 20;

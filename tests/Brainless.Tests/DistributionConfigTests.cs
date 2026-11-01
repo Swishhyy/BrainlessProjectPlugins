@@ -11,6 +11,7 @@ internal static class DistributionConfigTests
     internal static void Run(Action<bool, string> check)
     {
         LootChanceConfigTests.Run(check);
+        ConfigMigrationTests.Run(check);
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var gateway = Brainless.Core.DiscordProtocol.Read("{\"op\":10,\"d\":{\"heartbeat_interval\":41250}}");
@@ -35,7 +36,7 @@ internal static class DistributionConfigTests
         check(smokeLoot.MapRules[0].SourceTypes.Single() == ItemType.GrenadeFlash && smokeLoot.PlayerRules.Single().ReplaceTypes.Single() == ItemType.GrenadeFlash && smokeLoot.MapRules[1].SourceTypes.Single() == ItemType.GrenadeHE, "smoke crafting and natural loot use a flashbang body while cluster grenades keep HE bodies");
         var voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 1\nfull_volume_range: 2\n");
         voice.UpgradeAudio();
-        check(voice.Volume == 10 && voice.FullVolumeRange == 6 && voice.AudioBalanceRevision == 2, "old SCP voice YAML receives the stronger speech preset without deleting the server config");
+        check(voice.Volume == 10 && voice.FullVolumeRange == 12 && voice.AudioBalanceRevision == 3, "old SCP voice YAML receives the stronger speech preset without deleting the server config");
         voice = reader.Deserialize<Brainless.ScpProximityChat.Config>("volume: 0.5\nfull_volume_range: 4\n");
         voice.UpgradeAudio();
         check(voice.Volume == .5f && voice.FullVolumeRange == 4, "edited SCP voice gain and full-volume range survive the audio migration");

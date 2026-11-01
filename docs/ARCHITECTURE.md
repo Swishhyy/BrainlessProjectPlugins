@@ -56,3 +56,9 @@ All eight projects build in separate jobs and upload separate verified artifacts
 ## Direct equipment percentages
 
 Items/Weapons 0.6.0 compile their own source copy of the distribution percentage selector. One roll allocates fixed shares per map source/zone or matching human spawn; eligibility/supply is checked after selection so unavailable entries do not inflate peers. Matching pools are validated at 100% maximum. Null legacy fields use a conservative largest-overlap weight denominator; explicit entries bypass old global gates. Extra-drop anchors use the map-rule shares. These rules do not change fixed role kits, admin issuance or separate crafting rolls. No other plugin gains a runtime dependency.
+
+Roles 0.4.0 adds the fourteen SCP variants through per-profile typed traits. Native vigor/rage/intercom hooks keep native cancellation, range and mute checks. Poison uses one bounded lifetime per victim/life, clears on medical use and role change, and attributes damage to the source. Native hazard membership controls cloud exposure. Death bursts capture their original role before cleanup. Quiet-footstep leases restore stronger external effects.
+
+Items 0.6.1 resolves utility grenades at the early native fuse event, before native flash/visual suppression. Payloads are consumed before dispatch and explicitly destroyed after cancellation, including failed effects. SCP-244 components stay enabled for native room/door bounds while only owned server growth/decay and exposure queries are overridden.
+
+Roles/Items/voice startup migrations atomically save only their YAML section, retaining peer sections verbatim and backing up the previous file. Concurrent file edits prevent replacement. Voice 0.2.0 exposes live gain/reload controls and extends the full-volume region without re-encoding or adding dependencies.
