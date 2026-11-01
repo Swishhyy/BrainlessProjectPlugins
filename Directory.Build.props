@@ -42,6 +42,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Tuning.cs" Link="Internal/Tuning.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.RoundEvents'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Updates/*.cs" Link="Internal/Updates/%(Filename)%(Extension)" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/AudioRules.cs" Link="Internal/AudioRules.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigDocument.cs" Link="Internal/ConfigDocument.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigMigration.cs" Link="Internal/ConfigMigration.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ItemFiles.cs" Link="Internal/ItemFiles.cs" />

@@ -15,9 +15,11 @@
     <Compile Include="../../Shared/DistributionRules.cs" Link="DistributionRules.cs" />
     <Compile Include="../../Items/Tuning.cs" Link="ItemTuning.cs" />
     <Compile Include="../../Items/ImpactTrigger.cs" Link="ImpactTrigger.cs" />
+    <Compile Include="../../Items/GrenadeFuses.cs" Link="GrenadeFuses.cs" />
     <Compile Include="../../Weapons/Tuning.cs" Link="WeaponTuning.cs" />
     <Compile Include="../../Weapons/LauncherRules.cs" Link="LauncherRules.cs" />
     <Compile Include="../../Roles/ExplosiveZombieTuning.cs" Link="ExplosiveZombieTuning.cs" />
+    <Compile Include="../../Roles/ScpTraits.cs" Link="ScpTraits.cs" />
     <Compile Include="../../Roles/DeathCapture.cs" Link="DeathCapture.cs" />
     <Compile Include="../../Roles/CandyPool.cs" Link="CandyPool.cs" />
     <Compile Include="../../Roles/LockpickRules.cs" Link="LockpickRules.cs" />
@@ -42,6 +44,7 @@
     <Compile Include="../../RoundEvents/Config.cs" Link="RoundEventsConfig.cs" />
     <Compile Include="../../Roles/RoleDefinition.cs" Link="RoleDefinition.cs" />
     <Compile Include="../../Roles/Config.cs" Link="RolesConfig.cs" />
+    <Compile Include="../../Shared/ConfigDocument.cs" Link="ConfigDocument.cs" />
     <Compile Include="../../RoundEvents/NativeAttack.cs" Link="RoundEventsNativeAttack.cs" />
     <Compile Include="../../Shared/ItemFiles.cs" Link="ItemFiles.cs" />
     <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />

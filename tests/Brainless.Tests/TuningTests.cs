@@ -26,6 +26,18 @@ internal static class TuningTests
         var weapons = new WeaponTuning();
         var zombie = new ExplosiveZombieTuning();
         check(Valid(items) && Valid(weapons) && Valid(zombie), "all shipped tuning defaults validate");
+        var foam = new FoamTuning
+        {
+            DurationSeconds = 6,
+            HumanSlowPercent = 10,
+            ScpSlowPercent = 8
+        };
+        foam.Upgrade(4);
+        check(foam.DurationSeconds == 8 && foam.HumanSlowPercent == 25 && foam.ScpSlowPercent == 15, "old foam defaults migrate to a visible eight-second slowing field");
+        foam.HumanSlowPercent = 40;
+        foam.ScpSlowPercent = 0;
+        foam.Upgrade(4);
+        check(foam.HumanSlowPercent == 40 && foam.ScpSlowPercent == 0, "edited foam strength and an explicitly disabled SCP slow survive migration");
         check(items.ClusterGrenade.GrenadeCount == 4 && items.ClusterGrenade.HumanDamage == 120 && items.ClusterGrenade.Radius == 5.5f && items.ClusterGrenade.ParentHumanDamage == 180, "the stronger cluster retains four children with a stronger six-metre parent and larger child blasts");
         check(typeof(GasTuning).GetProperty("HumanDamagePerSecond") == null && typeof(GasTuning).GetProperty("HumanSlowPercent") == null && items.GasGrenade.DurationSeconds == 20 && !items.Supply.PairGasWithFilter, "smoke-only gas exposes no custom damage or slow fields and needs no paired filter");
         items.ClusterGrenade.GrenadeCount = 32;

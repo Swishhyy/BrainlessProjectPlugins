@@ -1,6 +1,6 @@
 # Balance and configuration
 
-Project Brainless Roles 0.2.5 and Items/Weapons 0.4.0 expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
+Project Brainless Roles, Items, Weapons and SCP proximity chat expose their gameplay settings in YAML. Each is a separate DLL and config section. No shared runtime plugin is required.
 
 ## Where to edit and apply
 
@@ -13,6 +13,7 @@ Save the file, then use Remote Admin:
 | `bpitems reload` | `brainless.items.configure` |
 | `bpweapons reload` | `brainless.weapons.configure` |
 | `bprole reload` | `brainless.roles` |
+| `bpscpchat reload` | `brainless.scpchat.configure` |
 
 Settings validate before application. Invalid YAML, null tuning sections, nonfinite numbers, unsupported IDs, duplicate names/IDs and unsafe numeric ranges reject the reload with a reason. A missing field uses its shipped default. These commands do not write over your YAML or reload another plugin.
 
@@ -78,7 +79,7 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 
 | Section / registry ID | Fields and shipped defaults |
 | --- | --- |
-| `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 6`, `radius: 3`, `human_slow_percent: 10`, `scp_slow_percent: 8`, both `*_damage_per_second: 0`, `affect_allies: false`, `affect_owner: true`, `same_room_only: true`, `require_line_of_sight: true` |
+| `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 8`, `radius: 3`, `human_slow_percent: 25`, `scp_slow_percent: 15`, both `*_damage_per_second: 0`, `affect_allies: false`, `affect_owner: true`, `same_room_only: true`, `require_line_of_sight: true` |
 | `echo_canister` / 7104 | `fuse_seconds: 1`, `duration_seconds: 6`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
 | `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 8`, `reach: 3` |
 | `signal_jammer` / 7106 | `deploy_seconds: 2`, `arming_seconds: 2`, `active_seconds: 6`, `room_cooldown_seconds: 30`, `remove_seconds: 2`, `max_active: 1` |
@@ -161,7 +162,7 @@ Items/Weapons 0.3.0 add `distribution` for weighted native pickup/locker replace
 
 This game build's native explosion constructor returns before setting damage/attacker when armor penetration is zero. Custom explosions now use valid penetration, default 50 to match native HE. Configure `armor_penetration` for Impact/Cluster and `explosive_zombie`, or root `launcher_armor_penetration` for the launcher. Valid range is 1-100; set the damage fields to zero when disabling damage. The force passed to the handler is now zero rather than world coordinates. Additional blast cover checks use the native HE blocker mask, allowing its normal wall/door cover behavior without treating loose pickup/ragdoll bodies as walls.
 
-Under Items/Weapons, `grenade_balance_revision: 0` (including a missing marker) upgrades individual fields that still exactly equal the former stock damage/radius/cap/timing values. Edited values and grenade counts survive. Items now migrates old cluster defaults through revision 2, including configs already at revision 1; Weapons retains revision 1 for its launcher. Migrations do not overwrite the YAML file. To deliberately retain old numeric values, save `grenade_balance_revision: 2` under Items or `grenade_balance_revision: 1` under Weapons. New cluster parent-blast fields default to the values above; set parent damage to zero to disable that stage. Queued projectiles keep captured tuning. Normal native armor, friendly-fire, god mode, spawn protection and damage-event rules remain.
+Under Items/Weapons, `grenade_balance_revision: 0` (including a missing marker) upgrades individual fields that still exactly equal the former stock damage/radius/cap/timing values. Edited values and grenade counts survive. Items now migrates old cluster defaults through revision 2, including configs already at revision 1; Weapons retains revision 1 for its launcher. Older grenade balance migrations apply in memory. Items 0.6.1 saves its pending catalog migration, including those values, with a config backup. To deliberately retain old numeric values, save `grenade_balance_revision: 2` under Items or `grenade_balance_revision: 1` under Weapons. New cluster parent-blast fields default to the values above; set parent damage to zero to disable that stage. Queued projectiles keep captured tuning. Normal native armor, friendly-fire, god mode, spawn protection and damage-event rules remain.
 
 ## Candy roles
 
@@ -181,7 +182,7 @@ tuning:
 
 Echo and Rattler retain independent `audio_volume: 2.5`, `audio_range: 16` and `audio_full_volume_range: 6` in their tuning sections. Gain accepts 0-10, with 0 muting that sound. The full-volume distance is clamped to the selected hearing radius. Existing untouched 0.65 Echo/Rattler gains migrate; custom values remain. Save `audio_balance_revision: 1` in the provider root when deliberately keeping an old gain. Native gunshot assets and client master/speaker sliders are unchanged.
 
-SCP proximity chat defaults to `volume: 3.5`, `full_volume_range: 6`, `voice_range: 16`. Gain accepts 0-10 through the native speaker's PCM multiplier. Old stock 1/2 values migrate automatically unless `audio_balance_revision: 1`; edited values and receive/mute controls survive. No microphone decoding/re-encoding or additional dependency is added. Confirm actual listening volume with two living clients after a full restart.
+SCP proximity chat defaults to `volume: 10`, `full_volume_range: 12`, `voice_range: 16`. Gain accepts 0-20 through the native speaker's PCM multiplier. Old stock gains migrate through revision 2; revision 3 upgrades stock 6m falloff to 12m. Edited values, pinned revisions and receive/mute controls survive. `bpscpchat volume <0-20>` changes live gain; save YAML and use `bpscpchat reload` to retain it. Both staff commands need `brainless.scpchat.configure`. No microphone decoding/re-encoding or additional dependency is added. Confirm actual listening volume with two living clients after a full restart.
 
 Door Jammer 7105 now uses `KeycardJanitor` instead of a coin. Equip it and interact with an ordinary closed door; the existing tool key also works. Timing, removal and duration still use `tuning.door_brace`. Catalog revision 2 migrates the old stock body/name/description and its single-coin distribution rules, without resetting edited timing, supply or removed loot lists. Body changes require a full restart.
 
@@ -194,3 +195,13 @@ Guard Captain card levels are native Containment 1 / Armory 2 / Administration 1
 ## Role percentages
 
 Roles 0.3.0 uses each entry's `chance_percent` directly, not legacy weight/family multiplication. Groups total at most 100 including disabled/experimental profiles; unused/blocked shares remain native. Doctor is a separate event roll. Missing/null old fields derive a nominal allocation from legacy settings. `bproles` shows active values; `bprole reload` validates and applies edits. See [STAFF_GUIDE.md](STAFF_GUIDE.md) for an example and [Roles](../Roles/README.md) for migration details.
+
+## SCP variants and role HUD
+
+Roles 0.4.0 includes 49 profiles. Each role has a `traits` section for recall/attack timings, attack damage, shield recharge rate/delay, vigor gain, quiet footsteps, poison, calm movement, rage windup, mimic cooldown, intercom access, explosion immunity and breakneck refresh. Multipliers default to 1; zero poison disables it. `quiet_footstep_stacks` reduces native footstep volume by 10% per stack (0-10); ambient SCP sounds remain native. Poison refreshes one effect and medical supplies cure it.
+
+`allow_model_scaling: true` applies each profile's `scale`; experimental profile gates remain separate. `explosive_scp173` controls Boom Boom's death burst, using the same fields as `explosive_zombie`. These profiles use normal SCP controls; test them with `bprole set <ID>`.
+
+The HUD defaults to `role_hud_edge_padding_percent: 0.5`; use `0` for the literal edge. `role_hud_layout_revision: 2` preserves deliberate old insets. Left/right, width, vertical position and description visibility remain editable.
+
+Startup migrations for Roles 0.4.0, Items 0.6.1 and SCP voice 0.2.0 save their new fields automatically and create a `.before-brainless-migration` backup. Peer-plugin sections remain verbatim. New SCP profiles append once (`role_catalog_revision: 1`); custom chance pools for those native SCPs are preserved by adding the new profiles at 0%. Save settings and use `bprole reload`; existing assigned stats keep their captured values until reassignment.

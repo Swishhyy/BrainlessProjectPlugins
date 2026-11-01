@@ -13,6 +13,8 @@ internal static class MetadataContracts
         var md = pe.GetMetadataReader();
         VoiceNativeContracts.Run(pe, md, check);
         ExplosionNativeContracts.Run(root, pe, md, check);
+        GrenadeNativeContracts.Run(pe, md, check);
+        ScpTraitNativeContracts.Run(pe, md, check);
         MethodDefinition Method(string ns, string name, string method)
         {
             var type = md.TypeDefinitions.Select(h => md.GetTypeDefinition(h)).Single(t => md.GetString(t.Namespace) == ns && md.GetString(t.Name) == name);

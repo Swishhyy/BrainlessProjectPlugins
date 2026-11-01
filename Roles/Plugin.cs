@@ -28,12 +28,12 @@ using FxAudio = Brainless.Internal.Audio;
 
 namespace Brainless.Roles
 {
-    public sealed class Plugin : Plugin<Config>
+    public sealed partial class Plugin : Plugin<Config>
     {
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 0);
+        public override Version Version => new Version(0, 4, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -60,6 +60,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
+            bool migrateConfig = Config.RoleCatalogRevision < 1 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -88,6 +89,7 @@ namespace Brainless.Roles
             P.Died += Died;
             Exiled.Events.Handlers.Map.ExplodingGrenade += BurstExploding;
             P.Hurting += Hurting;
+            SubscribeVariants();
             P.InteractingDoor += LockpickDoor;
             P.Left += Left;
             S.WaitingForPlayers += Reset;
@@ -97,6 +99,8 @@ namespace Brainless.Roles
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
             lifetime.Run(Tick());
+            if (migrateConfig)
+                ConfigMigration.Save(this);
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Roles", Config.AutoUpdate);
         }
@@ -111,6 +115,7 @@ namespace Brainless.Roles
             P.Died -= Died;
             Exiled.Events.Handlers.Map.ExplodingGrenade -= BurstExploding;
             P.Hurting -= Hurting;
+            UnsubscribeVariants();
             P.InteractingDoor -= LockpickDoor;
             P.Left -= Left;
             S.WaitingForPlayers -= Reset;
@@ -123,6 +128,7 @@ namespace Brainless.Roles
                 Remove(player);
             bursts.Clear();
             pendingBursts.Clear();
+            poisons.Clear();
             lifetime.Clear();
             lockpicking?.Clear();
             lockpicking = null;
@@ -144,6 +150,7 @@ namespace Brainless.Roles
             generations.Clear();
             bursts.Clear();
             pendingBursts.Clear();
+            poisons.Clear();
             reasons.Clear();
             zombieHistory.Clear();
             issued.Clear();
@@ -159,6 +166,7 @@ namespace Brainless.Roles
 
         private void Left(LeftEventArgs ev)
         {
+            ForgetPoisons(ev.Player);
             roleHud?.Forget(ev.Player);
             Remove(ev.Player);
             generations.Remove(ev.Player);
@@ -171,6 +179,7 @@ namespace Brainless.Roles
         {
             if (!ev.IsAllowed)
                 return;
+            poisons.Remove(ev.Player);
             roleHud?.Forget(ev.Player);
             Remove(ev.Player);
             generations[ev.Player] = Generation(ev.Player) + 1;
@@ -458,15 +467,16 @@ namespace Brainless.Roles
                     player.HumeShield = Math.Min(player.MaxHumeShield, state.Shield * definition.ShieldMultiplier);
                 }
 
-                if (definition.Scale != 1 && Config.AllowExperimentalRoles)
+                if (definition.Scale != 1 && Config.AllowModelScaling)
                     player.Scale = state.Scale * definition.Scale;
                 if (definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                     player.Scale = new Vector3(state.Scale.x, state.Scale.y * .5f, state.Scale.z);
-                if (player.Role is Scp049Role doctor && doctor.HumeShieldModule is DynamicHumeShieldController hs)
+                if (player.Role is IHumeShieldRole shieldRole && shieldRole.HumeShieldModule is DynamicHumeShieldController hs)
                 {
                     state.RegenCooldown = hs.RegenerationCooldown;
-                    if (definition.Id == "P01")
-                        hs.RegenerationCooldown *= .85f;
+                    state.RegenRate = hs.RegenerationRate;
+                    hs.RegenerationCooldown *= definition.Traits.ShieldRegenDelayMultiplier;
+                    hs.RegenerationRate *= definition.Traits.ShieldRegenRateMultiplier;
                 }
 
                 if (player.Role.Type == RoleTypeId.Scp0492)
@@ -574,6 +584,7 @@ namespace Brainless.Roles
             active.Remove(player);
             if (!player.IsConnected || player.Role != state.Role)
                 return;
+            state.QuietSteps.Clear();
             if (player.Role is FpcRole fpc)
             {
                 fpc.StaminaUsageMultiplier /= state.StaminaApplied;
@@ -581,8 +592,14 @@ namespace Brainless.Roles
                 state.Movement.Clear();
             }
 
-            if (player.Role is Scp049Role doctor && state.RegenCooldown.HasValue && doctor.HumeShieldModule is DynamicHumeShieldController hs)
-                hs.RegenerationCooldown = state.RegenCooldown.Value;
+            if (player.Role is IHumeShieldRole shieldRole && state.RegenCooldown.HasValue && shieldRole.HumeShieldModule is DynamicHumeShieldController hs)
+            {
+                if (hs.RegenerationCooldown == state.RegenCooldown.Value * state.Definition.Traits.ShieldRegenDelayMultiplier)
+                    hs.RegenerationCooldown = state.RegenCooldown.Value;
+                if (state.RegenRate.HasValue && hs.RegenerationRate == state.RegenRate.Value * state.Definition.Traits.ShieldRegenRateMultiplier)
+                    hs.RegenerationRate = state.RegenRate.Value;
+            }
+
             player.MaxHealth = state.MaxHealth;
             player.Health = Math.Min(player.Health, player.MaxHealth);
             player.MaxHumeShield = state.MaxShield;
@@ -600,6 +617,7 @@ namespace Brainless.Roles
                 Safe.Run(() => lockpicking?.Update());
                 Safe.Run(() => roleHud?.Update());
                 Safe.Run(() => bursts.Prune());
+                Safe.Run(UpdatePoisons);
             }
         }
 
@@ -614,6 +632,8 @@ namespace Brainless.Roles
             if (!(player.Role is FpcRole fpc))
                 return;
             float multiplier = state.Definition.SpeedMultiplier;
+            if (player.Role is Exiled.API.Features.Roles.Scp096Role shy && shy.RageState == PlayerRoles.PlayableScps.Scp096.Scp096RageState.Docile)
+                multiplier *= state.Definition.Traits.CalmSpeedMultiplier;
             bool nativeBoost = player.GetEffect(EffectType.MovementBoost)?.IsEnabled == true || player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
             if (state.Definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                 multiplier = 2;
@@ -622,6 +642,7 @@ namespace Brainless.Roles
             if (player.IsHuman && (nativeBoost || player.CurrentArmor?.Type == ItemType.ArmorHeavy))
                 multiplier = 1;
             state.Movement.Set(player, multiplier);
+            state.QuietSteps.Set(player, state.Definition.Traits.QuietFootstepStacks);
             bool stamina = true;
             if (state.Definition.Id == "G04" && player.CurrentArmor != null)
                 stamina = false;
@@ -630,7 +651,7 @@ namespace Brainless.Roles
             float nextStamina = 1 / (stamina ? Math.Max(1, state.Definition.SprintDurationMultiplier) : 1);
             fpc.StaminaUsageMultiplier = fpc.StaminaUsageMultiplier / state.StaminaApplied * nextStamina;
             state.StaminaApplied = nextStamina;
-            if (player.Role is Scp049Role doctor && doctor.HumeShieldModule is DynamicHumeShieldController shield)
+            if (player.Role is IHumeShieldRole shieldRole && shieldRole.HumeShieldModule is DynamicHumeShieldController shield)
                 player.MaxHumeShield = shield.HsMax * state.Definition.ShieldMultiplier;
         }
 
@@ -638,8 +659,10 @@ namespace Brainless.Roles
         {
             if (ev.IsAllowed && ev.Amount > 0)
                 lockpicking?.Cancel(ev.Player, "you took damage");
-            if (RoleId(ev.Attacker) == "Z02" && ev.DamageHandler.Type == DamageType.Scp0492 && ev.Amount > 0)
-                ev.Amount *= .5f;
+            if (Traits(ev.Player)?.ExplosionImmune == true && ev.DamageHandler.Type == DamageType.Explosion)
+                ev.IsAllowed = false;
+            if (ev.IsAllowed && ev.Amount > 0 && IsScpAttack(ev.DamageHandler.Type))
+                ev.Amount *= Traits(ev.Attacker)?.AttackDamageMultiplier ?? 1;
         }
 
         private void LockpickDoor(InteractingDoorEventArgs ev) => Safe.Run(() => lockpicking?.DoorInteraction(ev));
@@ -667,7 +690,8 @@ namespace Brainless.Roles
         private void Dying(DyingEventArgs ev) => Safe.Run(() =>
         {
             pendingBursts.Forget(ev.Player);
-            if (!ev.IsAllowed || RoleId(ev.Player) != "Z04")
+            string profile = RoleId(ev.Player);
+            if (!ev.IsAllowed || (profile != "Z04" && profile != "B04"))
                 return;
             var pending = new PendingBurst
             {
@@ -675,7 +699,9 @@ namespace Brainless.Roles
                 UserId = ev.Player.UserId,
                 Position = ev.Player.Position,
                 Source = new DamageSource(ev.Player),
-                Tuning = Config.ExplosiveZombie,
+                Tuning = profile == "B04" ? Config.ExplosiveScp173 : Config.ExplosiveZombie,
+                NativeRole = ev.Player.Role.Type,
+                Profile = profile,
                 HasAttacker = ev.Attacker != null && ev.Attacker != ev.Player,
                 Enemy = ev.Attacker != null && ev.Attacker != ev.Player && HitboxIdentity.IsEnemy(ev.Attacker.Role.Type, ev.Player.Role.Type)
             };
@@ -688,26 +714,29 @@ namespace Brainless.Roles
         });
         private void Died(DiedEventArgs ev) => Safe.Run(() =>
         {
-            if (!pendingBursts.Confirm(ev.Player, p => p.Event.IsAllowed && ev.TargetOldRole == RoleTypeId.Scp0492, out var pending))
+            poisons.Remove(ev.Player);
+            RefreshBreakneck(ev);
+            if (!pendingBursts.Confirm(ev.Player, p => p.Event.IsAllowed && ev.TargetOldRole == p.NativeRole, out var pending))
                 return;
             var tuning = pending.Tuning;
             if (!tuning.Allows(pending.HasAttacker, pending.Enemy, pending.Event.DamageHandler.Type == DamageType.Explosion))
                 return;
             bursts.Prune();
-            int used = burstSpent.TryGetValue(pending.UserId, out int before) ? before : 0;
+            string burstKey = pending.UserId + ":" + pending.Profile;
+            int used = burstSpent.TryGetValue(burstKey, out int before) ? before : 0;
             if ((tuning.MaxPerPlayerPerRound > 0 && used >= tuning.MaxPerPlayerPerRound) || (tuning.MaxConcurrentBursts > 0 && bursts.Count >= tuning.MaxConcurrentBursts))
                 return;
             var grenade = bursts.Launch(pending.Position + Vector3.up * .15f, Vector3.zero, Math.Max(.05f, tuning.WarningSeconds), pending.Source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: false, armorPenetration: tuning.ArmorPenetration);
             grenade.Scale = Vector3.one * .001f;
             if (grenade.Rigidbody != null)
                 grenade.Rigidbody.isKinematic = true;
-            burstSpent[pending.UserId] = used + 1;
+            burstSpent[burstKey] = used + 1;
             if (tuning.ShowWarning)
                 World.Cue(pending.Position, "Explosive corpse - move away!", tuning.WarningRange);
             if (tuning.PlayWarningSound)
                 FxAudio.Play(lifetime, pending.Position, tuning.WarningSeconds, "beep", range: tuning.WarningRange);
             if (Config.Debug)
-                Log.Info("[Z04] Confirmed death armed a native explosion.");
+                Log.Info("[" + pending.Profile + "] Confirmed death armed a native explosion.");
         });
         private void BurstExploding(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev) => Safe.Run(() => bursts.Exploding(ev));
         private sealed class PendingBurst
@@ -717,6 +746,8 @@ namespace Brainless.Roles
             internal Vector3 Position;
             internal DamageSource Source;
             internal ExplosiveZombieTuning Tuning;
+            internal RoleTypeId NativeRole;
+            internal string Profile;
             internal bool HasAttacker, Enemy;
         }
 
@@ -756,7 +787,8 @@ namespace Brainless.Roles
             internal RoleDefinition Definition;
             internal Role Role;
             internal float MaxHealth, MaxShield, Shield, Stamina, StaminaApplied = 1, Start;
-            internal float? RegenCooldown;
+            internal float? RegenCooldown, RegenRate;
+            internal QuietStepLayer QuietSteps = new QuietStepLayer();
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();
@@ -780,8 +812,7 @@ namespace Brainless.Roles
     {
         private static void Postfix(Scp049ResurrectAbility __instance, ref float __result)
         {
-            if (Plugin.Instance?.RoleId(Player.Get(__instance.Owner)) == "P01")
-                __result *= .75f;
+            __result *= Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.RecallDurationMultiplier ?? 1;
         }
     }
 
@@ -791,8 +822,9 @@ namespace Brainless.Roles
         private static void Postfix(Scp049AttackAbility __instance)
         {
             var player = Player.Get(__instance.Owner);
-            if (Plugin.Instance?.RoleId(player) == "P03" && player.Role is Scp049Role doctor && doctor.RemainingAttackCooldown > Scp049AttackAbility.CooldownTime - .1f)
-                doctor.RemainingAttackCooldown = Scp049AttackAbility.CooldownTime * .9f;
+            float factor = Plugin.Instance?.Traits(player)?.AttackCooldownMultiplier ?? 1;
+            if (factor != 1 && player.Role is Scp049Role doctor && doctor.RemainingAttackCooldown > Scp049AttackAbility.CooldownTime - .1f)
+                doctor.RemainingAttackCooldown = Scp049AttackAbility.CooldownTime * factor;
         }
     }
 }

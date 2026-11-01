@@ -67,6 +67,20 @@
     "Z02": "Attack normally.",
     "Z03": "Attack normally.",
     "Z04": "Automatic explosion after death.",
-    "Z05": "Use SCP-049's revive control on one eligible zombie."
+    "Z05": "Use SCP-049's revive control on one eligible zombie.",
+    "L01": "Move normally; quieter footsteps are automatic.",
+    "L02": "Use the normal stalk/atlas controls.",
+    "L03": "Move normally; conserve vigor.",
+    "L04": "Touch humans to poison them.",
+    "B01": "Move and blink normally.",
+    "B02": "Kill a human to refresh breakneck speed.",
+    "B03": "Move and blink normally; allow more time for shields to recover.",
+    "B04": "Automatic explosion after death.",
+    "H01": "Move normally; quieter footsteps also work while sprinting.",
+    "H02": "Attack normally.",
+    "H03": "Use mimic sound controls; stand at the intercom microphone and hold the normal voice key.",
+    "H04": "Claw humans or place an amnestic cloud.",
+    "R01": "Use the normal rage control when targets are available.",
+    "R02": "Move normally while calm."
   }
 }

@@ -17,7 +17,7 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 
 | Folder | DLL | Purpose |
 | --- | --- | --- |
-| [Roles](Roles) | `Brainless.Roles.dll` | 35 role profiles, per-role percentages and role HUD |
+| [Roles](Roles) | `Brainless.Roles.dll` | 49 role profiles, per-role percentages and role HUD |
 | [Items](Items) | `Brainless.Items.dll` | 21 custom grenades, tools and consumables |
 | [Weapons](Weapons) | `Brainless.Weapons.dll` | 8 weapons, including a grenade launcher and railgun |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Ordinary coin-flip outcomes |
@@ -26,7 +26,7 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 | [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | SCP-914 recipes, Rough teleports and action tracking |
 | [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection event |
 
-Current component versions: Roles **0.3.0**, Items/Weapons **0.6.0**, BetterCoinflips **5.1.7**, SCP voice **0.1.7**, Core **0.1.1**, Fixes **0.2.1**, Events **0.1.0**.
+Current component versions: Roles **0.4.0**, Items **0.6.1**, Weapons **0.6.0**, BetterCoinflips **5.1.7**, SCP voice **0.2.0**, Core **0.1.1**, Fixes **0.2.1**, Events **0.1.0**.
 
 ## Install / update
 

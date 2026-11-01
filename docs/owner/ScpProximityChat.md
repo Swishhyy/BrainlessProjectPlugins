@@ -1,6 +1,6 @@
 > Detailed owner notes. For staff, use [the quick guide](../STAFF_GUIDE.md) and [content page](../CATALOG.md). Older version notes below are historical; current spawn percentages are explained in [configuration](../CONFIGURATION.md).
 
-# Brainless SCP Proximity Chat 0.1.7
+# Brainless SCP Proximity Chat 0.2.0
 
 Standalone **EXILED 9.15.2 / SCP: SL 14.2.8** plugin. Install **one DLL**, `Brainless.ScpProximityChat.dll`, in `EXILED/Plugins`. No SecretAPI, SecretLabNAudio, AudioPlayer, or separate settings/HUD library is required. EXILED already supplies the framework, Harmony and MEC; the game supplies speakers, Opus playback and Server Specific Settings.
 
@@ -46,9 +46,9 @@ brainless_scp_proximity_chat:
   enabled_hint: Proximity chat enabled
   disabled_hint: Proximity chat disabled
   voice_range: 16
-  full_volume_range: 6
+  full_volume_range: 12
   volume: 10
-  audio_balance_revision: 2
+  audio_balance_revision: 3
   allowed_roles:
   - Scp049
   - Scp0492
@@ -82,3 +82,5 @@ Version 0.1.4 raises nearby microphone gain from 1 to 3.5 and full-volume distan
 Version 0.1.5 adds optional Core update-service delegation and robust component release discovery. Voice routing, controls and louder audio defaults are unchanged.
 
 Version 0.1.7 raises SCP-only speech gain from 3.5 to 10 (about +9.1 dB). Existing stock volume values of 1 or 3.5 migrate even when the previous revision already ran. The old 2m full-volume distance migrates to 6m. Custom volume/distance values and explicit mute (0) remain; set `audio_balance_revision: 2` to retain a deliberately quieter old value. This changes no item/weapon audio presets. `.scpchat status` reports the plugin version, configured and active speaker gain, full-volume distance and radius. Full process restart is required to load the new DLL. Native speaker playback remains separate from normal human voice, so exact perceived loudness still depends on the listener's mixer settings and needs a live same-microphone comparison.
+
+Version 0.2.0 keeps the 10x gain and extends the stock full-volume area to 12m (range 16m). Gain now accepts 0-20. Staff can use `bpscpchat volume <0-20>` immediately or save YAML and run `bpscpchat reload`; both require `brainless.scpchat.configure`. Live volume commands are temporary. Stock 6m falloff migrates unless revision 3 is pinned; custom values and mute remain. Startup migrations save the new fields with a `.before-brainless-migration` backup.

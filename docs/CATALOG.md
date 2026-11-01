@@ -2,7 +2,7 @@
 
 [Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)
 
-Current shipped content: **21 items, 8 weapons, 35 role profiles and 1 round event**. Values below are defaults; server settings can differ.
+Current shipped content: **21 items, 8 weapons, 49 role profiles and 1 round event**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -83,13 +83,27 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | P01 | Surgeon | Revives zombies faster and recovers shields sooner, but has less health. | Use SCP-049's normal revive control. | Enabled |
 | P02 | Brute | A tougher, slower SCP-049 with more health and shields. | Attack normally. | Enabled |
 | P03 | Tickler | A faster SCP-049 with quicker attacks, but less health and shields. | Attack normally. | Opt-in |
-| Z01 | Giant | Extra health, but slower movement. | Attack normally. | Enabled |
+| Z01 | Giant | A larger, tougher zombie that moves more slowly. | Attack normally. | Enabled |
 | Z02 | Muncher | Faster zombie with less health and weaker attacks. | Attack normally. | Opt-in |
 | Z03 | Armored | A heavily built zombie with more health, but less speed. | Attack normally. | Enabled |
 | Z04 | Explosive | Explodes after death. Has less health than a normal zombie. | Automatic explosion after death. | Enabled |
 | Z05 | Doctor | Becomes a weaker SCP-049 who can revive one zombie. | Use SCP-049's revive control on one eligible zombie. | Off / event only |
+| L01 | Stalker | Quieter footsteps, but less health. | Move normally; quieter footsteps are automatic. | Enabled |
+| L02 | Wormhole | Gains vigor faster, but moves more slowly. | Use the normal stalk/atlas controls. | Enabled |
+| L03 | Hyper | Moves faster, but gains vigor more slowly. | Move normally; conserve vigor. | Enabled |
+| L04 | Poisonous | Touches poison humans. Medical supplies cure the poison. | Touch humans to poison them. | Enabled |
+| B01 | Raisian | Smaller and faster, but has half the normal health. | Move and blink normally. | Enabled |
+| B02 | Escape's | Kills refresh breakneck speed and its cooldown. | Kill a human to refresh breakneck speed. | Enabled |
+| B03 | Cocoon | Tougher and slower, with shields that recover more slowly. | Move and blink normally; allow more time for shields to recover. | Enabled |
+| B04 | Boom Boom | Immune to explosions. Explodes after death. | Automatic explosion after death. | Enabled |
+| H01 | Ambusher | Quieter footsteps and faster movement, but less health. | Move normally; quieter footsteps also work while sprinting. | Enabled |
+| H02 | Alpha | Larger and tougher, but slower. | Attack normally. | Enabled |
+| H03 | Mimic | Reuses mimic sounds quickly and can use the intercom. | Use mimic sound controls; stand at the intercom microphone and hold the normal voice key. | Enabled |
+| H04 | Venomous | Claws and amnestic clouds poison humans. Medical supplies cure it. | Claw humans or place an amnestic cloud. | Enabled |
+| R01 | Anger Issue | Enrages immediately, but has less health and shields. | Use the normal rage control when targets are available. | Enabled |
+| R02 | Ill Temperature | Moves faster while calm. | Move normally while calm. | Enabled |
 
-Brute and Giant use normal-sized models by default. The extreme Muncher size/speed preset is optional. The additional Discord SCP-106/173/939/096 concepts are not shipped yet; see [role availability](ROLE_STATUS.md).
+Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. New SCP-106/173/939/096 profiles have editable traits; see [role settings](CONFIGURATION.md).
 
 ## Round events
 
