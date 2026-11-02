@@ -29,7 +29,7 @@ namespace Brainless.Core
             if (arguments.Count == 1 && arguments.Array[arguments.Offset].Equals("top", StringComparison.OrdinalIgnoreCase))
             {
                 var top = plugin.Store.Top();
-                response = top.Length == 0 ? "No XP recorded yet." : string.Join("\n", top.Select((p, i) => (i + 1) + ". " + DiscordProtocol.SafeName(p.Name) + ": " + p.Xp + " XP, level " + p.Level(plugin.Config.XpPerLevelSquared)));
+                response = top.Length == 0 ? "No XP recorded yet." : string.Join("\n", top.Select((p, i) => (i + 1) + ". " + StatsText.SafeName(p.Name) + ": " + p.Xp + " XP, level " + p.Level(plugin.Config.XpPerLevelSquared)));
                 return true;
             }
 
@@ -63,7 +63,7 @@ namespace Brainless.Core
                 return false;
             }
 
-            response = DiscordProtocol.Describe(stats, plugin.Config.XpPerLevelSquared);
+            response = StatsText.Describe(stats, plugin.Config.XpPerLevelSquared);
             return true;
         }
     }
@@ -91,9 +91,9 @@ namespace Brainless.Core
                 return false;
             }
 
-            if (!plugin.Config.Discord.Enabled)
+            if (plugin.Http == null || !plugin.Http.PrivateEndpointsEnabled)
             {
-                response = "The Project Brainless Discord bot is not enabled yet.";
+                response = "Discord linking is not set up on this server yet.";
                 return false;
             }
 
@@ -104,7 +104,7 @@ namespace Brainless.Core
             }
 
             string code = plugin.Store.CreateLinkCode(player.UserId, player.Nickname, DateTime.UtcNow);
-            response = code == null ? "Wait 30 seconds before requesting another code." : "Use /" + plugin.Config.Discord.CommandPrefix + "-link code:" + code + " in Discord. Code expires in ten minutes; requesting a new one invalidates the old code.";
+            response = code == null ? "Wait 30 seconds before requesting another code." : "Use /" + plugin.Config.StatsApi.DiscordCommandPrefix + "-link code:" + code + " in Discord. Code expires in ten minutes; requesting a new one invalidates the old code.";
             return code != null;
         }
     }
@@ -152,7 +152,7 @@ namespace Brainless.Core
                 return false;
             }
 
-            response = "Core: enabled; stats: " + (Api.IsReady ? "ready" : "unavailable") + "; shared updaters: " + UpdateHub.Count + "; Discord: " + (plugin.Bot == null ? "disabled/not configured" : plugin.Bot.Connected ? "connected" : "connecting/retrying") + ".";
+            response = "Core: enabled; stats: " + (Api.IsReady ? "ready" : "unavailable") + "; shared updaters: " + UpdateHub.Count + "; stats API: " + (plugin.Http == null ? "off" : plugin.Http.PrivateEndpointsEnabled ? "on (port " + plugin.Config.StatsApi.Port + ", Discord bot endpoints enabled)" : "on (port " + plugin.Config.StatsApi.Port + ", leaderboard only)") + ".";
             return true;
         }
     }

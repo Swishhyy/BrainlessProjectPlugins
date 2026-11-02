@@ -1,6 +1,6 @@
 # Project Brainless — Core
 
-Persistent XP/stats, shared update services and an optional Discord bot.
+Persistent XP/stats, shared update services and a stats API for the website leaderboard and the Discord bot ([setup](../discord-bot/README.md)).
 
 **Install:** fully stop the server, put `Brainless.Core.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 

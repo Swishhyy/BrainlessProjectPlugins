@@ -62,7 +62,7 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.pbprivacy optout` | Stops tracking and deletes your saved stats and Discord link |
 | `.pbprivacy optin` | Starts fresh; requires native DNT off |
 
-**Discord, when configured:** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
+**Discord, when the stats API and bot are set up ([guide](../discord-bot/README.md)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
 
 | Command | What it does |
 | --- | --- |

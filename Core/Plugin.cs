@@ -16,12 +16,12 @@ namespace Brainless.Core
         public override string Name => "ProjectBrainlessCore";
         public override string Prefix => "project_brainless_core";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 2, 2);
+        public override Version Version => new Version(0, 3, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Highest;
         public static Plugin Instance { get; private set; }
         public StatsStore Store { get; private set; }
-        internal DiscordBot Bot { get; private set; }
+        internal StatsApi Http { get; private set; }
 
         private readonly ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
         private CancellationTokenSource stop;
@@ -30,8 +30,9 @@ namespace Brainless.Core
         private IDisposable updates;
         public override void OnEnabled()
         {
-            if (Config.Discord == null || Config.AutoUpdate == null || Config.SaveIntervalSeconds < 5 || Config.SaveIntervalSeconds > 3600 || Config.XpPerLevelSquared < 1 || Config.MaxXpPerPlayerPerRound < 0 || Config.MaxXpPerPlayerPerRound > 100000)
+            if (Config.StatsApi == null || Config.AutoUpdate == null || Config.SaveIntervalSeconds < 5 || Config.SaveIntervalSeconds > 3600 || Config.XpPerLevelSquared < 1 || Config.MaxXpPerPlayerPerRound < 0 || Config.MaxXpPerPlayerPerRound > 100000)
                 throw new InvalidOperationException("Invalid Core stats/save configuration.");
+            Config.StatsApi.Validate();
             Instance = this;
             UpdateHub.Enable();
             updates = PluginUpdates.Start(GetType().Assembly, "Core", Config.AutoUpdate);
@@ -67,15 +68,15 @@ namespace Brainless.Core
                     {
                     }
                 });
-                if (Config.Discord.Enabled)
+                if (Config.StatsApi.Enabled)
                 {
                     try
                     {
-                        Bot = new DiscordBot(Config.Discord, store, Config.XpPerLevelSquared, messages.Enqueue);
+                        Http = new StatsApi(Config.StatsApi, store, Config.XpPerLevelSquared, messages.Enqueue);
                     }
                     catch (Exception failure)
                     {
-                        Log.Warn("[Project Brainless Core] Discord bot could not start (" + failure.GetType().Name + "). Stats and gameplay remain available; check discord.token and settings.");
+                        Log.Warn("[Project Brainless Core] Stats API could not start on port " + Config.StatsApi.Port + " (" + failure.GetType().Name + ": " + failure.Message + "). Stats and gameplay remain available; check that the port is free and forwarded.");
                     }
                 }
             }
@@ -105,8 +106,8 @@ namespace Brainless.Core
         {
             StopPrivacy();
             Exiled.Events.Handlers.Server.RoundStarted -= RoundStarted;
-            Bot?.Dispose();
-            Bot = null;
+            Http?.Dispose();
+            Http = null;
             stop?.Cancel();
             try
             {

@@ -1,10 +1,10 @@
 > Detailed owner notes. For staff, use [the quick guide](../STAFF_GUIDE.md) and [content page](../CATALOG.md). Older version notes below are historical; current spawn percentages are explained in [configuration](../CONFIGURATION.md).
 
-# Project Brainless Core 0.2.0
+# Project Brainless Core 0.3.0
 
-Shared services for the Project Brainless EXILED plugins: persistent XP/stat storage, an optional in-process Discord bot, account linking and a reusable update service. Framework: EXILED 9.15.3 / SCP:SL 14.2.9 / net48.
+Shared services for the Project Brainless EXILED plugins: persistent XP/stat storage, a stats API (website leaderboard and Discord bot), account linking and a reusable update service. Framework: EXILED 9.15.3 / SCP:SL 14.2.9 / net48.
 
-Install `Brainless.Core.dll` in EXILED/Plugins and fully restart. No separate Discord package is required. The bot uses the runtime's HTTP/WebSocket support and the serializer already supplied by EXILED. Existing gameplay plugins have no hard Core assembly dependency: they use the shared updater when Core is enabled and fall back to their standalone implementation at startup when it is absent. SlFixes supplies the gameplay action tracking; its SCP-914 features also work without Core.
+Install `Brainless.Core.dll` in EXILED/Plugins and fully restart. The stats API uses the runtime's built-in HTTP listener; no extra package is required. Existing gameplay plugins have no hard Core assembly dependency: they use the shared updater when Core is enabled and fall back to their standalone implementation at startup when it is absent. SlFixes supplies the gameplay action tracking; its SCP-914 features also work without Core.
 
 ## Configuration
 
@@ -24,13 +24,20 @@ data_directory: ""
 save_interval_seconds: 30
 xp_per_level_squared: 100
 max_xp_per_player_per_round: 500
-discord:
+stats_api:
   enabled: false
-  token: ""
-  token_environment_variable: BRAINLESS_DISCORD_TOKEN
-  guild_id: ""
-  command_prefix: pb
+  port: 0
+  bind_host: '*'
+  shared_secret: ""
+  shared_secret_environment_variable: BRAINLESS_API_SECRET
+  allowed_origin: '*'
+  trust_cloudflare_headers: true
+  requests_per_minute: 60
+  leaderboard_cache_seconds: 30
+  discord_command_prefix: pb
 ```
+
+The old `discord:` section (0.2.x in-process bot) is ignored and dropped from the file on the next save; remove the bot token from any backups.
 
 Empty `data_directory` saves under `EXILED/Configs/ProjectBrainless/<port>/stats.json`, with atomic writes and a `.backup`. A damaged main file is preserved and recovered from a readable backup. If both are unreadable, stats are disabled rather than silently reset; gameplay/update services remain available. Autosave defaults to 30 seconds and a normal shutdown saves again. A process crash may lose changes since the last save. Use one server process per data directory.
 
@@ -51,15 +58,16 @@ SlFixes records confirmed enemy kills, deaths, escapes, successful custom crafti
 
 Codes last ten minutes, can be used once, and are invalidated when another code is requested. They are not persisted. Discord links are persisted. Linking never grants Remote Admin permissions, badges or paid privileges; CedMod continues managing those.
 
-## Host the Discord bot
+## Stats API and Discord bot
 
-1. Create your own bot/application in the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Invite it to your community server with the `bot` and `applications.commands` scopes. It does not need Administrator, Message Content or Server Members intents.
-3. Put its **Discord bot token** in `discord.token`, put your Discord server's numeric ID in `discord.guild_id`, and set `discord.enabled: true`. This token is separate from the read-only GitHub token. Keep both out of shared screenshots/config uploads.
-4. Fully restart and inspect `pbcore status`. The optional bot runs inside the SCP server process, so it is offline when that process stops.
-5. In-game, run `.pblink`. In Discord use `/pb-link code:<your code>`, then `/pb-stats`, `/pb-playtime` or `/pb-top`. Add the optional `user` selector to stats/playtime to inspect another linked player. `/pb-optout` erases only your own linked game profile.
+Core 0.3.0 no longer runs a Discord bot inside the game server. It serves a small HTTP API instead: a public leaderboard for your website, plus private endpoints the Discord bot uses for stats, linking and opt-out. The bot is a free Cloudflare Worker in the [`discord-bot`](../../discord-bot) folder, and Cloudflare also provides HTTPS for the API. Follow [its README](../../discord-bot/README.md) for the full setup (game server → Cloudflare → Discord).
 
-The default `pb` command prefix is configurable. With a guild ID, commands are registered only there; an empty ID registers global commands, which can take longer to appear. Registration upserts only its five commands and does not delete other application commands. The top command returns ten profiles by XP. Replies are private, mention parsing is disabled, API tokens/response bodies are not logged, and reconnect/heartbeat logic runs away from the game thread. Live gateway connectivity needs your own application/token; it cannot be validated by the headless tests.
+- Public: `GET /api/v1/health`, `GET /api/v1/leaderboard?sort=xp|playtime&limit=1-100` (names, levels, XP and playtime only; never Steam IDs).
+- Signed (bot only): `GET /api/v1/discord/{id}`, `POST /api/v1/discord/{id}/link?code=`, `POST /api/v1/discord/{id}/optout`. Requests are HMAC-SHA256 signed with `shared_secret` plus a timestamp and one-time nonce. The secret is never transmitted, and old or repeated requests are rejected.
+- Without a `shared_secret` of at least 32 characters, only the public endpoints run and `.pblink` reports that linking is not set up.
+- Per-IP rate limiting (`requests_per_minute`, using Cloudflare's `CF-Connecting-IP` when `trust_cloudflare_headers` is on), a 32-request concurrency cap, and leaderboard caching keep load off the game thread. All requests are handled on background threads.
+
+In Discord, `/pb-link code:<code>` links the account from `.pblink`; `/pb-stats`, `/pb-playtime` (optionally for another linked `user`), `/pb-top` and `/pb-optout` work as before. Replies are private and mentions are disabled.
 
 ## Playtime and privacy
 

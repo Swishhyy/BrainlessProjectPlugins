@@ -27,14 +27,6 @@ internal static class HumanProfileTests
         var tier3 = new Interactables.Interobjects.DoorUtils.KeycardLevels(3, 0, 0, false);
         var parsed = new Interactables.Interobjects.DoorUtils.KeycardLevels(tier3.Permissions);
         check(parsed.HighestLevelValue == 3 && LockpickRules.Duration(parsed.HighestLevelValue, 15, 15) == 45, "a real level-three keycard permission now produces a 45-second pick instead of being rejected");
-        var commands = Brainless.Core.DiscordProtocol.Commands("pb").ToArray();
-        check(commands.Length == 5 && commands.Any(c => (string)c["name"] == "pb-optout") && commands.Any(c => (string)c["name"] == "pb-playtime"), "the native Discord adapter registers stats, playtime, top-10, link and opt-out commands");
-        foreach (var definition in commands.Where(c => (string)c["name"] == "pb-stats" || (string)c["name"] == "pb-playtime"))
-        {
-            var option = ((System.Collections.Generic.Dictionary<string, object>[])definition["options"])[0];
-            check((int)option["type"] == 6 && (bool)option["required"] == false, "Discord stats/playtime use an optional native user picker for self or others");
-        }
-        check(Brainless.Core.DiscordProtocol.Playtime(90061) == "25h 1m", "server playtime display does not wrap back to zero after one day");
         var fixes = new Brainless.SlFixes.Config(); fixes.Validate();
         check(fixes.CaptureConversions.Enabled && fixes.CaptureConversions.MinimumAliveSeconds == 10 && fixes.CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosConscript && fixes.CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfPrivate, "capture conversion defaults use native opposing military ranks and a ten-second minimum life");
         fixes.CaptureConversions.MtfRole = PlayerRoles.RoleTypeId.Tutorial;

@@ -14,11 +14,6 @@ internal static class DistributionConfigTests
         ConfigMigrationTests.Run(check);
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
-        var gateway = Brainless.Core.DiscordProtocol.Read("{\"op\":10,\"d\":{\"heartbeat_interval\":41250}}");
-        check(Brainless.Core.DiscordProtocol.Number(Brainless.Core.DiscordProtocol.At(gateway, "op")) == 10 && Brainless.Core.DiscordProtocol.Number(Brainless.Core.DiscordProtocol.At(Brainless.Core.DiscordProtocol.At(gateway, "d"), "heartbeat_interval")) == 41250, "the built-in Discord adapter parses real gateway JSON through the existing framework serializer");
-        using (var json = System.Text.Json.JsonDocument.Parse(Brainless.Core.DiscordProtocol.Write(Brainless.Core.DiscordProtocol.Object("op", 1, "d", null))))
-            check(json.RootElement.GetProperty("op").GetInt32() == 1 && json.RootElement.GetProperty("d").ValueKind == System.Text.Json.JsonValueKind.Null, "gateway heartbeat JSON preserves a null initial sequence and remains valid Discord JSON");
-        check(!Brainless.Core.DiscordProtocol.SafeName("@everyone **test**\n").Contains('@') && !Brainless.Core.DiscordProtocol.SafeName("@everyone **test**\n").Contains('\n'), "Discord leaderboard names cannot generate mentions or inject extra output lines");
         var fixes = reader.Deserialize<Brainless.SlFixes.Config>("rough_teleport_chance: 100\n");
         fixes.Validate();
         check(fixes.Recipes.Any(r => r.CustomId == 7101 && r.Source == ItemType.GrenadeFlash) && fixes.Recipes.Any(r => r.CustomId == 7102 && r.Setting == Scp914.Scp914KnobSetting.VeryFine), "partial Fixes YAML retains smoke/cluster recipes and compatible native bodies");
