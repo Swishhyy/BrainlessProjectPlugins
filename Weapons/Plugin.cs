@@ -28,8 +28,8 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 2);
-        public override Version RequiredExiledVersion => new Version(9, 15, 2);
+        public override Version Version => new Version(0, 7, 0);
+        public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
 
@@ -39,7 +39,6 @@ namespace Brainless.Weapons
         private readonly FragProjectiles grenades = new FragProjectiles();
         private readonly Dictionary<uint, RegisteredWeapon> registered = new Dictionary<uint, RegisteredWeapon>();
         private readonly Dictionary<int, WeaponState> states = new Dictionary<int, WeaponState>();
-        private readonly Dictionary<Player, float> tagImmunity = new Dictionary<Player, float>();
         private readonly Dictionary<Door, DoorProgress> doors = new Dictionary<Door, DoorProgress>();
         private bool capacitySet, reflected;
         private IDisposable updates;
@@ -124,7 +123,6 @@ namespace Brainless.Weapons
             grenades.Clear();
             states.Clear();
             shots.Clear();
-            tagImmunity.Clear();
             doors.Clear();
             foreach (var item in registered.Values)
                 item.TrackedSerials.Clear();
@@ -206,10 +204,9 @@ namespace Brainless.Weapons
             states[serial] = new WeaponState
             {
                 Definition = definition,
-                InitialCapacity = definition.Spec.Magazine,
-                LastHeat = Time.time
+                InitialCapacity = definition.Spec.Magazine
             };
-            if (definition.Id == 7205 || definition.Id == 7207 || definition.Id == 7208)
+            if (definition.Id == 7207 || definition.Id == 7208)
                 shots.Register(serial, definition.Spec.Magazine);
             return true;
         }
@@ -301,26 +298,6 @@ namespace Brainless.Weapons
                 return;
             }
 
-            if (state.Definition.Id == 7204)
-            {
-                Cool(state);
-                if (state.VentUntil > Time.time)
-                {
-                    ev.IsAllowed = false;
-                    ev.Player.ShowHint("Redline venting...", 1);
-                    return;
-                }
-
-                state.Heat = Math.Min(Config.Tuning.Redline.MaxHeat, state.Heat + Config.Tuning.Redline.HeatPerShot);
-                state.LastFire = Time.time;
-                if (state.Heat >= Config.Tuning.Redline.MaxHeat)
-                {
-                    state.VentUntil = Time.time + Config.Tuning.Redline.VentSeconds;
-                    state.Heat = 0;
-                    PlayAudio(ev.Player.Position, 1, "beep");
-                }
-            }
-
             state.Token++;
             state.AmmoBefore = ev.Firearm.MagazineAmmo + ev.Firearm.BarrelAmmo;
             if (FixedAmmo(state))
@@ -358,15 +335,8 @@ namespace Brainless.Weapons
                 });
             }
         });
-        private static bool FixedAmmo(WeaponState state) => state != null && (state.Definition.Id == 7205 || state.Definition.Id == 7207 || state.Definition.Id == 7208);
+        private static bool FixedAmmo(WeaponState state) => state != null && (state.Definition.Id == 7207 || state.Definition.Id == 7208);
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
-        private void Cool(WeaponState state)
-        {
-            float start = Math.Max(state.LastHeat, state.LastFire + Config.Tuning.Redline.CoolingDelaySeconds);
-            state.Heat = Math.Max(0, state.Heat - Math.Max(0, Time.time - start) * Config.Tuning.Redline.CoolingPerSecond);
-            state.LastHeat = Time.time;
-        }
-
         private void Hurting(HurtingEventArgs ev) => Safe.Run(() =>
         {
             if (reflected || !ev.IsAllowed || ev.Amount <= 0 || !(ev.DamageHandler.CustomBase is Exiled.API.Features.DamageHandlers.FirearmDamageHandler damage))
@@ -385,33 +355,6 @@ namespace Brainless.Weapons
                 ev.Amount = Rules.ShieldDamage(ev.Amount, ev.Player.HumeShield, Config.Tuning.Nullifier.ShieldDamageMultiplier, state.Definition.Spec.ScpDamage);
             else
                 ev.Amount *= ev.Player.IsScp ? state.Definition.Spec.ScpDamage : state.Definition.Spec.HumanDamage;
-            if (state.Definition.Id != 7202 || ev.Attacker == null || !HitboxIdentity.IsEnemy(ev.Attacker.Role.Type, ev.Player.Role.Type))
-                return;
-            if (tagImmunity.TryGetValue(ev.Player, out float immune) && immune > Time.time)
-                return;
-            if (!state.Tags.TryGetValue(ev.Player, out var hits) || Time.time - hits.Start > Config.Tuning.Rattler.HitWindowSeconds)
-                state.Tags[ev.Player] = hits = new Tag
-                {
-                    Start = Time.time
-                };
-            if (hits.Token == state.Token)
-                return;
-            hits.Token = state.Token;
-            hits.Hits++;
-            if (hits.Hits < Config.Tuning.Rattler.HitsToTag)
-                return;
-            state.Tags.Remove(ev.Player);
-            tagImmunity[ev.Player] = Time.time + Config.Tuning.Rattler.ImmunitySeconds;
-            var target = ev.Player;
-            var role = target.Role.Base;
-            Vector3 position = target.Position;
-            target.ShowHint($"Rattler tag - nearby players can hear you for {Config.Tuning.Rattler.TagDurationSeconds:0.#} seconds", Config.Tuning.Rattler.TagDurationSeconds);
-            FxAudio.Play(lifetime, position, Config.Tuning.Rattler.TagDurationSeconds, "beep", () =>
-            {
-                if (target.IsConnected && target.IsAlive && target.Role.Base == role)
-                    position = target.Position;
-                return position;
-            }, Config.Tuning.Rattler.AudioVolume, Config.Tuning.Rattler.AudioRange, Config.Tuning.Rattler.AudioFullVolumeRange);
         });
         private void Shot(ShotEventArgs ev) => Safe.Run(() =>
         {
@@ -604,15 +547,7 @@ namespace Brainless.Weapons
         {
             internal int InitialCapacity;
             internal RegisteredWeapon Definition;
-            internal float Heat, LastFire, LastHeat, VentUntil;
             internal int Token, ConsumedToken, DoorToken, AmmoBefore;
-            internal Dictionary<Player, Tag> Tags = new Dictionary<Player, Tag>();
-        }
-
-        private sealed class Tag
-        {
-            internal float Start;
-            internal int Hits, Token = -1;
         }
 
         private sealed class DoorProgress

@@ -21,7 +21,7 @@ internal static class HumanProfileTests
         old.Roles.RemoveAll(r => r.Id == "C05" || r.Id == "G07" || r.Id == "S07" || r.Id == "S08");
         foreach (var role in old.Roles.Where(r => Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman))) role.ChancePercent = 25;
         old.Prepare();
-        check(old.Roles.Count == 53 && old.RoleCatalogRevision == 2 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Where(r => r.Id != "C05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).All(r => r.ChancePercent == 25), "the new human catalog appends once without changing an existing full Chaos chance pool");
+        check(old.Roles.Count == 53 && old.RoleCatalogRevision == 3 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Where(r => r.Id != "C05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).All(r => r.ChancePercent == 25), "the new human catalog appends once without changing an existing full Chaos chance pool");
         old.Roles.RemoveAll(r => r.Id == "S07"); old.Prepare();
         check(!old.Roles.Any(r => r.Id == "S07"), "removing a new profile after migration is respected on later reloads");
         var tier3 = new Interactables.Interobjects.DoorUtils.KeycardLevels(3, 0, 0, false);

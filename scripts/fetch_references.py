@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch the exact EXILED 9.15.2 build inputs; never package them as plugin output."""
+"""Fetch the exact EXILED 9.15.3 build inputs; never package them as plugin output."""
 import argparse
 import hashlib
 import io
@@ -12,9 +12,9 @@ import zipfile
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCES = [
     ('https://exmod-team.github.io/SL-References/Master.zip',
-     '769477523d740752b929a46194cacfa7fd399a4f016ef4c6226b669a27c66a7f', 'zip'),
-    ('https://github.com/ExMod-Team/EXILED/releases/download/v9.15.2/Exiled.tar.gz',
-     '6b0537f92f911657e2187b079905781c9c0606fc8e6cef0ce8f737f4d8308ec8', 'tar'),
+     '535290e346d4c58d1113471396b2e7b1bf758043578ca9ccdd04ccd9cb34dbf9', 'zip'),
+    ('https://github.com/ExMod-Team/EXILED/releases/download/v9.15.3/Exiled.tar.gz',
+     'b9d9eb0bd17c11656e4f97e0c40d6a35faab22aa93d6793d9e177fb351f8f4a1', 'tar'),
 ]
 
 def fetch(destination):
@@ -41,7 +41,7 @@ def fetch(destination):
     for required in ['Exiled.API.dll', 'Exiled.Events.dll', 'Exiled.CustomItems.dll', 'Assembly-CSharp.dll', 'Assembly-CSharp-Publicized.dll']:
         if not (destination/required).is_file():
             raise RuntimeError(f'Missing build input: {required}')
-    (destination/'versions.txt').write_text('EXILED 9.15.2\nSCP SL 14.2.8 reference snapshot\n')
+    (destination/'versions.txt').write_text('EXILED 9.15.3\nSCP SL 14.2.9 reference snapshot\n')
     print('References prepared at', destination)
 
 if __name__ == '__main__':

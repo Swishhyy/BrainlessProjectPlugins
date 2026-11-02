@@ -57,12 +57,12 @@ internal static class SupTests
         check(rejected, "reversed random-effect intensity ranges are rejected");
         var fixes = new Brainless.SlFixes.Config();
         fixes.Validate();
-        check(fixes.Recipes.Count == 14 && fixes.Recipes.Select(r => r.CustomId).Distinct().Count() == 14 && fixes.Recipes.Single(r => r.CustomId == 7208).Chance == 5, "SCP-914 adds ten unique SUP recipes with a rare railgun result");
+        check(fixes.Recipes.Count == 12 && fixes.Recipes.Select(r => r.CustomId).Distinct().Count() == 12 && fixes.Recipes.Single(r => r.CustomId == 7208).Chance == 5 && !fixes.Recipes.Any(r => r.CustomId == 7109 || r.CustomId == 7121), "SCP-914 keeps unique SUP recipes with a rare railgun result and no removed items");
         fixes.Recipes.RemoveAll(r => r.CustomId == 7208);
         fixes.Validate();
-        check(fixes.Recipes.Count == 13, "deliberately removed recipes remain removed after the one-time migration");
+        check(fixes.Recipes.Count == 11, "deliberately removed recipes remain removed after the one-time migration");
         var items = new ItemDistributionConfig(); items.UpgradeSup(); items.UpgradeSup();
-        check(items.MapRules.Count(r => r.CustomId >= 7114) == 9 && items.MapRules.Single(r => r.CustomId == 7119).SourceTypes.Contains(ItemType.KeycardJanitor), "natural SUP loot migration adds all nine items once with compatible native bodies");
+        check(items.MapRules.Count(r => r.CustomId >= 7114) == 8 && !items.MapRules.Any(r => r.CustomId == 7121) && items.MapRules.Single(r => r.CustomId == 7119).SourceTypes.Contains(ItemType.KeycardJanitor), "natural SUP loot migration adds the eight remaining items once with compatible native bodies");
         var weapons = new WeaponDistributionConfig(); weapons.UpgradeSupWeapons(); weapons.UpgradeSupWeapons();
         check(weapons.MapRules.Count(r => r.CustomId == 7208) == 1 && weapons.PlayerRules.Count(r => r.CustomId == 7207) == 1, "railgun and launcher map/player pools migrate without duplicate rolls");
         var emptyLoot = new ItemDistributionConfig { MapRules = new System.Collections.Generic.List<MapLootRule>(), PlayerRules = new System.Collections.Generic.List<PlayerLootRule>() };

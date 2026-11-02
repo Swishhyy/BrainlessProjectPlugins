@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.Weapons</AssemblyName>
     <RootNamespace>Brainless.Weapons</RootNamespace>
-    <Version>0.6.2</Version>
+    <Version>0.7.0</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Brainless Project</Authors>
   </PropertyGroup>

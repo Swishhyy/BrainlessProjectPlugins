@@ -42,6 +42,9 @@ namespace Brainless.Items
         public ItemTuning Tuning { get; set; } = new ItemTuning();
         public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
         public int CatalogRevision { get; set; }
+
+        // Survey Beacon, Trace Chalk, Field Dressing, Preserved Specimen and SCRAMBLE Goggles were removed.
+        internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7107, 7108, 7109, 7112, 7121 };
         public int GrenadeBalanceRevision { get; set; }
         public int AudioBalanceRevision { get; set; }
         public List<ItemSpec> Items { get; set; } = new List<ItemSpec>
@@ -90,41 +93,11 @@ namespace Brainless.Items
             },
             new ItemSpec
             {
-                Id = 7107,
-                Name = "Survey Beacon",
-                Description = "Deploy and scan your room for humans and SCPs.",
-                BaseType = ItemType.Flashlight
-            },
-            new ItemSpec
-            {
-                Id = 7108,
-                Name = "Trace Chalk",
-                Description = "Leaves numbered markers to help you find your way.",
-                BaseType = ItemType.Coin,
-                Charges = 3
-            },
-            new ItemSpec
-            {
-                Id = 7109,
-                Name = "Field Dressing",
-                Description = "Hold still to bandage yourself and recover health.",
-                BaseType = ItemType.Medkit,
-                RoundCap = 4
-            },
-            new ItemSpec
-            {
                 Id = 7111,
                 Name = "Filter Inhaler",
                 Description = "Protects you from toxic clouds for a short time.",
                 BaseType = ItemType.Painkillers,
                 RoundCap = 4
-            },
-            new ItemSpec
-            {
-                Id = 7112,
-                Name = "Preserved Specimen",
-                Description = "Drop it for a zombie to eat and recover health.",
-                BaseType = ItemType.SCP500
             },
             CreateImpact(),
         }.Concat(SupCatalog.Defaults()).ToList();
@@ -140,7 +113,8 @@ namespace Brainless.Items
         {
             if (Items == null || Items.Any(i => i == null))
                 throw new InvalidOperationException("Items cannot contain null entries.");
-            Items.RemoveAll(item => item.Id == 7110);
+            Items.RemoveAll(item => item.Id == 7110 || Retired.Contains(item.Id));
+            Distribution?.RemoveRetired(Retired);
             if (CatalogRevision < 4)
             {
                 foreach (var spec in SupCatalog.Defaults())
@@ -177,7 +151,8 @@ namespace Brainless.Items
             Tuning.GasGrenade.Upgrade(CatalogRevision);
             Tuning.ContainmentFoam.Upgrade(CatalogRevision);
             Tuning.DoorBrace.Upgrade(CatalogRevision);
-            CatalogRevision = Math.Max(6, CatalogRevision);
+            Tuning.SignalJammer.Upgrade(CatalogRevision < 7 ? 0 : 1);
+            CatalogRevision = Math.Max(7, CatalogRevision);
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();
@@ -186,7 +161,7 @@ namespace Brainless.Items
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
-            Distribution.Validate(id => id >= 7101 && id <= 7122 && id != 7110);
+            Distribution.Validate(id => id >= 7101 && id <= 7122 && id != 7110 && !Retired.Contains(id));
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
             if (Items.Any(i => i.Id < 7101 || i.Id > 7122 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))

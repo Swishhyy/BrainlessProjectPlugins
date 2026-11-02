@@ -2,7 +2,7 @@
 
 # Brainless SCP Proximity Chat 0.2.0
 
-Standalone **EXILED 9.15.2 / SCP: SL 14.2.8** plugin. Install **one DLL**, `Brainless.ScpProximityChat.dll`, in `EXILED/Plugins`. No SecretAPI, SecretLabNAudio, AudioPlayer, or separate settings/HUD library is required. EXILED already supplies the framework, Harmony and MEC; the game supplies speakers, Opus playback and Server Specific Settings.
+Standalone **EXILED 9.15.3 / SCP: SL 14.2.9** plugin. Install **one DLL**, `Brainless.ScpProximityChat.dll`, in `EXILED/Plugins`. No SecretAPI, SecretLabNAudio, AudioPlayer, or separate settings/HUD library is required. EXILED already supplies the framework, Harmony and MEC; the game supplies speakers, Opus playback and Server Specific Settings.
 
 Stop the server, remove any other SCP proximity-chat plugin, install this DLL, and start the server. The configuration section is `brainless_scp_proximity_chat`. This plugin is independent of Roles, Items, Weapons and BetterCoinflips. Do not install framework/game DLLs from the build reference directory. Automatic updates use this repository's own release assets and `auto_update.token` directly in YAML (the environment variable remains an optional fallback); see [UPDATES.md](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/UPDATES.md).
 

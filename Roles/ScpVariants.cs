@@ -123,13 +123,31 @@ namespace Brainless.Roles
             }
         }
 
+        // Escape's (B02): a kill during breakneck restarts its stare timer, and the
+        // cooldown that follows is cleared. A kill while it is recharging clears it now.
         private void RefreshBreakneck(DiedEventArgs ev)
         {
-            if (ev.Player == ev.Attacker || !IsScpAttack(ev.DamageHandler.Type) || Traits(ev.Attacker)?.RefreshBreakneckOnKill != true || !(ev.Attacker.Role is Exiled.API.Features.Roles.Scp173Role statue))
+            if (ev.Attacker == null || ev.Player == ev.Attacker || !IsScpAttack(ev.DamageHandler.Type) || Traits(ev.Attacker)?.RefreshBreakneckOnKill != true || !(ev.Attacker.Role is Exiled.API.Features.Roles.Scp173Role statue) || !active.TryGetValue(ev.Attacker, out var state))
                 return;
             if (statue.BreakneckActive)
+            {
                 ScpPrivateAccess.RestartBreakneck(statue.BreakneckSpeedsAbility);
+                state.BreakneckKill = true;
+                ev.Attacker.ShowHint("Kill! Breakneck refreshed.", 2);
+                return;
+            }
+
             statue.RemainingBreakneckCooldown = 0;
+            ev.Attacker.ShowHint("Kill! Breakneck ready.", 2);
+        }
+
+        private static void ClearRefreshedCooldown(Player player, ActiveRole state)
+        {
+            if (!state.BreakneckKill || !(player.Role is Exiled.API.Features.Roles.Scp173Role statue) || statue.BreakneckActive)
+                return;
+            state.BreakneckKill = false;
+            if (statue.RemainingBreakneckCooldown > 0)
+                statue.RemainingBreakneckCooldown = 0;
         }
 
         private sealed class Poison

@@ -82,12 +82,8 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 | `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 8`, `radius: 3`, `human_slow_percent: 25`, `scp_slow_percent: 15`, both `*_damage_per_second: 0`, `affect_allies: false`, `affect_owner: true`, `same_room_only: true`, `require_line_of_sight: true` |
 | `echo_canister` / 7104 | `fuse_seconds: 1`, `duration_seconds: 6`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
 | `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 25`, `reach: 3` |
-| `signal_jammer` / 7106 | `deploy_seconds: 2`, `arming_seconds: 2`, `active_seconds: 6`, `room_cooldown_seconds: 30`, `remove_seconds: 2`, `max_active: 1` |
-| `survey_beacon` / 7107 | `deploy_seconds: 2`, `duration_seconds: 45`, `scan_seconds: 3`, `scans: 2`, `remove_seconds: 2` |
-| `trace_chalk` / 7108 | `duration_seconds: 45`, `max_markers: 9`; charges come from its item-list entry (default 3) |
-| `field_dressing` / 7109 | `use_seconds: 4`, `heal_amount: 35` |
+| `signal_jammer` / 7106 | `deploy_seconds: 2`, `arming_seconds: 2`, `active_seconds: 30`, `signal_loss_seconds: 4`, `room_cooldown_seconds: 30`, `remove_seconds: 2`, `max_active: 1` |
 | `filter_inhaler` / 7111 | `use_seconds: 2`, `duration_seconds: 12`, `blocks_slow: true`, `blocks_damage: true` |
-| `preserved_specimen` / 7112 | `use_seconds: 4`, `heal_amount: 80`, `reach: 2`, `once_per_player_per_round: true` |
 | `interaction` | `device_reach: 3`, `move_tolerance: 0.6`, `cancel_on_damage: true`, `tick_seconds: 0.1` |
 | `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2` (extra bundles), `pair_gas_with_filter: false` (legacy, ignored) |
 
@@ -180,7 +176,7 @@ tuning:
     range: 20
 ```
 
-Echo and Rattler retain independent `audio_volume: 2.5`, `audio_range: 16` and `audio_full_volume_range: 6` in their tuning sections. Gain accepts 0-10, with 0 muting that sound. The full-volume distance is clamped to the selected hearing radius. Existing untouched 0.65 Echo/Rattler gains migrate; custom values remain. Save `audio_balance_revision: 1` in the provider root when deliberately keeping an old gain. Native gunshot assets and client master/speaker sliders are unchanged.
+Echo retains independent `audio_volume: 2.5`, `audio_range: 16` and `audio_full_volume_range: 6` in their tuning sections. Gain accepts 0-10, with 0 muting that sound. The full-volume distance is clamped to the selected hearing radius. Existing untouched 0.65 Echo gains migrate; custom values remain. Save `audio_balance_revision: 1` in the provider root when deliberately keeping an old gain. Native gunshot assets and client master/speaker sliders are unchanged.
 
 SCP proximity chat defaults to `volume: 10`, `full_volume_range: 12`, `voice_range: 16`. Gain accepts 0-20 through the native speaker's PCM multiplier. Old stock gains migrate through revision 2; revision 3 upgrades stock 6m falloff to 12m. Edited values, pinned revisions and receive/mute controls survive. `bpscpchat volume <0-20>` changes live gain; save YAML and use `bpscpchat reload` to retain it. Both staff commands need `brainless.scpchat.configure`. No microphone decoding/re-encoding or additional dependency is added. Confirm actual listening volume with two living clients after a full restart.
 
@@ -207,3 +203,9 @@ The HUD defaults to `role_hud_edge_padding_percent: 0.5`; use `0` for the litera
 Startup migrations for Roles 0.5.0, Items 0.6.1 and SCP voice 0.2.0 save their new fields automatically and create a `.before-brainless-migration` backup. Peer-plugin sections remain verbatim. New SCP profiles append once at revision 1; revision 2 adds the four new human profiles using available pool space without changing existing percentages. A full pool leaves a new entry at 0%. Save settings and use `bprole reload`; existing assigned stats keep their captured values until reassignment.
 
 Items 0.6.2 uses catalog revision 6 to upgrade an untouched eight-second Door Jammer hold to 25 seconds. Edited lifetimes are preserved; current-revision values and explicit per-item file overrides remain authoritative. Deployment/removal stay at two/three seconds. Existing deployed braces keep their captured expiry.
+
+Items 0.7.0 (catalog revision 7) raises an untouched 6-second Signal Jammer to 30 seconds. While active, SCP-079 cannot use doors, cameras, tesla gates, pings or elevators in that room, and loses its signal for `signal_loss_seconds` if it is already watching the room.
+
+Weapons 0.7.0 raises the Nullifier to `human_damage: 1.06` (about 35 per E-11 body hit), `scp_damage: 0.85` and `tuning.nullifier.shield_damage_multiplier: 2`. Untouched old values (0.85 / 0.7 / 1.2) migrate; edited values stay.
+
+Roles 0.6.0 (catalog revision 3) raises every spawn group to an 80% custom-role total once, keeping relative shares; later edits are respected. `round_events.deathmatch` and `round_events.juggernaut` hold the new event settings; `project_brainless_sl_fixes.guard_escape` controls the guard escape (`enabled`, `minimum_alive_seconds`, `role`).

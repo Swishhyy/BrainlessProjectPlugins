@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Brainless.Internal;
 
 namespace Brainless.Roles
@@ -35,6 +36,7 @@ namespace Brainless.Roles
 
         [Tune(0, 120)]
         public float? MimicSoundCooldownSeconds { get; set; }
+        [Description("Retired. SCP-939 intercom access disconnected players and is no longer applied.")]
         public bool UseIntercom { get; set; }
 
         [Tune(0, 1000)]

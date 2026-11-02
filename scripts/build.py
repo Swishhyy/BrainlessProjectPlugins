@@ -29,7 +29,7 @@ args = parser.parse_args()
 output = ROOT/'artifacts'
 output.mkdir(exist_ok=True)
 failed = []
-manifest = {'exiled': '9.15.2', 'scp_sl': '14.2.8', 'plugins': []}
+manifest = {'exiled': '9.15.3', 'scp_sl': '14.2.9', 'plugins': []}
 for name, (project, assembly) in PROJECTS.items():
     if args.plugin and name != args.plugin:
         continue

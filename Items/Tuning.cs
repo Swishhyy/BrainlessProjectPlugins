@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Brainless.Internal;
 
 namespace Brainless.Items
@@ -11,11 +12,7 @@ namespace Brainless.Items
         public EchoTuning EchoCanister { get; set; } = new EchoTuning();
         public BraceTuning DoorBrace { get; set; } = new BraceTuning();
         public JammerTuning SignalJammer { get; set; } = new JammerTuning();
-        public BeaconTuning SurveyBeacon { get; set; } = new BeaconTuning();
-        public ChalkTuning TraceChalk { get; set; } = new ChalkTuning();
-        public DressingTuning FieldDressing { get; set; } = new DressingTuning();
         public FilterTuning FilterInhaler { get; set; } = new FilterTuning();
-        public SpecimenTuning PreservedSpecimen { get; set; } = new SpecimenTuning();
         public InteractionTuning Interaction { get; set; } = new InteractionTuning();
         public SupplyTuning Supply { get; set; } = new SupplyTuning();
         public EffectAudioTuning Audio { get; set; } = new EffectAudioTuning();
@@ -240,6 +237,13 @@ namespace Brainless.Items
 
     public sealed class JammerTuning
     {
+        // Revision 1 raised the stock 6-second window, which ended before SCP-079 noticed it.
+        internal void Upgrade(int revision)
+        {
+            if (revision < 1 && ActiveSeconds == 6)
+                ActiveSeconds = 30;
+        }
+
         [Tune(0, 120)]
         public float DeploySeconds { get; set; } = 2;
 
@@ -247,7 +251,11 @@ namespace Brainless.Items
         public float ArmingSeconds { get; set; } = 2;
 
         [Tune(.1, 3600)]
-        public float ActiveSeconds { get; set; } = 6;
+        public float ActiveSeconds { get; set; } = 30;
+
+        [Description("Seconds SCP-079 loses its signal when it is watching a jammed room.")]
+        [Tune(0, 60)]
+        public float SignalLossSeconds { get; set; } = 4;
 
         [Tune(0, 3600)]
         public float RoomCooldownSeconds { get; set; } = 30;
@@ -259,42 +267,6 @@ namespace Brainless.Items
         public int MaxActive { get; set; } = 1;
     }
 
-    public sealed class BeaconTuning
-    {
-        [Tune(0, 120)]
-        public float DeploySeconds { get; set; } = 2;
-
-        [Tune(.1, 3600)]
-        public float DurationSeconds { get; set; } = 45;
-
-        [Tune(0, 120)]
-        public float ScanSeconds { get; set; } = 3;
-
-        [Tune(1, 100)]
-        public int Scans { get; set; } = 2;
-
-        [Tune(0, 120)]
-        public float RemoveSeconds { get; set; } = 2;
-    }
-
-    public sealed class ChalkTuning
-    {
-        [Tune(.1, 3600)]
-        public float DurationSeconds { get; set; } = 45;
-
-        [Tune(1, 200)]
-        public int MaxMarkers { get; set; } = 9;
-    }
-
-    public sealed class DressingTuning
-    {
-        [Tune(0, 120)]
-        public float UseSeconds { get; set; } = 4;
-
-        [Tune(0, 100000)]
-        public float HealAmount { get; set; } = 35;
-    }
-
     public sealed class FilterTuning
     {
         [Tune(0, 120)]
@@ -304,19 +276,6 @@ namespace Brainless.Items
         public float DurationSeconds { get; set; } = 12;
         public bool BlocksSlow { get; set; } = true;
         public bool BlocksDamage { get; set; } = true;
-    }
-
-    public sealed class SpecimenTuning
-    {
-        [Tune(0, 120)]
-        public float UseSeconds { get; set; } = 4;
-
-        [Tune(0, 100000)]
-        public float HealAmount { get; set; } = 80;
-
-        [Tune(.5, 10)]
-        public float Reach { get; set; } = 2;
-        public bool OncePerPlayerPerRound { get; set; } = true;
     }
 
     public sealed class InteractionTuning

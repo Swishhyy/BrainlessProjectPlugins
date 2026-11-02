@@ -32,8 +32,8 @@ def collect(assets, repository):
         entry = entries[0]
         version = ET.parse(ROOT/project).findtext('.//Version')
         expected_entry = {'id': plugin, 'assembly_name': assembly, 'asset': dll.name, 'version': version,
-                          'sha256': hashlib.sha256(dll.read_bytes()).hexdigest(), 'exiled_min': '9.15.2',
-                          'game_version': '14.2.8', 'target_framework': 'net48'}
+                          'sha256': hashlib.sha256(dll.read_bytes()).hexdigest(), 'exiled_min': '9.15.3',
+                          'game_version': '14.2.9', 'target_framework': 'net48'}
         if any(entry.get(key) != value for key, value in expected_entry.items()):
             raise ValueError('Component identity, version, compatibility or checksum mismatch: '+plugin)
         components.append({'plugin': plugin, 'version': version, 'dll': dll, 'manifest': manifest})
@@ -43,7 +43,7 @@ def prepare_bundle(assets, output, repository):
     components = collect(assets, repository)
     output.mkdir(parents=True, exist_ok=True)
     install = ('# Project Brainless Plugins\n\n'
-               'Eight separate plugins for EXILED 9.15.2 / SCP:SL 14.2.8.\n\n'
+               'Eight separate plugins for EXILED 9.15.3 / SCP:SL 14.2.9.\n\n'
                '1. Fully stop the server.\n'
                '2. Copy the DLLs you want from Plugins/ into EXILED/Plugins, replacing prior copies.\n'
                '3. Keep existing configuration and start the server. New settings are generated.\n\n'
@@ -76,7 +76,7 @@ def prepare_bundle(assets, output, repository):
              'The `.update.json` files are used by the updater; they are not server plugins. '
              'Stop the server, replace your selected DLLs, keep existing configs, then start it. '
              'If the old updater fails, replace every installed component once, including Core if installed.\n\n'
-             '**Target:** EXILED 9.15.2 / SCP:SL 14.2.8. Automatic updates still replace only each installed component.\n\n'
+             '**Target:** EXILED 9.15.3 / SCP:SL 14.2.9. Automatic updates still replace only each installed component.\n\n'
              f'[Staff documentation](https://github.com/{repository}/blob/main/docs/README.md) · [All content and controls](https://github.com/{repository}/blob/main/docs/CATALOG.md). Also included under docs/ in the ZIP.\n\n'
              '| Plugin | Version | DLL |\n| --- | --- | --- |\n')
     notes += ''.join(f'| {c["plugin"]} | {c["version"]} | `{c["dll"].name}` |\n' for c in components)

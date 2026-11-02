@@ -1,15 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
 using Exiled.API.Features;
 using HarmonyLib;
 using Mirror;
 using PlayerRoles.PlayableScps.Scp096;
 using PlayerRoles.PlayableScps.Scp106;
-using PlayerRoles.PlayableScps.Scp939;
-using VoiceChat;
-using NativeIntercom = PlayerRoles.Voice.Intercom;
 
 namespace Brainless.Roles
 {
@@ -18,11 +12,20 @@ namespace Brainless.Roles
     {
         private static void Prefix(Scp106VigorAbilityBase __instance, ref float __0)
         {
-            if (!NetworkServer.active)
-                return;
-            float multiplier = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.VigorGainMultiplier ?? 1;
-            if (multiplier != 1)
-                __0 = ScpTraitRules.Vigor(((Exiled.API.Features.Roles.Scp106Role)Player.Get(__instance.Owner).Role).Vigor, __0, multiplier);
+            // A failing prefix would throw out of the native setter and freeze vigor,
+            // so any error leaves the native value untouched.
+            try
+            {
+                if (!NetworkServer.active)
+                    return;
+                float multiplier = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.VigorGainMultiplier ?? 1;
+                if (multiplier != 1)
+                    __0 = ScpTraitRules.Vigor(((Exiled.API.Features.Roles.Scp106Role)Player.Get(__instance.Owner).Role).Vigor, __0, multiplier);
+            }
+            catch (Exception exception)
+            {
+                Log.Debug("[Brainless Roles] Vigor multiplier skipped: " + exception.Message);
+            }
         }
     }
 
@@ -31,56 +34,23 @@ namespace Brainless.Roles
     {
         private static void Prefix(Scp096RageCycleAbility __instance)
         {
-            if (!NetworkServer.active || __instance.CastRole.StateController.RageState != Scp096RageState.Distressed)
-                return;
-            float? seconds = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.RageWindupSeconds;
-            if (seconds.HasValue)
-                ScpPrivateAccess.ShortenRageWindup(__instance, seconds.Value);
-        }
-    }
-
-    [HarmonyPatch(typeof(NativeIntercom), "CheckPlayer")]
-    internal static class MimicIntercomAccess
-    {
-        // Extend only the human eligibility predicate. Keep native distance,
-        // transmission state, intercom mute, cooldown and using-event checks.
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            int matches = 0;
-            foreach (var instruction in instructions)
+            // Runs every frame for every SCP-096. Never let a failure escape into the
+            // native rage cycle: that is what froze plain 096s mid-enrage in 0.5.0.
+            try
             {
-                if (instruction.opcode == OpCodes.Call && instruction.operand is MethodInfo method && method.Name == "IsHuman" && method.ReturnType == typeof(bool) && method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType == typeof(ReferenceHub))
-                {
-                    instruction.operand = AccessTools.Method(typeof(MimicIntercomAccess), nameof(HumanOrMimic));
-                    matches++;
-                }
-
-                yield return instruction;
+                if (!NetworkServer.active || __instance.CastRole.StateController.RageState != Scp096RageState.Distressed)
+                    return;
+                float? seconds = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.RageWindupSeconds;
+                if (seconds.HasValue)
+                    ScpPrivateAccess.ShortenRageWindup(__instance, seconds.Value);
             }
-
-            if (matches != 1)
-                throw new InvalidOperationException("The native intercom eligibility method changed; refusing to bypass its remaining checks.");
-        }
-
-        private static bool HumanOrMimic(ReferenceHub hub)
-        {
-            var player = Player.Get(hub);
-            return player != null && (player.IsHuman || (player.Role.Type == PlayerRoles.RoleTypeId.Scp939 && Plugin.Instance?.Traits(player)?.UseIntercom == true));
+            catch (Exception exception)
+            {
+                Log.Debug("[Brainless Roles] Rage windup skipped: " + exception.Message);
+            }
         }
     }
 
-    [HarmonyPatch(typeof(Scp939VoiceModule), nameof(Scp939VoiceModule.ValidateSend))]
-    internal static class MimicIntercomVoice
-    {
-        private static void Postfix(Scp939VoiceModule __instance, ref VoiceChatChannel __result)
-        {
-            // Never upgrade an invalid/muted stream or replace recorded mimicry.
-            // The native intercom first has to grant this SCP the microphone.
-            if (__result != VoiceChatChannel.ScpChat)
-                return;
-            var hub = ScpPrivateAccess.VoiceOwner(__instance);
-            if (Plugin.Instance?.Traits(Player.Get(hub))?.UseIntercom == true && NativeIntercom.CheckPerms(hub))
-                __result = VoiceChatChannel.Intercom;
-        }
-    }
+    // Mimic intercom access was removed: an SCP-939 transmitting on the intercom
+    // disconnected listeners whose clients cannot play intercom audio from an SCP.
 }

@@ -2,7 +2,7 @@
 
 Nearby SCP voice with tap-to-toggle controls.
 
-**Install:** fully stop the server, put `Brainless.ScpProximityChat.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
+**Install:** fully stop the server, put `Brainless.ScpProximityChat.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 
 **Config:** `brainless_scp_proximity_chat`. Keep your existing YAML when updating.
 

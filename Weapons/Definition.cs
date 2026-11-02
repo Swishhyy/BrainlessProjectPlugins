@@ -74,19 +74,10 @@ namespace Brainless.Weapons
             {
                 Id = 7201,
                 Name = "Nullifier Rifle",
-                Description = "Deals extra shield damage, but less health damage.",
+                Description = "Shreds SCP hume shields and hits harder than a standard rifle.",
                 BaseType = ItemType.GunE11SR,
-                HumanDamage = .85f,
-                ScpDamage = .7f
-            },
-            new WeaponSpec
-            {
-                Id = 7202,
-                Name = "Rattler",
-                Description = "Repeated hits make your target give off a tracking sound.",
-                BaseType = ItemType.GunCrossvec,
-                HumanDamage = .8f,
-                ScpDamage = .8f
+                HumanDamage = NullifierHumanDamage,
+                ScpDamage = .85f
             },
             new WeaponSpec
             {
@@ -97,27 +88,6 @@ namespace Brainless.Weapons
                 Magazine = 0,
                 Reserve = 18,
                 HumanDamage = .9f
-            },
-            new WeaponSpec
-            {
-                Id = 7204,
-                Name = "Redline SMG",
-                Description = "Builds heat while firing. Overheating forces a brief cooldown.",
-                BaseType = ItemType.GunFSP9,
-                HumanDamage = .85f,
-                ScpDamage = .85f,
-                Experimental = true,
-                RoundCap = 1
-            },
-            new WeaponSpec
-            {
-                Id = 7205,
-                Name = "Last Word",
-                Description = "A powerful pistol with six shots and no reload.",
-                BaseType = ItemType.GunCOM15,
-                Magazine = 6,
-                Reserve = 0,
-                RoundCap = 1
             },
             new WeaponSpec
             {
@@ -160,8 +130,28 @@ namespace Brainless.Weapons
         // Add this newly introduced weapon once; later deletions/edits are respected.
         public int CatalogRevision { get; set; }
 
+        // Rattler, Redline SMG and Last Word were removed in catalog revision 3.
+        internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7202, 7204, 7205 };
+        // About 35 per E-11 body hit (the old 0.85 multiplier gave about 28).
+        internal const float NullifierHumanDamage = 1.06f;
+
         internal void UpgradeCatalog()
         {
+            Weapons.RemoveAll(w => Retired.Contains(w.Id));
+            Distribution?.RemoveRetired(Retired);
+            if (CatalogRevision < 3)
+                foreach (var w in Weapons.Where(w => w.Id == 7201))
+                {
+                    if (Math.Abs(w.HumanDamage - .85f) < .001f)
+                        w.HumanDamage = NullifierHumanDamage;
+                    if (Math.Abs(w.ScpDamage - .7f) < .001f)
+                        w.ScpDamage = .85f;
+                    if (w.Description == "Deals extra shield damage, but less health damage.")
+                        w.Description = "Shreds SCP hume shields and hits harder than a standard rifle.";
+                    if (Math.Abs(Tuning.Nullifier.ShieldDamageMultiplier - 1.2f) < .001f)
+                        Tuning.Nullifier.ShieldDamageMultiplier = 2;
+                }
+
             if (CatalogRevision < 1 && !Weapons.Any(w => w.Id == 7207))
                 Weapons.Add(CreateLauncher());
             if (CatalogRevision < 2)
@@ -171,7 +161,7 @@ namespace Brainless.Weapons
                 Distribution?.UpgradeSupWeapons();
             }
 
-            CatalogRevision = Math.Max(2, CatalogRevision);
+            CatalogRevision = Math.Max(3, CatalogRevision);
         }
 
         internal void Prepare()
@@ -188,7 +178,7 @@ namespace Brainless.Weapons
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Weapons.Select(w => new KeyValuePair<uint, ItemType>(w.Id, w.BaseType)));
-            Distribution.Validate(id => id >= 7201 && id <= 7208);
+            Distribution.Validate(id => id >= 7201 && id <= 7208 && !Retired.Contains(id));
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
             foreach (var w in Weapons)
@@ -201,7 +191,7 @@ namespace Brainless.Weapons
                 }
 
             foreach (var w in Weapons)
-                if (w.Id < 7201 || w.Id > 7208 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7205 || w.Id == 7207 || w.Id == 7208) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
+                if (w.Id < 7201 || w.Id > 7208 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7207 || w.Id == 7208) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
                     throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
             foreach (var w in Weapons)
                 if (w.Id == 7208)
@@ -337,7 +327,7 @@ namespace Brainless.Weapons
                 return "The server did not add the weapon to the inventory; check the server log.";
             }
 
-            if (Id != 7207 && Id != 7205 && Id != 7208)
+            if (Id != 7207 && Id != 7208)
                 player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);

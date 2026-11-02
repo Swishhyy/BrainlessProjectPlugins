@@ -24,8 +24,8 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 1);
-        public override Version RequiredExiledVersion => new Version(9, 15, 2);
+        public override Version Version => new Version(0, 2, 2);
+        public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 
         private readonly Dictionary<Player, VoiceState> states = new Dictionary<Player, VoiceState>();
@@ -125,7 +125,10 @@ namespace Brainless.ScpProximityChat
             return state;
         }
 
-        internal bool Eligible(Player player) => player != null && player.IsConnected && player.IsAlive && !player.IsHost && player.IsScp && player.Role.Type != RoleTypeId.Scp079 && player.Role.Type != RoleTypeId.Scp3114 && Config.AllowedRoles?.Contains(player.Role.Type) == true;
+        // SCP-939 is excluded: its voice module also carries mimicry, and rerouting
+        // its stream through speakers disconnected players. It keeps native team voice.
+        internal static bool Excluded(RoleTypeId role) => role == RoleTypeId.Scp079 || role == RoleTypeId.Scp3114 || role == RoleTypeId.Scp939;
+        internal bool Eligible(Player player) => player != null && player.IsConnected && player.IsAlive && !player.IsHost && player.IsScp && !Excluded(player.Role.Type) && Config.AllowedRoles?.Contains(player.Role.Type) == true;
         private bool IsLocal(Player player) => Eligible(player) && states.TryGetValue(player, out var state) && state.Local;
         internal string AudioStatus(Player player)
         {
@@ -298,7 +301,7 @@ namespace Brainless.ScpProximityChat
 
         private void Receiving(ReceivingVoiceMessageEventArgs ev)
         {
-            if (!ev.IsAllowed || !IsLocal(ev.Sender))
+            if (!ev.IsAllowed || !IsLocal(ev.Sender) || ev.Player?.Role.Type == RoleTypeId.Scp939)
                 return;
             State(ev.Sender).RouteChecks++;
             // Only the normal SCP team channel is rerouted, never SCP-939 mimicry,
@@ -314,6 +317,9 @@ namespace Brainless.ScpProximityChat
         {
             Player sender = Player.Get(message.Speaker);
             if (!IsLocal(sender) || !(sender.Role.Base is IVoiceRole voice) || voice.VoiceModule.CurrentChannel != VoiceChatChannel.ScpChat)
+                return false;
+            // SCP-939 listeners stay on the untouched native path (normal team voice).
+            if (Player.Get(connection.identity)?.Role.Type == RoleTypeId.Scp939)
                 return false;
             if (message.Channel != VoiceChatChannel.Proximity)
                 return true;

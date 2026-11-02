@@ -2,7 +2,7 @@
 
 # Project Brainless SCP SL Fixes 0.3.0
 
-Small configurable gameplay additions, in a separate `Brainless.SlFixes.dll` for EXILED 9.15.2 / SCP:SL 14.2.8. Install it in EXILED/Plugins and fully restart. Install `Brainless.Core.dll` for saved XP and optional Discord stats; SCP-914 behavior still runs if Core is absent. Install Items/Weapons 0.5.0 for their crafting adapters. No gameplay plugin depends on another gameplay DLL.
+Small configurable gameplay additions, in a separate `Brainless.SlFixes.dll` for EXILED 9.15.3 / SCP:SL 14.2.9. Install it in EXILED/Plugins and fully restart. Install `Brainless.Core.dll` for saved XP and optional Discord stats; SCP-914 behavior still runs if Core is absent. Install Items/Weapons 0.5.0 for their crafting adapters. No gameplay plugin depends on another gameplay DLL.
 
 ## Captured military recruitment
 
@@ -21,7 +21,6 @@ Under `project_brainless_sl_fixes.capture_conversions`, edit `enabled`, `minimum
 | Flashbang | Fine | Smoke 7101 | 40% | 3 |
 | HE grenade | Very Fine | Cluster 7102 | 25% | 2 |
 | HE grenade | Fine | Impact 7113 | 30% | 2 |
-| Medkit | 1:1 | Field Dressing 7109 | 35% | 3 |
 
 All recipe fields are editable in `project_brainless_sl_fixes.recipes`: `name`, `source`, `setting`, `custom_id`, `chance`, `max_per_round`, `enabled`. Chance is per eligible input; recipes are checked in config order. Zero maximum disables that recipe. If a provider is missing, the roll fails, or normal item supply/population limits deny conversion, the native SCP-914 result applies. Recipes do not use admin supply bypasses. In particular, natural clusters still use the Items population/supply configuration, including the default 12-player gate.
 

@@ -20,7 +20,6 @@ using PlayerRoles.PlayableScps.Scp049;
 using UnityEngine;
 using P = Exiled.Events.Handlers.Player;
 using S = Exiled.Events.Handlers.Server;
-using D = Exiled.Events.Handlers.Scp049;
 using U = Exiled.Events.Handlers.Scp914;
 using Random = System.Random;
 using Scp049Role = Exiled.API.Features.Roles.Scp049Role;
@@ -33,8 +32,8 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 5, 1);
-        public override Version RequiredExiledVersion => new Version(9, 15, 2);
+        public override Version Version => new Version(0, 6, 0);
+        public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
 
@@ -49,7 +48,6 @@ namespace Brainless.Roles
         private readonly Dictionary<string, int> burstSpent = new Dictionary<string, int>();
         private readonly DeathCapture<Player, PendingBurst> pendingBursts = new DeathCapture<Player, PendingBurst>();
         private readonly FragProjectiles bursts = new FragProjectiles();
-        private readonly HashSet<string> doctorSpent = new HashSet<string>();
         private readonly Dictionary<int, int> badges = new Dictionary<int, int>();
         private bool doctorRolled;
         private float waveStart;
@@ -60,7 +58,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 2 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 3 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -94,8 +92,6 @@ namespace Brainless.Roles
             P.Left += Left;
             S.WaitingForPlayers += Reset;
             S.RoundEnded += Ended;
-            D.StartingRecall += StartingRecall;
-            D.FinishingRecall += FinishingRecall;
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
             lifetime.Run(Tick());
@@ -120,8 +116,6 @@ namespace Brainless.Roles
             P.Left -= Left;
             S.WaitingForPlayers -= Reset;
             S.RoundEnded -= Ended;
-            D.StartingRecall -= StartingRecall;
-            D.FinishingRecall -= FinishingRecall;
             U.UpgradingPickup -= UpgradePickup;
             U.UpgradingInventoryItem -= UpgradeInventory;
             foreach (var player in active.Keys.ToArray())
@@ -162,7 +156,6 @@ namespace Brainless.Roles
             issued.Clear();
             assignmentNotes.Clear();
             burstSpent.Clear();
-            doctorSpent.Clear();
             badges.Clear();
             doctorRolled = false;
             rogueAlertQueued = false;
@@ -229,7 +222,7 @@ namespace Brainless.Roles
             }
 
             var doctorEvent = Config.Roles.FirstOrDefault(r => r.Id == "Z05" && r.Enabled && r.ChancePercent > 0);
-            if (player.Role.Type == RoleTypeId.Scp0492 && Config.EnableDoctorEvent && Config.AllowExperimentalRoles && doctorEvent != null && !doctorRolled && Player.List.Count >= 12 && Player.List.Any(p => p.Role.Type == RoleTypeId.Scp049))
+            if (player.Role.Type == RoleTypeId.Scp0492 && Config.EnableDoctorEvent && doctorEvent != null && (!doctorEvent.Experimental || Config.AllowExperimentalRoles) && !doctorRolled && Player.List.Count(p => p.IsConnected && !p.IsHost) >= doctorEvent.MinPlayers && Count("Z05") < doctorEvent.MaxPerRound && Player.List.Any(p => p.Role.Type == RoleTypeId.Scp049))
             {
                 doctorRolled = true;
                 if (random.NextDouble() * 100 < doctorEvent.ChancePercent.Value)
@@ -423,7 +416,8 @@ namespace Brainless.Roles
                         foreach (var item in player.Items.Where(i => i.Type == type).ToArray())
                             player.RemoveItem(item);
                     foreach (var type in definition.Add)
-                        player.AddItem(type);
+                        if (player.AddItem(type) is Firearm added)
+                            added.MagazineAmmo = added.MaxMagazineAmmo;
                     if (definition.Id == "C01" || definition.Id == "C04")
                     {
                         var item = player.Items.FirstOrDefault(i => i.Type == ItemType.GrenadeHE) ?? player.Items.FirstOrDefault(i => i.Type == ItemType.Medkit);
@@ -433,8 +427,10 @@ namespace Brainless.Roles
 
                     foreach (var ammo in player.Ammo.ToArray())
                         player.SetAmmo(ammo.Key.GetAmmoType(), (ushort)(ammo.Value * definition.ReserveMultiplier));
-                    if (definition.Id == "M03" || definition.Id == "M04" || definition.Id == "C03")
+                    if (definition.Id == "M03" || definition.Id == "M04")
                         player.ClearAmmo();
+                    if (definition.Id == "S01")
+                        player.SetAmmo(AmmoType.Ammo44Cal, (ushort)Math.Max((int)player.GetAmmo(AmmoType.Ammo44Cal), 6));
                     foreach (uint id in definition.CustomItems)
                     {
                         var custom = FindCustom(id);
@@ -495,17 +491,13 @@ namespace Brainless.Roles
 
                 player.MaxHealth = definition.Health > 0 ? definition.Health : state.MaxHealth * definition.HealthMultiplier;
                 player.Health = player.MaxHealth;
-                if (player.Role is IHumeShieldRole)
-                {
-                    player.MaxHumeShield = state.MaxShield * definition.ShieldMultiplier;
-                    player.HumeShield = Math.Min(player.MaxHumeShield, state.Shield * definition.ShieldMultiplier);
-                }
+                ApplyShield(player, state, true);
 
                 if (definition.Scale != 1 && Config.AllowModelScaling)
                     player.Scale = state.Scale * definition.Scale;
                 if (definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                     player.Scale = new Vector3(state.Scale.x, state.Scale.y * .5f, state.Scale.z);
-                if (player.Role is IHumeShieldRole shieldRole && shieldRole.HumeShieldModule is DynamicHumeShieldController hs)
+                if (player.Role is IHumeShieldRole shieldRole && shieldRole.HumeShieldModule is DynamicHumeShieldController hs && !NoShield(definition))
                 {
                     state.RegenCooldown = hs.RegenerationCooldown;
                     state.RegenRate = hs.RegenerationRate;
@@ -581,7 +573,9 @@ namespace Brainless.Roles
 
         private void GiveBadge(Player player, string id)
         {
-            foreach (var item in player.Items.OfType<Keycard>().ToArray())
+            // Replace only native cards. A custom keycard body (Door Jammer, Hacking
+            // Chip) belongs to the role kit and must survive the badge swap.
+            foreach (var item in player.Items.OfType<Keycard>().Where(i => !CustomItem.Registered.Any(c => c.TrackedSerials.Contains(i.Serial))).ToArray())
                 player.RemoveItem(item);
             int tier = id == "G01" ? 2 : id == "G02" || id == "G04" ? 0 : 1;
             var card = (Exiled.API.Features.Items.Keycards.CustomKeycardItem)player.AddItem(ItemType.KeycardCustomTaskForce);
@@ -637,8 +631,11 @@ namespace Brainless.Roles
 
             player.MaxHealth = state.MaxHealth;
             player.Health = Math.Min(player.Health, player.MaxHealth);
-            player.MaxHumeShield = state.MaxShield;
-            player.Scale = state.Scale;
+            // A negative maximum clears the stat override so the native shield returns.
+            if (state.ShieldOverridden)
+                player.MaxHumeShield = -1;
+            if (player.Scale != state.Scale)
+                player.Scale = state.Scale;
             player.CustomInfo = ValidCustomInfo(state.Info);
         }
 
@@ -687,8 +684,33 @@ namespace Brainless.Roles
             float nextStamina = 1 / (stamina ? Math.Max(1, state.Definition.SprintDurationMultiplier) : 1);
             fpc.StaminaUsageMultiplier = fpc.StaminaUsageMultiplier / state.StaminaApplied * nextStamina;
             state.StaminaApplied = nextStamina;
-            if (player.Role is IHumeShieldRole shieldRole && shieldRole.HumeShieldModule is DynamicHumeShieldController shield)
-                player.MaxHumeShield = shield.HsMax * state.Definition.ShieldMultiplier;
+            ApplyShield(player, state, false);
+            if (state.Definition.Traits.RefreshBreakneckOnKill)
+                ClearRefreshedCooldown(player, state);
+        }
+
+        private static bool NoShield(RoleDefinition definition) => definition.Id == "Z05" || definition.ShieldMultiplier <= 0;
+
+        // Leave the native, dynamic shield alone unless the profile scales it. A
+        // scaled shield follows the module's live maximum; the Doctor never has one.
+        private static void ApplyShield(Player player, ActiveRole state, bool refill)
+        {
+            if (!(player.Role is IHumeShieldRole shieldRole) || shieldRole.HumeShieldModule == null)
+                return;
+            var definition = state.Definition;
+            if (NoShield(definition))
+            {
+                state.ShieldOverridden = true;
+                player.MaxHumeShield = 0;
+                player.HumeShield = 0;
+                return;
+            }
+
+            if (definition.ShieldMultiplier == 1)
+                return;
+            state.ShieldOverridden = true;
+            player.MaxHumeShield = shieldRole.HumeShieldModule.HsMax * definition.ShieldMultiplier;
+            player.HumeShield = refill ? Math.Min(player.MaxHumeShield, state.Shield * definition.ShieldMultiplier) : Math.Min(player.HumeShield, player.MaxHumeShield);
         }
 
         private void Hurting(HurtingEventArgs ev)
@@ -762,10 +784,7 @@ namespace Brainless.Roles
             int used = burstSpent.TryGetValue(burstKey, out int before) ? before : 0;
             if ((tuning.MaxPerPlayerPerRound > 0 && used >= tuning.MaxPerPlayerPerRound) || (tuning.MaxConcurrentBursts > 0 && bursts.Count >= tuning.MaxConcurrentBursts))
                 return;
-            var grenade = bursts.Launch(pending.Position + Vector3.up * .15f, Vector3.zero, Math.Max(.05f, tuning.WarningSeconds), pending.Source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: false, armorPenetration: tuning.ArmorPenetration);
-            grenade.Scale = Vector3.one * .001f;
-            if (grenade.Rigidbody != null)
-                grenade.Rigidbody.isKinematic = true;
+            bursts.Launch(pending.Position + Vector3.up * .15f, Vector3.zero, Math.Max(.05f, tuning.WarningSeconds), pending.Source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, requireLineOfSight: tuning.RequireLineOfSight, affectOwner: false, armorPenetration: tuning.ArmorPenetration, scale: Vector3.one * .001f, stationary: true);
             burstSpent[burstKey] = used + 1;
             if (tuning.ShowWarning)
                 World.Cue(pending.Position, "Explosive corpse - move away!", tuning.WarningRange);
@@ -801,23 +820,6 @@ namespace Brainless.Roles
             });
         }
 
-        private void StartingRecall(StartingRecallEventArgs ev)
-        {
-            if (RoleId(ev.Player) == "Z05" && (doctorSpent.Contains(ev.Player.UserId) || ev.Ragdoll.Role != RoleTypeId.Scp0492))
-                ev.IsAllowed = false;
-        }
-
-        private void FinishingRecall(FinishingRecallEventArgs ev)
-        {
-            if (RoleId(ev.Player) == "Z05" && ev.IsAllowed)
-            {
-                if (doctorSpent.Contains(ev.Player.UserId) || ev.Ragdoll.Role != RoleTypeId.Scp0492)
-                    ev.IsAllowed = false;
-                else
-                    doctorSpent.Add(ev.Player.UserId);
-            }
-        }
-
         private sealed class ActiveRole
         {
             internal RoleDefinition Definition;
@@ -827,6 +829,7 @@ namespace Brainless.Roles
             internal QuietStepLayer QuietSteps = new QuietStepLayer();
             internal Func<Player, Exiled.API.Structs.RoleData> RogueAppearance;
             internal float? TutorialDamage;
+            internal bool ShieldOverridden, BreakneckKill;
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();

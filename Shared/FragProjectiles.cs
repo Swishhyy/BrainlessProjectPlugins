@@ -16,9 +16,13 @@ namespace Brainless.Internal
         private readonly Dictionary<int, Frag> active = new Dictionary<int, Frag>();
         internal int Count => active.Count;
 
-        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false)
+        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false, Vector3? scale = null, bool stationary = false)
         {
             var grenade = Projectile.Create<ExplosionGrenadeProjectile>(ProjectileType.FragGrenade);
+            // Resize before the first spawn. Resizing a spawned pickup makes EXILED
+            // unspawn and respawn it, which can drop an armed fuse.
+            if (scale.HasValue)
+                grenade.Scale = scale.Value;
             grenade.FuseTime = fuse;
             grenade.MaxRadius = radius;
             grenade.BurnDuration = 0;
@@ -31,8 +35,13 @@ namespace Brainless.Internal
                 grenade.Base.PreviousOwner = source.Footprint;
                 if (grenade.Rigidbody != null)
                 {
-                    grenade.Rigidbody.linearVelocity = velocity;
-                    grenade.Rigidbody.angularVelocity = UnityEngine.Random.onUnitSphere * 12;
+                    if (stationary)
+                        grenade.Rigidbody.isKinematic = true;
+                    else
+                    {
+                        grenade.Rigidbody.linearVelocity = velocity;
+                        grenade.Rigidbody.angularVelocity = UnityEngine.Random.onUnitSphere * 12;
+                    }
                 }
 
                 // Start the native fuse only after ownership, tracking and velocity exist.

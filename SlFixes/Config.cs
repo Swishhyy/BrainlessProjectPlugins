@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,9 @@ namespace Brainless.SlFixes
         public bool EnableCrafting { get; set; } = true;
         public bool EnableXp { get; set; } = true;
         public CaptureConversionConfig CaptureConversions { get; set; } = new CaptureConversionConfig();
+
+        [Description("An uncuffed Facility Guard who reaches the surface escape zone joins MTF.")]
+        public GuardEscapeConfig GuardEscape { get; set; } = new GuardEscapeConfig();
         public int MaxCraftXpAwardsPerPlayerPerRound { get; set; } = 3;
         public int MaxTeleportXpAwardsPerPlayerPerRound { get; set; } = 3;
         public int MinimumRoundSecondsForXp { get; set; } = 120;
@@ -60,15 +64,6 @@ namespace Brainless.SlFixes
                 CustomId = 7113,
                 Chance = 30,
                 MaxPerRound = 2
-            },
-            new CraftingRecipe
-            {
-                Name = "Field Dressing",
-                Source = ItemType.Medkit,
-                Setting = Scp914KnobSetting.OneToOne,
-                CustomId = 7109,
-                Chance = 35,
-                MaxPerRound = 3
             }
         };
 
@@ -81,7 +76,6 @@ namespace Brainless.SlFixes
             R("Bio Grenade", ItemType.GrenadeFlash, Scp914KnobSetting.VeryFine, 7118, 20),
             R("Hacking Chip", ItemType.KeycardJanitor, Scp914KnobSetting.VeryFine, 7119, 15),
             R("Reinforcement Radio", ItemType.Radio, Scp914KnobSetting.VeryFine, 7120, 10),
-            R("SCRAMBLE Goggles", ItemType.Flashlight, Scp914KnobSetting.Fine, 7121, 20),
             R("Volatile Pills", ItemType.SCP500, Scp914KnobSetting.Rough, 7122, 10),
             R("Railgun", ItemType.GunE11SR, Scp914KnobSetting.VeryFine, 7208, 5)
         };
@@ -110,6 +104,10 @@ namespace Brainless.SlFixes
                 RecipeRevision = 1;
             }
 
+            // Field Dressing and SCRAMBLE Goggles no longer exist.
+            Recipes.RemoveAll(r => r != null && (r.CustomId == 7109 || r.CustomId == 7121));
+            if (GuardEscape == null || !Enum.IsDefined(typeof(PlayerRoles.RoleTypeId), GuardEscape.Role) || !GuardEscapeConfig.FoundationRoles.Contains(GuardEscape.Role) || double.IsNaN(GuardEscape.MinimumAliveSeconds) || GuardEscape.MinimumAliveSeconds < 0)
+                throw new InvalidOperationException("guard_escape.role must be a Foundation (MTF/Guard) role and minimum_alive_seconds nonnegative.");
             foreach (var recipe in Recipes)
                 if (recipe == null || string.IsNullOrWhiteSpace(recipe.Name) || !Enum.IsDefined(typeof(ItemType), recipe.Source) || recipe.Source == ItemType.None || !Enum.IsDefined(typeof(Scp914KnobSetting), recipe.Setting) || recipe.CustomId < 1 || recipe.MaxPerRound < 0 || double.IsNaN(recipe.Chance) || double.IsInfinity(recipe.Chance) || recipe.Chance < 0 || recipe.Chance > 100)
                     throw new InvalidOperationException("Invalid SCP-914 crafting recipe.");
@@ -124,6 +122,15 @@ namespace Brainless.SlFixes
         public double MinimumAliveSeconds { get; set; } = 10;
         public PlayerRoles.RoleTypeId ChaosRole { get; set; } = PlayerRoles.RoleTypeId.ChaosConscript;
         public PlayerRoles.RoleTypeId MtfRole { get; set; } = PlayerRoles.RoleTypeId.NtfPrivate;
+    }
+
+    public sealed class GuardEscapeConfig
+    {
+        internal static readonly PlayerRoles.RoleTypeId[] FoundationRoles = { PlayerRoles.RoleTypeId.FacilityGuard, PlayerRoles.RoleTypeId.NtfPrivate, PlayerRoles.RoleTypeId.NtfSergeant, PlayerRoles.RoleTypeId.NtfSpecialist, PlayerRoles.RoleTypeId.NtfCaptain };
+
+        public bool Enabled { get; set; } = true;
+        public double MinimumAliveSeconds { get; set; } = 10;
+        public PlayerRoles.RoleTypeId Role { get; set; } = PlayerRoles.RoleTypeId.NtfSergeant;
     }
 
     public sealed class CraftingRecipe

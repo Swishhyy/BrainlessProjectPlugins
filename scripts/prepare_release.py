@@ -39,7 +39,7 @@ def prepare(plugin, output):
         'plugins': [{
             'id': plugin, 'assembly_name': assembly, 'asset': source.name,
             'version': version, 'sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
-            'exiled_min': exiled, 'game_version': '14.2.8', 'target_framework': 'net48',
+            'exiled_min': exiled, 'game_version': '14.2.9', 'target_framework': 'net48',
         }],
     }
     manifest_path = output/(assembly+'.update.json')

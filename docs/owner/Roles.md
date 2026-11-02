@@ -2,11 +2,11 @@
 
 # Brainless Roles
 
-Install `Brainless.Roles.dll` in `EXILED/Plugins` on EXILED 9.15.2 / SCP: SL 14.2.8. This project builds independently and has no reference to another Brainless DLL.
+Install `Brainless.Roles.dll` in `EXILED/Plugins` on EXILED 9.15.3 / SCP: SL 14.2.9. This project builds independently and has no reference to another Brainless DLL.
 
 The generated `brainless_roles` configuration contains 53 profiles, spawn chances, health/stamina changes, optional equipment IDs and experimental switches. Normal coin grants apply to Class-D only. Native MTF/Chaos ranks are preserved when applying a specialist.
 
-All nonexperimental profiles are enabled by default, but caps and optional equipment determine which profiles are eligible. Enable a smaller roster for the first playtest. Child, Tickler, Muncher and Doctor behavior require explicit experimental settings. The Doctor conversion also requires `enable_doctor_event`; its profile must also be enabled, and its configurable `chance_percent` roll (default 1%) is separate from ordinary zombie selection.
+All profiles are enabled by default; caps and optional equipment determine which are eligible. Child, Tickler and Muncher are no longer experimental. The Doctor conversion uses `enable_doctor_event` (on by default) and its Z05 profile; its `chance_percent` roll (default 25%, once per round) is separate from ordinary zombie selection.
 
 Guard Captain badges use explicit native Containment 1 / Armory 2 / Administration 1 levels. The legacy `captain_gate_access` toggle is retired. Candy roles receive native SCP-330 candy. Empty `approved_candy` uses registered Rainbow, Yellow, Purple, Red, Green and Blue colors. `extreme_muncher_event_preset` adds the requested half-height and double-speed preset only when the experimental role is enabled.
 
@@ -67,8 +67,8 @@ Version 0.2.6 corrects captain badge levels and adds readable admin role names: 
 
 Set `chance_percent` on each existing role entry: `10` means a 10% roll on a matching new spawn; `0` prevents natural selection. Percentages are not multiplied by the former family chance or treated as relative weights. The complete group must total at most 100: Class-D, Scientists, Guards, MTF, Chaos, SCP-049 or zombies. Disabled/experimental entries still reserve their configured share, so enabling one does not change the other percentages. Unused or blocked shares keep the native role. Missing providers, population/supply limits and all other availability checks still apply. Admin `bprole set` ignores the percentage; revived zombies retain their existing profile.
 
-New defaults have numeric percentages on all 35 profiles. Old missing/null values derive a starting allocation from the legacy family budget and relative weights across the configured group, including disabled/experimental entries. Values are rounded down to two decimals within the nominal budget; old eligibility-based redistribution is intentionally replaced by fixed shares. EXILED may show a missing legacy field as `chance_percent: null`; set a number to override it. Existing kits, IDs and edited traits stay intact. Once a percentage is explicit, legacy `weight` and family-chance settings do not affect it. `bproles` shows the active percentages.
+New defaults give each spawn group an 80% total across its profiles (catalog revision 3 raises existing configs to 80% once, keeping relative shares).  All 53 profiles have numeric percentages. Old missing/null values derive a starting allocation from the legacy family budget and relative weights across the configured group, including disabled/experimental entries. Values are rounded down to two decimals within the nominal budget; old eligibility-based redistribution is intentionally replaced by fixed shares. EXILED may show a missing legacy field as `chance_percent: null`; set a number to override it. Existing kits, IDs and edited traits stay intact. Once a percentage is explicit, legacy `weight` and family-chance settings do not affect it. `bproles` shows the active percentages.
 
-Doctor (Z05) uses its percentage for the existing one-attempt-per-round conversion event, outside ordinary zombie selection. It still requires its profile, experimental and event switches, population threshold and an SCP-049.
+Doctor (Z05) uses its percentage for the one-attempt-per-round conversion event, outside ordinary zombie selection. It needs its profile and event switch, its population threshold (12) and a living SCP-049. The Doctor revives like SCP-049, with 35% health, no hume shield and slower movement, attacks and revives.
 
 Save edits and run `bprole reload`. Invalid percentages, non-finite numbers and group totals over 100 are rejected before applying the config. See the [staff guide](https://github.com/Swishhyy/BrainlessProjectPlugins/blob/main/docs/STAFF_GUIDE.md) for short examples.

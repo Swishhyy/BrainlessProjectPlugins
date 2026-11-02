@@ -2,7 +2,7 @@
 
 # BetterCoinflips BP
 
-This is the imported BetterCoinflips plugin, updated to **5.1.7** for **EXILED 9.15.2 / SCP: SL 14.2.8**. It builds separately as `BetterCoinflips.dll` and does not depend on any Brainless plugin DLL.
+This is the imported BetterCoinflips plugin, updated to **5.1.7** for **EXILED 9.15.3 / SCP: SL 14.2.9**. It builds separately as `BetterCoinflips.dll` and does not depend on any Brainless plugin DLL.
 
 Independent release updates are enabled under `auto_update`. They check GitHub Releases every 60 minutes, verify this DLL's checksum and identity, keep a `.previous` backup, and apply the new version after a full server restart. Paste a read-only GitHub token into `auto_update.token` in this plugin's YAML for this private repository; the environment variable remains optional; see `docs/UPDATES.md`.
 

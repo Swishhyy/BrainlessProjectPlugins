@@ -59,7 +59,7 @@ def publish_assets(files, tag, title, notes, existing_release=False, prerelease=
     gh(*args)
 
 def publish(plugin, version, dll, manifest, tag, existing_release=False, prerelease=False):
-    notes = (f'{plugin} {version} for EXILED 9.15.2 / SCP: SL 14.2.8.\n\n'
+    notes = (f'{plugin} {version} for EXILED 9.15.3 / SCP: SL 14.2.9.\n\n'
              'Download the DLL for manual installation. Existing installations with the updater '
              'will verify and download this plugin independently; the new version loads on the next full server restart.\n')
     detail = pathlib.Path(__file__).resolve().parents[1]/plugin/'RELEASE_NOTES.md'

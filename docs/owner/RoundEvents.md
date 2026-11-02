@@ -2,7 +2,7 @@
 
 # Project Brainless Round Events 0.1.0
 
-Independent `Brainless.RoundEvents.dll` for EXILED 9.15.2 / SCP:SL 14.2.8. The first round mode is **Infection**. Install in EXILED/Plugins and fully restart. No other Project Brainless DLL is required; optional Core can own its updater service. New plugins need an initial manual install.
+Independent `Brainless.RoundEvents.dll` for EXILED 9.15.3 / SCP:SL 14.2.9. The first round mode is **Infection**. Install in EXILED/Plugins and fully restart. No other Project Brainless DLL is required; optional Core can own its updater service. New plugins need an initial manual install.
 
 ## Infection
 

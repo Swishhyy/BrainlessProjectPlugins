@@ -28,6 +28,8 @@
 | `bpevent status` | Shows event state and counts | `projectbrainless.events` |
 | `bpevent infection next` | Queues Infection for next round | `projectbrainless.events` |
 | `bpevent infection start` | Starts Infection in the running round | `projectbrainless.events` |
+| `bpevent deathmatch next` / `start` | Queues or starts Deathmatch (Chaos holds the facility, MTF raids) | `projectbrainless.events` |
+| `bpevent juggernaut next` / `start` | Queues or starts Juggernaut | `projectbrainless.events` |
 | `bpevent stop` | Stops rules and pending conversions; current roles remain | `projectbrainless.events` |
 | `bpevent reload` | Reloads inactive/unscheduled event settings | `projectbrainless.events` |
 | `pbcore status` / `pbcore save` | Checks services / saves stats | `projectbrainless.core` |

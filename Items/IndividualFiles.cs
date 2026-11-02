@@ -19,11 +19,7 @@ namespace Brainless.Items
             Bind(7104, config.Tuning, "EchoCanister");
             Bind(7105, config.Tuning, "DoorBrace");
             Bind(7106, config.Tuning, "SignalJammer");
-            Bind(7107, config.Tuning, "SurveyBeacon");
-            Bind(7108, config.Tuning, "TraceChalk");
-            Bind(7109, config.Tuning, "FieldDressing");
             Bind(7111, config.Tuning, "FilterInhaler");
-            Bind(7112, config.Tuning, "PreservedSpecimen");
             Bind(7113, config.Tuning, "ImpactGrenade");
             Bind(7114, config.Sup, "AdrenalinePills");
             Bind(7115, config.Sup, "Anti096Pills");
@@ -32,7 +28,6 @@ namespace Brainless.Items
             Bind(7118, config.Sup, "BioGrenade");
             Bind(7119, config.Sup, "HackingChip");
             Bind(7120, config.Sup, "ReinforcementRadio");
-            Bind(7121, config.Sup, "ScrambleGoggles");
             Bind(7122, config.Sup, "VolatilePills");
             ItemFiles.Apply(Path.Combine(Paths.Configs, "ProjectBrainless", Server.Port.ToString(), "Items"), config.Items, i => i.Id, sections);
         }

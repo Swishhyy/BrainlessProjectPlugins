@@ -12,7 +12,7 @@ namespace Brainless.RoundEvents
         {
             "bpevents"
         };
-        public string Description => "Project Brainless round events: list, status, infection next/start, stop, reload.";
+        public string Description => "Project Brainless round events: list, status, infection/deathmatch/juggernaut next|start, stop, reload.";
 
         public bool Execute(ArraySegment<string> args, ICommandSender sender, out string response)
         {
@@ -37,7 +37,9 @@ namespace Brainless.RoundEvents
 
                 if (first == "list")
                 {
-                    response = "infection — low-health SCP-3114 swarm; direct SCP kills convert humans at their death point. Enabled: " + plugin.Config.Infection.Enabled;
+                    response = "infection — low-health SCP-3114 swarm; direct SCP kills convert humans at their death point. Enabled: " + plugin.Config.Infection.Enabled
+                        + "\ndeathmatch — Chaos holds the facility, MTF raids from the surface; respawn waves, first to the kill target wins. Enabled: " + plugin.Config.Deathmatch.Enabled
+                        + "\njuggernaut — one armored Chaos Juggernaut vs NTF hunters; kill the Juggernaut to become it. Enabled: " + plugin.Config.Juggernaut.Enabled;
                     return true;
                 }
 
@@ -61,7 +63,17 @@ namespace Brainless.RoundEvents
                     return plugin.StartInfection(out response);
             }
 
-            response = "bpevent list | status | infection next | infection start | stop | reload";
+            if (args.Count == 2 && (first == "deathmatch" || first == "dm" || first == "juggernaut" || first == "jugg"))
+            {
+                var mode = first == "deathmatch" || first == "dm" ? ArenaMode.Deathmatch : ArenaMode.Juggernaut;
+                string action = args.Array[args.Offset + 1].ToLowerInvariant();
+                if (action == "next")
+                    return plugin.QueueArena(mode, out response);
+                if (action == "start")
+                    return plugin.StartArena(mode, out response);
+            }
+
+            response = "bpevent list | status | infection|deathmatch|juggernaut next|start | stop | reload";
             return false;
         }
     }

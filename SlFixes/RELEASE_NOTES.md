@@ -1,4 +1,10 @@
-# SlFixes 0.3.1
+# SlFixes 0.4.0
+
+Facility Guards can escape: an uncuffed guard who reaches the surface escape zone becomes an NTF Sergeant (`guard_escape`). Field Dressing and SCRAMBLE Goggles recipes were removed with the items.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
+
+## Previous: 0.3.1
 
 Gameplay behavior is unchanged; this build includes the runtime-visibility build guard and clearer updater diagnostics.
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
@@ -188,6 +189,17 @@ namespace Brainless.Internal
                 encoder = new VoiceChat.Codec.OpusEncoder(VoiceChat.Codec.Enums.OpusApplicationType.Audio);
                 var samples = new float[960];
                 var bytes = new byte[4096];
+                // Prefer the game's own human footstep clips; generated steps are only a fallback.
+                Func<double, float> steps = null;
+                if (kind == "steps")
+                {
+                    var native = NativeFootsteps.Clips;
+                    if (native.Count > 0)
+                        steps = new NativeStepPlayer(random, native).Sample;
+                    else
+                        steps = new FootstepSynth(random).Sample;
+                }
+
                 int sample = 0;
                 for (int frame = 0; frame < seconds * 50; frame++)
                 {
@@ -196,10 +208,15 @@ namespace Brainless.Internal
                     for (int j = 0; j < samples.Length; j++, sample++)
                     {
                         double time = sample / 48000.0;
-                        double phase = time % (kind == "steps" ? .44 : .55);
-                        double envelope = kind == "steps" ? Math.Exp(-phase * 48) : phase < .08 ? Math.Sin(phase / .08 * Math.PI) : 0;
-                        double noise = random.NextDouble() * 2 - 1;
-                        samples[j] = (float)(envelope * (kind == "steps" ? .18 * noise + .55 * Math.Sin(time * 2 * Math.PI * 85) : .4 * Math.Sin(time * 2 * Math.PI * 920)));
+                        if (steps != null)
+                        {
+                            samples[j] = steps(time);
+                            continue;
+                        }
+
+                        double phase = time % .55;
+                        double envelope = phase < .08 ? Math.Sin(phase / .08 * Math.PI) : 0;
+                        samples[j] = (float)(envelope * .4 * Math.Sin(time * 2 * Math.PI * 920));
                     }
 
                     int length = encoder.Encode(samples, bytes, samples.Length);
@@ -212,6 +229,168 @@ namespace Brainless.Internal
                 encoder?.Dispose();
                 lifetime.Release(speaker);
             }
+        }
+    }
+
+    // The footstep sounds the game itself plays for human characters, read once from
+    // the Class-D character model (the clips every client already has) and converted
+    // to 48 kHz mono for the speaker stream. Empty when the server build carries no
+    // audio data, in which case callers fall back to generated steps.
+    internal static class NativeFootsteps
+    {
+        private static List<float[]> clips;
+
+        internal static IReadOnlyList<float[]> Clips => clips ?? (clips = Load());
+
+        private static List<float[]> Load()
+        {
+            var result = new List<float[]>();
+            try
+            {
+                if (!PlayerRoles.PlayerRoleLoader.TryGetRoleTemplate(PlayerRoles.RoleTypeId.ClassD, out PlayerRoles.FirstPersonControl.FpcStandardRoleBase role) || role.FpcModule == null)
+                    throw new InvalidOperationException("the Class-D role template is missing");
+                const BindingFlags any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+                var template = typeof(PlayerRoles.FirstPersonControl.FirstPersonMovementModule).GetField("CharacterModelTemplate", any)?.GetValue(role.FpcModule) as GameObject;
+                var model = template == null ? null : template.GetComponentInChildren<PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel>(true);
+                // AudioClip is read by reflection: the game's audio module targets a newer
+                // .NET Standard than these net48 plugins can reference at compile time.
+                var found = model == null ? null : typeof(PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel).GetField("_footstepClips", any)?.GetValue(model) as Array;
+                foreach (object clip in found ?? Array.Empty<object>())
+                {
+                    float[] mono = Read(clip);
+                    if (mono != null)
+                        result.Add(mono);
+                }
+
+                if (result.Count == 0)
+                    throw new InvalidOperationException("no readable footstep clips");
+            }
+            catch (Exception exception)
+            {
+                Log.Warn("[Brainless] Game footstep sounds are unavailable on this server (" + exception.GetBaseException().Message + "); Echo Canister uses generated footsteps.");
+                result.Clear();
+            }
+
+            return result;
+        }
+
+        private static float[] Read(object clip)
+        {
+            if (clip == null)
+                return null;
+            var type = clip.GetType();
+            int Int(string name) => Convert.ToInt32(type.GetProperty(name)?.GetValue(clip) ?? 0);
+            int frames = Int("samples"), channels = Int("channels"), frequency = Int("frequency");
+            if (frames <= 0 || channels <= 0 || frequency <= 0)
+                return null;
+            if (type.GetProperty("loadState")?.GetValue(clip)?.ToString() != "Loaded")
+                type.GetMethod("LoadAudioData", Type.EmptyTypes)?.Invoke(clip, null);
+            var raw = new float[frames * channels];
+            var getData = type.GetMethod("GetData", new[] { typeof(float[]), typeof(int) });
+            if (getData == null || !(getData.Invoke(clip, new object[] { raw, 0 }) is bool ok) || !ok || raw.All(v => v == 0))
+                return null;
+            int length = (int)Math.Ceiling(frames * 48000.0 / frequency);
+            var output = new float[length];
+            for (int i = 0; i < length; i++)
+            {
+                double position = i * (double)frequency / 48000;
+                int index = Math.Min(frames - 1, (int)position);
+                int next = Math.Min(frames - 1, index + 1);
+                double blend = position - index;
+                float x = 0, y = 0;
+                for (int c = 0; c < channels; c++)
+                {
+                    x += raw[index * channels + c];
+                    y += raw[next * channels + c];
+                }
+
+                output[i] = (float)((x + (y - x) * blend) / channels);
+            }
+
+            return output;
+        }
+    }
+
+    // Plays a random game footstep clip per step at an uneven walking cadence.
+    internal sealed class NativeStepPlayer
+    {
+        private readonly System.Random random;
+        private readonly IReadOnlyList<float[]> clips;
+        private float[] current;
+        private double start, nextStep = .05;
+        private float gain;
+
+        internal NativeStepPlayer(System.Random random, IReadOnlyList<float[]> clips)
+        {
+            this.random = random;
+            this.clips = clips;
+        }
+
+        internal float Sample(double time)
+        {
+            if (time >= nextStep)
+            {
+                current = clips[random.Next(clips.Count)];
+                start = time;
+                gain = .85f + (float)random.NextDouble() * .15f;
+                nextStep = time + .47 + random.NextDouble() * .09;
+            }
+
+            if (current == null)
+                return 0;
+            int index = (int)((time - start) * 48000);
+            return index >= 0 && index < current.Length ? Math.Max(-1, Math.Min(1, current[index] * gain)) : 0;
+        }
+    }
+
+    // Boot steps on a hard floor: each step is a heel strike followed by a softer
+    // toe contact. Both are short bursts of low-passed noise with a low body thump
+    // and a faint scuff, at an uneven walking cadence that alternates feet.
+    internal sealed class FootstepSynth
+    {
+        private readonly System.Random random;
+        private double nextStep = .05, heel = -1, toe = -1, heelGain, toeGain, thump;
+        private double low, lower, previous;
+        private int step;
+
+        internal FootstepSynth(System.Random random) => this.random = random;
+
+        internal float Sample(double time)
+        {
+            if (time >= nextStep)
+            {
+                heel = time;
+                heelGain = (step % 2 == 0 ? 1 : .82) * (.85 + random.NextDouble() * .15);
+                toe = time + .045 + random.NextDouble() * .025;
+                toeGain = heelGain * (.45 + random.NextDouble() * .15);
+                thump = 62 + random.NextDouble() * 22;
+                step++;
+                nextStep = time + .47 + random.NextDouble() * .09;
+            }
+
+            double noise = random.NextDouble() * 2 - 1;
+            low += (noise - low) * .09;
+            lower += (low - lower) * .25;
+            double scuff = noise - previous;
+            previous = noise;
+            double body = 0, click = 0, boom = 0;
+            if (heel >= 0 && time - heel < .3)
+            {
+                double age = time - heel;
+                body += heelGain * Math.Exp(-age * 48);
+                click += heelGain * Math.Exp(-age * 160);
+                boom += heelGain * Math.Exp(-age * 30) * Math.Sin(2 * Math.PI * thump * age);
+            }
+
+            if (toe >= 0 && time >= toe && time - toe < .25)
+            {
+                double age = time - toe;
+                body += toeGain * Math.Exp(-age * 65);
+                click += toeGain * Math.Exp(-age * 200);
+            }
+
+            double value = body * lower * 2.4 + boom * .42 + click * scuff * .1;
+            return (float)Math.Max(-1, Math.Min(1, value));
         }
     }
 

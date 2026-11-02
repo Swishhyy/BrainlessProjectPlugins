@@ -1,4 +1,8 @@
-# Core 0.2.1
+# Core 0.2.2
+
+Rebuilt for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Gameplay is unchanged. Older builds target 14.2.8, so their auto-updater refuses this release: install the DLL manually once, then fully restart.
+
+## Previous: 0.2.1
 
 Gameplay behavior is unchanged; this build includes the runtime-visibility build guard and clearer updater diagnostics.
 

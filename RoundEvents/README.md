@@ -1,8 +1,8 @@
 # Project Brainless — RoundEvents
 
-Infection rounds with low-health SCP-3114 and direct-kill conversion.
+Infection, Deathmatch (Chaos holds the facility, MTF raids it) and Juggernaut round events.
 
-**Install:** fully stop the server, put `Brainless.RoundEvents.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
+**Install:** fully stop the server, put `Brainless.RoundEvents.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 
 **Config:** `project_brainless_round_events`. Keep your existing YAML when updating.
 
