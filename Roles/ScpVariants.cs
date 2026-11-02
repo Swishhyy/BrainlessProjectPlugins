@@ -20,6 +20,8 @@ namespace Brainless.Roles
         private void SubscribeVariants()
         {
             Exiled.Events.Handlers.Player.Hurt += PoisonedByAttack;
+            Exiled.Events.Handlers.Player.Hurt += ResilientHurt;
+            Exiled.Events.Handlers.Player.UsedItem += BigBoiConsumable;
             Exiled.Events.Handlers.Player.UsedItem += CurePoison;
             Exiled.Events.Handlers.Scp939.PlayingSound += MimicSound;
         }
@@ -27,6 +29,8 @@ namespace Brainless.Roles
         private void UnsubscribeVariants()
         {
             Exiled.Events.Handlers.Player.Hurt -= PoisonedByAttack;
+            Exiled.Events.Handlers.Player.Hurt -= ResilientHurt;
+            Exiled.Events.Handlers.Player.UsedItem -= BigBoiConsumable;
             Exiled.Events.Handlers.Player.UsedItem -= CurePoison;
             Exiled.Events.Handlers.Scp939.PlayingSound -= MimicSound;
         }
@@ -46,6 +50,45 @@ namespace Brainless.Roles
             if (traits != null)
                 ApplyPoison(ev.Player, ev.Attacker, traits);
         }
+
+        // Resilient (X01): one-time last stand at low health.
+        private void ResilientHurt(HurtEventArgs ev) => Safe.Run(() =>
+        {
+            var player = ev.Player;
+            if (player == null || !player.IsAlive || !active.TryGetValue(player, out var state) || state.Definition.Id != "X01" || state.ResilientActive || player.Role != state.Role)
+                return;
+            if (player.Health > player.MaxHealth * Config.Resilient.TriggerHealthPercent / 100)
+                return;
+            state.ResilientActive = true;
+            if (Config.Resilient.ArtificialHealth > 0)
+                player.AddAhp(Config.Resilient.ArtificialHealth, Config.Resilient.ArtificialHealth, 0, .7f, 0, true);
+            player.ShowHint("<b><color=#e74c3c>RESILIENT</color></b>\nFaster, harder hitting and shielded for the rest of this life.", 5);
+        });
+
+        // Big Boi (X02): medical items do more.
+        private void BigBoiConsumable(UsedItemEventArgs ev) => Safe.Run(() =>
+        {
+            if (ev.CausedByHolstering || ev.Item == null || !active.TryGetValue(ev.Player, out var state) || state.Definition.Id != "X02" || ev.Player.Role != state.Role || !ev.Player.IsAlive)
+                return;
+            var cfg = Config.BigBoi;
+            switch (ev.Item.Type)
+            {
+                case ItemType.Medkit:
+                    ev.Player.Heal(cfg.MedkitBonusHealth);
+                    break;
+                case ItemType.Painkillers:
+                    ev.Player.Heal(cfg.PainkillersBonusHealth);
+                    break;
+                case ItemType.SCP500:
+                    if (cfg.Scp500BonusArtificialHealth > 0)
+                        ev.Player.AddAhp(cfg.Scp500BonusArtificialHealth);
+                    break;
+                case ItemType.Adrenaline:
+                    if (cfg.AdrenalineBonusArtificialHealth > 0)
+                        ev.Player.AddAhp(cfg.AdrenalineBonusArtificialHealth);
+                    break;
+            }
+        });
 
         private void ApplyPoison(Player player, Player source, ScpTraits traits)
         {

@@ -580,10 +580,16 @@ namespace Brainless.Items
         }
 
         // Containment foam leaves SCP-173's native tantrum mess across a wide area:
-        // a grid of puddles inside the radius, each on solid floor with a clear line
-        // back to the blast, cleaned up after the configured time.
+        // by default one puddle scaled to the radius; with single_puddle off, a grid
+        // of normal puddles on solid floor with a clear line back to the blast.
         private void SpreadTantrum(Vector3 position, FoamTuning tuning)
         {
+            if (tuning.SinglePuddle)
+            {
+                PlaceScaledTantrum(Ground(position), tuning);
+                return;
+            }
+
             Vector3 center = Ground(position);
             int placed = 0;
             float spacing = Math.Max(.5f, tuning.Spacing);
@@ -607,18 +613,41 @@ namespace Brainless.Items
                 Vector3 floor = Ground(probe);
                 if (Math.Abs(floor.y - center.y) > 1.5f)
                     continue;
-                // Same path as SCP-173's own tantrum: instantiate the prefab, set the
-                // synced position 1.25 m above the floor, and let the hazard spawn itself
-                // on the network in Start(). EXILED's PlaceTantrum also spawns it
-                // immediately, so clients received every puddle twice and could crash.
-                var puddle = UnityEngine.Object.Instantiate(TantrumHazard.TantrumPrefab);
-                puddle.SynchronizedPosition = new RelativePositioning.RelativePosition(floor + Vector3.up * 1.25f);
-                puddle.HazardDuration = tuning.DurationSeconds;
-                puddles.Add(puddle);
+                SpawnTantrum(floor, tuning.DurationSeconds, 1, null);
                 placed++;
             }
 
             World.Cue(center, "Containment foam - sticky floor", 10);
+        }
+
+        // One SCP-173 tantrum stretched to the configured radius: the effect area
+        // (MaxDistance) and the model's horizontal scale grow together. The scale is
+        // set before the hazard spawns, so clients receive it in the spawn message.
+        private void PlaceScaledTantrum(Vector3 floor, FoamTuning tuning)
+        {
+            var prefab = TantrumHazard.TantrumPrefab;
+            float factor = tuning.Radius / Math.Max(.1f, prefab.MaxDistance);
+            SpawnTantrum(floor, tuning.DurationSeconds, factor, tuning.Radius);
+            World.Cue(floor, "Containment foam - sticky floor", 10);
+        }
+
+        // Same path as SCP-173's own tantrum: instantiate the prefab, set the synced
+        // position 1.25 m above the floor and let the hazard spawn itself once in
+        // Start(). EXILED's PlaceTantrum spawns it twice, which crashed clients.
+        private void SpawnTantrum(Vector3 floor, float duration, float widthFactor, float? radius)
+        {
+            var puddle = UnityEngine.Object.Instantiate(TantrumHazard.TantrumPrefab);
+            if (widthFactor != 1)
+            {
+                Vector3 scale = puddle.transform.localScale;
+                puddle.transform.localScale = new Vector3(scale.x * widthFactor, scale.y, scale.z * widthFactor);
+            }
+
+            if (radius.HasValue)
+                puddle.MaxDistance = radius.Value;
+            puddle.SynchronizedPosition = new RelativePositioning.RelativePosition(floor + Vector3.up * 1.25f);
+            puddle.HazardDuration = duration;
+            puddles.Add(puddle);
         }
 
         private void PlayAudio(Vector3 position, float seconds, string kind)

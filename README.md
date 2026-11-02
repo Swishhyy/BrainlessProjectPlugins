@@ -17,16 +17,16 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 
 | Folder | DLL | Purpose |
 | --- | --- | --- |
-| [Roles](Roles) | `Brainless.Roles.dll` | 66 role profiles, per-role percentages and role HUD |
+| [Roles](Roles) | `Brainless.Roles.dll` | 68 role profiles, per-role percentages and role HUD |
 | [Items](Items) | `Brainless.Items.dll` | 12 custom grenades, tools and consumables |
-| [Weapons](Weapons) | `Brainless.Weapons.dll` | 2 weapons: a grenade launcher and the experimental Ricochet Pistol |
+| [Weapons](Weapons) | `Brainless.Weapons.dll` | 3 weapons: a grenade launcher, a stun gun and the experimental Ricochet Pistol |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Ordinary coin-flip outcomes |
 | [ScpProximityChat](ScpProximityChat) | `Brainless.ScpProximityChat.dll` | Nearby SCP voice and receive controls |
 | [Core](Core) | `Brainless.Core.dll` | XP, playtime, privacy controls, optional Discord bot and update services |
 | [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | Captive recruitment, guard escape, SCP-914 additions and action tracking |
 | [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection, Deathmatch and Juggernaut events |
 
-Current component versions: Roles **0.7.0**, Items **0.8.1**, Weapons **0.8.0**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.2.2**, Fixes **0.4.1**, Events **0.3.0**.
+Current component versions: Roles **0.8.0**, Items **0.8.1**, Weapons **0.9.0**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.2.2**, Fixes **0.4.1**, Events **0.3.0**.
 
 ## Install / update
 

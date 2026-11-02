@@ -155,11 +155,13 @@ namespace Brainless.Internal
             PlayerDelaySeconds = 1,
             MapRules = new List<MapLootRule>
             {
-                Map(7207, 1, ItemType.GunLogicer)
+                Map(7207, 1, ItemType.GunLogicer),
+                Map(7209, 2, ItemType.GunCOM18)
             },
             PlayerRules = new List<PlayerLootRule>
             {
-                Replace(7207, 1, ItemType.GunLogicer)
+                Replace(7207, 1, ItemType.GunLogicer),
+                Replace(7209, 2, ItemType.GunCOM18)
             }
         };
         private static MapLootRule Map(uint id, int weight, ItemType source) => new MapLootRule
@@ -272,6 +274,11 @@ namespace Brainless.Internal
                 {
                     Id = 7207u,
                     Body = ItemType.GunLogicer
+                },
+                new
+                {
+                    Id = 7209u,
+                    Body = ItemType.GunCOM18
                 }
             }
 

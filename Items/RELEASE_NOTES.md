@@ -1,6 +1,8 @@
 # Items 0.8.1
 
-Fixes a client crash when containment foam spreads its tantrum puddles. Puddles are now created exactly like SCP-173's own tantrum (positioned 1.25 m above the floor and registered on the network once by the game); EXILED's PlaceTantrum registered each puddle twice. The default covers the same 6 m radius with fewer puddles (spacing 3 m, at most 12); untouched 0.8.0 values migrate.
+Fixes a client crash when containment foam spreads its tantrum puddles. Puddles are now created exactly like SCP-173's own tantrum (positioned 1.25 m above the floor and registered on the network once by the game); EXILED's PlaceTantrum registered each puddle twice.
+
+Containment foam now places one tantrum puddle stretched to the 6 m radius (effect area and model width scale together). Set `single_puddle: false` to use a grid of normal puddles instead (spacing 3 m, at most 12; untouched 0.8.0 grid values migrate).
 
 Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
 

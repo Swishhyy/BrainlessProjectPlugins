@@ -54,7 +54,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -84,6 +84,12 @@ namespace Brainless.Roles
         [Tune(0, 100)]
         public float RogueSpawnSeparation { get; set; } = 12;
         public bool AnnounceRogue { get; set; } = true;
+
+        [Description("Resilient (X01): when the player first drops to trigger_health_percent, they gain these boosts for the rest of that life.")]
+        public ResilientTuning Resilient { get; set; } = new ResilientTuning();
+
+        [Description("Big Boi (X02): extra healing from medical items.")]
+        public BigBoiTuning BigBoi { get; set; } = new BigBoiTuning();
 
         [Description("Most living humans that may hold a custom role at once, as a percentage of living humans.")]
         [Tune(0, 100)]
@@ -137,6 +143,7 @@ namespace Brainless.Roles
             UpgradeHumanProfiles();
             UpgradeReworkedProfiles();
             UpgradeFactionProfiles();
+            UpgradeAnyHumanProfiles();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -219,7 +226,9 @@ namespace Brainless.Roles
 
             EnableDoctorEvent = true;
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
-            foreach (var group in Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase)).GroupBy(Catalog.ChanceGroup))
+            // Only the classic family pools are raised; rank-only and any-human profiles
+            // (match_roles) keep their own catalog percentages.
+            foreach (var group in Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && (r.MatchRoles == null || r.MatchRoles.Count == 0)).GroupBy(Catalog.ChanceGroup))
             {
                 // Invalid values are left for validation to reject with a clear message.
                 if (group.Any(r => double.IsNaN(r.ChancePercent.Value) || double.IsInfinity(r.ChancePercent.Value) || r.ChancePercent.Value < 0 || r.ChancePercent.Value > 100))
@@ -282,6 +291,22 @@ namespace Brainless.Roles
         }
 
         private static readonly ItemType ItemTypeE11 = ItemType.GunE11SR;
+
+        // Revision 5: append the "any human" profiles without overfilling any pool.
+        private void UpgradeAnyHumanProfiles()
+        {
+            if (RoleCatalogRevision >= 5)
+                return;
+            Catalog.FillMissingChances(Roles, LegacyFamilyChance);
+            foreach (var profile in Catalog.Create().Where(r => (r.Id == "X01" || r.Id == "X02") && !Roles.Any(existing => existing.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase))))
+            {
+                decimal used = Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Where(t => Catalog.MatchesNative(profile, t)).Select(t => Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && Catalog.MatchesNative(r, t)).Sum(r => (decimal)r.ChancePercent.Value)).DefaultIfEmpty(0).Max();
+                profile.ChancePercent = (double)Math.Max(0, Math.Min((decimal)profile.ChancePercent.Value, 100m - used));
+                Roles.Add(profile);
+            }
+
+            RoleCatalogRevision = 5;
+        }
 
         private void UpgradeHumanProfiles()
         {
@@ -369,5 +394,35 @@ namespace Brainless.Roles
         }
 
         private double LegacyFamilyChance(RoleDefinition role) => role.BaseRole == PlayerRoles.RoleTypeId.ClassD ? ClassDChance : role.BaseRole == PlayerRoles.RoleTypeId.Scientist ? ScientistChance : role.BaseRole == PlayerRoles.RoleTypeId.FacilityGuard ? GuardChance : role.BaseRole == PlayerRoles.RoleTypeId.Scp049 ? DoctorVariantChance : role.BaseRole == PlayerRoles.RoleTypeId.Scp0492 ? ZombieChance : ReinforcementChance;
+    }
+
+    public sealed class ResilientTuning
+    {
+        [Tune(1, 99)]
+        public float TriggerHealthPercent { get; set; } = 25;
+
+        [Tune(1, 3)]
+        public float SpeedMultiplier { get; set; } = 1.25f;
+
+        [Tune(1, 5)]
+        public float DamageMultiplier { get; set; } = 1.3f;
+
+        [Tune(0, 500)]
+        public float ArtificialHealth { get; set; } = 50;
+    }
+
+    public sealed class BigBoiTuning
+    {
+        [Tune(0, 500)]
+        public float MedkitBonusHealth { get; set; } = 35;
+
+        [Tune(0, 500)]
+        public float PainkillersBonusHealth { get; set; } = 20;
+
+        [Tune(0, 500)]
+        public float Scp500BonusArtificialHealth { get; set; } = 30;
+
+        [Tune(0, 500)]
+        public float AdrenalineBonusArtificialHealth { get; set; } = 20;
     }
 }

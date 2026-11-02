@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 0);
+        public override Version Version => new Version(0, 9, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -62,6 +62,7 @@ namespace Brainless.Weapons
             }
 
             P.Shooting += Shooting;
+            SubscribeStun();
             P.Shot += Shot;
             P.Hurting += Hurting;
             P.ReloadingWeapon += Reload;
@@ -105,6 +106,7 @@ namespace Brainless.Weapons
             S.RoundEnded -= Ended;
             S.RoundStarted -= RoundStarted;
             AdminItems.Disable();
+            UnsubscribeStun();
             lifetime.Clear();
             grenades.Clear();
             foreach (var weapon in registered.Values)
@@ -115,6 +117,7 @@ namespace Brainless.Weapons
 
         private void Reset()
         {
+            ClearStuns();
             distribution?.Reset();
             lifetime.Clear();
             grenades.Clear();
@@ -277,6 +280,12 @@ namespace Brainless.Weapons
 
         private void Shooting(ShootingEventArgs ev) => Safe.Run(() =>
         {
+            if (IsStunned(ev.Player))
+            {
+                ev.IsAllowed = false;
+                return;
+            }
+
             grenades.Prune();
             var state = Find(ev.Item);
             if (state == null || !ev.IsAllowed)
@@ -329,6 +338,13 @@ namespace Brainless.Weapons
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Hurting(HurtingEventArgs ev) => Safe.Run(() =>
         {
+            // A stunned player (human or SCP) cannot deal damage until they recover.
+            if (ev.IsAllowed && ev.Attacker != null && ev.Attacker != ev.Player && IsStunned(ev.Attacker))
+            {
+                ev.IsAllowed = false;
+                return;
+            }
+
             if (reflected || !ev.IsAllowed || ev.Amount <= 0 || !(ev.DamageHandler.CustomBase is Exiled.API.Features.DamageHandlers.FirearmDamageHandler damage))
                 return;
             var state = Find(damage.Item);
@@ -341,6 +357,8 @@ namespace Brainless.Weapons
                 return;
             }
 
+            if (StunHit(ev, state))
+                return;
             ev.Amount *= ev.Player.IsScp ? state.Definition.Spec.ScpDamage : state.Definition.Spec.HumanDamage;
         });
         private void Shot(ShotEventArgs ev) => Safe.Run(() =>

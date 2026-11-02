@@ -35,7 +35,7 @@ usage = json.loads((root/'docs/content_usage.json').read_text())
 assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
 lines = ['# Project Brainless — What We Have', '',
          '[Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)', '',
-         'Current shipped content: **12 items, 2 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **12 items, 3 weapons, 68 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
@@ -46,7 +46,7 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
         fields = [re.search(pattern, block) for pattern in (r'\bId\s*=\s*(\d+)', r'\bName\s*=\s*"([^"]+)"', r'\bDescription\s*=\s*"([^"]+)"')]
         if all(fields): entries.append(tuple(field.group(1) for field in fields))
     entries.sort(key=lambda e: int(e[0]))
-    assert len(entries) == (12 if folder == 'Items' else 2)
+    assert len(entries) == (12 if folder == 'Items' else 3)
     controls = usage[folder.lower()]
     assert set(controls) == {e[0] for e in entries}, f'Usage coverage missing for {folder}'
     if folder == 'Weapons':
@@ -91,20 +91,20 @@ for body, setting, ident, name in recipes:
     setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
     lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
-assert len(roles) == 66
+assert len(roles) == 68
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 12 items, 2 weapons, 66 roles, 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 12 items, 3 weapons, 68 roles, 3 events and 10 recipes; all have usage instructions.')
 
 # A separate operator-facing audit records why a correctly installed profile may
 # not appear. Runtime bproles remains the authority for edited server configs.
 source = (root/'Roles/RoleDefinition.cs').read_text()
 blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
 status = ['# Role availability audit', '',
-          'All 66 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
+          'All 68 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
           '## Shipped defaults', '',
           '| ID | Role | Chance % | Default status | Required custom equipment | Minimum players |',
           '| --- | --- | --- | --- | --- | --- |']
-assert len(blocks) == 66
+assert len(blocks) == 68
 known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
 for block in blocks:
     match = re.search(r'R\("([A-Z]\d\d)",\s*"([^"]+)"', block)
@@ -133,4 +133,4 @@ status += ['', '## Why a role can be absent', '',
 audit = root/'docs/ROLE_STATUS.md'
 status += ['## SCP variants', '', 'The SCP-106, SCP-173, SCP-939 and SCP-096 profiles use normal SCP controls. Stalker and Ambusher reduce footsteps; they keep native ambient sounds. Mimic has a short sound cooldown; intercom access was removed because it disconnected players. Escape\'s kills restart breakneck and clear the cooldown that follows. Poison refreshes one effect, does not stack, and medical supplies cure it. Boom Boom uses its separate explosive_scp173 settings.', '', 'Brute, Giant, Muncher, Raisian and Alpha apply their configured model sizes when allow_model_scaling is true. Child, Tickler and Muncher are no longer experimental. Profiles keep the native hume shield unless their shield multiplier changes it; the Doctor never has one.', '']
 audit.write_text('\n'.join(status))
-print('Role availability audit written with all 66 profiles and validated equipment IDs.')
+print('Role availability audit written with all 68 profiles and validated equipment IDs.')
