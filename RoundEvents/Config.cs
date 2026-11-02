@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using Exiled.API.Enums;
 using Brainless.Internal;
 using Brainless.Internal.Updates;
 using Exiled.API.Interfaces;
+using System.Linq;
 using PlayerRoles;
 
 namespace Brainless.RoundEvents
@@ -20,6 +24,15 @@ namespace Brainless.RoundEvents
         public float RoundStartDelaySeconds { get; set; } = 1.5f;
         public InfectionTuning Infection { get; set; } = new InfectionTuning();
 
+        [Description("Chaos holds the facility, MTF raids it. Teams respawn in waves; first to the kill target wins.")]
+        public DeathmatchTuning Deathmatch { get; set; } = new DeathmatchTuning();
+
+        [Description("One heavily armored Chaos Juggernaut against NTF hunters. Killing the Juggernaut makes you the next one.")]
+        public JuggernautTuning Juggernaut { get; set; } = new JuggernautTuning();
+
+        private static readonly RoleTypeId[] ChaosRoles = { RoleTypeId.ChaosConscript, RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder, RoleTypeId.ChaosRepressor };
+        private static readonly RoleTypeId[] MtfRoles = { RoleTypeId.NtfPrivate, RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist, RoleTypeId.NtfCaptain, RoleTypeId.FacilityGuard };
+
         internal void Validate()
         {
             if (AutoUpdate == null)
@@ -27,6 +40,10 @@ namespace Brainless.RoundEvents
             Tuning.Validate(this, "round_events");
             if (Infection.MinimumPlayers <= Infection.MinimumSurvivors)
                 throw new InvalidOperationException("minimum_players must exceed minimum_survivors.");
+            if (Deathmatch == null || Juggernaut == null || Deathmatch.ChaosRoles == null || Deathmatch.MtfRoles == null || Deathmatch.ChaosZones == null || Juggernaut.HunterRoles == null || Juggernaut.JuggernautZones == null)
+                throw new InvalidOperationException("Deathmatch and Juggernaut settings and their role/zone lists cannot be null.");
+            if (Deathmatch.ChaosRoles.Any(r => !ChaosRoles.Contains(r)) || Deathmatch.MtfRoles.Any(r => !MtfRoles.Contains(r)) || Juggernaut.HunterRoles.Any(r => !MtfRoles.Contains(r)) || !ChaosRoles.Contains(Juggernaut.JuggernautRole))
+                throw new InvalidOperationException("Deathmatch/Juggernaut Chaos roles must be Chaos and MTF/hunter roles must be Foundation forces.");
             if (!(Infection.SurvivorRole == RoleTypeId.FacilityGuard || Infection.SurvivorRole == RoleTypeId.NtfPrivate || Infection.SurvivorRole == RoleTypeId.NtfSergeant || Infection.SurvivorRole == RoleTypeId.NtfSpecialist || Infection.SurvivorRole == RoleTypeId.NtfCaptain))
                 throw new InvalidOperationException("survivor_role must be a native Guard or NTF role.");
         }
@@ -76,5 +93,72 @@ namespace Brainless.RoundEvents
         public bool BlockReinforcements { get; set; } = true;
         public bool AllowLateJoinSurvivors { get; set; }
         public bool RemoveConvertedRagdoll { get; set; } = true;
+    }
+
+    public sealed class DeathmatchTuning
+    {
+        public bool Enabled { get; set; } = true;
+
+        [Tune(2, 1000)]
+        public int MinimumPlayers { get; set; } = 4;
+
+        [Tune(1, 10000)]
+        public int KillTarget { get; set; } = 40;
+
+        [Tune(60, 7200)]
+        public float TimeLimitSeconds { get; set; } = 900;
+
+        [Tune(1, 300)]
+        public float RespawnWaveSeconds { get; set; } = 15;
+
+        [Tune(0, 60)]
+        public float SpawnProtectionSeconds { get; set; } = 5;
+        public List<RoleTypeId> ChaosRoles { get; set; } = new List<RoleTypeId> { RoleTypeId.ChaosRifleman, RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder, RoleTypeId.ChaosRepressor };
+        public List<RoleTypeId> MtfRoles { get; set; } = new List<RoleTypeId> { RoleTypeId.NtfSergeant, RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist, RoleTypeId.NtfPrivate };
+
+        [Description("Zones where Chaos spawns inside the facility. Light Containment is excluded by default.")]
+        public List<ZoneType> ChaosZones { get; set; } = new List<ZoneType> { ZoneType.HeavyContainment, ZoneType.Entrance };
+    }
+
+    public sealed class JuggernautTuning
+    {
+        public bool Enabled { get; set; } = true;
+
+        [Tune(2, 1000)]
+        public int MinimumPlayers { get; set; } = 4;
+
+        [Tune(1, 10000)]
+        public int ScoreTarget { get; set; } = 20;
+
+        [Tune(60, 7200)]
+        public float TimeLimitSeconds { get; set; } = 600;
+
+        [Tune(1, 300)]
+        public float RespawnWaveSeconds { get; set; } = 12;
+
+        [Tune(0, 60)]
+        public float SpawnProtectionSeconds { get; set; } = 5;
+        public RoleTypeId JuggernautRole { get; set; } = RoleTypeId.ChaosRepressor;
+        public List<RoleTypeId> HunterRoles { get; set; } = new List<RoleTypeId> { RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist };
+        public List<ZoneType> JuggernautZones { get; set; } = new List<ZoneType> { ZoneType.HeavyContainment, ZoneType.Entrance };
+
+        [Tune(1, 100000)]
+        public float BaseHealth { get; set; } = 1000;
+
+        [Tune(0, 10000)]
+        public float HealthPerHunter { get; set; } = 150;
+
+        [Tune(0, 10000)]
+        public float KillHeal { get; set; } = 75;
+
+        [Tune(0, 1000)]
+        public int PointsPerKill { get; set; } = 1;
+
+        [Tune(0, 1000)]
+        public int PointsForJuggernautKill { get; set; } = 3;
+
+        [Description("How often hunters are told which zone and room the Juggernaut is in.")]
+        [Tune(5, 600)]
+        public float RevealIntervalSeconds { get; set; } = 30;
     }
 }

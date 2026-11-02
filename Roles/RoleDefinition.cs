@@ -97,7 +97,16 @@ namespace Brainless.Roles
                     doctor.ChancePercent = 1;
         }
 
-        private static double DefaultFamilyChance(RoleDefinition role) => role.BaseRole == RoleTypeId.ClassD || role.BaseRole == RoleTypeId.Scientist || role.BaseRole == RoleTypeId.Scp0492 ? 45 : role.BaseRole == RoleTypeId.FacilityGuard || role.BaseRole == RoleTypeId.Scp049 ? 50 : 30;
+        // Every chance group shares this total; the remainder keeps the plain native role.
+        internal const double GroupChancePercent = 80;
+        internal const float DoctorHealth = .35f;
+        // Rolled once per round, on the first zombie spawn while SCP-049 is alive.
+        internal const double DoctorChance = 25;
+        // Kits that used removed items: Survey Beacon, Trace Chalk, Field Dressing,
+        // Preserved Specimen, SCRAMBLE Goggles, Rattler, Redline SMG and Last Word.
+        internal static readonly HashSet<uint> RetiredItems = new HashSet<uint> { 7107, 7108, 7109, 7112, 7121, 7202, 7204, 7205 };
+        internal static readonly string[] ReworkedKits = { "S01", "S05", "S06", "G05", "M01", "M02", "C02", "C03" };
+        private static double DefaultFamilyChance(RoleDefinition role) => GroupChancePercent;
         private static RoleDefinition R(string id, string name, RoleTypeId baseRole, string hint) => new RoleDefinition
         {
             Id = id,
@@ -117,7 +126,6 @@ namespace Brainless.Roles
             r.Add.AddRange(new[] { ItemType.KeycardJanitor, ItemType.Flashlight });
             list.Add(r);
             r = R("D03", "Child", RoleTypeId.ClassD, "A smaller Class-D with less health and a piece of candy.");
-            r.Experimental = true;
             r.Scale = .9f;
             r.Health = 85;
             r.Add.Add(ItemType.Painkillers);
@@ -135,9 +143,9 @@ namespace Brainless.Roles
             r = R("D07", "Noise Complaint", RoleTypeId.ClassD, "Carries an Echo Canister to distract enemies with fake footsteps.");
             r.CustomItems.Add(7104);
             list.Add(r);
-            r = R("S01", "Mad Scientist", RoleTypeId.Scientist, "An armed scientist with a six-shot pistol and an SCP specimen.");
+            r = R("S01", "Mad Scientist", RoleTypeId.Scientist, "An armed scientist with a revolver, a spare cylinder and a can of SCP-207.");
             r.Remove.Add(ItemType.Medkit);
-            r.CustomItems.AddRange(new uint[] { 7205, 7112 });
+            r.Add.AddRange(new[] { ItemType.GunRevolver, ItemType.SCP207 });
             r.MaxPerRound = 1;
             list.Add(r);
             r = R("S02", "Pharmacist", RoleTypeId.Scientist, "Carries extra medkits and painkillers to share.");
@@ -154,13 +162,13 @@ namespace Brainless.Roles
             r = R("S04", "Candy Man", RoleTypeId.Scientist, "Carries a bag of SCP-330 candy.");
             r.Remove.Add(ItemType.Medkit);
             list.Add(r);
-            r = R("S05", "Auditor", RoleTypeId.Scientist, "Uses a Survey Beacon to check a room for humans and SCPs.");
-            r.Remove.Add(ItemType.Medkit);
-            r.CustomItems.Add(7107);
+            r = R("S05", "Auditor", RoleTypeId.Scientist, "Carries a Zone Manager keycard for wider access and a radio.");
+            r.Remove.AddRange(new[] { ItemType.Medkit, ItemType.KeycardScientist });
+            r.Add.AddRange(new[] { ItemType.KeycardZoneManager, ItemType.Radio });
             list.Add(r);
-            r = R("S06", "Anomaly Handler", RoleTypeId.Scientist, "Carries a gas filter and a specimen that heals zombies.");
+            r = R("S06", "Anomaly Handler", RoleTypeId.Scientist, "Carries an Irritant Gas Grenade and a Filter Inhaler to stay safe in it.");
             r.Remove.Add(ItemType.Medkit);
-            r.CustomItems.AddRange(new uint[] { 7111, 7112 });
+            r.CustomItems.AddRange(new uint[] { 7101, 7111 });
             list.Add(r);
             r = R("G01", "Guard Captain", RoleTypeId.FacilityGuard, "Leads with a Crossvec, heavy armor and better access. Carries less spare ammo.");
             r.Remove.AddRange(new[] { ItemType.GunFSP9, ItemType.ArmorLight });
@@ -182,9 +190,8 @@ namespace Brainless.Roles
             r.Remove.Add(ItemType.ArmorLight);
             r.SprintDurationMultiplier = 1.3f;
             list.Add(r);
-            r = R("G05", "Quartermaster", RoleTypeId.FacilityGuard, "Carries extra bandages, but less spare ammo.");
-            r.Remove.Add(ItemType.Medkit);
-            r.CustomItems.AddRange(new uint[] { 7109, 7109 });
+            r = R("G05", "Quartermaster", RoleTypeId.FacilityGuard, "Carries an extra medkit and painkillers, but less spare ammo.");
+            r.Add.AddRange(new[] { ItemType.Medkit, ItemType.Painkillers });
             r.ReserveMultiplier = .75f;
             list.Add(r);
             r = R("G06", "Maintenance Liaison", RoleTypeId.FacilityGuard, "Carries a Door Jammer keycard, but less spare ammo.");
@@ -192,14 +199,14 @@ namespace Brainless.Roles
             r.CustomItems.Add(7105);
             r.ReserveMultiplier = .75f;
             list.Add(r);
-            r = R("M01", "Field Medic", RoleTypeId.NtfPrivate, "Carries extra bandages to heal the squad, but less spare ammo.");
-            r.Remove.Add(ItemType.Medkit);
-            r.CustomItems.AddRange(new uint[] { 7109, 7109 });
+            r = R("M01", "Field Medic", RoleTypeId.NtfPrivate, "Carries an extra medkit and adrenaline for the squad, but less spare ammo.");
+            r.Add.AddRange(new[] { ItemType.Medkit, ItemType.Adrenaline });
             r.ReserveMultiplier = .75f;
             list.Add(r);
-            r = R("M02", "Signal Officer", RoleTypeId.NtfPrivate, "Carries a room jammer and a beacon to locate enemies.");
+            r = R("M02", "Signal Officer", RoleTypeId.NtfPrivate, "Carries a Signal Jammer that blinds SCP-079 in a room, plus a flashbang.");
             r.Remove.Add(ItemType.GrenadeHE);
-            r.CustomItems.AddRange(new uint[] { 7106, 7107 });
+            r.Add.Add(ItemType.GrenadeFlash);
+            r.CustomItems.Add(7106);
             r.ReserveMultiplier = .75f;
             list.Add(r);
             r = R("M03", "Containment Specialist", RoleTypeId.NtfPrivate, "Uses a shield-breaking rifle and slowing foam to contain SCPs.");
@@ -215,15 +222,14 @@ namespace Brainless.Roles
             r.CustomItems.Add(7106);
             r.ReserveMultiplier = .75f;
             list.Add(r);
-            r = R("C02", "Courier", RoleTypeId.ChaosRifleman, "A lightly armored runner with extra stamina and trail markers.");
+            r = R("C02", "Courier", RoleTypeId.ChaosRifleman, "A lightly armored runner with extra stamina and an adrenaline shot.");
             r.Remove.AddRange(new[] { ItemType.ArmorCombat, ItemType.ArmorHeavy });
-            r.Add.Add(ItemType.ArmorLight);
+            r.Add.AddRange(new[] { ItemType.ArmorLight, ItemType.Adrenaline });
             r.SprintDurationMultiplier = 1.25f;
-            r.CustomItems.Add(7108);
             list.Add(r);
-            r = R("C03", "Interceptor", RoleTypeId.ChaosRifleman, "Repeated shots reveal targets with an audible tracking sound.");
+            r = R("C03", "Interceptor", RoleTypeId.ChaosRifleman, "Swaps the AK for a Logicer machine gun to hold corridors.");
             r.Remove.Add(ItemType.GunAK);
-            r.CustomItems.Add(7202);
+            r.Add.Add(ItemType.GunLogicer);
             list.Add(r);
             r = R("C04", "Demolitionist", RoleTypeId.ChaosRifleman, "Carries a Cluster Grenade, but less spare ammo.");
             r.MinPlayers = 12;
@@ -237,13 +243,12 @@ namespace Brainless.Roles
             r.Traits.ShieldRegenDelayMultiplier = .85f;
             list.Add(r);
             r = R("P02", "Brute", RoleTypeId.Scp049, "A tougher, slower SCP-049 with more health and shields.");
-            r.HealthMultiplier = 1.2f;
+            r.HealthMultiplier = 1.5f;
             r.ShieldMultiplier = 1.1f;
             r.SpeedMultiplier = .92f;
             r.Scale = 1.1f;
             list.Add(r);
             r = R("P03", "Tickler", RoleTypeId.Scp049, "A faster SCP-049 with quicker attacks, but less health and shields.");
-            r.Experimental = true;
             r.HealthMultiplier = .85f;
             r.ShieldMultiplier = .85f;
             r.SpeedMultiplier = 1.05f;
@@ -255,7 +260,6 @@ namespace Brainless.Roles
             r.Scale = 1.15f;
             list.Add(r);
             r = R("Z02", "Muncher", RoleTypeId.Scp0492, "A small, fast zombie with less health and weaker attacks.");
-            r.Experimental = true;
             r.HealthMultiplier = .5f;
             r.SpeedMultiplier = 1.18f;
             r.Scale = .85f;
@@ -268,14 +272,16 @@ namespace Brainless.Roles
             r = R("Z04", "Explosive", RoleTypeId.Scp0492, "Explodes after death. Has less health than a normal zombie.");
             r.HealthMultiplier = .75f;
             list.Add(r);
-            r = R("Z05", "Doctor", RoleTypeId.Scp0492, "Becomes a weaker SCP-049 who can revive one zombie.");
-            r.Enabled = false;
-            r.Experimental = true;
+            r = R("Z05", "Doctor", RoleTypeId.Scp0492, "A weakened SCP-049 that can revive the dead. Low health, slower, and never has a hume shield.");
+            r.ChancePercent = DoctorChance;
             r.Weight = 1;
             r.MinPlayers = 12;
             r.MaxPerRound = 1;
-            r.HealthMultiplier = .4f;
-            r.ShieldMultiplier = .5f;
+            r.HealthMultiplier = DoctorHealth;
+            r.ShieldMultiplier = 0;
+            r.SpeedMultiplier = .9f;
+            r.Traits.AttackCooldownMultiplier = 1.4f;
+            r.Traits.RecallDurationMultiplier = 1.5f;
             list.Add(r);
             r = R("L01", "Stalker", RoleTypeId.Scp106, "Quieter footsteps, but less health.");
             r.HealthMultiplier = .8f;
@@ -289,8 +295,9 @@ namespace Brainless.Roles
             r.SpeedMultiplier = 1.18f;
             r.Traits.VigorGainMultiplier = .5f;
             list.Add(r);
-            r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans. Medical supplies cure the poison.");
+            r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans, but it walks more slowly. Medical supplies cure the poison.");
             r.HealthMultiplier = .9f;
+            r.SpeedMultiplier = .85f;
             r.Traits.PoisonDamagePerSecond = 4;
             r.Traits.PoisonDurationSeconds = 5;
             list.Add(r);
@@ -327,10 +334,9 @@ namespace Brainless.Roles
             r.ShieldMultiplier = 1.1f;
             r.SpeedMultiplier = .9f;
             list.Add(r);
-            r = R("H03", "Mimic", RoleTypeId.Scp939, "Reuses mimic sounds quickly and can use the intercom.");
+            r = R("H03", "Mimic", RoleTypeId.Scp939, "Reuses mimic sounds much faster, but has less health.");
             r.HealthMultiplier = .9f;
             r.Traits.MimicSoundCooldownSeconds = .25f;
-            r.Traits.UseIntercom = true;
             list.Add(r);
             r = R("H04", "Venomous", RoleTypeId.Scp939, "Claws and amnestic clouds poison humans. Medical supplies cure it.");
             r.HealthMultiplier = .9f;

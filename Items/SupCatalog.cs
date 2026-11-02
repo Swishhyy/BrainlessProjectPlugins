@@ -64,14 +64,6 @@ namespace Brainless.Items
             },
             new ItemSpec
             {
-                Id = 7121,
-                Name = "SCRAMBLE Goggles",
-                BaseType = ItemType.Flashlight,
-                Description = "Protects you when looking at SCP-096. Uses battery power.",
-                RoundCap = 2
-            },
-            new ItemSpec
-            {
                 Id = 7122,
                 Name = "SCP500-E Volatile Pills",
                 BaseType = ItemType.SCP500,

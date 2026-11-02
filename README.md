@@ -18,15 +18,15 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 | Folder | DLL | Purpose |
 | --- | --- | --- |
 | [Roles](Roles) | `Brainless.Roles.dll` | 53 role profiles, per-role percentages and role HUD |
-| [Items](Items) | `Brainless.Items.dll` | 21 custom grenades, tools and consumables |
-| [Weapons](Weapons) | `Brainless.Weapons.dll` | 8 weapons, including a grenade launcher and railgun |
+| [Items](Items) | `Brainless.Items.dll` | 16 custom grenades, tools and consumables |
+| [Weapons](Weapons) | `Brainless.Weapons.dll` | 5 weapons, including a grenade launcher and railgun |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Ordinary coin-flip outcomes |
 | [ScpProximityChat](ScpProximityChat) | `Brainless.ScpProximityChat.dll` | Nearby SCP voice and receive controls |
 | [Core](Core) | `Brainless.Core.dll` | XP, playtime, privacy controls, optional Discord bot and update services |
-| [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | Captive recruitment, SCP-914 additions and action tracking |
-| [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection event |
+| [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | Captive recruitment, guard escape, SCP-914 additions and action tracking |
+| [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection, Deathmatch and Juggernaut events |
 
-Current component versions: Roles **0.5.1**, Items **0.6.3**, Weapons **0.6.2**, BetterCoinflips **5.1.8**, SCP voice **0.2.1**, Core **0.2.1**, Fixes **0.3.1**, Events **0.1.1**.
+Current component versions: Roles **0.6.0**, Items **0.7.0**, Weapons **0.7.0**, BetterCoinflips **5.1.8**, SCP voice **0.2.2**, Core **0.2.1**, Fixes **0.4.0**, Events **0.2.0**.
 
 ## Install / update
 

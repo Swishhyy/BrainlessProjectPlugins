@@ -21,10 +21,6 @@ namespace Brainless.Items
         private readonly Dictionary<Player, Stealth> invisible = new Dictionary<Player, Stealth>();
         private readonly Dictionary<Player, Boost> boosts = new Dictionary<Player, Boost>();
         private readonly Dictionary<Player, float> anti096 = new Dictionary<Player, float>();
-        private readonly BatteryLedger gogglesBattery = new BatteryLedger();
-        private readonly Dictionary<Player, int> goggles = new Dictionary<Player, int>();
-        private readonly HashSet<string> scrambleChecked = new HashSet<string>();
-        private readonly HashSet<string> scrambleFailed = new HashSet<string>();
         private readonly List<BioCloud> bioClouds = new List<BioCloud>();
         private readonly Dictionary<string, float> radioCooldowns = new Dictionary<string, float>();
         private readonly Dictionary<bool, int> radioCalls = new Dictionary<bool, int>();
@@ -57,24 +53,7 @@ namespace Brainless.Items
             if (!ev.IsAllowed || ev.Target == null)
                 return;
             if (anti096.TryGetValue(ev.Target, out float expiry) && expiry > Time.time)
-            {
                 ev.IsAllowed = false;
-                return;
-            }
-
-            if (!ev.IsLooking || !goggles.TryGetValue(ev.Target, out int serial) || !GogglesValid(ev.Target, serial))
-                return;
-            string encounter = serial + ":" + ev.Player.Id;
-            if (scrambleFailed.Contains(encounter))
-                return;
-            if (scrambleChecked.Add(encounter) && UnityEngine.Random.Range(0f, 100f) < Config.Sup.ScrambleGoggles.FailureChancePercent)
-            {
-                scrambleFailed.Add(encounter);
-                ev.Target.ShowHint("SCRAMBLE failed to filter SCP-096!", 3);
-                return;
-            }
-
-            ev.IsAllowed = false;
         });
         private void Validating939(Exiled.Events.EventArgs.Scp939.ValidatingVisibilityEventArgs ev)
         {
@@ -95,7 +74,6 @@ namespace Brainless.Items
             if (boosts.TryGetValue(player, out var boost))
                 boost.Layer.Clear();
             boosts.Remove(player);
-            goggles.Remove(player);
             anti096.Remove(player);
         }
 
@@ -115,7 +93,6 @@ namespace Brainless.Items
             foreach (var boost in boosts.Values)
                 boost.Layer.Clear();
             boosts.Clear();
-            goggles.Clear();
             anti096.Clear();
             bioClouds.Clear();
         }
@@ -124,9 +101,6 @@ namespace Brainless.Items
         {
             invisibleUsed.Clear();
             pillCooldowns.Clear();
-            gogglesBattery.Clear();
-            scrambleFailed.Clear();
-            scrambleChecked.Clear();
             radioCooldowns.Clear();
             radioCalls.Clear();
             supTick = Time.time;
@@ -148,12 +122,6 @@ namespace Brainless.Items
             if (item.Id == 7120)
             {
                 CallReinforcements(player, held, hold);
-                return true;
-            }
-
-            if (item.Id == 7121)
-            {
-                ToggleGoggles(player, held);
                 return true;
             }
 
@@ -339,26 +307,6 @@ namespace Brainless.Items
             });
         }
 
-        private bool GogglesValid(Player player, int serial) => player.IsConnected && player.IsAlive && player.IsHuman && player.Items.Any(i => i.Serial == serial) && Find(serial)?.Id == 7121 && gogglesBattery.Remaining(serial) > 0;
-        private void ToggleGoggles(Player player, Item item)
-        {
-            if (goggles.Remove(player))
-            {
-                player.ShowHint("SCRAMBLE disabled.", 3);
-                return;
-            }
-
-            gogglesBattery.Ensure(item.Serial, Config.Sup.ScrambleGoggles.BatterySeconds);
-            if (!GogglesValid(player, item.Serial))
-            {
-                player.ShowHint("SCRAMBLE battery empty.", 3);
-                return;
-            }
-
-            goggles[player] = item.Serial;
-            player.ShowHint($"SCRAMBLE enabled: {gogglesBattery.Remaining(item.Serial):0}s. Existing SCP-096 targets remain.", 4);
-        }
-
         private void SpawnBio(Vector3 position, DamageSource source, BioTuning tuning)
         {
             NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f, tuning.DurationSeconds);
@@ -402,22 +350,6 @@ namespace Brainless.Items
                 }
                 else
                     boost.Layer.Set(player, boost.Multiplier);
-            }
-
-            foreach (var pair in goggles.ToArray())
-            {
-                if (!GogglesValid(pair.Key, pair.Value))
-                {
-                    goggles.Remove(pair.Key);
-                    continue;
-                }
-
-                gogglesBattery.Spend(pair.Value, elapsed);
-                if (gogglesBattery.Remaining(pair.Value) <= 0)
-                {
-                    goggles.Remove(pair.Key);
-                    pair.Key.ShowHint("SCRAMBLE battery empty.", 3);
-                }
             }
 
             foreach (var cloud in bioClouds.ToArray())

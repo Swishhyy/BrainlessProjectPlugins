@@ -1,4 +1,19 @@
-# Roles 0.5.1
+# Roles 0.6.0
+
+Fixes the reported SCP and kit problems and makes custom roles common. Each spawn group now gives custom roles an 80% total share; catalog revision 3 raises existing configs to 80% once, keeping each role's relative share.
+
+- Kits that used removed items are rebuilt: Mad Scientist (revolver, spare cylinder, SCP-207), Auditor (Zone Manager card, radio), Anomaly Handler (gas grenade, filter inhaler), Quartermaster and Field Medic (real medkit plus painkillers/adrenaline), Signal Officer (jammer, flashbang), Courier (adrenaline) and Interceptor (Logicer instead of the AK). Added guns come with a full magazine.
+- Doctor (Z05) is enabled and revives exactly like SCP-049 (it could not revive before). It has 35% health, never a hume shield, slower movement, attacks and revives, and a 25% once-per-round event chance.
+- Child, Tickler and Muncher are no longer experimental. Brute has 1.5x health; Poisonous SCP-106 walks at 85% speed.
+- Explosive zombie and Boom Boom bursts are now sized before the grenade spawns; resizing a spawned grenade made EXILED respawn it and could drop the fuse.
+- Escape's kills restart breakneck and its stare timer, and the cooldown that follows is cleared.
+- Hume shields stay native unless a profile scales them, and a role change no longer leaves a stale shield cap behind.
+- Maintenance Liaison keeps its Door Jammer: the guard badge swap no longer deletes custom keycards.
+- SCP-096 rage and SCP-106 vigor patches can no longer throw into the native ability. Mimic intercom access was removed because it disconnected players.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.5.1
 
 Fixes private access in SCP-173 breakneck refresh and SCP-096 rage timing, and uses the public SCP-106 vigor API. Breakneck refresh errors are isolated so they cannot stop pending explosive-death bursts. Native CustomInfo validation now checks role-name-only overhead labels; IDs remain in the HUD/admin output. Guard-card SCP-914 normalization uses cached reflection for native private upgrade methods.
 

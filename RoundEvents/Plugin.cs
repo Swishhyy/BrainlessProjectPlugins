@@ -18,12 +18,12 @@ using Skeleton = Exiled.Events.Handlers.Scp3114;
 
 namespace Brainless.RoundEvents
 {
-    public sealed class Plugin : Plugin<Config>
+    public sealed partial class Plugin : Plugin<Config>
     {
         public override string Name => "Project Brainless Round Events";
         public override string Prefix => "project_brainless_round_events";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 2, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Last;
         public static Plugin Instance { get; private set; }
@@ -36,12 +36,21 @@ namespace Brainless.RoundEvents
         private readonly HashSet<Player> ownedSpawns = new HashSet<Player>();
         private readonly HashSet<string> participants = new HashSet<string>();
         private IDisposable updates;
+        private ArenaEvents arena;
+        private ArenaMode nextArena;
         private bool nextInfection, scheduled, preparing, announcedWinner;
         private float started;
         public override void OnEnabled()
         {
             Config.Validate();
             Instance = this;
+            arena = new ArenaEvents(this);
+            P.Spawning += arena.Spawning;
+            P.ChangingRole.Subscribe(arena.ChangingRole, -1000);
+            P.Died += arena.Died;
+            P.Left += arena.Left;
+            S.RespawningTeam += arena.Respawning;
+            S.EndingRound.Subscribe(arena.Ending, -1000);
             S.RoundStarted += RoundStarted;
             S.WaitingForPlayers += Cleanup;
             S.RestartingRound += Cleanup;
@@ -78,6 +87,16 @@ namespace Brainless.RoundEvents
             P.Left -= Left;
             Skeleton.Disguising -= Disguising;
             Skeleton.TryUseBody -= UsingBody;
+            if (arena != null)
+            {
+                P.Spawning -= arena.Spawning;
+                P.ChangingRole -= arena.ChangingRole;
+                P.Died -= arena.Died;
+                P.Left -= arena.Left;
+                S.RespawningTeam -= arena.Respawning;
+                S.EndingRound -= arena.Ending;
+            }
+
             Cleanup();
             updates?.Dispose();
             updates = null;
@@ -92,8 +111,11 @@ namespace Brainless.RoundEvents
         private int Humans => Player.List.Count(p => Eligible(p) && participants.Contains(p.UserId) && p.IsHuman);
         private int InfectedCount => Player.List.Count(Infected);
 
+        internal bool InfectionRunning => state.Active || scheduled;
+
         private void Cleanup()
         {
+            arena?.Stop();
             state.Stop();
             lifetime.Clear();
             foreach (var player in stats.Keys.ToArray())
@@ -109,7 +131,35 @@ namespace Brainless.RoundEvents
         private void RoundStarted()
         {
             Cleanup();
-            bool selected = nextInfection || Config.AutomaticEvents && UnityEngine.Random.Range(0f, 100f) < Config.AutomaticEventChancePercent;
+            var queuedArena = nextArena;
+            nextArena = ArenaMode.None;
+            if (queuedArena == ArenaMode.None && !nextInfection && Config.AutomaticEvents && UnityEngine.Random.Range(0f, 100f) < Config.AutomaticEventChancePercent)
+            {
+                // An automatic roll picks one enabled event at random.
+                var pool = new List<int>();
+                if (Config.Infection.Enabled)
+                    pool.Add(0);
+                if (Config.Deathmatch.Enabled)
+                    pool.Add(1);
+                if (Config.Juggernaut.Enabled)
+                    pool.Add(2);
+                int pick = pool.Count == 0 ? -1 : pool[UnityEngine.Random.Range(0, pool.Count)];
+                nextInfection = pick == 0;
+                queuedArena = pick == 1 ? ArenaMode.Deathmatch : pick == 2 ? ArenaMode.Juggernaut : ArenaMode.None;
+            }
+
+            if (queuedArena != ArenaMode.None)
+            {
+                nextInfection = false;
+                lifetime.Later(Config.RoundStartDelaySeconds, () =>
+                {
+                    if (!arena.Start(queuedArena, out string arenaResponse))
+                        Log.Info("[PB Round Events] " + arenaResponse);
+                });
+                return;
+            }
+
+            bool selected = nextInfection;
             nextInfection = false;
             if (!selected || !Config.Infection.Enabled)
                 return;
@@ -135,7 +185,7 @@ namespace Brainless.RoundEvents
         internal bool StartInfection(out string response)
         {
             response = "Infection requires a running round and must be enabled, with no event already active/scheduled.";
-            if (!Config.Infection.Enabled || !Round.IsStarted || Round.IsEnded || state.Active || scheduled)
+            if (!Config.Infection.Enabled || !Round.IsStarted || Round.IsEnded || state.Active || scheduled || arena.Active)
                 return false;
             var players = Player.List.Where(Eligible).OrderBy(_ => UnityEngine.Random.value).ToArray();
             var cfg = Config.Infection;
@@ -426,10 +476,24 @@ namespace Brainless.RoundEvents
             }
         }
 
-        internal string Status() => $"Infection: {(state.Active ? "ACTIVE" : scheduled ? "starting" : "inactive")}; next round: {nextInfection}; humans: {Humans}; infected: {InfectedCount}; pending conversions: {state.PendingCount}.\nInfected HP: {Config.Infection.InfectedHealth}; shield: {Config.Infection.InfectedHumeShield}; automatic events: {Config.AutomaticEvents}.";
+        internal bool QueueArena(ArenaMode mode, out string response)
+        {
+            bool enabled = mode == ArenaMode.Deathmatch ? Config.Deathmatch.Enabled : Config.Juggernaut.Enabled;
+            response = mode + " is disabled in configuration.";
+            if (!enabled)
+                return false;
+            nextArena = mode;
+            nextInfection = false;
+            response = mode + " queued for the next round. Minimum-player checks still apply.";
+            return true;
+        }
+
+        internal bool StartArena(ArenaMode mode, out string response) => arena.Start(mode, out response);
+        internal string Status() => arena.Status() + (nextArena != ArenaMode.None ? " Next round: " + nextArena + "." : "") + "\n" + $"Infection: {(state.Active ? "ACTIVE" : scheduled ? "starting" : "inactive")}; next round: {nextInfection}; humans: {Humans}; infected: {InfectedCount}; pending conversions: {state.PendingCount}.\nInfected HP: {Config.Infection.InfectedHealth}; shield: {Config.Infection.InfectedHumeShield}; automatic events: {Config.AutomaticEvents}.";
         internal void StopEvent()
         {
             nextInfection = false;
+            nextArena = ArenaMode.None;
             Cleanup();
             Map.Broadcast(5, "Round event stopped. Restart the round to reset roles.");
         }
@@ -438,7 +502,7 @@ namespace Brainless.RoundEvents
         {
             try
             {
-                if (state.Active || scheduled)
+                if (state.Active || scheduled || arena.Active)
                     throw new InvalidOperationException("Stop the active/scheduled event before reloading event tuning.");
                 var next = ConfigReload.Read(this);
                 next.Validate();

@@ -4,7 +4,7 @@
 
 Install `Brainless.Items.dll` in `EXILED/Plugins` on EXILED 9.15.2 / SCP: SL 14.2.8, with EXILED's standard CustomItems module enabled. Roles and Weapons are optional.
 
-The `brainless_items` configuration contains the 21 item definitions and their per-round caps. IDs 7101-7109 and 7111-7122 are stable integration IDs; 7110 is retired. Total supply is 6 / 10 / 14 utilities at fewer than 12 / 12-23 / 24+ players. Smoke occupies one utility slot and creates no filter. Cluster supply is 0 / 1 / 2 by the same bands.
+The `brainless_items` configuration contains the 16 item definitions and their per-round caps. IDs 7101-7106, 7111, 7113-7120 and 7122 are stable integration IDs; 7107-7110, 7112 and 7121 are retired (Survey Beacon, Trace Chalk, Field Dressing, Preserved Specimen and SCRAMBLE Goggles were removed in 0.7.0). Total supply is 6 / 10 / 14 utilities at fewer than 12 / 12-23 / 24+ players. Smoke occupies one utility slot and creates no filter. Cluster supply is 0 / 1 / 2 by the same bands.
 
 Smoke (7101) uses a flashbang body and full-size native SCP-244 fog. It applies no flash, blast damage or custom slow. One emitter lasts 20 seconds by default; duration and emitter count are configurable. It needs no paired filter or extra inventory slot. Native client fog remains; server cold exposure from owned clouds is excluded. Ordinary SCP-244 keeps its behavior except while a player deliberately uses a Filter Inhaler.
 

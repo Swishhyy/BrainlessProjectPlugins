@@ -54,7 +54,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer once without changing existing percentages.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -84,7 +84,8 @@ namespace Brainless.Roles
         [Tune(0, 100)]
         public float RogueSpawnSeparation { get; set; } = 12;
         public bool AnnounceRogue { get; set; } = true;
-        public bool EnableDoctorEvent { get; set; }
+        [Description("Lets one zombie per round become the Doctor (Z05): a weak SCP-049 that can revive. Needs the Z05 profile enabled and its minimum players.")]
+        public bool EnableDoctorEvent { get; set; } = true;
         public bool ExtremeMuncherEventPreset { get; set; }
 
         [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
@@ -126,6 +127,7 @@ namespace Brainless.Roles
                 throw new InvalidOperationException("Role profiles need unique IDs, nonempty names and non-null equipment/candy lists.");
             UpgradeCatalog();
             UpgradeHumanProfiles();
+            UpgradeReworkedProfiles();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -141,12 +143,85 @@ namespace Brainless.Roles
                 if (role.Id == "G06" && role.Hint == "Door Brace instead of flashbang; less ammo.")
                     role.Hint = "Door Jammer keycard instead of flashbang; less ammo.";
                 role.Hint = GameplayText.Clean(role.Hint, descriptions.TryGetValue(role.Id, out string shortText) ? shortText : "");
-                role.CustomItems.RemoveAll(id => id == 7110);
+                role.CustomItems.RemoveAll(id => id == 7110 || Catalog.RetiredItems.Contains(id));
             }
 
             foreach (var native in Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Distinct())
                 if (Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, native)).Sum(r => (decimal)r.ChancePercent.Value) > 100m)
                     throw new InvalidOperationException("chance_percent totals for " + native + " exceed 100. Reduce that group's percentages; disabled profiles also reserve their share.");
+        }
+
+        // Revision 3: removed items leave every kit, the eight affected kits get their
+        // replacement equipment, the Doctor becomes a usable weak SCP-049, the old
+        // experimental gates on Child/Tickler/Muncher are lifted, and each chance group
+        // is scaled up to an 80% total (relative shares are kept).
+        private void UpgradeReworkedProfiles()
+        {
+            if (RoleCatalogRevision >= 3)
+                return;
+            var stock = Catalog.Create().ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+            foreach (var role in Roles)
+            {
+                string id = role.Id.ToUpperInvariant();
+                if (!stock.TryGetValue(id, out var fresh))
+                    continue;
+                bool usedRetired = role.CustomItems.Any(Catalog.RetiredItems.Contains) || (id == "C03" && role.Add.Count == 0);
+                if (Catalog.ReworkedKits.Contains(id) && usedRetired)
+                {
+                    role.Remove = fresh.Remove.ToList();
+                    role.Add = fresh.Add.ToList();
+                    role.CustomItems = fresh.CustomItems.ToList();
+                    role.Hint = fresh.Hint;
+                }
+
+                if (id == "D03" || id == "P03" || id == "Z02")
+                    role.Experimental = false;
+                if (id == "P02" && Math.Abs(role.HealthMultiplier - 1.2f) < .001f)
+                    role.HealthMultiplier = fresh.HealthMultiplier;
+                if (id == "L04" && role.SpeedMultiplier == 1)
+                    role.SpeedMultiplier = fresh.SpeedMultiplier;
+                if (id == "H03")
+                {
+                    role.Traits.UseIntercom = false;
+                    if (role.Hint != null && role.Hint.Contains("intercom"))
+                        role.Hint = fresh.Hint;
+                }
+
+                if (id == "Z05")
+                {
+                    role.Enabled = true;
+                    role.Experimental = false;
+                    role.Hint = fresh.Hint;
+                    role.ShieldMultiplier = 0;
+                    if (!role.ChancePercent.HasValue || role.ChancePercent == 1)
+                        role.ChancePercent = Catalog.DoctorChance;
+                    if (Math.Abs(role.HealthMultiplier - .4f) < .001f)
+                        role.HealthMultiplier = Catalog.DoctorHealth;
+                    if (role.SpeedMultiplier == 1)
+                        role.SpeedMultiplier = fresh.SpeedMultiplier;
+                    if (role.Traits.AttackCooldownMultiplier == 1)
+                        role.Traits.AttackCooldownMultiplier = fresh.Traits.AttackCooldownMultiplier;
+                    if (role.Traits.RecallDurationMultiplier == 1)
+                        role.Traits.RecallDurationMultiplier = fresh.Traits.RecallDurationMultiplier;
+                }
+            }
+
+            EnableDoctorEvent = true;
+            Catalog.FillMissingChances(Roles, LegacyFamilyChance);
+            foreach (var group in Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase)).GroupBy(Catalog.ChanceGroup))
+            {
+                // Invalid values are left for validation to reject with a clear message.
+                if (group.Any(r => double.IsNaN(r.ChancePercent.Value) || double.IsInfinity(r.ChancePercent.Value) || r.ChancePercent.Value < 0 || r.ChancePercent.Value > 100))
+                    continue;
+                decimal total = group.Sum(r => (decimal)r.ChancePercent.Value);
+                decimal target = (decimal)Catalog.GroupChancePercent;
+                if (total <= 0 || total >= target)
+                    continue;
+                foreach (var role in group)
+                    role.ChancePercent = (double)(Math.Floor((decimal)role.ChancePercent.Value * target / total * 100) / 100);
+            }
+
+            RoleCatalogRevision = 3;
         }
 
         private void UpgradeHumanProfiles()

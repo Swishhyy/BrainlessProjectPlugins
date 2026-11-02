@@ -1,4 +1,10 @@
-# ScpProximityChat 0.2.1
+# ScpProximityChat 0.2.2
+
+SCP-939 is excluded from nearby voice, both as speaker and listener. Routing its voice through speakers broke proximity chat and disconnected players; it keeps native SCP team voice.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.2.1
 
 Gameplay behavior is unchanged; this build includes the runtime-visibility build guard and clearer updater diagnostics.
 

@@ -14,9 +14,7 @@ namespace Brainless.Weapons
             var sections = new Dictionary<uint, ItemFiles.Section>
             {
                 [7201] = ItemFiles.Bind(config.Tuning, "Nullifier"),
-                [7202] = ItemFiles.Bind(config.Tuning, "Rattler"),
                 [7203] = ItemFiles.Bind(config.Tuning, "BreachShotgun"),
-                [7204] = ItemFiles.Bind(config.Tuning, "Redline"),
                 [7206] = ItemFiles.Bind(config.Tuning, "Ricochet"),
                 [7208] = ItemFiles.Bind(config.Tuning, "Railgun")
             };

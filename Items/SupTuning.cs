@@ -15,7 +15,6 @@ namespace Brainless.Items
         public BioTuning BioGrenade { get; set; } = new BioTuning();
         public HackingTuning HackingChip { get; set; } = new HackingTuning();
         public ReinforcementTuning ReinforcementRadio { get; set; } = new ReinforcementTuning();
-        public ScrambleTuning ScrambleGoggles { get; set; } = new ScrambleTuning();
         public VolatilePillTuning VolatilePills { get; set; } = new VolatilePillTuning();
 
         internal void Validate()
@@ -213,15 +212,6 @@ namespace Brainless.Items
 
         [Tune(.1, 30)]
         public float UseSeconds { get; set; } = 3;
-    }
-
-    public sealed class ScrambleTuning
-    {
-        [Tune(.1, 1800)]
-        public float BatterySeconds { get; set; } = 60;
-
-        [Tune(0, 100)]
-        public float FailureChancePercent { get; set; }
     }
 
     public sealed class VolatilePillTuning : PillTuning

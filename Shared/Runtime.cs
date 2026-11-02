@@ -188,6 +188,7 @@ namespace Brainless.Internal
                 encoder = new VoiceChat.Codec.OpusEncoder(VoiceChat.Codec.Enums.OpusApplicationType.Audio);
                 var samples = new float[960];
                 var bytes = new byte[4096];
+                var steps = kind == "steps" ? new FootstepSynth(random) : null;
                 int sample = 0;
                 for (int frame = 0; frame < seconds * 50; frame++)
                 {
@@ -196,10 +197,15 @@ namespace Brainless.Internal
                     for (int j = 0; j < samples.Length; j++, sample++)
                     {
                         double time = sample / 48000.0;
-                        double phase = time % (kind == "steps" ? .44 : .55);
-                        double envelope = kind == "steps" ? Math.Exp(-phase * 48) : phase < .08 ? Math.Sin(phase / .08 * Math.PI) : 0;
-                        double noise = random.NextDouble() * 2 - 1;
-                        samples[j] = (float)(envelope * (kind == "steps" ? .18 * noise + .55 * Math.Sin(time * 2 * Math.PI * 85) : .4 * Math.Sin(time * 2 * Math.PI * 920)));
+                        if (steps != null)
+                        {
+                            samples[j] = steps.Sample(time);
+                            continue;
+                        }
+
+                        double phase = time % .55;
+                        double envelope = phase < .08 ? Math.Sin(phase / .08 * Math.PI) : 0;
+                        samples[j] = (float)(envelope * .4 * Math.Sin(time * 2 * Math.PI * 920));
                     }
 
                     int length = encoder.Encode(samples, bytes, samples.Length);
@@ -212,6 +218,57 @@ namespace Brainless.Internal
                 encoder?.Dispose();
                 lifetime.Release(speaker);
             }
+        }
+    }
+
+    // Boot steps on a hard floor: each step is a heel strike followed by a softer
+    // toe contact. Both are short bursts of low-passed noise with a low body thump
+    // and a faint scuff, at an uneven walking cadence that alternates feet.
+    internal sealed class FootstepSynth
+    {
+        private readonly System.Random random;
+        private double nextStep = .05, heel = -1, toe = -1, heelGain, toeGain, thump;
+        private double low, lower, previous;
+        private int step;
+
+        internal FootstepSynth(System.Random random) => this.random = random;
+
+        internal float Sample(double time)
+        {
+            if (time >= nextStep)
+            {
+                heel = time;
+                heelGain = (step % 2 == 0 ? 1 : .82) * (.85 + random.NextDouble() * .15);
+                toe = time + .045 + random.NextDouble() * .025;
+                toeGain = heelGain * (.45 + random.NextDouble() * .15);
+                thump = 62 + random.NextDouble() * 22;
+                step++;
+                nextStep = time + .47 + random.NextDouble() * .09;
+            }
+
+            double noise = random.NextDouble() * 2 - 1;
+            low += (noise - low) * .09;
+            lower += (low - lower) * .25;
+            double scuff = noise - previous;
+            previous = noise;
+            double body = 0, click = 0, boom = 0;
+            if (heel >= 0 && time - heel < .3)
+            {
+                double age = time - heel;
+                body += heelGain * Math.Exp(-age * 48);
+                click += heelGain * Math.Exp(-age * 160);
+                boom += heelGain * Math.Exp(-age * 30) * Math.Sin(2 * Math.PI * thump * age);
+            }
+
+            if (toe >= 0 && time >= toe && time - toe < .25)
+            {
+                double age = time - toe;
+                body += toeGain * Math.Exp(-age * 65);
+                click += toeGain * Math.Exp(-age * 200);
+            }
+
+            double value = body * lower * 2.4 + boom * .42 + click * scuff * .1;
+            return (float)Math.Max(-1, Math.Min(1, value));
         }
     }
 

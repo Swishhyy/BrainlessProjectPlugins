@@ -15,6 +15,8 @@ Use **Remote Admin → text console**, without `/` or `.`. `[playerID]` is optio
 | Tune SCP voice live | `bpscpchat volume 10` | `brainless.scpchat.configure` |
 | Queue Infection | `bpevent infection next` | `projectbrainless.events` |
 | Start Infection now | `bpevent infection start` | `projectbrainless.events` |
+| Queue / start Deathmatch | `bpevent deathmatch next` / `bpevent deathmatch start` | `projectbrainless.events` |
+| Queue / start Juggernaut | `bpevent juggernaut next` / `bpevent juggernaut start` | `projectbrainless.events` |
 | Check / stop an event | `bpevent status` / `bpevent stop` | `projectbrainless.events` |
 
 Examples: `ci give 7102 4` gives player 4 a Cluster Grenade. `bprole set Z04` makes you Explosive Zombie. `bprole set S04 4` makes player 4 Candy Man.

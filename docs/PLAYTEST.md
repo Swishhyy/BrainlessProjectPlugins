@@ -115,3 +115,17 @@ Keep a record of server version, enabled entries, player count, cause of death, 
 - Run Guard badge, utility and finite/custom weapon items through SCP-914 as inventory and pickups. Normalization must preserve the intended recipe/serial/ammo behavior without private-method exceptions or recursive upgrade loops.
 - Inspect every role overhead label with the stock and a stricter CustomInfo regex. Rejected names must hide only that label; the side HUD and role IDs in admin output remain. Death/role change restores only native-valid prior text.
 - Confirm the updater still refuses a genuinely different game version, now showing both target and running numbers. Test matching versions, bad tokens and server restart independently. CedMod verification is outside these plugin access fixes.
+
+## Fix pass (Roles 0.6.0 / Items 0.7.0 / Weapons 0.7.0 / Events 0.2.0 / Fixes 0.4.0 / SCP voice 0.2.2)
+
+- Plain and custom SCP-096: look at him, enrage, and confirm he attacks after the crying animation. Anger Issue should skip the windup.
+- Wormhole/Hyper: vigor rises (faster/slower). Escape's: a kill during breakneck restarts it; it is ready again right after it ends. Explosive zombie and Boom Boom: death leaves a beeping burst that explodes.
+- Doctor: `bprole set Z05` on a 049 test; it revives normal corpses, shows zero hume shield, and is noticeably weaker. Natural roll needs 12 players and a living 049.
+- Check hume shields on Surgeon, Brute, Cocoon (scaled) and the other SCP variants (native).
+- Maintenance Liaison keeps the Door Jammer; Mad Scientist gets a loaded revolver; Interceptor gets a loaded Logicer.
+- SCP-939 near SCPs using nearby voice: no disconnects; 939 keeps team voice.
+- Signal Jammer: SCP-079 is denied doors/cameras/teslas in the room and loses signal if watching it.
+- Echo Canister sounds like walking boots. Nullifier: about 35 per body hit on humans; strips SCP shields fast.
+- Guard escape: uncuffed guard at the escape zone becomes NTF Sergeant; cuffed guard still follows captive rules.
+- Deathmatch and Juggernaut with 4+ players: spawns, respawn waves, scoring, location reveals, round end and warhead/decontamination restore.
+

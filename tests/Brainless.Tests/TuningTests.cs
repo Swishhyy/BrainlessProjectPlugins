@@ -65,8 +65,8 @@ internal static class TuningTests
         items.ContainmentFoam.Radius = 4;
         items.FilterInhaler = null;
         check(!Valid(items), "a missing nested tuning section is rejected");
-        weapons.Rattler.TagDurationSeconds = float.PositiveInfinity;
-        check(!Valid(weapons), "infinite audio durations are rejected");
+        weapons.Railgun.ChargeSeconds = float.PositiveInfinity;
+        check(!Valid(weapons), "infinite weapon durations are rejected");
         check(ExplosionRules.DefaultPenetration == 50 && ExplosionRules.Penetration(0) == 1 && ExplosionRules.Penetration(-1) == 1 && ExplosionRules.Penetration(500) == 100, "custom blasts cannot pass zero penetration to the native zero-damage constructor path");
         var fresh = new ItemTuning();
         check(fresh.ImpactGrenade.HumanDamage == 140 && fresh.ImpactGrenade.ScpDamage == 350 && fresh.ImpactGrenade.Radius == 5 && fresh.ImpactGrenade.ArmorPenetration == 50, "impact defaults provide a larger damaging blast with native HE penetration");

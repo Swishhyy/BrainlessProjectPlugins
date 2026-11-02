@@ -32,7 +32,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 3);
+        public override Version Version => new Version(0, 7, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 2);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -47,19 +47,17 @@ namespace Brainless.Items
         private readonly HashSet<Player> keyHeld = new HashSet<Player>();
         private readonly Dictionary<Player, float> filters = new Dictionary<Player, float>();
         private readonly Dictionary<Player, MovementLayer> movement = new Dictionary<Player, MovementLayer>();
-        private readonly HashSet<string> specimenUsed = new HashSet<string>();
         private readonly List<Device> devices = new List<Device>();
         private readonly List<Field> fields = new List<Field>();
         private readonly Dictionary<Room, float> jamCooldown = new Dictionary<Room, float>();
         private KeybindSetting toolKey;
-        private int chalkNumber;
         private bool capacitySet;
         private float lastFieldTick;
         private IDisposable updates;
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 6;
+            bool migrateConfig = Config.CatalogRevision < 7;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -99,6 +97,10 @@ namespace Brainless.Items
             C.RoomBlackout += Blackout;
             C.LockingDown += Lockdown;
             C.ChangingSpeakerStatus += Speaker;
+            C.ChangingCamera += JammedCamera;
+            C.InteractingTesla += JammedTesla;
+            C.Pinging += JammedPing;
+            C.ElevatorTeleporting += JammedElevator;
             S.WaitingForPlayers += Reset;
             S.RoundStarted += RoundStarted;
             S.RoundEnded += Ended;
@@ -140,6 +142,10 @@ namespace Brainless.Items
             C.RoomBlackout -= Blackout;
             C.LockingDown -= Lockdown;
             C.ChangingSpeakerStatus -= Speaker;
+            C.ChangingCamera -= JammedCamera;
+            C.InteractingTesla -= JammedTesla;
+            C.Pinging -= JammedPing;
+            C.ElevatorTeleporting -= JammedElevator;
             S.WaitingForPlayers -= Reset;
             S.RoundStarted -= RoundStarted;
             S.RoundEnded -= Ended;
@@ -181,9 +187,7 @@ namespace Brainless.Items
             foreach (var item in registered.Values)
                 item.TrackedSerials.Clear();
             SupReset();
-            specimenUsed.Clear();
             jamCooldown.Clear();
-            chalkNumber = 0;
             budget.Reset(0);
             capacitySet = false;
             lifetime.Run(Tick());
@@ -424,41 +428,7 @@ namespace Brainless.Items
             var nearby = devices.FirstOrDefault(d => Vector3.Distance(player.Position, d.Position) <= Config.Tuning.Interaction.DeviceReach && Vector3.Dot(player.CameraTransform.forward, (d.Position - player.CameraTransform.position).normalized) > .75f && World.ClearLine(player.CameraTransform.position, d.Position + Vector3.up * .1f));
             if (nearby != null)
             {
-                if (nearby.Id == 7107 && player.IsHuman)
-                {
-                    if (nearby.Scans < 1)
-                        return;
-                    Begin(player, Config.Tuning.SurveyBeacon.ScanSeconds, null, hold, () =>
-                    {
-                        if (!devices.Contains(nearby) || nearby.Scans < 1)
-                            return;
-                        nearby.Scans--;
-                        bool humans = Player.List.Any(p => p != player && p.IsAlive && p.IsHuman && p.CurrentRoom == nearby.Room);
-                        bool scps = Player.List.Any(p => p != player && p.IsAlive && p.IsScp && p.Role.Type != RoleTypeId.Scp079 && p.CurrentRoom == nearby.Room);
-                        player.ShowHint($"Survey: other humans {(humans ? "YES" : "NO")}; physical SCPs {(scps ? "YES" : "NO")}", 6);
-                        World.Cue(nearby.Position, "Survey scan complete");
-                    });
-                    PlayAudio(nearby.Position, Config.Tuning.SurveyBeacon.ScanSeconds, "beep");
-                    return;
-                }
-
-                Begin(player, nearby.Id == 7105 ? Config.Tuning.DoorBrace.RemoveSeconds : nearby.Id == 7106 ? Config.Tuning.SignalJammer.RemoveSeconds : Config.Tuning.SurveyBeacon.RemoveSeconds, null, hold, () => RemoveDevice(nearby));
-                return;
-            }
-
-            if (player.Role.Type == RoleTypeId.Scp0492)
-            {
-                var specimen = Pickup.List.FirstOrDefault(p => Find(p.Serial)?.Id == 7112 && Vector3.Distance(p.Position, player.Position) < Config.Tuning.PreservedSpecimen.Reach && World.ClearLine(player.CameraTransform.position, p.Position));
-                if (specimen == null || (Config.Tuning.PreservedSpecimen.OncePerPlayerPerRound && specimenUsed.Contains(player.UserId)))
-                    return;
-                Begin(player, Config.Tuning.PreservedSpecimen.UseSeconds, null, hold, () =>
-                {
-                    if (!Pickup.List.Contains(specimen) || (Config.Tuning.PreservedSpecimen.OncePerPlayerPerRound && specimenUsed.Contains(player.UserId)) || Vector3.Distance(specimen.Position, player.Position) > Config.Tuning.PreservedSpecimen.Reach || !World.ClearLine(player.CameraTransform.position, specimen.Position))
-                        return;
-                    specimenUsed.Add(player.UserId);
-                    specimen.Destroy();
-                    player.Heal(Config.Tuning.PreservedSpecimen.HealAmount);
-                });
+                Begin(player, nearby.Id == 7105 ? Config.Tuning.DoorBrace.RemoveSeconds : Config.Tuning.SignalJammer.RemoveSeconds, null, hold, () => RemoveDevice(nearby));
                 return;
             }
 
@@ -477,35 +447,7 @@ namespace Brainless.Items
                     UseDoorItem(player, held, item, door, hold);
                     break;
                 case 7106:
-                case 7107:
-                    Begin(player, item.Id == 7106 ? Config.Tuning.SignalJammer.DeploySeconds : Config.Tuning.SurveyBeacon.DeploySeconds, held, hold, () => Deploy(player, held, item));
-                    break;
-                case 7108:
-                    if (Spend(player, held))
-                    {
-                        Vector3 position = Ground(player.Position);
-                        var marker = World.Marker(lifetime, position + Vector3.up * .03f, Color.cyan, new Vector3(.2f, .015f, .2f));
-                        var text = lifetime.Own(Text.Create(position + Vector3.up * .2f, (++chalkNumber).ToString()));
-                        var chalk = new Device
-                        {
-                            Id = 7108,
-                            Position = position,
-                            Expires = Time.time + Config.Tuning.TraceChalk.DurationSeconds,
-                            Marker = marker,
-                            Text = text
-                        };
-                        devices.Add(chalk);
-                        while (devices.Count(d => d.Id == 7108) > Config.Tuning.TraceChalk.MaxMarkers)
-                            RemoveDevice(devices.First(d => d.Id == 7108));
-                    }
-
-                    break;
-                case 7109:
-                    Begin(player, Config.Tuning.FieldDressing.UseSeconds, held, hold, () =>
-                    {
-                        if (Spend(player, held))
-                            player.Heal(Config.Tuning.FieldDressing.HealAmount);
-                    });
+                    Begin(player, Config.Tuning.SignalJammer.DeploySeconds, held, hold, () => Deploy(player, held, item));
                     break;
                 case 7111:
                     Begin(player, Config.Tuning.FilterInhaler.UseSeconds, held, hold, () =>
@@ -516,9 +458,6 @@ namespace Brainless.Items
                             player.ShowHint($"Custom gas filter active for {Config.Tuning.FilterInhaler.DurationSeconds:0.#} seconds", 3);
                         }
                     });
-                    break;
-                case 7112:
-                    player.ShowHint("Drop or throw the specimen. A zombie can choose to eat it with the tool key.", 5);
                     break;
             }
         }
@@ -610,7 +549,9 @@ namespace Brainless.Items
             Room room = player.CurrentRoom;
             if (room == null || room.Zone == ZoneType.Surface || room.Type == RoomType.Pocket)
                 return;
-            if (item.Id == 7106 && (devices.Count(d => d.Id == 7106) >= Config.Tuning.SignalJammer.MaxActive || (jamCooldown.TryGetValue(room, out float cooldown) && cooldown > Time.time)))
+            if (item.Id != 7106)
+                return;
+            if ((devices.Count(d => d.Id == 7106) >= Config.Tuning.SignalJammer.MaxActive || (jamCooldown.TryGetValue(room, out float cooldown) && cooldown > Time.time)))
             {
                 player.ShowHint("Jammer unavailable in this room yet", 3);
                 return;
@@ -624,19 +565,15 @@ namespace Brainless.Items
                 Id = item.Id,
                 Position = point,
                 Room = room,
-                ActiveAt = Time.time + (item.Id == 7106 ? Config.Tuning.SignalJammer.ArmingSeconds : 0),
-                Expires = Time.time + (item.Id == 7106 ? Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds : Config.Tuning.SurveyBeacon.DurationSeconds),
-                Scans = Config.Tuning.SurveyBeacon.Scans
+                ActiveAt = Time.time + Config.Tuning.SignalJammer.ArmingSeconds,
+                Expires = Time.time + Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds
             };
-            d.Marker = World.Marker(lifetime, point + Vector3.up * .15f, item.Id == 7106 ? Color.red : Color.green, new Vector3(.3f, .3f, .3f), PrimitiveType.Cube);
+            d.Marker = World.Marker(lifetime, point + Vector3.up * .15f, Color.red, new Vector3(.3f, .3f, .3f), PrimitiveType.Cube);
             d.Text = lifetime.Own(Text.Create(point + Vector3.up * .55f, item.Name));
             devices.Add(d);
-            if (item.Id == 7106)
-            {
-                jamCooldown[room] = d.Expires + Config.Tuning.SignalJammer.RoomCooldownSeconds;
-                World.Cue(point, "Jammer arming - hold tool key to deactivate");
-                PlayAudio(point, Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds, "beep");
-            }
+            jamCooldown[room] = d.Expires + Config.Tuning.SignalJammer.RoomCooldownSeconds;
+            World.Cue(point, "Jammer arming - hold tool key to deactivate");
+            PlayAudio(point, Config.Tuning.SignalJammer.ArmingSeconds + Config.Tuning.SignalJammer.ActiveSeconds, "beep");
         }
 
         private void RemoveDevice(Device device)
@@ -649,10 +586,54 @@ namespace Brainless.Items
         }
 
         private bool Jammed(Room room) => room != null && devices.Any(d => d.Id == 7106 && d.Room == room && d.ActiveAt <= Time.time && d.Expires > Time.time);
+        // SCP-079 loses every door, gate and checkpoint touching a jammed room, not only
+        // ordinary doors. Door Jammer devices still block their own door.
         private void ComputerDoor(Exiled.Events.EventArgs.Scp079.TriggeringDoorEventArgs ev)
         {
-            if (devices.Any(d => d.Id == 7105 && d.Door == ev.Door) || World.OrdinaryDoor(ev.Door) && ev.Door.Rooms.Any(Jammed))
-                ev.IsAllowed = false;
+            if (devices.Any(d => d.Id == 7105 && d.Door == ev.Door) || (ev.Door?.Rooms?.Any(Jammed) ?? false))
+                Deny079(ev.Player, () => ev.IsAllowed = false);
+        }
+
+        private void JammedCamera(Exiled.Events.EventArgs.Scp079.ChangingCameraEventArgs ev)
+        {
+            if (Jammed(ev.Camera?.Room))
+                Deny079(ev.Player, () => ev.IsAllowed = false);
+        }
+
+        private void JammedTesla(Exiled.Events.EventArgs.Scp079.InteractingTeslaEventArgs ev)
+        {
+            if (Jammed(ev.Tesla?.Room))
+                Deny079(ev.Player, () => ev.IsAllowed = false);
+        }
+
+        private void JammedPing(Exiled.Events.EventArgs.Scp079.PingingEventArgs ev)
+        {
+            if (Jammed(ev.Room))
+                Deny079(ev.Player, () => ev.IsAllowed = false);
+        }
+
+        private void JammedElevator(Exiled.Events.EventArgs.Scp079.ElevatorTeleportingEventArgs ev)
+        {
+            if (Jammed(ev.Room))
+                Deny079(ev.Player, () => ev.IsAllowed = false);
+        }
+
+        private static void Deny079(Player player, Action deny)
+        {
+            deny();
+            player?.ShowHint("<color=red>Signal jammed in that room</color>", 2);
+        }
+
+        // An SCP-079 already watching a jammed room loses its signal and is pushed out.
+        private void JamComputers()
+        {
+            foreach (var player in Player.List.Where(p => p.IsAlive && p.Role.Type == RoleTypeId.Scp079).ToArray())
+            {
+                if (!(player.Role is Exiled.API.Features.Roles.Scp079Role computer) || computer.LostSignalHandler == null || computer.LostSignalHandler.Lost || !Jammed(computer.Camera?.Room))
+                    continue;
+                computer.LoseSignal(Config.Tuning.SignalJammer.SignalLossSeconds);
+                player.ShowHint("<color=red>Signal lost: a jammer is active in that room</color>", 3);
+            }
         }
 
         private void Blackout(Exiled.Events.EventArgs.Scp079.RoomBlackoutEventArgs ev)
@@ -864,6 +845,7 @@ namespace Brainless.Items
 
             foreach (var d in devices.Where(d => d.Expires <= Time.time).ToArray())
                 RemoveDevice(d);
+            Safe.Run(JamComputers);
             foreach (var field in fields.Where(f => f.Expires <= Time.time).ToArray())
             {
                 fields.Remove(field);
@@ -919,7 +901,7 @@ namespace Brainless.Items
             }
         }
 
-        private ItemType Conversion(uint id, ItemType type) => id == 7105 || id == 7108 || id == 7112 ? ItemType.Coin : type;
+        private ItemType Conversion(uint id, ItemType type) => id == 7105 ? ItemType.Coin : type;
         private void UpgradePickup(UpgradingPickupEventArgs ev) => Safe.Run(() =>
         {
             var item = Find(ev.Pickup.Serial);
@@ -976,7 +958,6 @@ namespace Brainless.Items
             internal Room Room;
             internal Door Door;
             internal float Expires, ActiveAt;
-            internal int Scans;
             internal Primitive Marker;
             internal Text Text;
         }

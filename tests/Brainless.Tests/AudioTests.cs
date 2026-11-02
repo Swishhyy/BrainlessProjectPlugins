@@ -21,13 +21,8 @@ internal static class AudioTests
         items.UpgradeAudio(1);
         check(items.EchoCanister.AudioVolume == .65f, "the audio revision marker preserves a deliberately retained old preset");
         var weapons = new WeaponTuning();
-        weapons.Rattler.AudioVolume = .65f;
-        check(weapons.UpgradeAudio(0) == 1 && weapons.Rattler.AudioVolume == 2.5f && weapons.Rattler.AudioFullVolumeRange == 6, "old Rattler YAML gains a stronger tag and a wider full-volume area");
-        weapons.Rattler.AudioVolume = .4f;
-        weapons.UpgradeAudio(0);
-        check(weapons.Rattler.AudioVolume == .4f, "a custom Rattler gain is not overwritten by the stock audio upgrade");
+        check(weapons.UpgradeAudio(0) == 1 && weapons.UpgradeAudio(1) == 1, "the weapon audio revision marker advances without a removed Rattler section");
         weapons.Audio.Volume = 10;
-        weapons.Rattler.AudioVolume = 10;
         bool Valid()
         {
             try
@@ -41,7 +36,7 @@ internal static class AudioTests
             }
         }
 
-        check(Valid(), "operators can independently amplify general weapon cues and Rattler audio up to tenfold");
+        check(Valid(), "operators can amplify general weapon cues up to tenfold");
         weapons.Audio.Volume = 10.1f;
         check(!Valid(), "invalid audio gain is rejected before applying weapon settings");
         weapons.Audio = null;

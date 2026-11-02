@@ -108,6 +108,13 @@ namespace Brainless.Internal
             }
         }
 
+        // Retired content leaves both loot tables so its share is no longer rolled.
+        internal void RemoveRetired(ICollection<uint> retired)
+        {
+            MapRules?.RemoveAll(r => r != null && retired.Contains(r.CustomId));
+            PlayerRules?.RemoveAll(r => r != null && retired.Contains(r.CustomId));
+        }
+
         internal void EnsureEntries(IEnumerable<KeyValuePair<uint, ItemType>> entries)
         {
             foreach (var entry in entries)
@@ -124,24 +131,18 @@ namespace Brainless.Internal
         {
             MapRules = new List<MapLootRule>
             {
-                Map(7109, 6, ItemType.Medkit),
                 Map(7111, 3, ItemType.Painkillers),
-                Map(7108, 3, ItemType.Coin),
                 Map(7105, 2, ItemType.KeycardJanitor),
                 Map(7104, 3, ItemType.GrenadeFlash),
                 Map(7103, 2, ItemType.GrenadeFlash),
                 Map(7101, 3, ItemType.GrenadeFlash),
                 Map(7113, 2, ItemType.GrenadeHE),
                 Map(7102, 1, ItemType.GrenadeHE),
-                Map(7107, 1, ItemType.Flashlight),
                 Map(7106, 1, ItemType.Radio),
             },
             PlayerRules = new List<PlayerLootRule>
             {
-                Add(7108, 3, RoleTypeId.ClassD),
                 Add(7105, 2, RoleTypeId.ClassD),
-                Add(7109, 2, RoleTypeId.ClassD),
-                Replace(7109, 6, ItemType.Medkit),
                 Replace(7111, 2, ItemType.Painkillers),
                 Replace(7104, 3, ItemType.GrenadeFlash),
                 Replace(7103, 2, ItemType.GrenadeFlash),
@@ -160,13 +161,11 @@ namespace Brainless.Internal
             MapRules = new List<MapLootRule>
             {
                 Map(7201, 3, ItemType.GunE11SR),
-                Map(7202, 4, ItemType.GunCrossvec),
                 Map(7203, 2, ItemType.GunShotgun)
             },
             PlayerRules = new List<PlayerLootRule>
             {
                 Replace(7201, 3, ItemType.GunE11SR),
-                Replace(7202, 4, ItemType.GunCrossvec),
                 Replace(7203, 2, ItemType.GunShotgun)
             }
         };
@@ -223,7 +222,6 @@ namespace Brainless.Internal
             AddSup(7118, ItemType.GrenadeFlash, 1);
             AddSup(7119, ItemType.KeycardJanitor, 1);
             AddSup(7120, ItemType.Radio, 1);
-            AddSup(7121, ItemType.Flashlight, 1);
         }
 
         private void AddSup(uint id, ItemType body, int weight)

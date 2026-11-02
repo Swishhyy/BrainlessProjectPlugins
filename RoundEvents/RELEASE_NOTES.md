@@ -1,4 +1,14 @@
-# Round Events 0.1.1
+# Round Events 0.2.0
+
+Adds two events next to Infection, controlled with `bpevent deathmatch next|start` and `bpevent juggernaut next|start`.
+
+- Deathmatch: Chaos has taken the facility and spawns in Heavy Containment and Entrance; MTF raids from the surface. No SCPs. Both sides respawn in waves (15 s); first to 40 kills, or the leader after 15 minutes, wins.
+- Juggernaut: one Chaos Juggernaut in heavy armor (1000 HP + 150 per hunter, heals 75 per kill) against NTF hunters, who are told its zone and room every 30 seconds. Killing the Juggernaut makes you the next one.
+- Events lock the warhead and LCZ decontamination and block normal respawn waves while they run. Automatic selection picks one enabled event at random.
+
+Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.1.1
 
 Gameplay behavior is unchanged; this build includes the runtime-visibility build guard and clearer updater diagnostics.
 

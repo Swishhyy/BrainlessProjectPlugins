@@ -59,11 +59,13 @@ internal static class RoleChanceTests
         var config = new Config();
         config.Prepare();
         check(config.Roles.Count == 53 && config.Roles.All(r => r.ChancePercent.HasValue), "every shipped role has a numeric default percentage");
-        check(config.Roles.Where(r => r.Id != "Z05").GroupBy(Catalog.ChanceGroup).All(g => g.Sum(r => (decimal)r.ChancePercent.Value) <= 100), "all default role groups fit within their 100-percent budget including experimental profiles");
+        check(config.Roles.Where(r => r.Id != "Z05").GroupBy(Catalog.ChanceGroup).All(g => g.Sum(r => (decimal)r.ChancePercent.Value) <= 100 && g.Sum(r => (decimal)r.ChancePercent.Value) >= 79), "every default role group gives custom roles about an 80% share within its 100-percent budget");
         var legacy = reader.Deserialize<Config>("class_d_chance: 40\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 1\n- id: D02\n  name: Second\n  base_role: ClassD\n  weight: 3\n");
         legacy.Prepare();
-        check(legacy.Roles[0].ChancePercent == 10 && legacy.Roles[1].ChancePercent == 30, "old YAML without percentages derives its nominal family budget and relative weights");
-        var explicitChance = reader.Deserialize<Config>("class_d_chance: 0\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 0\n  chance_percent: 12.5\n");
+        check(legacy.Roles[0].ChancePercent == 20 && legacy.Roles[1].ChancePercent == 60 && legacy.RoleCatalogRevision == 3, "old YAML without percentages keeps its relative weights and is raised once to the 80% group total");
+        legacy.Prepare();
+        check(legacy.Roles[0].ChancePercent == 20 && legacy.Roles[1].ChancePercent == 60, "the one-time chance raise does not repeat on later loads");
+        var explicitChance = reader.Deserialize<Config>("class_d_chance: 0\nrole_catalog_revision: 3\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 0\n  chance_percent: 12.5\n");
         explicitChance.Prepare();
         check(explicitChance.Roles.Single(r => r.Id == "D01").ChancePercent == 12.5, "explicit role percentage overrides both the legacy family gate and legacy zero weight");
         var roundtrip = reader.Deserialize<Config>(writer.Serialize(explicitChance));
@@ -72,7 +74,7 @@ internal static class RoleChanceTests
         var doctor = config.Roles.Single(r => r.Id == "Z05");
         doctor.ChancePercent = 100;
         config.Prepare();
-        check(doctor.ChancePercent == 100 && !doctor.Enabled, "Doctor has its own configurable event chance without consuming the ordinary zombie pool or enabling the event");
+        check(doctor.ChancePercent == 100 && doctor.Enabled && !doctor.Experimental && config.EnableDoctorEvent && doctor.ShieldMultiplier == 0, "Doctor is a usable shieldless event role with its own chance outside the ordinary zombie pool");
         bool Invalid(Action<Config> edit)
         {
             var next = new Config(); edit(next);
