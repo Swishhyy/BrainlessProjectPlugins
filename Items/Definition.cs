@@ -133,7 +133,14 @@ namespace Brainless.Items
             foreach (var foam in Items.Where(i => i.Id == 7103 && i.Description == "Slows anyone walking through the foam."))
                 foam.Description = FoamDescription;
             Tuning.DoorBrace.Upgrade(CatalogRevision);
-            CatalogRevision = Math.Max(8, CatalogRevision);
+            // Revision 9: fewer, wider-spaced foam puddles (untouched 0.8.0 values only).
+            if (CatalogRevision < 9 && Tuning.ContainmentFoam.Spacing == 2.5f && Tuning.ContainmentFoam.MaxPuddles == 24)
+            {
+                Tuning.ContainmentFoam.Spacing = 3;
+                Tuning.ContainmentFoam.MaxPuddles = 12;
+            }
+
+            CatalogRevision = Math.Max(9, CatalogRevision);
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();

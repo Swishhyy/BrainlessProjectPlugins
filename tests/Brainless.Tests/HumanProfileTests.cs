@@ -19,9 +19,9 @@ internal static class HumanProfileTests
         check(config.Roles.Single(r => r.Id == "S03").Name == "Head Scientist" && config.Roles.Single(r => r.Id == "S03").Add.Contains(ItemType.KeycardResearchCoordinator), "Head Scientist reuses the existing S03 profile and native research-coordinator card");
         var old = new Config { RoleCatalogRevision = 1 };
         old.Roles.RemoveAll(r => r.Id == "C05" || r.Id == "G07" || r.Id == "S07" || r.Id == "S08");
-        foreach (var role in old.Roles.Where(r => Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman))) role.ChancePercent = 25;
+        foreach (var role in old.Roles.Where(r => r.Id.StartsWith("C") && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman))) role.ChancePercent = 25;
         old.Prepare();
-        check(old.Roles.Count == 66 && old.RoleCatalogRevision == 4 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Single(r => r.Id == "C02").ChancePercent == 8 && old.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).Sum(r => (decimal)r.ChancePercent.Value) <= 100 && !old.Roles.Any(r => Catalog.RetiredRoles.Contains(r.Id)), "revision 4 removes retired profiles and resets MTF/Chaos pools to the rank-aware defaults");
+        check(old.Roles.Count == 68 && old.RoleCatalogRevision == 5 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Single(r => r.Id == "C02").ChancePercent == 8 && old.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).Sum(r => (decimal)r.ChancePercent.Value) <= 100 && !old.Roles.Any(r => Catalog.RetiredRoles.Contains(r.Id)), "revision 4 removes retired profiles and resets MTF/Chaos pools to the rank-aware defaults");
         old.Roles.RemoveAll(r => r.Id == "S07"); old.Prepare();
         check(!old.Roles.Any(r => r.Id == "S07"), "removing a new profile after migration is respected on later reloads");
         var tier3 = new Interactables.Interobjects.DoorUtils.KeycardLevels(3, 0, 0, false);

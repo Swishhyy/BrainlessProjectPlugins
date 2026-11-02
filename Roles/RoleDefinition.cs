@@ -62,6 +62,10 @@ namespace Brainless.Roles
 
         [Tune(.1, 10)]
         public float Scale { get; set; } = 1;
+
+        [Description("Extra horizontal (width/depth) model scale on top of scale. Needs allow_model_scaling.")]
+        [Tune(.5, 3)]
+        public float WidthScale { get; set; } = 1;
         public List<ItemType> Remove { get; set; } = new List<ItemType>();
         public List<ItemType> Add { get; set; } = new List<ItemType>();
         public List<uint> CustomItems { get; set; } = new List<uint>();
@@ -121,6 +125,7 @@ namespace Brainless.Roles
         internal static readonly ItemType[] Firearms = { ItemType.GunAK, ItemType.GunLogicer, ItemType.GunShotgun, ItemType.GunCrossvec, ItemType.GunA7, ItemType.GunRevolver, ItemType.GunFRMG0, ItemType.GunE11SR, ItemType.GunFSP9, ItemType.GunCOM15, ItemType.GunCOM18 };
         internal static readonly ItemType[] ScpItems = { ItemType.SCP500, ItemType.SCP207, ItemType.AntiSCP207, ItemType.SCP018, ItemType.SCP268, ItemType.SCP1853, ItemType.SCP2176, ItemType.SCP244a, ItemType.SCP244b, ItemType.SCP1576, ItemType.SCP1344 };
         internal const float EscapeHealth = .71f;
+        internal static readonly RoleTypeId[] HumanRoles = { RoleTypeId.ClassD, RoleTypeId.Scientist, RoleTypeId.FacilityGuard, RoleTypeId.NtfPrivate, RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist, RoleTypeId.NtfCaptain, RoleTypeId.ChaosConscript, RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder, RoleTypeId.ChaosRepressor };
         private static double DefaultFamilyChance(RoleDefinition role) => GroupChancePercent;
         private static RoleDefinition R(string id, string name, RoleTypeId baseRole, string hint) => new RoleDefinition
         {
@@ -492,6 +497,19 @@ namespace Brainless.Roles
             r.ReplaceInventory = true;
             r.FillAmmoToLimit = true;
             r.Add.AddRange(new[] { ItemType.GunCOM15, ItemType.ArmorHeavy, ItemType.SCP1853 });
+            list.Add(r);
+            r = R("X01", "Resilient", RoleTypeId.ClassD, "Any human. The first time you drop to 25% health you get a burst of speed, extra damage and artificial health.");
+            r.MatchRoles.AddRange(HumanRoles);
+            r.ChancePercent = 2;
+            r.MaxPerRound = 1;
+            list.Add(r);
+            r = R("X02", "Big Boi", RoleTypeId.ClassD, "Any human. Wider, with 50% more health but slower. Medical items heal you more.");
+            r.MatchRoles.AddRange(HumanRoles);
+            r.ChancePercent = 3;
+            r.MaxPerRound = 2;
+            r.HealthMultiplier = 1.5f;
+            r.SpeedMultiplier = .85f;
+            r.WidthScale = 1.3f;
             list.Add(r);
             FillMissingChances(list, DefaultFamilyChance);
             return list;

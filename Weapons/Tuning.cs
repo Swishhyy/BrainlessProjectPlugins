@@ -5,6 +5,7 @@ namespace Brainless.Weapons
     public sealed class WeaponTuning
     {
         public RicochetTuning Ricochet { get; set; } = new RicochetTuning();
+        public StunGunTuning StunGun { get; set; } = new StunGunTuning();
         public WeaponSupplyTuning Supply { get; set; } = new WeaponSupplyTuning();
         public EffectAudioTuning Audio { get; set; } = new EffectAudioTuning();
 
@@ -12,6 +13,16 @@ namespace Brainless.Weapons
         {
             return System.Math.Max(1, revision);
         }
+    }
+
+    public sealed class StunGunTuning
+    {
+        [Tune(.5, 30)]
+        public float StunSeconds { get; set; } = 3;
+
+        [Tune(0, 300)]
+        public float TargetCooldownSeconds { get; set; } = 10;
+        public bool BlindTarget { get; set; } = true;
     }
 
     public sealed class RicochetTuning

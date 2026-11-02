@@ -81,16 +81,19 @@ namespace Brainless.Items
         [Tune(1, 3600)]
         public float DurationSeconds { get; set; } = 30;
 
+        [Description("One tantrum puddle stretched to the radius. Off places a grid of normal-size puddles instead.")]
+        public bool SinglePuddle { get; set; } = true;
+
         [Description("Radius in meters covered with puddles.")]
         [Tune(.5, 30)]
         public float Radius { get; set; } = 6;
 
-        [Description("Distance between puddle centers; smaller values cover the area more densely.")]
+        [Description("Grid mode only: distance between puddle centers; smaller values cover the area more densely.")]
         [Tune(.5, 10)]
-        public float Spacing { get; set; } = 2.5f;
+        public float Spacing { get; set; } = 3;
 
         [Tune(1, 100)]
-        public int MaxPuddles { get; set; } = 24;
+        public int MaxPuddles { get; set; } = 12;
     }
 
     public class BlastTuning

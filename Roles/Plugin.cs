@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 7, 0);
+        public override Version Version => new Version(0, 8, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -58,7 +58,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 4 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 5 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -497,8 +497,8 @@ namespace Brainless.Roles
                 player.Health = player.MaxHealth;
                 ApplyShield(player, state, true);
 
-                if (definition.Scale != 1 && Config.AllowModelScaling)
-                    player.Scale = state.Scale * definition.Scale;
+                if ((definition.Scale != 1 || definition.WidthScale != 1) && Config.AllowModelScaling)
+                    player.Scale = Vector3.Scale(state.Scale, new Vector3(definition.Scale * definition.WidthScale, definition.Scale, definition.Scale * definition.WidthScale));
                 if (definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                     player.Scale = new Vector3(state.Scale.x, state.Scale.y * .5f, state.Scale.z);
                 if (player.Role is IHumeShieldRole shieldRole && shieldRole.HumeShieldModule is DynamicHumeShieldController hs && !NoShield(definition))
@@ -686,6 +686,8 @@ namespace Brainless.Roles
                 nativeBoost = player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
             if (player.IsHuman && (nativeBoost || player.CurrentArmor?.Type == ItemType.ArmorHeavy))
                 multiplier = 1;
+            if (state.ResilientActive)
+                multiplier = Math.Max(multiplier, 1) * Config.Resilient.SpeedMultiplier;
             state.Movement.Set(player, multiplier);
             state.QuietSteps.Set(player, state.Definition.Traits.QuietFootstepStacks);
             bool stamina = true;
@@ -733,6 +735,8 @@ namespace Brainless.Roles
                 ev.IsAllowed = false;
             if (ev.IsAllowed && ev.Amount > 0 && IsScpAttack(ev.DamageHandler.Type))
                 ev.Amount *= Traits(ev.Attacker)?.AttackDamageMultiplier ?? 1;
+            if (ev.IsAllowed && ev.Amount > 0 && ev.Attacker != null && ev.Attacker != ev.Player && active.TryGetValue(ev.Attacker, out var attacker) && attacker.ResilientActive && ev.Attacker.Role == attacker.Role)
+                ev.Amount *= Config.Resilient.DamageMultiplier;
         }
 
         private void LockpickDoor(InteractingDoorEventArgs ev) => Safe.Run(() => lockpicking?.DoorInteraction(ev));
@@ -840,7 +844,7 @@ namespace Brainless.Roles
             internal float? RegenCooldown, RegenRate;
             internal QuietStepLayer QuietSteps = new QuietStepLayer();
             internal string PreviousUniqueRole;
-            internal bool ShieldOverridden, BreakneckKill;
+            internal bool ShieldOverridden, BreakneckKill, ResilientActive;
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();

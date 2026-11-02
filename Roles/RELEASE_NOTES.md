@@ -1,4 +1,13 @@
-# Roles 0.7.0
+# Roles 0.8.0
+
+Adds two rare "any human" roles (catalog revision 5 appends them without overfilling any pool).
+
+- Resilient (X01, 2%, one per round): the first time they drop to 25% health they get 1.25x speed, 1.3x damage and 50 non-decaying artificial health for the rest of that life (`resilient` settings).
+- Big Boi (X02, 3%, two per round): 1.3x wider model, 1.5x health, 0.85x speed; medkits, painkillers, SCP-500 and adrenaline give extra healing or artificial health (`big_boi` settings). New per-profile `width_scale` field.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.7.0
 
 Adds rank-specific MTF/Chaos roles and reworks rogues. Catalog revision 4 removes retired profiles, appends the new roles and resets stock MTF/Chaos percentages to the new defaults (profiles set to 0% stay disabled).
 

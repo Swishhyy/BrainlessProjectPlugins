@@ -84,6 +84,20 @@ namespace Brainless.Weapons
                 RoundCap = 1
             },
             CreateLauncher(),
+            CreateStunGun(),
+        };
+
+        private static WeaponSpec CreateStunGun() => new WeaponSpec
+        {
+            Id = 7209,
+            Name = "Stun Gun",
+            Description = "Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
+            BaseType = ItemType.GunCOM18,
+            Magazine = 6,
+            Reserve = 12,
+            HumanDamage = 0,
+            ScpDamage = 0,
+            RoundCap = 1
         };
 
         private static WeaponSpec CreateLauncher() => new WeaponSpec
@@ -115,7 +129,14 @@ namespace Brainless.Weapons
                 Distribution?.UpgradeSupWeapons();
             }
 
-            CatalogRevision = Math.Max(4, CatalogRevision);
+            if (CatalogRevision < 5)
+            {
+                if (!Weapons.Any(w => w.Id == 7209))
+                    Weapons.Add(CreateStunGun());
+                Distribution?.UpgradeSupWeapons();
+            }
+
+            CatalogRevision = Math.Max(5, CatalogRevision);
         }
 
         internal void Prepare()
@@ -132,7 +153,7 @@ namespace Brainless.Weapons
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Weapons.Select(w => new KeyValuePair<uint, ItemType>(w.Id, w.BaseType)));
-            Distribution.Validate(id => id >= 7201 && id <= 7208 && !Retired.Contains(id));
+            Distribution.Validate(id => id >= 7201 && id <= 7209 && !Retired.Contains(id));
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
             foreach (var w in Weapons)
@@ -145,7 +166,7 @@ namespace Brainless.Weapons
                 }
 
             foreach (var w in Weapons)
-                if (w.Id < 7201 || w.Id > 7208 || w.Magazine < 0 || w.Magazine > 255 || (w.Id == 7207 && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
+                if (w.Id < 7201 || w.Id > 7209 || w.Magazine < 0 || w.Magazine > 255 || (w.Id == 7207 && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
                     throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
             foreach (var w in Weapons)
                 if (w.Id == 7207 && w.BaseType != ItemType.GunLogicer)

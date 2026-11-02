@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 0);
+        public override Version Version => new Version(0, 8, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -48,14 +48,14 @@ namespace Brainless.Items
         private readonly HashSet<Player> keyHeld = new HashSet<Player>();
         private readonly Dictionary<Player, MovementLayer> movement = new Dictionary<Player, MovementLayer>();
         private readonly List<Device> devices = new List<Device>();
-        private readonly List<TantrumHazard> puddles = new List<TantrumHazard>();
+        private readonly List<Hazards.TantrumEnvironmentalHazard> puddles = new List<Hazards.TantrumEnvironmentalHazard>();
         private KeybindSetting toolKey;
         private bool capacitySet;
         private IDisposable updates;
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 8;
+            bool migrateConfig = Config.CatalogRevision < 9;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -160,8 +160,8 @@ namespace Brainless.Items
             foreach (var puddle in puddles)
                 Safe.Run(() =>
                 {
-                    if (!puddle.IsDestroyed)
-                        puddle.Destroy();
+                    if (puddle != null && puddle.IsActive)
+                        puddle.ServerDestroy();
                 });
             puddles.Clear();
             devices.Clear();
@@ -580,10 +580,16 @@ namespace Brainless.Items
         }
 
         // Containment foam leaves SCP-173's native tantrum mess across a wide area:
-        // a grid of puddles inside the radius, each on solid floor with a clear line
-        // back to the blast, cleaned up after the configured time.
+        // by default one puddle scaled to the radius; with single_puddle off, a grid
+        // of normal puddles on solid floor with a clear line back to the blast.
         private void SpreadTantrum(Vector3 position, FoamTuning tuning)
         {
+            if (tuning.SinglePuddle)
+            {
+                PlaceScaledTantrum(Ground(position), tuning);
+                return;
+            }
+
             Vector3 center = Ground(position);
             int placed = 0;
             float spacing = Math.Max(.5f, tuning.Spacing);
@@ -607,15 +613,41 @@ namespace Brainless.Items
                 Vector3 floor = Ground(probe);
                 if (Math.Abs(floor.y - center.y) > 1.5f)
                     continue;
-                var puddle = TantrumHazard.PlaceTantrum(floor);
-                if (puddle == null)
-                    continue;
-                puddle.Base.HazardDuration = tuning.DurationSeconds;
-                puddles.Add(puddle);
+                SpawnTantrum(floor, tuning.DurationSeconds, 1, null);
                 placed++;
             }
 
             World.Cue(center, "Containment foam - sticky floor", 10);
+        }
+
+        // One SCP-173 tantrum stretched to the configured radius: the effect area
+        // (MaxDistance) and the model's horizontal scale grow together. The scale is
+        // set before the hazard spawns, so clients receive it in the spawn message.
+        private void PlaceScaledTantrum(Vector3 floor, FoamTuning tuning)
+        {
+            var prefab = TantrumHazard.TantrumPrefab;
+            float factor = tuning.Radius / Math.Max(.1f, prefab.MaxDistance);
+            SpawnTantrum(floor, tuning.DurationSeconds, factor, tuning.Radius);
+            World.Cue(floor, "Containment foam - sticky floor", 10);
+        }
+
+        // Same path as SCP-173's own tantrum: instantiate the prefab, set the synced
+        // position 1.25 m above the floor and let the hazard spawn itself once in
+        // Start(). EXILED's PlaceTantrum spawns it twice, which crashed clients.
+        private void SpawnTantrum(Vector3 floor, float duration, float widthFactor, float? radius)
+        {
+            var puddle = UnityEngine.Object.Instantiate(TantrumHazard.TantrumPrefab);
+            if (widthFactor != 1)
+            {
+                Vector3 scale = puddle.transform.localScale;
+                puddle.transform.localScale = new Vector3(scale.x * widthFactor, scale.y, scale.z * widthFactor);
+            }
+
+            if (radius.HasValue)
+                puddle.MaxDistance = radius.Value;
+            puddle.SynchronizedPosition = new RelativePositioning.RelativePosition(floor + Vector3.up * 1.25f);
+            puddle.HazardDuration = duration;
+            puddles.Add(puddle);
         }
 
         private void PlayAudio(Vector3 position, float seconds, string kind)
@@ -696,7 +728,7 @@ namespace Brainless.Items
 
             foreach (var d in devices.Where(d => d.Expires <= Time.time).ToArray())
                 RemoveDevice(d);
-            puddles.RemoveAll(p => p == null || p.IsDestroyed);
+            puddles.RemoveAll(p => p == null);
         }
 
         internal bool ReloadTuning(out string response)

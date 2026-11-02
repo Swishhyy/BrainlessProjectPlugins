@@ -1,17 +1,17 @@
 # Role availability audit
 
-All 66 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.
+All 68 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.
 
 ## Shipped defaults
 
 | ID | Role | Chance % | Default status | Required custom equipment | Minimum players |
 | --- | --- | --- | --- | --- | --- |
-| D01 | Athletic | 11.42 | Enabled; normal spawn roll | None | 0 |
-| D02 | Janitor | 11.42 | Enabled; normal spawn roll | None | 0 |
-| D03 | Child | 11.42 | Enabled; normal spawn roll | None | 0 |
-| D04 | Thief | 11.42 | Enabled; normal spawn roll | None | 0 |
-| D05 | Survivor | 11.42 | Enabled; normal spawn roll | None | 0 |
-| D06 | Locksmith | 11.42 | Enabled; normal spawn roll | None | 0 |
+| D01 | Athletic | 8.88 | Enabled; normal spawn roll | None | 0 |
+| D02 | Janitor | 8.88 | Enabled; normal spawn roll | None | 0 |
+| D03 | Child | 8.88 | Enabled; normal spawn roll | None | 0 |
+| D04 | Thief | 8.88 | Enabled; normal spawn roll | None | 0 |
+| D05 | Survivor | 8.88 | Enabled; normal spawn roll | None | 0 |
+| D06 | Locksmith | 8.88 | Enabled; normal spawn roll | None | 0 |
 | S01 | Mad Scientist | 13.79 | Enabled; normal spawn roll | None | 0 |
 | S02 | Pharmacist | 13.79 | Enabled; normal spawn roll | None | 0 |
 | S03 | Head Scientist | 1.37 | Enabled; normal spawn roll | None | 12 |
@@ -54,7 +54,7 @@ All 66 profiles have an implementation and compile against the pinned EXILED/gam
 | G07 | Rogue Guard | 2.58 | Enabled; normal spawn roll | None | 0 |
 | S07 | Containment Engineer | 6.89 | Enabled; normal spawn roll | None | 0 |
 | S08 | Rogue Scientist | 2.75 | Enabled; normal spawn roll | None | 0 |
-| D08 | Captured Insurgent | 11.42 | Enabled; normal spawn roll | None | 0 |
+| D08 | Captured Insurgent | 8.88 | Enabled; normal spawn roll | None | 0 |
 | C06 | Juggernaut | 16 | Enabled; normal spawn roll | None | 0 |
 | C07 | Squad Leader | 16 | Enabled; normal spawn roll | None | 0 |
 | C08 | Scout | 16 | Enabled; normal spawn roll | None | 0 |
@@ -72,6 +72,8 @@ All 66 profiles have an implementation and compile against the pinned EXILED/gam
 | M12 | Blubber | 15 | Enabled; normal spawn roll | None | 0 |
 | M13 | Juggernaut | 15 | Enabled; normal spawn roll | None | 0 |
 | M14 | Squad Leader | 15 | Enabled; normal spawn roll | None | 0 |
+| X01 | Resilient | 2 | Enabled; normal spawn roll | None | 0 |
+| X02 | Big Boi | 3 | Enabled; normal spawn roll | None | 0 |
 
 ## Why a role can be absent
 

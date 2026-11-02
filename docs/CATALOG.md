@@ -2,7 +2,7 @@
 
 [Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)
 
-Current shipped content: **12 items, 2 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **12 items, 3 weapons, 68 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -29,6 +29,7 @@ Current shipped content: **12 items, 2 weapons, 66 role profiles and 3 round eve
 | --- | --- | --- | --- |
 | 7206 | Ricochet Pistol **(opt-in)** | Shots can bounce once off solid surfaces. | Shoot toward solid geometry for one reflected shot. |
 | 7207 | Grenade Launcher | Fires a grenade with each shot. Holds up to 16; cannot reload. | Fire normally; each bullet launches a grenade. No reload. |
+| 7209 | Stun Gun | Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills. | Shoot a target to knock them down with a fake death for a few seconds; it never kills. |
 
 Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.
 
@@ -104,6 +105,8 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | M12 | Blubber | Carries far more spare ammo, but moves more slowly. | Keep firing; you carry far more spare ammo but move slowly. | Enabled |
 | M13 | Juggernaut | A Captain with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled |
 | M14 | Squad Leader | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled |
+| X01 | Resilient | Any human. The first time you drop to 25% health you get a burst of speed, extra damage and artificial health. | Keep fighting when you drop low; your last stand makes you faster and hit harder. | Enabled |
+| X02 | Big Boi | Any human. Wider, with 50% more health but slower. Medical items heal you more. | Use medical items for bonus healing; you are tougher but slower. | Enabled |
 
 About 80% of each spawn group rolls a custom role by default; the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits; see [role settings](CONFIGURATION.md).
 
