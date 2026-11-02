@@ -7,7 +7,7 @@
     <Deterministic>true</Deterministic>
     <DebugType>portable</DebugType>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <ExiledVersion>9.15.2</ExiledVersion>
+    <ExiledVersion>9.15.3</ExiledVersion>
     <ReferencesPath Condition="'$(ReferencesPath)' == ''">$(MSBuildThisFileDirectory).build/references</ReferencesPath>
   </PropertyGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'Brainless.Tests'">

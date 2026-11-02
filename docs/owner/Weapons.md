@@ -2,7 +2,7 @@
 
 # Brainless Weapons
 
-Install `Brainless.Weapons.dll` in `EXILED/Plugins` on EXILED 9.15.2 / SCP: SL 14.2.8, with EXILED's standard CustomItems module enabled. Roles and Items are optional.
+Install `Brainless.Weapons.dll` in `EXILED/Plugins` on EXILED 9.15.3 / SCP: SL 14.2.9, with EXILED's standard CustomItems module enabled. Roles and Items are optional.
 
 The `brainless_weapons` configuration registers Nullifier, Breach Shotgun, Grenade Launcher and Railgun by default. Ricochet requires `allow_experimental_weapons`. Rattler (7202), Redline SMG (7204) and Last Word (7205) were removed in 0.7.0 and drop out of existing configs on load. Total supply is one firearm per round below 24 players and two at 24+. Additional world-loot bundles are disabled by default; configurable native firearm replacements and occasional starting-gun conversions are enabled. All share the limited firearm supply.
 

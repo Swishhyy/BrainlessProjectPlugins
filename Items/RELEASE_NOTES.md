@@ -5,7 +5,7 @@ Removes Survey Beacon (7107), Trace Chalk (7108), Field Dressing (7109), Preserv
 - Echo Canister plays the game's own human footstep sounds (read from the character model's footstep clips) at an uneven walking pace. If a server build has no readable audio data, it logs a warning and uses generated boot steps instead.
 - Signal Jammer now stops SCP-079 properly: every door touching the jammed room (not only ordinary doors), its cameras, tesla gates, pings and elevators. An SCP-079 already watching a jammed room loses its signal. The stock active time is 30 seconds instead of 6.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
 
 ## Previous: 0.6.3
 

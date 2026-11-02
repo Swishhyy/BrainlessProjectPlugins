@@ -185,7 +185,7 @@ if (args.Length > 0)
         var type = nativeReader.TypeDefinitions.Select(h => nativeReader.GetTypeDefinition(h)).Single(t => nativeReader.GetString(t.Namespace) == "Exiled.CustomItems.Commands" && nativeReader.GetString(t.Name) == command);
         var execute = type.GetMethods().Select(h => nativeReader.GetMethodDefinition(h)).Single(m => nativeReader.GetString(m.Name) == "Execute");
         var parameters = execute.GetParameters().Select(h => nativeReader.GetParameter(h)).Where(p => p.SequenceNumber > 0).OrderBy(p => p.SequenceNumber).Select(p => nativeReader.GetString(p.Name)).ToArray();
-        Check(parameters.SequenceEqual(new[] { "arguments", "sender", "response" }), command + " command patch matches the official EXILED 9.15.2 target");
+        Check(parameters.SequenceEqual(new[] { "arguments", "sender", "response" }), command + " command patch matches the official EXILED 9.15.3 target");
     }
 }
 

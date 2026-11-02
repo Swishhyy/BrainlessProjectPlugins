@@ -11,7 +11,7 @@ Fixes the reported SCP and kit problems and makes custom roles common. Each spaw
 - Maintenance Liaison keeps its Door Jammer: the guard badge swap no longer deletes custom keycards.
 - SCP-096 rage and SCP-106 vigor patches can no longer throw into the native ability. Mimic intercom access was removed because it disconnected players.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
 
 ## Previous: 0.5.1
 

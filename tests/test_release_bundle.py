@@ -35,7 +35,7 @@ class BundleTests(unittest.TestCase):
                 'id': plugin, 'assembly_name': assembly, 'asset': dll.name,
                 'version': ET.parse(ROOT/project).findtext('.//Version'),
                 'sha256': hashlib.sha256(dll.read_bytes()).hexdigest(),
-                'exiled_min': '9.15.2', 'game_version': '14.2.8', 'target_framework': 'net48'}]}
+                'exiled_min': '9.15.3', 'game_version': '14.2.9', 'target_framework': 'net48'}]}
             (folder/(assembly+'.update.json')).write_text(json.dumps(manifest))
 
     def first_manifest(self):

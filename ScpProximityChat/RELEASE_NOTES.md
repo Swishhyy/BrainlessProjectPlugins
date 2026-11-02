@@ -2,7 +2,7 @@
 
 SCP-939 is excluded from nearby voice, both as speaker and listener. Routing its voice through speakers broke proximity chat and disconnected players; it keeps native SCP team voice.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
 
 ## Previous: 0.2.1
 

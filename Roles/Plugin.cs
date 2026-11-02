@@ -33,7 +33,7 @@ namespace Brainless.Roles
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
         public override Version Version => new Version(0, 6, 0);
-        public override Version RequiredExiledVersion => new Version(9, 15, 2);
+        public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
 

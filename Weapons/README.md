@@ -2,7 +2,7 @@
 
 5 custom weapons, including the finite grenade launcher and railgun.
 
-**Install:** fully stop the server, put `Brainless.Weapons.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.2 / SCP:SL 14.2.8. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
+**Install:** fully stop the server, put `Brainless.Weapons.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 
 **Config:** `brainless_weapons`. Keep your existing YAML when updating.
 

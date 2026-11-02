@@ -39,7 +39,7 @@ jobs:
       - name: Upload this plugin DLL and instructions
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.plugin }}-EXILED-9.15.2
+          name: ${{ matrix.plugin }}-EXILED-9.15.3
           path: artifacts/${{ matrix.plugin }}/
           if-no-files-found: error
           retention-days: 90

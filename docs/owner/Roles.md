@@ -2,7 +2,7 @@
 
 # Brainless Roles
 
-Install `Brainless.Roles.dll` in `EXILED/Plugins` on EXILED 9.15.2 / SCP: SL 14.2.8. This project builds independently and has no reference to another Brainless DLL.
+Install `Brainless.Roles.dll` in `EXILED/Plugins` on EXILED 9.15.3 / SCP: SL 14.2.9. This project builds independently and has no reference to another Brainless DLL.
 
 The generated `brainless_roles` configuration contains 53 profiles, spawn chances, health/stamina changes, optional equipment IDs and experimental switches. Normal coin grants apply to Class-D only. Native MTF/Chaos ranks are preserved when applying a specialist.
 

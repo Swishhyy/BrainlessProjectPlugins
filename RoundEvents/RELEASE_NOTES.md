@@ -6,7 +6,7 @@ Adds two events next to Infection, controlled with `bpevent deathmatch next|star
 - Juggernaut: one Chaos Juggernaut in heavy armor (1000 HP + 150 per hunter, heals 75 per kill) against NTF hunters, who are told its zone and room every 30 seconds. Killing the Juggernaut makes you the next one.
 - Events lock the warhead and LCZ decontamination and block normal respawn waves while they run. Automatic selection picks one enabled event at random.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
 
 ## Previous: 0.1.1
 

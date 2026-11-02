@@ -1,6 +1,6 @@
 # Project Brainless Plugins
 
-Eight separate SCP: Secret Laboratory plugins for **EXILED 9.15.2 / SCP:SL 14.2.8**.
+Eight separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.9**.
 
 ## Staff documentation
 
@@ -26,7 +26,7 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 | [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | Captive recruitment, guard escape, SCP-914 additions and action tracking |
 | [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection, Deathmatch and Juggernaut events |
 
-Current component versions: Roles **0.6.0**, Items **0.7.0**, Weapons **0.7.0**, BetterCoinflips **5.1.8**, SCP voice **0.2.2**, Core **0.2.1**, Fixes **0.4.0**, Events **0.2.0**.
+Current component versions: Roles **0.6.0**, Items **0.7.0**, Weapons **0.7.0**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.2.2**, Fixes **0.4.0**, Events **0.2.0**.
 
 ## Install / update
 

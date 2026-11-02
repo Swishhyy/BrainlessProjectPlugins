@@ -4,7 +4,7 @@ Removes Rattler (7202), Redline SMG (7204) and Last Word (7205) with their loot 
 
 - Nullifier Rifle hits harder: about 35 damage per body hit on humans (was about 28), 0.85x on SCP health, and 2x damage against hume shields (was 1.2x). Unchanged old values migrate automatically.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
 
 ## Previous: 0.6.2
 

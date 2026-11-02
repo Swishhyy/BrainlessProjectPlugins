@@ -2,7 +2,7 @@
 
 Facility Guards can escape: an uncuffed guard who reaches the surface escape zone becomes an NTF Sergeant (`guard_escape`). Field Dressing and SCRAMBLE Goggles recipes were removed with the items.
 
-Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
+Built for EXILED 9.15.3 / SCP:SL 14.2.9 (the post-Halloween update). Older builds target 14.2.8, so their auto-updater refuses this release: install the DLLs manually once, then fully restart. Needs a live playtest.
 
 ## Previous: 0.3.1
 

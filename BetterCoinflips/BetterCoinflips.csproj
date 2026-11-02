@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>BetterCoinflips</AssemblyName>
     <RootNamespace>BetterCoinflips</RootNamespace>
-    <Version>5.1.8</Version>
+    <Version>5.1.9</Version>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Authors>Miki_hero; Brainless Project</Authors>
   </PropertyGroup>
