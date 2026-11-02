@@ -10,6 +10,7 @@ Eight separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.
 | [Staff Quick Guide](docs/STAFF_GUIDE.md) | Giving equipment, testing roles, running events and common fixes |
 | [Command Table](docs/COMMANDS.md) | Exact commands and permission nodes |
 | [Owner Settings](docs/CONFIGURATION.md) | Percentages, reloads, updates and detailed references |
+| [Stats API](docs/STATS_API.md) | Website leaderboard and Discord bot API behind Cloudflare |
 
 The combined ZIP includes these pages. Start with `CATALOG.md` for content or `STAFF_GUIDE.md` for commands.
 

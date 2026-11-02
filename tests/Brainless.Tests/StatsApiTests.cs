@@ -5,7 +5,7 @@ using Brainless.Core;
 
 internal static class StatsApiTests
 {
-    // Shared with discord-bot/test/signature.test.mjs so the plugin and the bot agree.
+    // Shared with BrainlessDiscordBot test/bot.test.mjs so the plugin and the bot agree.
     internal const string Secret = "0123456789abcdef0123456789abcdef";
 
     internal static void Run(Action<bool, string> check)

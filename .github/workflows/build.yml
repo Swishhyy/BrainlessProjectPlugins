@@ -55,12 +55,6 @@ jobs:
         run: dotnet run --project tests/Brainless.Tests/Brainless.Tests.csproj -c Release
       - name: Validate release publication policy
         run: python -m unittest discover -s tests -p 'test_release_*.py'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Discord bot (Cloudflare Worker) tests
-        working-directory: discord-bot
-        run: npm test
       - name: Validate staff content coverage
         run: |
           python scripts/generate_catalog.py

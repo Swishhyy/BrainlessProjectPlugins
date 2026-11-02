@@ -1,10 +1,10 @@
 # Core 0.3.0
 
-The Discord bot no longer runs inside the game server. Core now serves a small **stats API** instead, and the bot is a separate free **Cloudflare Worker** (`discord-bot/` in the repository).
+The Discord bot no longer runs inside the game server. Core now serves a small **stats API** instead, and the bot is a separate free **Cloudflare Worker** ([BrainlessDiscordBot](https://github.com/Swishhyy/BrainlessDiscordBot)).
 
 - Public leaderboard for your website: `GET /api/v1/leaderboard?sort=xp|playtime&limit=1-100`. It lists names, levels, XP and playtime, never Steam IDs, and is cached and rate-limited.
 - Private endpoints for the bot (stats, `/pb-link`, `/pb-optout`) are signed with a shared secret (HMAC-SHA256, timestamp and one-time nonce). The secret is never sent, and replayed or altered requests are rejected.
-- Put the API behind Cloudflare for HTTPS; the setup guide covers DNS, the port rule and the Worker.
+- Put the API behind Cloudflare for HTTPS; [the setup guide](../docs/STATS_API.md) covers the config, DNS and the port rule.
 - New `stats_api` config section (off by default). The old `discord:` section is ignored; remove the bot token from backups. Player commands are unchanged.
 
 Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live check of the API behind Cloudflare and the Worker bot.

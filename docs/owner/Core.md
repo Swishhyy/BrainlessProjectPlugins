@@ -60,7 +60,7 @@ Codes last ten minutes, can be used once, and are invalidated when another code 
 
 ## Stats API and Discord bot
 
-Core 0.3.0 no longer runs a Discord bot inside the game server. It serves a small HTTP API instead: a public leaderboard for your website, plus private endpoints the Discord bot uses for stats, linking and opt-out. The bot is a free Cloudflare Worker in the [`discord-bot`](../../discord-bot) folder, and Cloudflare also provides HTTPS for the API. Follow [its README](../../discord-bot/README.md) for the full setup (game server → Cloudflare → Discord).
+Core 0.3.0 no longer runs a Discord bot inside the game server. It serves a small HTTP API instead: a public leaderboard for your website, plus private endpoints the Discord bot uses for stats, linking and opt-out. The bot is a free Cloudflare Worker in its own repository, [BrainlessDiscordBot](https://github.com/Swishhyy/BrainlessDiscordBot), and Cloudflare also provides HTTPS for the API. Follow the [Stats API guide](../STATS_API.md) for the game-server and Cloudflare steps, then the bot's README.
 
 - Public: `GET /api/v1/health`, `GET /api/v1/leaderboard?sort=xp|playtime&limit=1-100` (names, levels, XP and playtime only; never Steam IDs).
 - Signed (bot only): `GET /api/v1/discord/{id}`, `POST /api/v1/discord/{id}/link?code=`, `POST /api/v1/discord/{id}/optout`. Requests are HMAC-SHA256 signed with `shared_secret` plus a timestamp and one-time nonce. The secret is never transmitted, and old or repeated requests are rejected.
