@@ -79,7 +79,7 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 
 | Section / registry ID | Fields and shipped defaults |
 | --- | --- |
-| `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 30`, `radius: 6`, `spacing: 2.5`, `max_puddles: 24` (spreads SCP-173 tantrum puddles) |
+| `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 30`, `radius: 6`, `spacing: 3`, `max_puddles: 12` (spreads SCP-173 tantrum puddles) |
 | `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 25`, `reach: 3` |
 | `interaction` | `device_reach: 3`, `move_tolerance: 0.6`, `cancel_on_damage: true`, `tick_seconds: 0.1` |
 | `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2` (extra bundles), `pair_gas_with_filter: false` (legacy, ignored) |

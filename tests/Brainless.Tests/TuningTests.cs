@@ -40,7 +40,7 @@ internal static class TuningTests
         brace.Upgrade(6);
         check(brace.DurationSeconds == 8, "the current catalog marker allows deliberately retaining an eight-second brace");
         var foam = new FoamTuning();
-        check(foam.Radius == 6 && foam.Spacing == 2.5f && foam.MaxPuddles == 24 && foam.DurationSeconds == 30, "containment foam spreads a wide tantrum area by default");
+        check(foam.Radius == 6 && foam.Spacing == 3 && foam.MaxPuddles == 12 && foam.DurationSeconds == 30, "containment foam spreads a wide tantrum area by default");
         check(items.ClusterGrenade.GrenadeCount == 4 && items.ClusterGrenade.HumanDamage == 120 && items.ClusterGrenade.Radius == 5.5f && items.ClusterGrenade.ParentHumanDamage == 180, "the stronger cluster retains four children with a stronger six-metre parent and larger child blasts");
         check(typeof(GasTuning).GetProperty("HumanDamagePerSecond") == null && typeof(GasTuning).GetProperty("HumanSlowPercent") == null && items.GasGrenade.DurationSeconds == 20 && !items.Supply.PairGasWithFilter, "smoke-only gas exposes no custom damage or slow fields and needs no paired filter");
         items.ClusterGrenade.GrenadeCount = 32;

@@ -87,10 +87,10 @@ namespace Brainless.Items
 
         [Description("Distance between puddle centers; smaller values cover the area more densely.")]
         [Tune(.5, 10)]
-        public float Spacing { get; set; } = 2.5f;
+        public float Spacing { get; set; } = 3;
 
         [Tune(1, 100)]
-        public int MaxPuddles { get; set; } = 24;
+        public int MaxPuddles { get; set; } = 12;
     }
 
     public class BlastTuning

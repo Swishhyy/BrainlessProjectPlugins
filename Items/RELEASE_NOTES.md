@@ -1,4 +1,10 @@
-# Items 0.8.0
+# Items 0.8.1
+
+Fixes a client crash when containment foam spreads its tantrum puddles. Puddles are now created exactly like SCP-173's own tantrum (positioned 1.25 m above the floor and registered on the network once by the game); EXILED's PlaceTantrum registered each puddle twice. The default covers the same 6 m radius with fewer puddles (spacing 3 m, at most 12); untouched 0.8.0 values migrate.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.8.0
 
 Removes Echo Canister (7104), Signal Jammer (7106), Filter Inhaler (7111) and Bio Grenade (7118), with their loot entries, recipes and tuning (catalog revision 8).
 

@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 0);
+        public override Version Version => new Version(0, 8, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -48,14 +48,14 @@ namespace Brainless.Items
         private readonly HashSet<Player> keyHeld = new HashSet<Player>();
         private readonly Dictionary<Player, MovementLayer> movement = new Dictionary<Player, MovementLayer>();
         private readonly List<Device> devices = new List<Device>();
-        private readonly List<TantrumHazard> puddles = new List<TantrumHazard>();
+        private readonly List<Hazards.TantrumEnvironmentalHazard> puddles = new List<Hazards.TantrumEnvironmentalHazard>();
         private KeybindSetting toolKey;
         private bool capacitySet;
         private IDisposable updates;
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 8;
+            bool migrateConfig = Config.CatalogRevision < 9;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -160,8 +160,8 @@ namespace Brainless.Items
             foreach (var puddle in puddles)
                 Safe.Run(() =>
                 {
-                    if (!puddle.IsDestroyed)
-                        puddle.Destroy();
+                    if (puddle != null && puddle.IsActive)
+                        puddle.ServerDestroy();
                 });
             puddles.Clear();
             devices.Clear();
@@ -607,10 +607,13 @@ namespace Brainless.Items
                 Vector3 floor = Ground(probe);
                 if (Math.Abs(floor.y - center.y) > 1.5f)
                     continue;
-                var puddle = TantrumHazard.PlaceTantrum(floor);
-                if (puddle == null)
-                    continue;
-                puddle.Base.HazardDuration = tuning.DurationSeconds;
+                // Same path as SCP-173's own tantrum: instantiate the prefab, set the
+                // synced position 1.25 m above the floor, and let the hazard spawn itself
+                // on the network in Start(). EXILED's PlaceTantrum also spawns it
+                // immediately, so clients received every puddle twice and could crash.
+                var puddle = UnityEngine.Object.Instantiate(TantrumHazard.TantrumPrefab);
+                puddle.SynchronizedPosition = new RelativePositioning.RelativePosition(floor + Vector3.up * 1.25f);
+                puddle.HazardDuration = tuning.DurationSeconds;
                 puddles.Add(puddle);
                 placed++;
             }
@@ -696,7 +699,7 @@ namespace Brainless.Items
 
             foreach (var d in devices.Where(d => d.Expires <= Time.time).ToArray())
                 RemoveDevice(d);
-            puddles.RemoveAll(p => p == null || p.IsDestroyed);
+            puddles.RemoveAll(p => p == null);
         }
 
         internal bool ReloadTuning(out string response)
