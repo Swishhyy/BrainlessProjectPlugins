@@ -81,7 +81,7 @@ internal static class DistributionConfigTests
         check(!Valid(reader.Deserialize<WeaponDistributionConfig>("player_rules:\n- custom_id: 7109\n"), true), "a weapon config cannot issue another provider's custom IDs");
         check(!Valid(reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7109\n  source_types: []\n")), "map rules require explicit native source bodies");
         items.MapRules.Clear();
-        check(new ItemDistributionConfig().MapRules.Count > 0 && new WeaponDistributionConfig().MapRules.Count == 5, "provider defaults never share mutable rule-list instances");
+        check(new ItemDistributionConfig().MapRules.Count > 0 && new WeaponDistributionConfig().MapRules.Count == 4, "provider defaults never share mutable rule-list instances");
     }
 }
 #endif

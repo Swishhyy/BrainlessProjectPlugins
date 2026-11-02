@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Exiled.API.Extensions;
 using Exiled.API.Features;
 using Exiled.API.Features.Doors;
@@ -248,11 +249,13 @@ namespace Brainless.Internal
             {
                 if (!PlayerRoles.PlayerRoleLoader.TryGetRoleTemplate(PlayerRoles.RoleTypeId.ClassD, out PlayerRoles.FirstPersonControl.FpcStandardRoleBase role) || role.FpcModule == null)
                     throw new InvalidOperationException("the Class-D role template is missing");
-                const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+                const BindingFlags any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
                 var template = typeof(PlayerRoles.FirstPersonControl.FirstPersonMovementModule).GetField("CharacterModelTemplate", any)?.GetValue(role.FpcModule) as GameObject;
                 var model = template == null ? null : template.GetComponentInChildren<PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel>(true);
-                var found = model == null ? null : typeof(PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel).GetField("_footstepClips", any)?.GetValue(model) as AudioClip[];
-                foreach (var clip in found ?? Array.Empty<AudioClip>())
+                // AudioClip is read by reflection: the game's audio module targets a newer
+                // .NET Standard than these net48 plugins can reference at compile time.
+                var found = model == null ? null : typeof(PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel).GetField("_footstepClips", any)?.GetValue(model) as Array;
+                foreach (object clip in found ?? Array.Empty<object>())
                 {
                     float[] mono = Read(clip);
                     if (mono != null)
@@ -264,39 +267,44 @@ namespace Brainless.Internal
             }
             catch (Exception exception)
             {
-                Log.Warn("[Brainless] Game footstep sounds are unavailable on this server (" + exception.Message + "); Echo Canister uses generated footsteps.");
+                Log.Warn("[Brainless] Game footstep sounds are unavailable on this server (" + exception.GetBaseException().Message + "); Echo Canister uses generated footsteps.");
                 result.Clear();
             }
 
             return result;
         }
 
-        private static float[] Read(AudioClip clip)
+        private static float[] Read(object clip)
         {
-            if (clip == null || clip.samples <= 0 || clip.channels <= 0 || clip.frequency <= 0)
+            if (clip == null)
                 return null;
-            if (clip.loadState != AudioDataLoadState.Loaded)
-                clip.LoadAudioData();
-            var raw = new float[clip.samples * clip.channels];
-            if (!clip.GetData(raw, 0) || raw.All(v => v == 0))
+            var type = clip.GetType();
+            int Int(string name) => Convert.ToInt32(type.GetProperty(name)?.GetValue(clip) ?? 0);
+            int frames = Int("samples"), channels = Int("channels"), frequency = Int("frequency");
+            if (frames <= 0 || channels <= 0 || frequency <= 0)
                 return null;
-            int frames = clip.samples, channels = clip.channels;
-            int length = (int)Math.Ceiling(frames * 48000.0 / clip.frequency);
+            if (type.GetProperty("loadState")?.GetValue(clip)?.ToString() != "Loaded")
+                type.GetMethod("LoadAudioData", Type.EmptyTypes)?.Invoke(clip, null);
+            var raw = new float[frames * channels];
+            var getData = type.GetMethod("GetData", new[] { typeof(float[]), typeof(int) });
+            if (getData == null || !(getData.Invoke(clip, new object[] { raw, 0 }) is bool ok) || !ok || raw.All(v => v == 0))
+                return null;
+            int length = (int)Math.Ceiling(frames * 48000.0 / frequency);
             var output = new float[length];
             for (int i = 0; i < length; i++)
             {
-                double position = i * (double)clip.frequency / 48000;
+                double position = i * (double)frequency / 48000;
                 int index = Math.Min(frames - 1, (int)position);
                 int next = Math.Min(frames - 1, index + 1);
                 double blend = position - index;
-                float a = 0, b = 0;
+                float x = 0, y = 0;
                 for (int c = 0; c < channels; c++)
                 {
-                    a += raw[index * channels + c];
-                    b += raw[next * channels + c];
+                    x += raw[index * channels + c];
+                    y += raw[next * channels + c];
                 }
 
-                output[i] = (float)((a + (b - a) * blend) / channels);
+                output[i] = (float)((x + (y - x) * blend) / channels);
             }
 
             return output;

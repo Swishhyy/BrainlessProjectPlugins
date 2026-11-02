@@ -20,7 +20,7 @@ namespace Brainless.Roles
                     return;
                 float multiplier = Plugin.Instance?.Traits(Player.Get(__instance.Owner))?.VigorGainMultiplier ?? 1;
                 if (multiplier != 1)
-                    __0 = ScpTraitRules.Vigor(__instance.VigorAmount, __0, multiplier);
+                    __0 = ScpTraitRules.Vigor(((Exiled.API.Features.Roles.Scp106Role)Player.Get(__instance.Owner).Role).Vigor, __0, multiplier);
             }
             catch (Exception exception)
             {
