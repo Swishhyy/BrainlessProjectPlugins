@@ -125,7 +125,7 @@ Keep a record of server version, enabled entries, player count, cause of death, 
 - Maintenance Liaison keeps the Door Jammer; Mad Scientist gets a loaded revolver; Interceptor gets a loaded Logicer.
 - SCP-939 near SCPs using nearby voice: no disconnects; 939 keeps team voice.
 - Signal Jammer: SCP-079 is denied doors/cameras/teslas in the room and loses signal if watching it.
-- Echo Canister sounds like walking boots. Nullifier: about 35 per body hit on humans; strips SCP shields fast.
+- Echo Canister plays the game's own footstep sounds; the server log has no "Game footstep sounds are unavailable" warning. Nullifier: about 35 per body hit on humans; strips SCP shields fast.
 - Guard escape: uncuffed guard at the escape zone becomes NTF Sergeant; cuffed guard still follows captive rules.
 - Deathmatch and Juggernaut with 4+ players: spawns, respawn waves, scoring, location reveals, round end and warhead/decontamination restore.
 

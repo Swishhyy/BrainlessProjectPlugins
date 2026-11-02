@@ -188,7 +188,17 @@ namespace Brainless.Internal
                 encoder = new VoiceChat.Codec.OpusEncoder(VoiceChat.Codec.Enums.OpusApplicationType.Audio);
                 var samples = new float[960];
                 var bytes = new byte[4096];
-                var steps = kind == "steps" ? new FootstepSynth(random) : null;
+                // Prefer the game's own human footstep clips; generated steps are only a fallback.
+                Func<double, float> steps = null;
+                if (kind == "steps")
+                {
+                    var native = NativeFootsteps.Clips;
+                    if (native.Count > 0)
+                        steps = new NativeStepPlayer(random, native).Sample;
+                    else
+                        steps = new FootstepSynth(random).Sample;
+                }
+
                 int sample = 0;
                 for (int frame = 0; frame < seconds * 50; frame++)
                 {
@@ -199,7 +209,7 @@ namespace Brainless.Internal
                         double time = sample / 48000.0;
                         if (steps != null)
                         {
-                            samples[j] = steps.Sample(time);
+                            samples[j] = steps(time);
                             continue;
                         }
 
@@ -218,6 +228,110 @@ namespace Brainless.Internal
                 encoder?.Dispose();
                 lifetime.Release(speaker);
             }
+        }
+    }
+
+    // The footstep sounds the game itself plays for human characters, read once from
+    // the Class-D character model (the clips every client already has) and converted
+    // to 48 kHz mono for the speaker stream. Empty when the server build carries no
+    // audio data, in which case callers fall back to generated steps.
+    internal static class NativeFootsteps
+    {
+        private static List<float[]> clips;
+
+        internal static IReadOnlyList<float[]> Clips => clips ?? (clips = Load());
+
+        private static List<float[]> Load()
+        {
+            var result = new List<float[]>();
+            try
+            {
+                if (!PlayerRoles.PlayerRoleLoader.TryGetRoleTemplate(PlayerRoles.RoleTypeId.ClassD, out PlayerRoles.FirstPersonControl.FpcStandardRoleBase role) || role.FpcModule == null)
+                    throw new InvalidOperationException("the Class-D role template is missing");
+                const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+                var template = typeof(PlayerRoles.FirstPersonControl.FirstPersonMovementModule).GetField("CharacterModelTemplate", any)?.GetValue(role.FpcModule) as GameObject;
+                var model = template == null ? null : template.GetComponentInChildren<PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel>(true);
+                var found = model == null ? null : typeof(PlayerRoles.FirstPersonControl.Thirdperson.AnimatedCharacterModel).GetField("_footstepClips", any)?.GetValue(model) as AudioClip[];
+                foreach (var clip in found ?? Array.Empty<AudioClip>())
+                {
+                    float[] mono = Read(clip);
+                    if (mono != null)
+                        result.Add(mono);
+                }
+
+                if (result.Count == 0)
+                    throw new InvalidOperationException("no readable footstep clips");
+            }
+            catch (Exception exception)
+            {
+                Log.Warn("[Brainless] Game footstep sounds are unavailable on this server (" + exception.Message + "); Echo Canister uses generated footsteps.");
+                result.Clear();
+            }
+
+            return result;
+        }
+
+        private static float[] Read(AudioClip clip)
+        {
+            if (clip == null || clip.samples <= 0 || clip.channels <= 0 || clip.frequency <= 0)
+                return null;
+            if (clip.loadState != AudioDataLoadState.Loaded)
+                clip.LoadAudioData();
+            var raw = new float[clip.samples * clip.channels];
+            if (!clip.GetData(raw, 0) || raw.All(v => v == 0))
+                return null;
+            int frames = clip.samples, channels = clip.channels;
+            int length = (int)Math.Ceiling(frames * 48000.0 / clip.frequency);
+            var output = new float[length];
+            for (int i = 0; i < length; i++)
+            {
+                double position = i * (double)clip.frequency / 48000;
+                int index = Math.Min(frames - 1, (int)position);
+                int next = Math.Min(frames - 1, index + 1);
+                double blend = position - index;
+                float a = 0, b = 0;
+                for (int c = 0; c < channels; c++)
+                {
+                    a += raw[index * channels + c];
+                    b += raw[next * channels + c];
+                }
+
+                output[i] = (float)((a + (b - a) * blend) / channels);
+            }
+
+            return output;
+        }
+    }
+
+    // Plays a random game footstep clip per step at an uneven walking cadence.
+    internal sealed class NativeStepPlayer
+    {
+        private readonly System.Random random;
+        private readonly IReadOnlyList<float[]> clips;
+        private float[] current;
+        private double start, nextStep = .05;
+        private float gain;
+
+        internal NativeStepPlayer(System.Random random, IReadOnlyList<float[]> clips)
+        {
+            this.random = random;
+            this.clips = clips;
+        }
+
+        internal float Sample(double time)
+        {
+            if (time >= nextStep)
+            {
+                current = clips[random.Next(clips.Count)];
+                start = time;
+                gain = .85f + (float)random.NextDouble() * .15f;
+                nextStep = time + .47 + random.NextDouble() * .09;
+            }
+
+            if (current == null)
+                return 0;
+            int index = (int)((time - start) * 48000);
+            return index >= 0 && index < current.Length ? Math.Max(-1, Math.Min(1, current[index] * gain)) : 0;
         }
     }
 

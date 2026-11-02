@@ -2,7 +2,7 @@
 
 Removes Survey Beacon (7107), Trace Chalk (7108), Field Dressing (7109), Preserved Specimen (7112) and SCRAMBLE Goggles (7121), including their loot entries, recipes and tuning. Existing configs drop them on load (catalog revision 7).
 
-- Echo Canister plays real-sounding boot steps: a heel strike and softer toe contact at an uneven walking pace, alternating feet.
+- Echo Canister plays the game's own human footstep sounds (read from the character model's footstep clips) at an uneven walking pace. If a server build has no readable audio data, it logs a warning and uses generated boot steps instead.
 - Signal Jammer now stops SCP-079 properly: every door touching the jammed room (not only ordinary doors), its cameras, tesla gates, pings and elevators. An SCP-079 already watching a jammed room loses its signal. The stock active time is 30 seconds instead of 6.
 
 Built for EXILED 9.15.2 / SCP:SL 14.2.8. Fully restart after replacing DLLs. Needs a live playtest.
