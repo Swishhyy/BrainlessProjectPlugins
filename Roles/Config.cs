@@ -54,7 +54,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -84,6 +84,14 @@ namespace Brainless.Roles
         [Tune(0, 100)]
         public float RogueSpawnSeparation { get; set; } = 12;
         public bool AnnounceRogue { get; set; } = true;
+
+        [Description("Most living humans that may hold a custom role at once, as a percentage of living humans.")]
+        [Tune(0, 100)]
+        public float CustomHumanSharePercent { get; set; } = 80;
+
+        [Description("Most custom MTF/Chaos roles per respawn wave. 0 means no limit (each profile still appears once per wave).")]
+        [Tune(0, 100)]
+        public int ReinforcementSpecialistsPerWave { get; set; }
         [Description("Lets one zombie per round become the Doctor (Z05): a weak SCP-049 that can revive. Needs the Z05 profile enabled and its minimum players.")]
         public bool EnableDoctorEvent { get; set; } = true;
         public bool ExtremeMuncherEventPreset { get; set; }
@@ -128,6 +136,7 @@ namespace Brainless.Roles
             UpgradeCatalog();
             UpgradeHumanProfiles();
             UpgradeReworkedProfiles();
+            UpgradeFactionProfiles();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -143,7 +152,9 @@ namespace Brainless.Roles
                 if (role.Id == "G06" && role.Hint == "Door Brace instead of flashbang; less ammo.")
                     role.Hint = "Door Jammer keycard instead of flashbang; less ammo.";
                 role.Hint = GameplayText.Clean(role.Hint, descriptions.TryGetValue(role.Id, out string shortText) ? shortText : "");
-                role.CustomItems.RemoveAll(id => id == 7110 || Catalog.RetiredItems.Contains(id));
+                role.CustomItems.RemoveAll(id => id == 7110 || Catalog.RetiredItems.Contains(id) || Catalog.RetiredItemsV4.Contains(id));
+                if (role.MatchRoles == null)
+                    role.MatchRoles = new List<PlayerRoles.RoleTypeId>();
             }
 
             foreach (var native in Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Distinct())
@@ -223,6 +234,54 @@ namespace Brainless.Roles
 
             RoleCatalogRevision = 3;
         }
+
+        // Revision 4: drop retired profiles, rebuild kits that used newly removed items,
+        // append the rank-specific MTF/Chaos roles and the Captured Insurgent, and reset
+        // every stock MTF/Chaos percentage to the new defaults (the pool layout changed).
+        private void UpgradeFactionProfiles()
+        {
+            if (RoleCatalogRevision >= 4)
+                return;
+            var stock = Catalog.Create();
+            var byId = stock.ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+            Roles.RemoveAll(r => Catalog.RetiredRoles.Contains(r.Id));
+            foreach (var role in Roles)
+            {
+                if (!byId.TryGetValue(role.Id, out var fresh))
+                    continue;
+                string id = role.Id.ToUpperInvariant();
+                if (Catalog.ReworkedKitsV4.Contains(id) && (role.CustomItems.Any(Catalog.RetiredItemsV4.Contains) || (id == "M03" && role.Remove.Contains(ItemTypeE11))))
+                {
+                    role.Remove = fresh.Remove.ToList();
+                    role.Add = fresh.Add.ToList();
+                    role.CustomItems = fresh.CustomItems.ToList();
+                    role.Hint = fresh.Hint;
+                }
+
+                if (id == "B02" && Math.Abs(role.HealthMultiplier - .9f) < .001f)
+                    role.HealthMultiplier = Catalog.EscapeHealth;
+                if (id == "S07" && role.Hint == "Starts in HCZ's Micro room with a containment engineer keycard.")
+                    role.Hint = fresh.Hint;
+                // A profile deliberately set to 0% stays disabled.
+                if ((id.StartsWith("M") || id.StartsWith("C")) && fresh.ChancePercent.HasValue && role.ChancePercent != 0)
+                    role.ChancePercent = fresh.ChancePercent;
+            }
+
+            Catalog.FillMissingChances(Roles, LegacyFamilyChance);
+            foreach (var profile in stock.Where(r => !Roles.Any(existing => existing.Id.Equals(r.Id, StringComparison.OrdinalIgnoreCase))))
+            {
+                if (!(profile.Id.StartsWith("M") || profile.Id.StartsWith("C") || profile.Id == "D08"))
+                    continue;
+                // Never overfill a pool the owner already allocated.
+                decimal used = Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Where(t => Catalog.MatchesNative(profile, t)).Select(t => Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && Catalog.MatchesNative(r, t)).Sum(r => (decimal)r.ChancePercent.Value)).DefaultIfEmpty(0).Max();
+                profile.ChancePercent = (double)Math.Max(0, Math.Min((decimal)profile.ChancePercent.Value, 100m - used));
+                Roles.Add(profile);
+            }
+
+            RoleCatalogRevision = 4;
+        }
+
+        private static readonly ItemType ItemTypeE11 = ItemType.GunE11SR;
 
         private void UpgradeHumanProfiles()
         {

@@ -1,6 +1,6 @@
 # Project Brainless — Roles
 
-53 custom profiles with configurable percentages and a side HUD.
+66 custom profiles with configurable percentages and a side HUD.
 
 **Install:** fully stop the server, put `Brainless.Roles.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 

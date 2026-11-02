@@ -1,6 +1,6 @@
 # Project Brainless — Weapons
 
-5 custom weapons, including the finite grenade launcher and railgun.
+2 custom weapons: the finite grenade launcher and the experimental Ricochet Pistol.
 
 **Install:** fully stop the server, put `Brainless.Weapons.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 

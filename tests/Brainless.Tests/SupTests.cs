@@ -27,20 +27,6 @@ internal static class SupTests
         battery.Clear();
         battery.Ensure(10, 60);
         check(battery.Remaining(10) == 60, "a round reset explicitly resets wearable battery ledgers");
-        var rail = new Brainless.Weapons.RailgunTuning();
-        Tuning.Validate(rail, "railgun");
-        rail.ChargeSeconds = float.NaN;
-        bool rejected = false;
-        try
-        {
-            Tuning.Validate(rail, "railgun");
-        }
-        catch (InvalidOperationException)
-        {
-            rejected = true;
-        }
-
-        check(rejected, "invalid railgun charge timing is rejected before tuning application");
 #if NATIVE_CONFIG_TESTS
         Native(check);
 #endif
@@ -57,14 +43,14 @@ internal static class SupTests
         check(rejected, "reversed random-effect intensity ranges are rejected");
         var fixes = new Brainless.SlFixes.Config();
         fixes.Validate();
-        check(fixes.Recipes.Count == 12 && fixes.Recipes.Select(r => r.CustomId).Distinct().Count() == 12 && fixes.Recipes.Single(r => r.CustomId == 7208).Chance == 5 && !fixes.Recipes.Any(r => r.CustomId == 7109 || r.CustomId == 7121), "SCP-914 keeps unique SUP recipes with a rare railgun result and no removed items");
-        fixes.Recipes.RemoveAll(r => r.CustomId == 7208);
+        check(fixes.Recipes.Count == 10 && fixes.Recipes.Select(r => r.CustomId).Distinct().Count() == 10 && !fixes.Recipes.Any(r => r.CustomId == 7109 || r.CustomId == 7118 || r.CustomId == 7121 || r.CustomId == 7208), "SCP-914 keeps unique recipes and none for removed items");
+        fixes.Recipes.RemoveAll(r => r.CustomId == 7122);
         fixes.Validate();
-        check(fixes.Recipes.Count == 11, "deliberately removed recipes remain removed after the one-time migration");
+        check(fixes.Recipes.Count == 9, "deliberately removed recipes remain removed after the one-time migration");
         var items = new ItemDistributionConfig(); items.UpgradeSup(); items.UpgradeSup();
-        check(items.MapRules.Count(r => r.CustomId >= 7114) == 8 && !items.MapRules.Any(r => r.CustomId == 7121) && items.MapRules.Single(r => r.CustomId == 7119).SourceTypes.Contains(ItemType.KeycardJanitor), "natural SUP loot migration adds the eight remaining items once with compatible native bodies");
+        check(items.MapRules.Count(r => r.CustomId >= 7114) == 7 && !items.MapRules.Any(r => r.CustomId == 7118 || r.CustomId == 7121) && items.MapRules.Single(r => r.CustomId == 7119).SourceTypes.Contains(ItemType.KeycardJanitor), "natural SUP loot migration adds the seven remaining items once with compatible native bodies");
         var weapons = new WeaponDistributionConfig(); weapons.UpgradeSupWeapons(); weapons.UpgradeSupWeapons();
-        check(weapons.MapRules.Count(r => r.CustomId == 7208) == 1 && weapons.PlayerRules.Count(r => r.CustomId == 7207) == 1, "railgun and launcher map/player pools migrate without duplicate rolls");
+        check(weapons.MapRules.Count(r => r.CustomId == 7207) == 1 && weapons.PlayerRules.Count(r => r.CustomId == 7207) == 1 && !weapons.MapRules.Any(r => r.CustomId == 7208), "the launcher pool migrates without duplicate rolls and the railgun is gone");
         var emptyLoot = new ItemDistributionConfig { MapRules = new System.Collections.Generic.List<MapLootRule>(), PlayerRules = new System.Collections.Generic.List<PlayerLootRule>() };
         emptyLoot.UpgradeSup();
         var emptyRecipes = new Brainless.SlFixes.Config { Recipes = new System.Collections.Generic.List<Brainless.SlFixes.CraftingRecipe>() };
@@ -74,13 +60,13 @@ internal static class SupTests
     }
     public sealed class FileSpec
     {
-        public uint Id { get; set; } = 7208;
-        public string Name { get; set; } = "Railgun";
+        public uint Id { get; set; } = 7206;
+        public string Name { get; set; } = "Ricochet Pistol";
         public bool Enabled { get; set; } = true;
     }
     public sealed class FileRoot
     {
-        public Brainless.Weapons.RailgunTuning Railgun { get; set; } = new Brainless.Weapons.RailgunTuning();
+        public Brainless.Weapons.RicochetTuning Ricochet { get; set; } = new Brainless.Weapons.RicochetTuning();
     }
     private static void ItemFileTests(Action<bool, string> check)
     {
@@ -89,15 +75,15 @@ internal static class SupTests
         {
             var catalog = new System.Collections.Generic.List<FileSpec> { new FileSpec() };
             var root = new FileRoot();
-            var sections = new System.Collections.Generic.Dictionary<uint, ItemFiles.Section> { [7208] = ItemFiles.Bind(root, "Railgun") };
+            var sections = new System.Collections.Generic.Dictionary<uint, ItemFiles.Section> { [7206] = ItemFiles.Bind(root, "Ricochet") };
             ItemFiles.Apply(directory, catalog, i => i.Id, sections);
-            string path = System.IO.Path.Combine(directory, "7208.yml"), initial = System.IO.File.ReadAllText(path);
-            System.IO.File.WriteAllText(path, initial.Replace("human_damage: 85", "human_damage: 133").Replace("enabled: true", "enabled: false"));
+            string path = System.IO.Path.Combine(directory, "7206.yml"), initial = System.IO.File.ReadAllText(path);
+            System.IO.File.WriteAllText(path, initial.Replace("range: 20", "range: 133").Replace("enabled: true", "enabled: false"));
             string edited = System.IO.File.ReadAllText(path);
-            root.Railgun.HumanDamage = 2; catalog[0].Enabled = true;
+            root.Ricochet.Range = 2; catalog[0].Enabled = true;
             ItemFiles.Apply(directory, catalog, i => i.Id, sections);
-            check(root.Railgun.HumanDamage == 133 && !catalog[0].Enabled && System.IO.File.ReadAllText(path) == edited, "per-item YAML overrides catalog and tuning without overwriting saved edits at startup/reload");
-            System.IO.File.WriteAllText(path, edited.Replace("id: 7208", "id: 7122"));
+            check(root.Ricochet.Range == 133 && !catalog[0].Enabled && System.IO.File.ReadAllText(path) == edited, "per-item YAML overrides catalog and tuning without overwriting saved edits at startup/reload");
+            System.IO.File.WriteAllText(path, edited.Replace("id: 7206", "id: 7122"));
             bool rejected = false;
             try { ItemFiles.Apply(directory, catalog, i => i.Id, sections); } catch (InvalidOperationException) { rejected = true; }
             check(rejected, "per-item files cannot change stable item identity");

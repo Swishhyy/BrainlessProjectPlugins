@@ -21,7 +21,6 @@ namespace Brainless.Items
         private readonly Dictionary<Player, Stealth> invisible = new Dictionary<Player, Stealth>();
         private readonly Dictionary<Player, Boost> boosts = new Dictionary<Player, Boost>();
         private readonly Dictionary<Player, float> anti096 = new Dictionary<Player, float>();
-        private readonly List<BioCloud> bioClouds = new List<BioCloud>();
         private readonly Dictionary<string, float> radioCooldowns = new Dictionary<string, float>();
         private readonly Dictionary<bool, int> radioCalls = new Dictionary<bool, int>();
         private float supTick, roundStartedAt;
@@ -94,7 +93,6 @@ namespace Brainless.Items
                 boost.Layer.Clear();
             boosts.Clear();
             anti096.Clear();
-            bioClouds.Clear();
         }
 
         private void SupReset()
@@ -111,8 +109,6 @@ namespace Brainless.Items
         {
             if (item.Id < 7114 || item.Id > 7122)
                 return false;
-            if (item.Id == 7118)
-                return true; // Native throwable controls only.
             if (item.Id == 7119)
             {
                 HackDoor(player, held, LookDoor(player, Config.Sup.HackingChip.Reach), hold);
@@ -287,30 +283,15 @@ namespace Brainless.Items
                     return;
                 radioCalls[chaos] = used + 1;
                 radioCooldowns[player.UserId] = Time.time + cfg.CooldownSeconds;
-                Map.Broadcast(5, (chaos ? "Chaos" : "Foundation") + $" reinforcement radio: up to {cfg.PlayersPerCall} arriving in {cfg.ArrivalSeconds:0.#} seconds.");
+                Map.Broadcast(5, (chaos ? "Chaos" : "Foundation") + " reinforcement radio: a mini wave has been called.");
+                // Trigger the faction's native mini wave (its own arrival, spawn points,
+                // loadouts and custom-role rolls) instead of placing spectators directly.
                 lifetime.Later(cfg.ArrivalSeconds, () =>
                 {
-                    if (!Round.IsStarted)
-                        return;
-                    int count = 0;
-                    foreach (var spectator in Spectators().OrderBy(_ => UnityEngine.Random.value).Take(cfg.PlayersPerCall))
-                    {
-                        if (spectator.Role.Type != RoleTypeId.Spectator || spectator.IsOverwatchEnabled)
-                            continue;
-                        spectator.Role.Set(chaos ? RoleTypeId.ChaosRifleman : RoleTypeId.NtfPrivate, SpawnReason.Respawn);
-                        if (spectator.IsAlive)
-                            count++;
-                    }
-
-                    Map.Broadcast(4, (chaos ? "Chaos" : "Foundation") + $" radio reinforcements arrived: {count}.");
+                    if (Round.IsStarted && !Round.IsEnded)
+                        Respawn.ForceWave(chaos ? SpawnableFaction.ChaosMiniWave : SpawnableFaction.NtfMiniWave);
                 });
             });
-        }
-
-        private void SpawnBio(Vector3 position, DamageSource source, BioTuning tuning)
-        {
-            NativeSmoke.Spawn(Ground(position) + Vector3.up * .08f, tuning.DurationSeconds);
-            bioClouds.Add(new BioCloud { Position = position, Room = Room.Get(position), Source = source, Expires = Time.time + tuning.DurationSeconds, Tuning = tuning });
         }
 
         private System.Collections.Generic.IEnumerator<float> SupUpdates()
@@ -351,46 +332,6 @@ namespace Brainless.Items
                 else
                     boost.Layer.Set(player, boost.Multiplier);
             }
-
-            foreach (var cloud in bioClouds.ToArray())
-            {
-                if (cloud.Expires <= now)
-                {
-                    bioClouds.Remove(cloud);
-                    continue;
-                }
-
-                var cfg = cloud.Tuning;
-                foreach (var player in Player.List.Where(p => p.IsConnected && p.IsAlive))
-                {
-                    bool inside = Vector3.Distance(player.Position, cloud.Position) <= cfg.Radius && (!cfg.SameRoomOnly || player.CurrentRoom == cloud.Room) && (!cfg.RequireLineOfSight || FragProjectiles.ClearBlast(cloud.Position, player));
-                    bool filtered = cfg.FilterProtects && filters.TryGetValue(player, out float expiry) && expiry > now;
-                    bool damaging = cloud.Source.CanAffect(player) && (cfg.AffectOwner || player != cloud.Source.Owner) && (cfg.AffectScps || !player.IsScp);
-                    if (!inside || filtered || !damaging)
-                        cloud.Exposure.Remove(player);
-                    else
-                    {
-                        cloud.Exposure.TryGetValue(player, out float exposure);
-                        cloud.Exposure[player] = exposure += elapsed;
-                        if (exposure >= cfg.ExposureSeconds && !cloud.Affected.Contains(player))
-                        {
-                            cloud.Affected.Add(player);
-                            player.EnableEffect(EffectType.Corroding, 1, cfg.CorrodingSeconds);
-                            player.ShowHint("Bio cloud exposure: corrosion! Leave the smoke.", 3);
-                        }
-                    }
-
-                    bool ally = cloud.Source.Owner != null && (player == cloud.Source.Owner || !HitboxIdentity.IsEnemy(cloud.Source.Role, player.Role.Type));
-                    if (inside && ally && !player.IsScp && (!cloud.Healed.TryGetValue(player, out float last) || cfg.ContinuousHealing && now - last >= cfg.HealingIntervalSeconds))
-                    {
-                        cloud.Healed[player] = now;
-                        if (cfg.AllyHealAmount > 0)
-                            player.Heal(cfg.AllyHealAmount);
-                        if (cfg.AllyAhpAmount > 0)
-                            player.ArtificialHealth = Math.Max(player.ArtificialHealth, cfg.AllyAhpAmount);
-                    }
-                }
-            }
         }
 
         private sealed class Stealth
@@ -405,18 +346,6 @@ namespace Brainless.Items
             internal PlayerRoleBase Role;
             internal float Expires, Multiplier, Exhaustion;
             internal readonly MovementLayer Layer = new MovementLayer();
-        }
-
-        private sealed class BioCloud
-        {
-            internal Vector3 Position;
-            internal Room Room;
-            internal DamageSource Source;
-            internal BioTuning Tuning;
-            internal float Expires;
-            internal readonly Dictionary<Player, float> Exposure = new Dictionary<Player, float>();
-            internal readonly HashSet<Player> Affected = new HashSet<Player>();
-            internal readonly Dictionary<Player, float> Healed = new Dictionary<Player, float>();
         }
 
         private sealed class InvisibleLease

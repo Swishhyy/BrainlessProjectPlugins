@@ -11,15 +11,7 @@ internal static class AudioTests
         check(AudioRules.FullVolumeDistance(6, 3) == 3 && AudioRules.FullVolumeDistance(6, 20) == 6, "short custom hearing ranges cannot put the full-volume distance beyond the speaker range");
         check(AudioRules.FullVolumeDistance(float.NaN, 16) == 6 && AudioRules.FullVolumeDistance(float.PositiveInfinity, 16) == 6 && AudioRules.FullVolumeDistance(-1, 16) == .1f, "invalid full-volume distances have finite native-safe bounds");
         var items = new ItemTuning();
-        items.EchoCanister.AudioVolume = .65f;
-        items.EchoCanister.AudioRange = 9;
-        check(items.UpgradeAudio(0) == 1 && items.EchoCanister.AudioVolume == 2.5f && items.EchoCanister.AudioRange == 9, "old stock echo volume upgrades without changing a custom hearing radius");
-        items.EchoCanister.AudioVolume = 0;
-        items.UpgradeAudio(0);
-        check(items.EchoCanister.AudioVolume == 0, "an explicitly muted effect stays muted during preset migration");
-        items.EchoCanister.AudioVolume = .65f;
-        items.UpgradeAudio(1);
-        check(items.EchoCanister.AudioVolume == .65f, "the audio revision marker preserves a deliberately retained old preset");
+        check(items.UpgradeAudio(0) == 1 && items.UpgradeAudio(1) == 1, "the item audio revision marker advances without the removed Echo Canister section");
         var weapons = new WeaponTuning();
         check(weapons.UpgradeAudio(0) == 1 && weapons.UpgradeAudio(1) == 1, "the weapon audio revision marker advances without a removed Rattler section");
         weapons.Audio.Volume = 10;

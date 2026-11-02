@@ -18,7 +18,10 @@ namespace Brainless.RoundEvents
         public bool AutomaticEvents { get; set; }
 
         [Tune(0, 100)]
-        public float AutomaticEventChancePercent { get; set; } = 10;
+        public float AutomaticEventChancePercent { get; set; } = 3;
+
+        [Description("Migration marker. Revision 1 lowers the stock 10% automatic event chance to 3%.")]
+        public int EventBalanceRevision { get; set; }
 
         [Tune(0, 15)]
         public float RoundStartDelaySeconds { get; set; } = 1.5f;
@@ -35,6 +38,13 @@ namespace Brainless.RoundEvents
 
         internal void Validate()
         {
+            if (EventBalanceRevision < 1)
+            {
+                if (AutomaticEventChancePercent == 10)
+                    AutomaticEventChancePercent = 3;
+                EventBalanceRevision = 1;
+            }
+
             if (AutoUpdate == null)
                 throw new InvalidOperationException("auto_update cannot be null.");
             Tuning.Validate(this, "round_events");
@@ -55,6 +65,10 @@ namespace Brainless.RoundEvents
 
         [Tune(2, 1000)]
         public int MinimumPlayers { get; set; } = 4;
+
+        [Description("Players needed before an automatic roll can pick this event. Staff commands use minimum_players.")]
+        [Tune(2, 1000)]
+        public int AutomaticMinimumPlayers { get; set; } = 12;
 
         [Tune(1, 1000)]
         public int MinimumSurvivors { get; set; } = 2;
@@ -102,6 +116,10 @@ namespace Brainless.RoundEvents
         [Tune(2, 1000)]
         public int MinimumPlayers { get; set; } = 4;
 
+        [Description("Players needed before an automatic roll can pick this event. Staff commands use minimum_players.")]
+        [Tune(2, 1000)]
+        public int AutomaticMinimumPlayers { get; set; } = 16;
+
         [Tune(1, 10000)]
         public int KillTarget { get; set; } = 40;
 
@@ -126,6 +144,10 @@ namespace Brainless.RoundEvents
 
         [Tune(2, 1000)]
         public int MinimumPlayers { get; set; } = 4;
+
+        [Description("Players needed before an automatic roll can pick this event. Staff commands use minimum_players.")]
+        [Tune(2, 1000)]
+        public int AutomaticMinimumPlayers { get; set; } = 10;
 
         [Tune(1, 10000)]
         public int ScoreTarget { get; set; } = 20;

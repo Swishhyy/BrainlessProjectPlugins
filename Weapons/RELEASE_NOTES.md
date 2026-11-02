@@ -1,4 +1,10 @@
-# Weapons 0.7.0
+# Weapons 0.8.0
+
+Removes Nullifier Rifle (7201), Breach Shotgun (7203) and Railgun (7208) with their loot entries and tuning. The Grenade Launcher and the experimental Ricochet Pistol remain.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.7.0
 
 Removes Rattler (7202), Redline SMG (7204) and Last Word (7205) with their loot entries and tuning.
 

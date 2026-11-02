@@ -9,17 +9,13 @@ namespace Brainless.Items
         public ClusterTuning ClusterGrenade { get; set; } = new ClusterTuning();
         public ImpactTuning ImpactGrenade { get; set; } = new ImpactTuning();
         public FoamTuning ContainmentFoam { get; set; } = new FoamTuning();
-        public EchoTuning EchoCanister { get; set; } = new EchoTuning();
         public BraceTuning DoorBrace { get; set; } = new BraceTuning();
-        public JammerTuning SignalJammer { get; set; } = new JammerTuning();
-        public FilterTuning FilterInhaler { get; set; } = new FilterTuning();
         public InteractionTuning Interaction { get; set; } = new InteractionTuning();
         public SupplyTuning Supply { get; set; } = new SupplyTuning();
         public EffectAudioTuning Audio { get; set; } = new EffectAudioTuning();
 
         internal int UpgradeAudio(int revision)
         {
-            EchoCanister.AudioVolume = AudioRules.UpgradeStock(EchoCanister.AudioVolume, .65f, AudioRules.EffectVolume, revision);
             return System.Math.Max(1, revision);
         }
 
@@ -56,34 +52,6 @@ namespace Brainless.Items
         }
     }
 
-    public class FieldTuning
-    {
-        [Tune(.05, 120)]
-        public float FuseSeconds { get; set; } = 2;
-
-        [Tune(.1, 3600)]
-        public float DurationSeconds { get; set; } = 6;
-
-        [Tune(.5, 30)]
-        public float Radius { get; set; } = 3;
-
-        [Tune(0, 100)]
-        public float HumanSlowPercent { get; set; } = 10;
-
-        [Tune(0, 100)]
-        public float ScpSlowPercent { get; set; } = 8;
-
-        [Tune(0, 10000)]
-        public float HumanDamagePerSecond { get; set; }
-
-        [Tune(0, 10000)]
-        public float ScpDamagePerSecond { get; set; }
-        public bool AffectAllies { get; set; }
-        public bool AffectOwner { get; set; } = true;
-        public bool SameRoomOnly { get; set; } = true;
-        public bool RequireLineOfSight { get; set; } = true;
-    }
-
     public sealed class GasTuning
     {
         internal void Upgrade(int catalogRevision)
@@ -102,26 +70,27 @@ namespace Brainless.Items
         public int SmokeEmitters { get; set; } = 1;
     }
 
-    public sealed class FoamTuning : FieldTuning
+    // Containment foam now spreads SCP-173's native tantrum mess. The game applies
+    // its own slow and footstep effect to humans walking through it.
+    public sealed class FoamTuning
     {
-        public FoamTuning()
-        {
-            DurationSeconds = 8;
-            HumanSlowPercent = 25;
-            ScpSlowPercent = 15;
-        }
+        [Tune(.05, 120)]
+        public float FuseSeconds { get; set; } = 2;
 
-        internal void Upgrade(int catalogRevision)
-        {
-            if (catalogRevision >= 5)
-                return;
-            if (DurationSeconds == 6)
-                DurationSeconds = 8;
-            if (HumanSlowPercent == 10)
-                HumanSlowPercent = 25;
-            if (ScpSlowPercent == 8)
-                ScpSlowPercent = 15;
-        }
+        [Description("Seconds before the tantrum puddles decay.")]
+        [Tune(1, 3600)]
+        public float DurationSeconds { get; set; } = 30;
+
+        [Description("Radius in meters covered with puddles.")]
+        [Tune(.5, 30)]
+        public float Radius { get; set; } = 6;
+
+        [Description("Distance between puddle centers; smaller values cover the area more densely.")]
+        [Tune(.5, 10)]
+        public float Spacing { get; set; } = 2.5f;
+
+        [Tune(1, 100)]
+        public int MaxPuddles { get; set; } = 24;
     }
 
     public class BlastTuning
@@ -196,24 +165,6 @@ namespace Brainless.Items
         public bool DetonateOnPlayers { get; set; }
     }
 
-    public sealed class EchoTuning
-    {
-        [Tune(.05, 120)]
-        public float FuseSeconds { get; set; } = 1;
-
-        [Tune(.1, 120)]
-        public float DurationSeconds { get; set; } = 6;
-
-        [Tune(1, 100)]
-        public float AudioRange { get; set; } = 16;
-
-        [Tune(0, 10)]
-        public float AudioVolume { get; set; } = AudioRules.EffectVolume;
-
-        [Tune(.1, 100)]
-        public float AudioFullVolumeRange { get; set; } = AudioRules.FullVolumeRange;
-    }
-
     public sealed class BraceTuning
     {
         internal void Upgrade(int catalogRevision)
@@ -233,49 +184,6 @@ namespace Brainless.Items
 
         [Tune(.5, 10)]
         public float Reach { get; set; } = 3;
-    }
-
-    public sealed class JammerTuning
-    {
-        // Revision 1 raised the stock 6-second window, which ended before SCP-079 noticed it.
-        internal void Upgrade(int revision)
-        {
-            if (revision < 1 && ActiveSeconds == 6)
-                ActiveSeconds = 30;
-        }
-
-        [Tune(0, 120)]
-        public float DeploySeconds { get; set; } = 2;
-
-        [Tune(0, 120)]
-        public float ArmingSeconds { get; set; } = 2;
-
-        [Tune(.1, 3600)]
-        public float ActiveSeconds { get; set; } = 30;
-
-        [Description("Seconds SCP-079 loses its signal when it is watching a jammed room.")]
-        [Tune(0, 60)]
-        public float SignalLossSeconds { get; set; } = 4;
-
-        [Tune(0, 3600)]
-        public float RoomCooldownSeconds { get; set; } = 30;
-
-        [Tune(0, 120)]
-        public float RemoveSeconds { get; set; } = 2;
-
-        [Tune(1, 64)]
-        public int MaxActive { get; set; } = 1;
-    }
-
-    public sealed class FilterTuning
-    {
-        [Tune(0, 120)]
-        public float UseSeconds { get; set; } = 2;
-
-        [Tune(.1, 3600)]
-        public float DurationSeconds { get; set; } = 12;
-        public bool BlocksSlow { get; set; } = true;
-        public bool BlocksDamage { get; set; } = true;
     }
 
     public sealed class InteractionTuning

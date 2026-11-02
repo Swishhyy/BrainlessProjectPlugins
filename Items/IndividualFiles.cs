@@ -16,16 +16,12 @@ namespace Brainless.Items
             Bind(7101, config.Tuning, "GasGrenade");
             Bind(7102, config.Tuning, "ClusterGrenade");
             Bind(7103, config.Tuning, "ContainmentFoam");
-            Bind(7104, config.Tuning, "EchoCanister");
             Bind(7105, config.Tuning, "DoorBrace");
-            Bind(7106, config.Tuning, "SignalJammer");
-            Bind(7111, config.Tuning, "FilterInhaler");
             Bind(7113, config.Tuning, "ImpactGrenade");
             Bind(7114, config.Sup, "AdrenalinePills");
             Bind(7115, config.Sup, "Anti096Pills");
             Bind(7116, config.Sup, "ExpiredPills");
             Bind(7117, config.Sup, "InvisibilityPills");
-            Bind(7118, config.Sup, "BioGrenade");
             Bind(7119, config.Sup, "HackingChip");
             Bind(7120, config.Sup, "ReinforcementRadio");
             Bind(7122, config.Sup, "VolatilePills");

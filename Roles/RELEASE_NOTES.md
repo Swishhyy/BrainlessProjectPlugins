@@ -1,4 +1,20 @@
-# Roles 0.6.0
+# Roles 0.7.0
+
+Adds rank-specific MTF/Chaos roles and reworks rogues. Catalog revision 4 removes retired profiles, appends the new roles and resets stock MTF/Chaos percentages to the new defaults (profiles set to 0% stay disabled).
+
+- Removed: Noise Complaint (D07), Signal Officer (M02), Breacher (M04), Saboteur (C01), Interceptor (C03).
+- New Chaos: Juggernaut and Squad Leader (Repressor), Scout (Rifleman), Paranoid (Rifleman/Marauder), Desperate (Jailbird), SCP Handler (random SCP item), Sweet Tooth (candy).
+- New MTF: Scout, Agent, Personnel (Private); Leader, Explosiphile, Swordsman (Sergeant); General, Blubber, Juggernaut, Squad Leader (Captain). Squad Leaders get a keycard for every door except the Alpha Warhead.
+- New Captured Insurgent (D08): a Class-D spawn becomes an empty-handed Chaos Conscript in the cells.
+- Containment Specialist keeps its normal rifle and gets the new foam; Anomaly Handler keeps the gas grenade.
+- Escape's (B02) health drops to about 3,200 (0.71x).
+- Rogue Guard/Scientist are no longer Tutorial: they stay real Guard/Scientist roles but can damage, and be damaged by, everyone.
+- Containment Engineer spawns just outside the Micro H.I.D. room.
+- New `custom_human_share_percent` (80) and `reinforcement_specialists_per_wave` (0 = unlimited) replace the old fixed 50% and 1-3-per-wave caps.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.6.0
 
 Fixes the reported SCP and kit problems and makes custom roles common. Each spawn group now gives custom roles an 80% total share; catalog revision 3 raises existing configs to 80% once, keeping each role's relative share.
 
