@@ -1,4 +1,10 @@
-# Round Events 0.2.0
+# Round Events 0.3.0
+
+Automatic events are rarer and safer: 3% per round by default (untouched 10% configs migrate), never two rounds in a row, and each needs its own player count: Infection 12, Deathmatch 16, Juggernaut 10 (`automatic_minimum_players`). Staff commands are unchanged.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.2.0
 
 Adds two events next to Infection, controlled with `bpevent deathmatch next|start` and `bpevent juggernaut next|start`.
 

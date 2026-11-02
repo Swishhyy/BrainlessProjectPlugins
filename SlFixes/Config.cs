@@ -8,7 +8,7 @@ using Scp914;
 
 namespace Brainless.SlFixes
 {
-    public sealed class Config : IConfig
+    public sealed partial class Config : IConfig
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
@@ -73,11 +73,9 @@ namespace Brainless.SlFixes
             R("Anti-096 Pills", ItemType.SCP500, Scp914KnobSetting.VeryFine, 7115, 15),
             R("Expired Pills", ItemType.SCP500, Scp914KnobSetting.Coarse, 7116, 40),
             R("Invisibility Pills", ItemType.SCP500, Scp914KnobSetting.VeryFine, 7117, 10),
-            R("Bio Grenade", ItemType.GrenadeFlash, Scp914KnobSetting.VeryFine, 7118, 20),
             R("Hacking Chip", ItemType.KeycardJanitor, Scp914KnobSetting.VeryFine, 7119, 15),
             R("Reinforcement Radio", ItemType.Radio, Scp914KnobSetting.VeryFine, 7120, 10),
-            R("Volatile Pills", ItemType.SCP500, Scp914KnobSetting.Rough, 7122, 10),
-            R("Railgun", ItemType.GunE11SR, Scp914KnobSetting.VeryFine, 7208, 5)
+            R("Volatile Pills", ItemType.SCP500, Scp914KnobSetting.Rough, 7122, 10)
         };
         private static CraftingRecipe R(string name, ItemType source, Scp914KnobSetting setting, uint id, double chance) => new CraftingRecipe
         {
@@ -104,8 +102,8 @@ namespace Brainless.SlFixes
                 RecipeRevision = 1;
             }
 
-            // Field Dressing and SCRAMBLE Goggles no longer exist.
-            Recipes.RemoveAll(r => r != null && (r.CustomId == 7109 || r.CustomId == 7121));
+            // Recipes for removed items (Field Dressing, SCRAMBLE Goggles, Bio Grenade, Railgun).
+            Recipes.RemoveAll(r => r != null && RetiredRecipes.Contains(r.CustomId));
             if (GuardEscape == null || !Enum.IsDefined(typeof(PlayerRoles.RoleTypeId), GuardEscape.Role) || !GuardEscapeConfig.FoundationRoles.Contains(GuardEscape.Role) || double.IsNaN(GuardEscape.MinimumAliveSeconds) || GuardEscape.MinimumAliveSeconds < 0)
                 throw new InvalidOperationException("guard_escape.role must be a Foundation (MTF/Guard) role and minimum_alive_seconds nonnegative.");
             foreach (var recipe in Recipes)
@@ -122,6 +120,11 @@ namespace Brainless.SlFixes
         public double MinimumAliveSeconds { get; set; } = 10;
         public PlayerRoles.RoleTypeId ChaosRole { get; set; } = PlayerRoles.RoleTypeId.ChaosConscript;
         public PlayerRoles.RoleTypeId MtfRole { get; set; } = PlayerRoles.RoleTypeId.NtfPrivate;
+    }
+
+    public sealed partial class Config
+    {
+        private static readonly uint[] RetiredRecipes = { 7104, 7106, 7109, 7111, 7118, 7121, 7201, 7203, 7208 };
     }
 
     public sealed class GuardEscapeConfig

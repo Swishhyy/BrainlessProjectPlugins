@@ -71,7 +71,7 @@ Blast damage is center damage with linear distance falloff; normal friendly-fire
 
 Smoke 7101 now uses a flashbang body and full-size native SCP-244 particles. Its only tuning fields are fuse, duration and emitter count; legacy gas slow/DPS/radius fields are ignored. It does not flash, explode, apply a custom slow or create a filter. Native server exposure from owned emitters is excluded so they cannot drain HP/Hume shields or apply cold gameplay effects. Native client rendering and room/door fog boundaries remain. The native prefab controls its visual extent; there is no pretend independent server radius. Full size avoids a low emission percentage that can make a short cloud effectively invisible. Default lifetime is 20 seconds, with one emitter. The server lifetime component is disabled only for owned emitters and their network size is held at full; ordinary SCP-244 is not changed. Client smoke still needs an in-game visual check.
 
-Containment foam retains its independent radius, slow/DPS, ally/owner and cover settings. A Filter Inhaler is no longer paired with smoke; it can suppress native SCP-244 server exposure while active. Legacy pair_gas_with_filter is ignored/forced off. Smoke and matching old HE loot rules migrate to flashbangs; catalog revision 3 also upgrades an untouched eight-second lifetime. Set revision 3 to deliberately retain eight seconds.
+Containment foam spreads SCP-173's native tantrum puddles across its radius. Smoke is not paired with any filter item. Legacy pair_gas_with_filter is ignored/forced off. Smoke and matching old HE loot rules migrate to flashbangs; catalog revision 3 also upgrades an untouched eight-second lifetime. Set revision 3 to deliberately retain eight seconds.
 
 ## Every other item
 
@@ -79,11 +79,8 @@ All names below are children of `brainless_items.tuning`. Units are seconds/mete
 
 | Section / registry ID | Fields and shipped defaults |
 | --- | --- |
-| `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 8`, `radius: 3`, `human_slow_percent: 25`, `scp_slow_percent: 15`, both `*_damage_per_second: 0`, `affect_allies: false`, `affect_owner: true`, `same_room_only: true`, `require_line_of_sight: true` |
-| `echo_canister` / 7104 | `fuse_seconds: 1`, `duration_seconds: 6`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
+| `containment_foam` / 7103 | `fuse_seconds: 2`, `duration_seconds: 30`, `radius: 6`, `spacing: 2.5`, `max_puddles: 24` (spreads SCP-173 tantrum puddles) |
 | `door_brace` / Door Jammer 7105 | `deploy_seconds: 2`, `remove_seconds: 3`, `duration_seconds: 25`, `reach: 3` |
-| `signal_jammer` / 7106 | `deploy_seconds: 2`, `arming_seconds: 2`, `active_seconds: 30`, `signal_loss_seconds: 4`, `room_cooldown_seconds: 30`, `remove_seconds: 2`, `max_active: 1` |
-| `filter_inhaler` / 7111 | `use_seconds: 2`, `duration_seconds: 12`, `blocks_slow: true`, `blocks_damage: true` |
 | `interaction` | `device_reach: 3`, `move_tolerance: 0.6`, `cancel_on_damage: true`, `tick_seconds: 0.1` |
 | `supply` | `small_lobby_capacity: 6`, `medium_lobby_capacity: 10`, `large_lobby_capacity: 14`, `medium_lobby_players: 12`, `large_lobby_players: 24`, `cluster_min_players: 12`, `small_lobby_clusters: 0`, `medium_lobby_clusters: 1`, `large_lobby_clusters: 2`, `world_loot_count: 2` (extra bundles), `pair_gas_with_filter: false` (legacy, ignored) |
 
@@ -137,9 +134,7 @@ The Logicer body remains mandatory for 7207. These legacy launcher field names r
 
 | Section under `brainless_weapons.tuning` | Fields and shipped defaults |
 | --- | --- |
-| `nullifier` | `shield_damage_multiplier: 1.2` |
 | `rattler` | `hits_to_tag: 3`, `hit_window_seconds: 2`, `tag_duration_seconds: 3`, `immunity_seconds: 11`, `audio_range: 16`, `audio_volume: 2.5`, `audio_full_volume_range: 6` |
-| `breach_shotgun` | `shells_per_cycle: 2`, `cycles_to_breach: 3`, `progress_reset_seconds: 6`, `reach: 2` |
 | `redline` | `heat_per_shot: 9`, `max_heat: 100`, `vent_seconds: 3`, `cooling_delay_seconds: 0.6`, `cooling_per_second: 25` |
 | `ricochet` | `range: 20`, `bounce_damage_multiplier: 0.5`, `tracer_seconds: 0.12` |
 | `supply` | `small_lobby_capacity: 1`, `large_lobby_capacity: 2`, `large_lobby_players: 24`, `world_loot_count: 1` |
@@ -209,3 +204,5 @@ Items 0.7.0 (catalog revision 7) raises an untouched 6-second Signal Jammer to 3
 Weapons 0.7.0 raises the Nullifier to `human_damage: 1.06` (about 35 per E-11 body hit), `scp_damage: 0.85` and `tuning.nullifier.shield_damage_multiplier: 2`. Untouched old values (0.85 / 0.7 / 1.2) migrate; edited values stay.
 
 Roles 0.6.0 (catalog revision 3) raises every spawn group to an 80% custom-role total once, keeping relative shares; later edits are respected. `round_events.deathmatch` and `round_events.juggernaut` hold the new event settings; `project_brainless_sl_fixes.guard_escape` controls the guard escape (`enabled`, `minimum_alive_seconds`, `role`).
+
+Items 0.8.0 and Weapons 0.8.0 removed the Echo Canister, Signal Jammer, Filter Inhaler, Bio Grenade, Nullifier Rifle, Breach Shotgun and Railgun; their tuning sections are ignored. Roles 0.7.0 adds `custom_human_share_percent` (default 80) and `reinforcement_specialists_per_wave` (default 0 = unlimited). Round Events 0.3.0 adds `automatic_minimum_players` per event (Infection 12, Deathmatch 16, Juggernaut 10) and lowers `automatic_event_chance_percent` to 3.

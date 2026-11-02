@@ -39,18 +39,8 @@ internal static class TuningTests
         brace.DurationSeconds = 8;
         brace.Upgrade(6);
         check(brace.DurationSeconds == 8, "the current catalog marker allows deliberately retaining an eight-second brace");
-        var foam = new FoamTuning
-        {
-            DurationSeconds = 6,
-            HumanSlowPercent = 10,
-            ScpSlowPercent = 8
-        };
-        foam.Upgrade(4);
-        check(foam.DurationSeconds == 8 && foam.HumanSlowPercent == 25 && foam.ScpSlowPercent == 15, "old foam defaults migrate to a visible eight-second slowing field");
-        foam.HumanSlowPercent = 40;
-        foam.ScpSlowPercent = 0;
-        foam.Upgrade(4);
-        check(foam.HumanSlowPercent == 40 && foam.ScpSlowPercent == 0, "edited foam strength and an explicitly disabled SCP slow survive migration");
+        var foam = new FoamTuning();
+        check(foam.Radius == 6 && foam.Spacing == 2.5f && foam.MaxPuddles == 24 && foam.DurationSeconds == 30, "containment foam spreads a wide tantrum area by default");
         check(items.ClusterGrenade.GrenadeCount == 4 && items.ClusterGrenade.HumanDamage == 120 && items.ClusterGrenade.Radius == 5.5f && items.ClusterGrenade.ParentHumanDamage == 180, "the stronger cluster retains four children with a stronger six-metre parent and larger child blasts");
         check(typeof(GasTuning).GetProperty("HumanDamagePerSecond") == null && typeof(GasTuning).GetProperty("HumanSlowPercent") == null && items.GasGrenade.DurationSeconds == 20 && !items.Supply.PairGasWithFilter, "smoke-only gas exposes no custom damage or slow fields and needs no paired filter");
         items.ClusterGrenade.GrenadeCount = 32;
@@ -63,10 +53,10 @@ internal static class TuningTests
         items.ContainmentFoam.Radius = float.NaN;
         check(!Valid(items), "nested NaN tuning cannot enter the live simulation");
         items.ContainmentFoam.Radius = 4;
-        items.FilterInhaler = null;
+        items.ContainmentFoam = null;
         check(!Valid(items), "a missing nested tuning section is rejected");
-        weapons.Railgun.ChargeSeconds = float.PositiveInfinity;
-        check(!Valid(weapons), "infinite weapon durations are rejected");
+        weapons.Ricochet.Range = float.PositiveInfinity;
+        check(!Valid(weapons), "infinite weapon ranges are rejected");
         check(ExplosionRules.DefaultPenetration == 50 && ExplosionRules.Penetration(0) == 1 && ExplosionRules.Penetration(-1) == 1 && ExplosionRules.Penetration(500) == 100, "custom blasts cannot pass zero penetration to the native zero-damage constructor path");
         var fresh = new ItemTuning();
         check(fresh.ImpactGrenade.HumanDamage == 140 && fresh.ImpactGrenade.ScpDamage == 350 && fresh.ImpactGrenade.Radius == 5 && fresh.ImpactGrenade.ArmorPenetration == 50, "impact defaults provide a larger damaging blast with native HE penetration");

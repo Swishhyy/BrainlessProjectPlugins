@@ -62,11 +62,11 @@ internal static class DistributionConfigTests
         }
         var items = reader.Deserialize<ItemDistributionConfig>("map_chance_percent: 60\n");
         check(items.MapChancePercent == 60 && items.MaxMapReplacements == 3 && items.PlayerChancePercent == 30, "partial item YAML keeps provider-specific numeric defaults");
-        check(items.MapRules.Any(r => r.CustomId == 7111) && items.PlayerRules.Any(r => r.CustomId == 7105) && Valid(items), "partial item YAML retains its natural loot and spawn pools");
+        check(items.MapRules.Any(r => r.CustomId == 7101) && items.PlayerRules.Any(r => r.CustomId == 7105) && Valid(items), "partial item YAML retains its natural loot and spawn pools");
         var weapons = reader.Deserialize<WeaponDistributionConfig>("map_chance_percent: 55\n");
         check(weapons.MapChancePercent == 55 && weapons.MaxMapReplacements == 1 && weapons.MaxPlayerGrants == 1 && weapons.PlayerChancePercent == 15 && weapons.PlayerDelaySeconds == 1,
             "partial weapon YAML cannot fall back to the more generous item limits");
-        check(weapons.MapRules.Select(r => r.CustomId).SequenceEqual(new uint[] { 7201, 7203, 7207, 7208 }) && Valid(weapons, true), "partial weapon YAML retains its safe native firearm pool");
+        check(weapons.MapRules.Select(r => r.CustomId).SequenceEqual(new uint[] { 7207 }) && Valid(weapons, true), "partial weapon YAML retains its safe native firearm pool");
         var empty = reader.Deserialize<ItemDistributionConfig>("map_rules: []\nplayer_rules: []\n");
         check(empty.MapRules.Count == 0 && empty.PlayerRules.Count == 0 && Valid(empty), "explicit empty YAML pools remain empty rather than being repopulated");
         var custom = reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7113\n  source_types: [GrenadeHE]\nplayer_rules:\n- custom_id: 7108\n  roles: [ClassD]\n  replace_types: []\n");
@@ -81,7 +81,7 @@ internal static class DistributionConfigTests
         check(!Valid(reader.Deserialize<WeaponDistributionConfig>("player_rules:\n- custom_id: 7109\n"), true), "a weapon config cannot issue another provider's custom IDs");
         check(!Valid(reader.Deserialize<ItemDistributionConfig>("map_rules:\n- custom_id: 7109\n  source_types: []\n")), "map rules require explicit native source bodies");
         items.MapRules.Clear();
-        check(new ItemDistributionConfig().MapRules.Count > 0 && new WeaponDistributionConfig().MapRules.Count == 4, "provider defaults never share mutable rule-list instances");
+        check(new ItemDistributionConfig().MapRules.Count > 0 && new WeaponDistributionConfig().MapRules.Count == 1, "provider defaults never share mutable rule-list instances");
     }
 }
 #endif

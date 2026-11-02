@@ -1,4 +1,10 @@
-# SlFixes 0.4.0
+# SlFixes 0.4.1
+
+Drops SCP-914 recipes for removed items (Bio Grenade, Railgun).
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.4.0
 
 Facility Guards can escape: an uncuffed guard who reaches the surface escape zone becomes an NTF Sergeant (`guard_escape`). Field Dressing and SCRAMBLE Goggles recipes were removed with the items.
 

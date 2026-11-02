@@ -14,7 +14,7 @@ internal static class ScpTraitTests
         check(Math.Abs(ScpTraitRules.PoisonDamage(10, 4.9f, 5, 4) - .4f) < .001f && ScpTraitRules.PoisonDamage(10, 6, 5, 4) == 0, "a delayed update cannot overrun a poison's remaining lifetime or refund health");
 #if NATIVE_CONFIG_TESTS
         var config = new Config(); config.Prepare();
-        check(config.Roles.Count == 53, "all fourteen previously missing SCP variants are present alongside the original profiles");
+        check(config.Roles.Count == 66, "all fourteen previously missing SCP variants are present alongside the original profiles");
         check(config.RoleHudEdgePaddingPercent == .5f && config.RoleHudLayoutRevision == 2, "a new HUD starts next to the display edge");
         config.RoleHudEdgePaddingPercent = 3; config.RoleHudLayoutRevision = 1; config.Prepare();
         check(config.RoleHudEdgePaddingPercent == .5f, "old side-HUD YAML receives the closer edge inset");
@@ -22,7 +22,7 @@ internal static class ScpTraitTests
         check(config.RoleHudEdgePaddingPercent == 1.25f, "a deliberate custom HUD inset survives migration");
         var legacy = new Config(); legacy.Roles.RemoveAll(r => r.BaseRole == PlayerRoles.RoleTypeId.Scp106 || r.BaseRole == PlayerRoles.RoleTypeId.Scp173 || r.BaseRole == PlayerRoles.RoleTypeId.Scp939 || r.BaseRole == PlayerRoles.RoleTypeId.Scp096);
         legacy.Prepare();
-        check(legacy.Roles.Count == 53 && legacy.RoleCatalogRevision == 3, "an existing YAML role list gains missing SCP profiles in one migration");
+        check(legacy.Roles.Count == 66 && legacy.RoleCatalogRevision == 4, "an existing YAML role list gains missing SCP profiles in one migration");
         legacy.Roles.RemoveAll(r => r.Id == "L01"); legacy.Prepare();
         check(!legacy.Roles.Exists(r => r.Id == "L01"), "deliberate profile deletion after migration is retained");
         var custom = new Config(); custom.Roles.RemoveAll(r => r.BaseRole == PlayerRoles.RoleTypeId.Scp106);

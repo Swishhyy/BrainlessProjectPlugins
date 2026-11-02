@@ -43,8 +43,11 @@ namespace Brainless.Items
         public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
         public int CatalogRevision { get; set; }
 
-        // Survey Beacon, Trace Chalk, Field Dressing, Preserved Specimen and SCRAMBLE Goggles were removed.
-        internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7107, 7108, 7109, 7112, 7121 };
+        // Removed items: Survey Beacon, Trace Chalk, Field Dressing, Preserved Specimen and
+        // SCRAMBLE Goggles (revision 7); Echo Canister, Signal Jammer, Filter Inhaler and
+        // Bio Grenade (revision 8).
+        internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7104, 7106, 7107, 7108, 7109, 7111, 7112, 7118, 7121 };
+        internal const string FoamDescription = "Covers the floor around it in SCP-173's sticky tantrum mess.";
         public int GrenadeBalanceRevision { get; set; }
         public int AudioBalanceRevision { get; set; }
         public List<ItemSpec> Items { get; set; } = new List<ItemSpec>
@@ -67,14 +70,7 @@ namespace Brainless.Items
             {
                 Id = 7103,
                 Name = "Containment Foam Canister",
-                Description = "Slows anyone walking through the foam.",
-                BaseType = ItemType.GrenadeFlash
-            },
-            new ItemSpec
-            {
-                Id = 7104,
-                Name = "Echo Canister",
-                Description = "Plays fake footsteps to distract nearby players.",
+                Description = "Covers the floor around it in SCP-173's sticky tantrum mess.",
                 BaseType = ItemType.GrenadeFlash
             },
             new ItemSpec
@@ -83,21 +79,6 @@ namespace Brainless.Items
                 Name = "Door Jammer",
                 Description = "Use this card on a closed door to jam it briefly.",
                 BaseType = ItemType.KeycardJanitor
-            },
-            new ItemSpec
-            {
-                Id = 7106,
-                Name = "Signal Jammer",
-                Description = "Deploy to disrupt SCP-079 in your room.",
-                BaseType = ItemType.Radio
-            },
-            new ItemSpec
-            {
-                Id = 7111,
-                Name = "Filter Inhaler",
-                Description = "Protects you from toxic clouds for a short time.",
-                BaseType = ItemType.Painkillers,
-                RoundCap = 4
             },
             CreateImpact(),
         }.Concat(SupCatalog.Defaults()).ToList();
@@ -149,10 +130,10 @@ namespace Brainless.Items
             Brainless.Internal.Tuning.Validate(Tuning, "tuning");
             Tuning.Supply.PairGasWithFilter = false;
             Tuning.GasGrenade.Upgrade(CatalogRevision);
-            Tuning.ContainmentFoam.Upgrade(CatalogRevision);
+            foreach (var foam in Items.Where(i => i.Id == 7103 && i.Description == "Slows anyone walking through the foam."))
+                foam.Description = FoamDescription;
             Tuning.DoorBrace.Upgrade(CatalogRevision);
-            Tuning.SignalJammer.Upgrade(CatalogRevision < 7 ? 0 : 1);
-            CatalogRevision = Math.Max(7, CatalogRevision);
+            CatalogRevision = Math.Max(8, CatalogRevision);
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();
@@ -173,8 +154,8 @@ namespace Brainless.Items
                     throw new InvalidOperationException("SUP item " + expected.Id + " must keep its native body.");
             foreach (var i in Items)
             {
-                bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7104 || i.Id == 7113 || i.Id == 7118;
-                if (throwable && i.BaseType != (i.Id == 7101 || i.Id == 7103 || i.Id == 7104 || i.Id == 7118 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
+                bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7113;
+                if (throwable && i.BaseType != (i.Id == 7101 || i.Id == 7103 ? ItemType.GrenadeFlash : ItemType.GrenadeHE))
                     throw new InvalidOperationException("Throwable " + i.Id + " must keep its native grenade body.");
             }
 
@@ -230,20 +211,11 @@ namespace Brainless.Items
         {
             if (item.Type != Type || !player.Items.Contains(item))
                 return "The native inventory item changed.";
-            bool paired = Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter;
-            if (paired && player.Items.Count >= 8)
-                return "The gas filter needs one free inventory slot.";
             string failure = owner.IssueFailure(Spec, 1, false);
             if (failure != null)
                 return failure;
             if (!owner.Mint(this, item.Serial))
                 return "Natural supply was exhausted.";
-            if (paired && (failure = owner.GiveFilter(player, false)) != null)
-            {
-                owner.Unmint(this, item.Serial, false);
-                return failure;
-            }
-
             TrackedSerials.Add(item.Serial);
             return null;
         }
@@ -252,19 +224,11 @@ namespace Brainless.Items
         {
             if (pickup.Base == null || pickup.Type != Type)
                 return "The native map pickup changed.";
-            if (Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter && chamber == null && (!pickup.IsSpawned || pickup.IsLocked))
-                return "A paired gas filter needs an accessible loose pickup or a known locker chamber.";
             string failure = owner.IssueFailure(Spec, 1, false);
             if (failure != null)
                 return failure;
             if (!owner.Mint(this, pickup.Serial))
                 return "Natural supply was exhausted.";
-            if (Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter && (failure = owner.SpawnMapFilter(pickup, chamber)) != null)
-            {
-                owner.Unmint(this, pickup.Serial, false);
-                return failure;
-            }
-
             TrackedSerials.Add(pickup.Serial);
             pickup.Weight = Weight;
             return null;
@@ -303,10 +267,8 @@ namespace Brainless.Items
                 return "Player must be alive.";
             if (player.IsCuffed)
                 return "Player is restrained.";
-            bool paired = Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter;
-            int slots = paired ? 2 : 1;
-            if (player.Items.Count + slots > 8)
-                return $"Inventory needs {slots} free slot(s).";
+            if (player.Items.Count + 1 > 8)
+                return "Inventory needs a free slot.";
             string failure = owner.IssueFailure(Spec, 1, ignoreLimits);
             if (failure != null)
                 return failure;
@@ -318,17 +280,6 @@ namespace Brainless.Items
             {
                 owner.Unmint(this, item.Serial, ignoreLimits);
                 return "The server did not add the item to the inventory; check the server log.";
-            }
-
-            if (paired)
-            {
-                failure = owner.GiveFilter(player, ignoreLimits);
-                if (failure != null)
-                {
-                    player.RemoveItem(item);
-                    owner.Unmint(this, item.Serial, ignoreLimits);
-                    return "Gas kit cancelled because its paired filter could not be given: " + failure;
-                }
             }
 
             if (displayMessage)
@@ -357,18 +308,6 @@ namespace Brainless.Items
             {
                 owner.Unmint(this, item.Serial, ignoreLimits);
                 return "The server did not create the pickup; check the server log.";
-            }
-
-            if (Id == 7101 && owner.Config.Tuning.Supply.PairGasWithFilter)
-            {
-                failure = owner.SpawnFilter(position + Vector3.right * .3f, ignoreLimits);
-                if (failure != null)
-                {
-                    pickup.Destroy();
-                    pickup = null;
-                    owner.Unmint(this, item.Serial, ignoreLimits);
-                    return "Gas kit cancelled because its paired filter could not spawn: " + failure;
-                }
             }
 
             return null;

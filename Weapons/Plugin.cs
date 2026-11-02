@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 7, 0);
+        public override Version Version => new Version(0, 8, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -39,7 +39,6 @@ namespace Brainless.Weapons
         private readonly FragProjectiles grenades = new FragProjectiles();
         private readonly Dictionary<uint, RegisteredWeapon> registered = new Dictionary<uint, RegisteredWeapon>();
         private readonly Dictionary<int, WeaponState> states = new Dictionary<int, WeaponState>();
-        private readonly Dictionary<Door, DoorProgress> doors = new Dictionary<Door, DoorProgress>();
         private bool capacitySet, reflected;
         private IDisposable updates;
         private NaturalDistribution distribution;
@@ -106,7 +105,6 @@ namespace Brainless.Weapons
             S.RoundEnded -= Ended;
             S.RoundStarted -= RoundStarted;
             AdminItems.Disable();
-            RailReset();
             lifetime.Clear();
             grenades.Clear();
             foreach (var weapon in registered.Values)
@@ -118,12 +116,10 @@ namespace Brainless.Weapons
         private void Reset()
         {
             distribution?.Reset();
-            RailReset();
             lifetime.Clear();
             grenades.Clear();
             states.Clear();
             shots.Clear();
-            doors.Clear();
             foreach (var item in registered.Values)
                 item.TrackedSerials.Clear();
             budget.Reset(0);
@@ -206,7 +202,7 @@ namespace Brainless.Weapons
                 Definition = definition,
                 InitialCapacity = definition.Spec.Magazine
             };
-            if (definition.Id == 7207 || definition.Id == 7208)
+            if (definition.Id == 7207)
                 shots.Register(serial, definition.Spec.Magazine);
             return true;
         }
@@ -285,12 +281,6 @@ namespace Brainless.Weapons
             var state = Find(ev.Item);
             if (state == null || !ev.IsAllowed)
                 return;
-            if (state.Definition.Id == 7208)
-            {
-                StartRailgun(ev, state);
-                return;
-            }
-
             Clamp(ev.Firearm);
             if (FixedAmmo(state) && shots.Remaining(ev.Item.Serial) < 1)
             {
@@ -335,7 +325,7 @@ namespace Brainless.Weapons
                 });
             }
         });
-        private static bool FixedAmmo(WeaponState state) => state != null && (state.Definition.Id == 7207 || state.Definition.Id == 7208);
+        private static bool FixedAmmo(WeaponState state) => state != null && state.Definition.Id == 7207;
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Hurting(HurtingEventArgs ev) => Safe.Run(() =>
         {
@@ -344,24 +334,21 @@ namespace Brainless.Weapons
             var state = Find(damage.Item);
             if (state == null)
                 return;
-            if (state.Definition.Id == 7207 || state.Definition.Id == 7208)
+            if (state.Definition.Id == 7207)
             {
                 ev.IsAllowed = false;
                 ev.Amount = 0;
                 return;
             }
 
-            if (state.Definition.Id == 7201 && ev.Player.IsScp)
-                ev.Amount = Rules.ShieldDamage(ev.Amount, ev.Player.HumeShield, Config.Tuning.Nullifier.ShieldDamageMultiplier, state.Definition.Spec.ScpDamage);
-            else
-                ev.Amount *= ev.Player.IsScp ? state.Definition.Spec.ScpDamage : state.Definition.Spec.HumanDamage;
+            ev.Amount *= ev.Player.IsScp ? state.Definition.Spec.ScpDamage : state.Definition.Spec.HumanDamage;
         });
         private void Shot(ShotEventArgs ev) => Safe.Run(() =>
         {
             var state = Find(ev.Item);
             if (state == null)
                 return;
-            if (state.Definition.Id == 7207 || state.Definition.Id == 7208)
+            if (state.Definition.Id == 7207)
             {
                 ev.CanHurt = false;
                 ev.CanSpawnImpactEffects = false;
@@ -370,45 +357,9 @@ namespace Brainless.Weapons
 
             if (!ev.CanHurt)
                 return;
-            if (state.Definition.Id == 7203)
-                Breach(ev, state);
             if (state.Definition.Id == 7206 && ev.Target == null)
                 Bounce(ev);
         });
-        private void Breach(ShotEventArgs ev, WeaponState state)
-        {
-            var door = ev.RaycastHit.collider == null ? null : Door.Get(ev.RaycastHit.collider.gameObject);
-            var tuning = Config.Tuning.BreachShotgun;
-            if (!World.OrdinaryDoor(door) || Vector3.Distance(ev.Player.Position, door.Position) > tuning.Reach || state.DoorToken == state.Token || state.AmmoBefore < tuning.ShellsPerCycle)
-                return;
-            state.DoorToken = state.Token;
-            int ammoBefore = state.AmmoBefore;
-            var gun = ev.Firearm;
-            var player = ev.Player;
-            lifetime.Later(.02f, () =>
-            {
-                if (!player.Items.Contains(gun) || !World.OrdinaryDoor(door))
-                    return;
-                int spent = Math.Max(0, ammoBefore - gun.MagazineAmmo - gun.BarrelAmmo);
-                int extra = Math.Max(0, tuning.ShellsPerCycle - spent);
-                if (gun.MagazineAmmo + gun.BarrelAmmo < extra)
-                    return;
-                int fromMagazine = Math.Min(extra, gun.MagazineAmmo);
-                gun.MagazineAmmo -= fromMagazine;
-                gun.BarrelAmmo -= extra - fromMagazine;
-                if (!doors.TryGetValue(door, out var progress) || Time.time - progress.Last > tuning.ProgressResetSeconds)
-                    doors[door] = progress = new DoorProgress();
-                progress.Hits++;
-                progress.Last = Time.time;
-                World.Cue(door.Position, $"Door breach {progress.Hits}/{tuning.CyclesToBreach}", 10);
-                if (progress.Hits >= tuning.CyclesToBreach && door is IDamageableDoor damageable)
-                {
-                    damageable.Break();
-                    doors.Remove(door);
-                }
-            });
-        }
-
         private void Bounce(ShotEventArgs ev)
         {
             var hit = ev.RaycastHit;
@@ -547,13 +498,7 @@ namespace Brainless.Weapons
         {
             internal int InitialCapacity;
             internal RegisteredWeapon Definition;
-            internal int Token, ConsumedToken, DoorToken, AmmoBefore;
-        }
-
-        private sealed class DoorProgress
-        {
-            internal int Hits;
-            internal float Last;
+            internal int Token, ConsumedToken, AmmoBefore;
         }
     }
 }

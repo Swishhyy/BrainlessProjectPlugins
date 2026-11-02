@@ -1,4 +1,13 @@
-# Items 0.7.0
+# Items 0.8.0
+
+Removes Echo Canister (7104), Signal Jammer (7106), Filter Inhaler (7111) and Bio Grenade (7118), with their loot entries, recipes and tuning (catalog revision 8).
+
+- Containment foam now spreads SCP-173's native tantrum mess over a wide area (radius 6 m, up to 24 puddles, 30 seconds by default).
+- The Reinforcement Radio calls a native mini wave for your faction instead of spawning spectators directly.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.7.0
 
 Removes Survey Beacon (7107), Trace Chalk (7108), Field Dressing (7109), Preserved Specimen (7112) and SCRAMBLE Goggles (7121), including their loot entries, recipes and tuning. Existing configs drop them on load (catalog revision 7).
 

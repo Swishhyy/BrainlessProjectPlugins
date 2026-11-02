@@ -66,14 +66,22 @@ namespace Brainless.Roles
         public List<ItemType> Add { get; set; } = new List<ItemType>();
         public List<uint> CustomItems { get; set; } = new List<uint>();
 
+        [Description("Native roles this profile can roll from. Empty uses the base role (or every MTF/Chaos rank for M/C profiles).")]
+        public List<RoleTypeId> MatchRoles { get; set; } = new List<RoleTypeId>();
+
+        [Description("Changes the player to this role in place when the profile is applied. None keeps the spawned role.")]
+        public RoleTypeId SpawnAs { get; set; } = RoleTypeId.None;
+
         internal int InventorySlots(int current, int removed, int extra) => (ReplaceInventory ? 0 : current - removed) + Add.Count + CustomItems.Count + extra;
     }
 
     public static class Catalog
     {
-        internal static string ChanceGroup(RoleDefinition role) => role.Id.StartsWith("M", StringComparison.OrdinalIgnoreCase) ? "MTF" : role.Id.StartsWith("C", StringComparison.OrdinalIgnoreCase) ? "Chaos" : role.BaseRole.ToString();
+        internal static string ChanceGroup(RoleDefinition role) => role.MatchRoles?.Count > 0 ? "Only:" + string.Join(",", role.MatchRoles.OrderBy(r => r)) : role.Id.StartsWith("M", StringComparison.OrdinalIgnoreCase) ? "MTF" : role.Id.StartsWith("C", StringComparison.OrdinalIgnoreCase) ? "Chaos" : role.BaseRole.ToString();
         internal static bool MatchesNative(RoleDefinition role, RoleTypeId type)
         {
+            if (role.MatchRoles?.Count > 0)
+                return role.MatchRoles.Contains(type);
             if (role.Id.StartsWith("M", StringComparison.OrdinalIgnoreCase))
                 return type == RoleTypeId.NtfPrivate || type == RoleTypeId.NtfSergeant || type == RoleTypeId.NtfSpecialist || type == RoleTypeId.NtfCaptain;
             if (role.Id.StartsWith("C", StringComparison.OrdinalIgnoreCase))
@@ -106,6 +114,13 @@ namespace Brainless.Roles
         // Preserved Specimen, SCRAMBLE Goggles, Rattler, Redline SMG and Last Word.
         internal static readonly HashSet<uint> RetiredItems = new HashSet<uint> { 7107, 7108, 7109, 7112, 7121, 7202, 7204, 7205 };
         internal static readonly string[] ReworkedKits = { "S01", "S05", "S06", "G05", "M01", "M02", "C02", "C03" };
+        // Revision 4: profiles removed from the catalog and kits rebuilt again.
+        internal static readonly HashSet<string> RetiredRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "D07", "M02", "M04", "C01", "C03" };
+        internal static readonly string[] ReworkedKitsV4 = { "S06", "M03" };
+        internal static readonly HashSet<uint> RetiredItemsV4 = new HashSet<uint> { 7104, 7106, 7111, 7118, 7201, 7203, 7208 };
+        internal static readonly ItemType[] Firearms = { ItemType.GunAK, ItemType.GunLogicer, ItemType.GunShotgun, ItemType.GunCrossvec, ItemType.GunA7, ItemType.GunRevolver, ItemType.GunFRMG0, ItemType.GunE11SR, ItemType.GunFSP9, ItemType.GunCOM15, ItemType.GunCOM18 };
+        internal static readonly ItemType[] ScpItems = { ItemType.SCP500, ItemType.SCP207, ItemType.AntiSCP207, ItemType.SCP018, ItemType.SCP268, ItemType.SCP1853, ItemType.SCP2176, ItemType.SCP244a, ItemType.SCP244b, ItemType.SCP1576, ItemType.SCP1344 };
+        internal const float EscapeHealth = .71f;
         private static double DefaultFamilyChance(RoleDefinition role) => GroupChancePercent;
         private static RoleDefinition R(string id, string name, RoleTypeId baseRole, string hint) => new RoleDefinition
         {
@@ -140,9 +155,6 @@ namespace Brainless.Roles
             r = R("D06", "Locksmith", RoleTypeId.ClassD, "Picks any keycard door. Higher access takes longer.");
             r.Health = 90;
             list.Add(r);
-            r = R("D07", "Noise Complaint", RoleTypeId.ClassD, "Carries an Echo Canister to distract enemies with fake footsteps.");
-            r.CustomItems.Add(7104);
-            list.Add(r);
             r = R("S01", "Mad Scientist", RoleTypeId.Scientist, "An armed scientist with a revolver, a spare cylinder and a can of SCP-207.");
             r.Remove.Add(ItemType.Medkit);
             r.Add.AddRange(new[] { ItemType.GunRevolver, ItemType.SCP207 });
@@ -166,9 +178,9 @@ namespace Brainless.Roles
             r.Remove.AddRange(new[] { ItemType.Medkit, ItemType.KeycardScientist });
             r.Add.AddRange(new[] { ItemType.KeycardZoneManager, ItemType.Radio });
             list.Add(r);
-            r = R("S06", "Anomaly Handler", RoleTypeId.Scientist, "Carries an Irritant Gas Grenade and a Filter Inhaler to stay safe in it.");
+            r = R("S06", "Anomaly Handler", RoleTypeId.Scientist, "Carries an Irritant Gas Grenade to cover an escape.");
             r.Remove.Add(ItemType.Medkit);
-            r.CustomItems.AddRange(new uint[] { 7101, 7111 });
+            r.CustomItems.Add(7101);
             list.Add(r);
             r = R("G01", "Guard Captain", RoleTypeId.FacilityGuard, "Leads with a Crossvec, heavy armor and better access. Carries less spare ammo.");
             r.Remove.AddRange(new[] { ItemType.GunFSP9, ItemType.ArmorLight });
@@ -200,41 +212,26 @@ namespace Brainless.Roles
             r.ReserveMultiplier = .75f;
             list.Add(r);
             r = R("M01", "Field Medic", RoleTypeId.NtfPrivate, "Carries an extra medkit and adrenaline for the squad, but less spare ammo.");
+            r.ChancePercent = 10;
             r.Add.AddRange(new[] { ItemType.Medkit, ItemType.Adrenaline });
             r.ReserveMultiplier = .75f;
             list.Add(r);
-            r = R("M02", "Signal Officer", RoleTypeId.NtfPrivate, "Carries a Signal Jammer that blinds SCP-079 in a room, plus a flashbang.");
+            r = R("M03", "Containment Specialist", RoleTypeId.NtfPrivate, "Carries containment foam that covers a wide area in SCP-173's sticky mess.");
             r.Remove.Add(ItemType.GrenadeHE);
-            r.Add.Add(ItemType.GrenadeFlash);
-            r.CustomItems.Add(7106);
-            r.ReserveMultiplier = .75f;
-            list.Add(r);
-            r = R("M03", "Containment Specialist", RoleTypeId.NtfPrivate, "Uses a shield-breaking rifle and slowing foam to contain SCPs.");
-            r.Remove.AddRange(new[] { ItemType.GunE11SR, ItemType.GunCrossvec, ItemType.GunFRMG0, ItemType.GrenadeHE });
-            r.CustomItems.AddRange(new uint[] { 7201, 7103 });
-            list.Add(r);
-            r = R("M04", "Breacher", RoleTypeId.NtfPrivate, "Uses a shotgun to breach doors and a flashbang to clear rooms.");
-            r.Remove.AddRange(new[] { ItemType.GunE11SR, ItemType.GunCrossvec, ItemType.GunFRMG0, ItemType.GrenadeHE });
-            r.Add.Add(ItemType.GrenadeFlash);
-            r.CustomItems.Add(7203);
-            list.Add(r);
-            r = R("C01", "Saboteur", RoleTypeId.ChaosRifleman, "Carries a jammer to disrupt SCP-079, but less spare ammo.");
-            r.CustomItems.Add(7106);
-            r.ReserveMultiplier = .75f;
+            r.CustomItems.Add(7103);
+            r.ChancePercent = 10;
             list.Add(r);
             r = R("C02", "Courier", RoleTypeId.ChaosRifleman, "A lightly armored runner with extra stamina and an adrenaline shot.");
             r.Remove.AddRange(new[] { ItemType.ArmorCombat, ItemType.ArmorHeavy });
             r.Add.AddRange(new[] { ItemType.ArmorLight, ItemType.Adrenaline });
             r.SprintDurationMultiplier = 1.25f;
-            list.Add(r);
-            r = R("C03", "Interceptor", RoleTypeId.ChaosRifleman, "Swaps the AK for a Logicer machine gun to hold corridors.");
-            r.Remove.Add(ItemType.GunAK);
-            r.Add.Add(ItemType.GunLogicer);
+            r.ChancePercent = 8;
             list.Add(r);
             r = R("C04", "Demolitionist", RoleTypeId.ChaosRifleman, "Carries a Cluster Grenade, but less spare ammo.");
             r.MinPlayers = 12;
             r.CustomItems.Add(7102);
             r.ReserveMultiplier = .75f;
+            r.ChancePercent = 8;
             list.Add(r);
             r = R("P01", "Surgeon", RoleTypeId.Scp049, "Revives zombies faster and recovers shields sooner, but has less health.");
             r.HealthMultiplier = .85f;
@@ -308,7 +305,7 @@ namespace Brainless.Roles
             r.ShieldMultiplier = .75f;
             list.Add(r);
             r = R("B02", "Escape's", RoleTypeId.Scp173, "Kills refresh breakneck speed and its cooldown.");
-            r.HealthMultiplier = .9f;
+            r.HealthMultiplier = EscapeHealth;
             r.Traits.RefreshBreakneckOnKill = true;
             list.Add(r);
             r = R("B03", "Cocoon", RoleTypeId.Scp173, "Tougher and slower, with shields that recover more slowly.");
@@ -356,6 +353,7 @@ namespace Brainless.Roles
             r.ReplaceInventory = true;
             r.FillAmmoToLimit = true;
             r.Add.AddRange(new[] { ItemType.KeycardChaosInsurgency, ItemType.GunRevolver, ItemType.ArmorLight, ItemType.Adrenaline, ItemType.Adrenaline, ItemType.Painkillers });
+            r.ChancePercent = 8;
             list.Add(r);
             r = R("G07", "Rogue Guard", RoleTypeId.FacilityGuard, "An unaffiliated guard, hostile to everyone. Can be captured and recruited.");
             r.Neutral = true;
@@ -367,7 +365,7 @@ namespace Brainless.Roles
             r.Add.AddRange(new[] { ItemType.KeycardGuard, ItemType.GunFSP9, ItemType.ArmorLight, ItemType.Medkit, ItemType.Radio });
             r.FillAmmoToLimit = true;
             list.Add(r);
-            r = R("S07", "Containment Engineer", RoleTypeId.Scientist, "Starts in HCZ's Micro room with a containment engineer keycard.");
+            r = R("S07", "Containment Engineer", RoleTypeId.Scientist, "Starts just outside HCZ's Micro room with a containment engineer keycard.");
             r.Remove.Add(ItemType.KeycardScientist);
             r.Add.Add(ItemType.KeycardContainmentEngineer);
             r.SpawnArea = RoleSpawnArea.MicroRoom;
@@ -382,6 +380,118 @@ namespace Brainless.Roles
             r.Weight = 2;
             r.MaxPerRound = 1;
             r.Add.AddRange(new[] { ItemType.KeycardScientist, ItemType.Medkit, ItemType.Flashlight });
+            list.Add(r);
+            r = R("D08", "Captured Insurgent", RoleTypeId.ClassD, "A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment.");
+            r.SpawnAs = RoleTypeId.ChaosConscript;
+            r.ReplaceInventory = true;
+            r.MaxPerRound = 2;
+            list.Add(r);
+            r = R("C06", "Juggernaut", RoleTypeId.ChaosRepressor, "A Repressor with 200 health, but slower.");
+            r.MatchRoles.Add(RoleTypeId.ChaosRepressor);
+            r.ChancePercent = 16;
+            r.Health = 200;
+            r.SpeedMultiplier = .85f;
+            list.Add(r);
+            r = R("C07", "Squad Leader", RoleTypeId.ChaosRepressor, "Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853.");
+            r.MatchRoles.Add(RoleTypeId.ChaosRepressor);
+            r.ChancePercent = 16;
+            r.ReplaceInventory = true;
+            r.FillAmmoToLimit = true;
+            r.Add.AddRange(new[] { ItemType.GunCOM15, ItemType.ArmorHeavy, ItemType.SCP1853 });
+            list.Add(r);
+            r = R("C08", "Scout", RoleTypeId.ChaosRifleman, "Trades the AK for an FSP-9 and less health for much more speed.");
+            r.MatchRoles.Add(RoleTypeId.ChaosRifleman);
+            r.ChancePercent = 16;
+            r.Remove.Add(ItemType.GunAK);
+            r.Add.Add(ItemType.GunFSP9);
+            r.Health = 80;
+            r.SpeedMultiplier = 1.25f;
+            list.Add(r);
+            r = R("C09", "Desperate", RoleTypeId.ChaosRifleman, "Spawns with a Jailbird instead of a gun.");
+            r.ChancePercent = 8;
+            r.Remove.AddRange(Firearms);
+            r.Add.Add(ItemType.Jailbird);
+            list.Add(r);
+            r = R("C10", "Paranoid", RoleTypeId.ChaosRifleman, "Slower, but carries heavy armor and twice the spare ammo. May also carry SCP-1344 goggles.");
+            r.MatchRoles.AddRange(new[] { RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder });
+            r.ChancePercent = 16;
+            r.Remove.AddRange(new[] { ItemType.ArmorLight, ItemType.ArmorCombat });
+            r.Add.Add(ItemType.ArmorHeavy);
+            r.ReserveMultiplier = 2;
+            r.SpeedMultiplier = .85f;
+            list.Add(r);
+            r = R("C11", "SCP Handler", RoleTypeId.ChaosRifleman, "Carries one random SCP item.");
+            r.ChancePercent = 8;
+            list.Add(r);
+            r = R("C12", "Sweet Tooth", RoleTypeId.ChaosRifleman, "Carries a bag of SCP-330 candy.");
+            r.ChancePercent = 8;
+            list.Add(r);
+            r = R("M05", "Scout", RoleTypeId.NtfPrivate, "Trades the main gun for an FSP-9 and less health for much more speed.");
+            r.MatchRoles.Add(RoleTypeId.NtfPrivate);
+            r.ChancePercent = 20;
+            r.Remove.AddRange(new[] { ItemType.GunCrossvec, ItemType.GunE11SR });
+            r.Add.Add(ItemType.GunFSP9);
+            r.Health = 80;
+            r.SpeedMultiplier = 1.25f;
+            list.Add(r);
+            r = R("M06", "Agent", RoleTypeId.NtfPrivate, "Carries an Irritant Gas Grenade and a flashbang.");
+            r.MatchRoles.Add(RoleTypeId.NtfPrivate);
+            r.ChancePercent = 20;
+            r.Add.Add(ItemType.GrenadeFlash);
+            r.CustomItems.Add(7101);
+            list.Add(r);
+            r = R("M07", "Personnel", RoleTypeId.NtfPrivate, "Carries a shotgun and a Cluster Grenade.");
+            r.MatchRoles.Add(RoleTypeId.NtfPrivate);
+            r.ChancePercent = 20;
+            r.Remove.AddRange(new[] { ItemType.GunCrossvec, ItemType.GunE11SR });
+            r.Add.Add(ItemType.GunShotgun);
+            r.CustomItems.Add(7102);
+            list.Add(r);
+            r = R("M08", "Leader", RoleTypeId.NtfSergeant, "A Sergeant with 115 health, but no grenade.");
+            r.MatchRoles.Add(RoleTypeId.NtfSergeant);
+            r.ChancePercent = 20;
+            r.Health = 115;
+            r.Remove.Add(ItemType.GrenadeHE);
+            list.Add(r);
+            r = R("M09", "Explosiphile", RoleTypeId.NtfSergeant, "Carries a Cluster Grenade and an Impact Grenade, with a Crossvec as the main gun.");
+            r.MatchRoles.Add(RoleTypeId.NtfSergeant);
+            r.ChancePercent = 20;
+            r.Remove.AddRange(new[] { ItemType.GunE11SR, ItemType.GrenadeHE });
+            r.Add.Add(ItemType.GunCrossvec);
+            r.CustomItems.AddRange(new uint[] { 7102, 7113 });
+            list.Add(r);
+            r = R("M10", "Swordsman", RoleTypeId.NtfSergeant, "Fights with SCP-1509, with 150 health and a little more speed.");
+            r.MatchRoles.Add(RoleTypeId.NtfSergeant);
+            r.ChancePercent = 20;
+            r.Remove.AddRange(new[] { ItemType.GunE11SR, ItemType.GunCrossvec });
+            r.Add.Add(ItemType.SCP1509);
+            r.Health = 150;
+            r.SpeedMultiplier = 1.1f;
+            list.Add(r);
+            r = R("M11", "General", RoleTypeId.NtfCaptain, "A Captain with 110 health, an Irritant Gas Grenade and a Cluster Grenade.");
+            r.MatchRoles.Add(RoleTypeId.NtfCaptain);
+            r.ChancePercent = 15;
+            r.Health = 110;
+            r.CustomItems.AddRange(new uint[] { 7101, 7102 });
+            list.Add(r);
+            r = R("M12", "Blubber", RoleTypeId.NtfCaptain, "Carries far more spare ammo, but moves more slowly.");
+            r.MatchRoles.Add(RoleTypeId.NtfCaptain);
+            r.ChancePercent = 15;
+            r.ReserveMultiplier = 3;
+            r.SpeedMultiplier = .85f;
+            list.Add(r);
+            r = R("M13", "Juggernaut", RoleTypeId.NtfCaptain, "A Captain with 200 health, but slower.");
+            r.MatchRoles.Add(RoleTypeId.NtfCaptain);
+            r.ChancePercent = 15;
+            r.Health = 200;
+            r.SpeedMultiplier = .85f;
+            list.Add(r);
+            r = R("M14", "Squad Leader", RoleTypeId.NtfCaptain, "Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853.");
+            r.MatchRoles.Add(RoleTypeId.NtfCaptain);
+            r.ChancePercent = 15;
+            r.ReplaceInventory = true;
+            r.FillAmmoToLimit = true;
+            r.Add.AddRange(new[] { ItemType.GunCOM15, ItemType.ArmorHeavy, ItemType.SCP1853 });
             list.Add(r);
             FillMissingChances(list, DefaultFamilyChance);
             return list;

@@ -72,25 +72,6 @@ namespace Brainless.Weapons
         {
             new WeaponSpec
             {
-                Id = 7201,
-                Name = "Nullifier Rifle",
-                Description = "Shreds SCP hume shields and hits harder than a standard rifle.",
-                BaseType = ItemType.GunE11SR,
-                HumanDamage = NullifierHumanDamage,
-                ScpDamage = .85f
-            },
-            new WeaponSpec
-            {
-                Id = 7203,
-                Name = "Breach Shotgun",
-                Description = "Repeated close-range shots can break ordinary doors.",
-                BaseType = ItemType.GunShotgun,
-                Magazine = 0,
-                Reserve = 18,
-                HumanDamage = .9f
-            },
-            new WeaponSpec
-            {
                 Id = 7206,
                 Name = "Ricochet Pistol",
                 Description = "Shots can bounce once off solid surfaces.",
@@ -103,19 +84,8 @@ namespace Brainless.Weapons
                 RoundCap = 1
             },
             CreateLauncher(),
-            CreateRailgun(),
         };
 
-        private static WeaponSpec CreateRailgun() => new WeaponSpec
-        {
-            Id = 7208,
-            Name = "Railgun",
-            Description = "Charge a piercing energy beam. Limited shots; cannot reload.",
-            BaseType = ItemType.GunE11SR,
-            Magazine = 3,
-            Reserve = 0,
-            RoundCap = 1
-        };
         private static WeaponSpec CreateLauncher() => new WeaponSpec
         {
             Id = 7207,
@@ -130,38 +100,22 @@ namespace Brainless.Weapons
         // Add this newly introduced weapon once; later deletions/edits are respected.
         public int CatalogRevision { get; set; }
 
-        // Rattler, Redline SMG and Last Word were removed in catalog revision 3.
-        internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7202, 7204, 7205 };
-        // About 35 per E-11 body hit (the old 0.85 multiplier gave about 28).
-        internal const float NullifierHumanDamage = 1.06f;
+        // Removed: Rattler, Redline SMG and Last Word (revision 3); Nullifier Rifle, Breach
+        // Shotgun and Railgun (revision 4).
+        internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7201, 7202, 7203, 7204, 7205, 7208 };
 
         internal void UpgradeCatalog()
         {
             Weapons.RemoveAll(w => Retired.Contains(w.Id));
             Distribution?.RemoveRetired(Retired);
-            if (CatalogRevision < 3)
-                foreach (var w in Weapons.Where(w => w.Id == 7201))
-                {
-                    if (Math.Abs(w.HumanDamage - .85f) < .001f)
-                        w.HumanDamage = NullifierHumanDamage;
-                    if (Math.Abs(w.ScpDamage - .7f) < .001f)
-                        w.ScpDamage = .85f;
-                    if (w.Description == "Deals extra shield damage, but less health damage.")
-                        w.Description = "Shreds SCP hume shields and hits harder than a standard rifle.";
-                    if (Math.Abs(Tuning.Nullifier.ShieldDamageMultiplier - 1.2f) < .001f)
-                        Tuning.Nullifier.ShieldDamageMultiplier = 2;
-                }
-
             if (CatalogRevision < 1 && !Weapons.Any(w => w.Id == 7207))
                 Weapons.Add(CreateLauncher());
             if (CatalogRevision < 2)
             {
-                if (!Weapons.Any(w => w.Id == 7208))
-                    Weapons.Add(CreateRailgun());
                 Distribution?.UpgradeSupWeapons();
             }
 
-            CatalogRevision = Math.Max(3, CatalogRevision);
+            CatalogRevision = Math.Max(4, CatalogRevision);
         }
 
         internal void Prepare()
@@ -191,16 +145,8 @@ namespace Brainless.Weapons
                 }
 
             foreach (var w in Weapons)
-                if (w.Id < 7201 || w.Id > 7208 || w.Magazine < 0 || w.Magazine > 255 || ((w.Id == 7207 || w.Id == 7208) && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
+                if (w.Id < 7201 || w.Id > 7208 || w.Magazine < 0 || w.Magazine > 255 || (w.Id == 7207 && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
                     throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
-            foreach (var w in Weapons)
-                if (w.Id == 7208)
-                {
-                    if (w.BaseType != ItemType.GunE11SR || w.Magazine < 1 || w.Magazine > 16)
-                        throw new InvalidOperationException("Railgun requires E11 body and 1-16 finite charges.");
-                    w.Reserve = 0;
-                }
-
             foreach (var w in Weapons)
                 if (w.Id == 7207 && w.BaseType != ItemType.GunLogicer)
                     throw new InvalidOperationException("The launcher must use the Logicer body.");
@@ -327,7 +273,7 @@ namespace Brainless.Weapons
                 return "The server did not add the weapon to the inventory; check the server log.";
             }
 
-            if (Id != 7207 && Id != 7208)
+            if (Id != 7207)
                 player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);

@@ -40,14 +40,6 @@ namespace Brainless.Items
             },
             new ItemSpec
             {
-                Id = 7118,
-                Name = "Bio Grenade",
-                BaseType = ItemType.GrenadeFlash,
-                Description = "Releases toxic smoke. Staying inside causes corrosion.",
-                RoundCap = 2
-            },
-            new ItemSpec
-            {
                 Id = 7119,
                 Name = "Hacking Chip",
                 BaseType = ItemType.KeycardJanitor,
@@ -59,7 +51,7 @@ namespace Brainless.Items
                 Id = 7120,
                 Name = "Reinforcement Radio",
                 BaseType = ItemType.Radio,
-                Description = "Calls a small group of reinforcements for your team.",
+                Description = "Calls a native mini wave for your faction.",
                 RoundCap = 1
             },
             new ItemSpec

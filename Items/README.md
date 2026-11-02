@@ -1,6 +1,6 @@
 # Project Brainless — Items
 
-16 custom grenades, tools and consumables.
+12 custom grenades, tools and consumables.
 
 **Install:** fully stop the server, put `Brainless.Items.dll` in `EXILED/Plugins`, then start it. Target: EXILED 9.15.3 / SCP:SL 14.2.9. Each plugin is optional and builds separately. No peer plugin DLL is required for loading.
 

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,6 @@ namespace Brainless.Items
         public Anti096Tuning Anti096Pills { get; set; } = new Anti096Tuning();
         public ExpiredPillTuning ExpiredPills { get; set; } = new ExpiredPillTuning();
         public InvisiblePillTuning InvisibilityPills { get; set; } = new InvisiblePillTuning();
-        public BioTuning BioGrenade { get; set; } = new BioTuning();
         public HackingTuning HackingChip { get; set; } = new HackingTuning();
         public ReinforcementTuning ReinforcementRadio { get; set; } = new ReinforcementTuning();
         public VolatilePillTuning VolatilePills { get; set; } = new VolatilePillTuning();
@@ -144,39 +144,6 @@ namespace Brainless.Items
         public float DurationSeconds { get; set; }
     }
 
-    public sealed class BioTuning
-    {
-        [Tune(.1, 30)]
-        public float FuseSeconds { get; set; } = 3;
-
-        [Tune(.1, 180)]
-        public float DurationSeconds { get; set; } = 30;
-
-        [Tune(.1, 20)]
-        public float Radius { get; set; } = 5;
-
-        [Tune(.1, 120)]
-        public float ExposureSeconds { get; set; } = 10;
-
-        [Tune(.1, 30)]
-        public float CorrodingSeconds { get; set; } = 3;
-        public bool AffectOwner { get; set; } = true;
-        public bool AffectScps { get; set; } = true;
-        public bool RequireLineOfSight { get; set; } = true;
-        public bool SameRoomOnly { get; set; } = true;
-        public bool FilterProtects { get; set; } = true;
-
-        [Tune(0, 1000)]
-        public float AllyHealAmount { get; set; }
-
-        [Tune(0, 1000)]
-        public float AllyAhpAmount { get; set; }
-
-        [Tune(.25, 60)]
-        public float HealingIntervalSeconds { get; set; } = 5;
-        public bool ContinuousHealing { get; set; } = true;
-    }
-
     public sealed class HackingTuning
     {
         [Tune(.1, 60)]
@@ -195,9 +162,11 @@ namespace Brainless.Items
         [Tune(0, 3600)]
         public float CooldownSeconds { get; set; } = 300;
 
+        [Description("Extra seconds before the native mini wave is triggered; the wave's own arrival follows.")]
         [Tune(0, 120)]
-        public float ArrivalSeconds { get; set; } = 15;
+        public float ArrivalSeconds { get; set; }
 
+        [Description("Retired: the size of a mini wave is decided by the game.")]
         [Tune(1, 10)]
         public int PlayersPerCall { get; set; } = 3;
 

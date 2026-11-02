@@ -131,20 +131,15 @@ namespace Brainless.Internal
         {
             MapRules = new List<MapLootRule>
             {
-                Map(7111, 3, ItemType.Painkillers),
                 Map(7105, 2, ItemType.KeycardJanitor),
-                Map(7104, 3, ItemType.GrenadeFlash),
                 Map(7103, 2, ItemType.GrenadeFlash),
                 Map(7101, 3, ItemType.GrenadeFlash),
                 Map(7113, 2, ItemType.GrenadeHE),
                 Map(7102, 1, ItemType.GrenadeHE),
-                Map(7106, 1, ItemType.Radio),
             },
             PlayerRules = new List<PlayerLootRule>
             {
                 Add(7105, 2, RoleTypeId.ClassD),
-                Replace(7111, 2, ItemType.Painkillers),
-                Replace(7104, 3, ItemType.GrenadeFlash),
                 Replace(7103, 2, ItemType.GrenadeFlash),
                 Replace(7101, 3, ItemType.GrenadeFlash),
                 Replace(7113, 2, ItemType.GrenadeHE),
@@ -160,13 +155,11 @@ namespace Brainless.Internal
             PlayerDelaySeconds = 1,
             MapRules = new List<MapLootRule>
             {
-                Map(7201, 3, ItemType.GunE11SR),
-                Map(7203, 2, ItemType.GunShotgun)
+                Map(7207, 1, ItemType.GunLogicer)
             },
             PlayerRules = new List<PlayerLootRule>
             {
-                Replace(7201, 3, ItemType.GunE11SR),
-                Replace(7203, 2, ItemType.GunShotgun)
+                Replace(7207, 1, ItemType.GunLogicer)
             }
         };
         private static MapLootRule Map(uint id, int weight, ItemType source) => new MapLootRule
@@ -219,7 +212,6 @@ namespace Brainless.Internal
                     PlayerRules.Add(new PlayerLootRule { CustomId = id, Weight = 1, Roles = new List<RoleTypeId> { RoleTypeId.ClassD, RoleTypeId.Scientist } });
             }
 
-            AddSup(7118, ItemType.GrenadeFlash, 1);
             AddSup(7119, ItemType.KeycardJanitor, 1);
             AddSup(7120, ItemType.Radio, 1);
         }
@@ -280,11 +272,6 @@ namespace Brainless.Internal
                 {
                     Id = 7207u,
                     Body = ItemType.GunLogicer
-                },
-                new
-                {
-                    Id = 7208u,
-                    Body = ItemType.GunE11SR
                 }
             }
 

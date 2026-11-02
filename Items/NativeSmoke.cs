@@ -96,7 +96,7 @@ namespace Brainless.Items
 
         private static bool VisualOnly(Scp244DeployablePickup __instance, Vector3 __0, ref float __result)
         {
-            if (!NetworkServer.active || (!owned.ContainsKey(__instance) && !(Plugin.Instance?.FilterProtectsAt(__0) ?? false)))
+            if (!NetworkServer.active || !owned.ContainsKey(__instance))
                 return true;
             // This is a server-only exposure query. Native client fog rendering is
             // untouched; ordinary unfiltered SCP-244 keeps its normal behavior.

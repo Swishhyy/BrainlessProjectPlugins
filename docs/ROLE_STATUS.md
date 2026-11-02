@@ -1,6 +1,6 @@
 # Role availability audit
 
-All 53 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.
+All 66 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.
 
 ## Shipped defaults
 
@@ -12,27 +12,22 @@ All 53 profiles have an implementation and compile against the pinned EXILED/gam
 | D04 | Thief | 11.42 | Enabled; normal spawn roll | None | 0 |
 | D05 | Survivor | 11.42 | Enabled; normal spawn roll | None | 0 |
 | D06 | Locksmith | 11.42 | Enabled; normal spawn roll | None | 0 |
-| D07 | Noise Complaint | 11.42 | Enabled; normal spawn roll | 7104 | 0 |
 | S01 | Mad Scientist | 13.79 | Enabled; normal spawn roll | None | 0 |
 | S02 | Pharmacist | 13.79 | Enabled; normal spawn roll | None | 0 |
 | S03 | Head Scientist | 1.37 | Enabled; normal spawn roll | None | 12 |
 | S04 | Candy Man | 13.79 | Enabled; normal spawn roll | None | 0 |
 | S05 | Auditor | 13.79 | Enabled; normal spawn roll | None | 0 |
-| S06 | Anomaly Handler | 13.79 | Enabled; normal spawn roll | 7101, 7111 | 0 |
+| S06 | Anomaly Handler | 13.79 | Enabled; normal spawn roll | 7101 | 0 |
 | G01 | Guard Captain | 12.9 | Enabled; normal spawn roll | None | 0 |
 | G02 | New Hire | 12.9 | Enabled; normal spawn roll | None | 0 |
 | G03 | Trained Agent | 12.9 | Enabled; normal spawn roll | None | 0 |
 | G04 | Coward | 12.9 | Enabled; normal spawn roll | None | 0 |
 | G05 | Quartermaster | 12.9 | Enabled; normal spawn roll | None | 0 |
 | G06 | Maintenance Liaison | 12.9 | Enabled; normal spawn roll | 7105 | 0 |
-| M01 | Field Medic | 20 | Enabled; normal spawn roll | None | 0 |
-| M02 | Signal Officer | 20 | Enabled; normal spawn roll | 7106 | 0 |
-| M03 | Containment Specialist | 20 | Enabled; normal spawn roll | 7201, 7103 | 0 |
-| M04 | Breacher | 20 | Enabled; normal spawn roll | 7203 | 0 |
-| C01 | Saboteur | 16 | Enabled; normal spawn roll | 7106 | 0 |
-| C02 | Courier | 16 | Enabled; normal spawn roll | None | 0 |
-| C03 | Interceptor | 16 | Enabled; normal spawn roll | None | 0 |
-| C04 | Demolitionist | 16 | Enabled; normal spawn roll | 7102 | 12 |
+| M01 | Field Medic | 10 | Enabled; normal spawn roll | None | 0 |
+| M03 | Containment Specialist | 10 | Enabled; normal spawn roll | 7103 | 0 |
+| C02 | Courier | 8 | Enabled; normal spawn roll | None | 0 |
+| C04 | Demolitionist | 8 | Enabled; normal spawn roll | 7102 | 12 |
 | P01 | Surgeon | 26.66 | Enabled; normal spawn roll | None | 0 |
 | P02 | Brute | 26.66 | Enabled; normal spawn roll | None | 0 |
 | P03 | Tickler | 26.66 | Enabled; normal spawn roll | None | 0 |
@@ -55,19 +50,38 @@ All 53 profiles have an implementation and compile against the pinned EXILED/gam
 | H04 | Venomous | 20 | Enabled; normal spawn roll | None | 0 |
 | R01 | Anger Issue | 40 | Enabled; normal spawn roll | None | 0 |
 | R02 | Ill Temperature | 40 | Enabled; normal spawn roll | None | 0 |
-| C05 | Cowboy | 16 | Enabled; normal spawn roll | None | 0 |
+| C05 | Cowboy | 8 | Enabled; normal spawn roll | None | 0 |
 | G07 | Rogue Guard | 2.58 | Enabled; normal spawn roll | None | 0 |
 | S07 | Containment Engineer | 6.89 | Enabled; normal spawn roll | None | 0 |
 | S08 | Rogue Scientist | 2.75 | Enabled; normal spawn roll | None | 0 |
+| D08 | Captured Insurgent | 11.42 | Enabled; normal spawn roll | None | 0 |
+| C06 | Juggernaut | 16 | Enabled; normal spawn roll | None | 0 |
+| C07 | Squad Leader | 16 | Enabled; normal spawn roll | None | 0 |
+| C08 | Scout | 16 | Enabled; normal spawn roll | None | 0 |
+| C09 | Desperate | 8 | Enabled; normal spawn roll | None | 0 |
+| C10 | Paranoid | 16 | Enabled; normal spawn roll | None | 0 |
+| C11 | SCP Handler | 8 | Enabled; normal spawn roll | None | 0 |
+| C12 | Sweet Tooth | 8 | Enabled; normal spawn roll | None | 0 |
+| M05 | Scout | 20 | Enabled; normal spawn roll | None | 0 |
+| M06 | Agent | 20 | Enabled; normal spawn roll | 7101 | 0 |
+| M07 | Personnel | 20 | Enabled; normal spawn roll | 7102 | 0 |
+| M08 | Leader | 20 | Enabled; normal spawn roll | None | 0 |
+| M09 | Explosiphile | 20 | Enabled; normal spawn roll | 7102, 7113 | 0 |
+| M10 | Swordsman | 20 | Enabled; normal spawn roll | None | 0 |
+| M11 | General | 15 | Enabled; normal spawn roll | 7101, 7102 | 0 |
+| M12 | Blubber | 15 | Enabled; normal spawn roll | None | 0 |
+| M13 | Juggernaut | 15 | Enabled; normal spawn roll | None | 0 |
+| M14 | Squad Leader | 15 | Enabled; normal spawn roll | None | 0 |
 
 ## Why a role can be absent
 
 - Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults share an 80% total per group (two decimals, rounded down); catalog revision 3 raised existing configs to the same 80% once, keeping relative shares.
 - Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. These restrictions do not redistribute a blocked profile's percentage to another role.
-- Head Scientist and Demolitionist require 12 players. Interceptor needs a Chaos subtype with an AK (it swaps it for a Logicer). MTF/Chaos profiles preserve their matching native rank/subtype.
+- Head Scientist and Demolitionist require 12 players. MTF/Chaos profiles preserve their matching native rank/subtype.
 - Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.
 - Candy roles use real SCP-330 candy; approved_candy can select colors and candy_man_candy_count controls the Candy Man count. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.
-- Rogue Guard/Scientist are neutral internally, hostile to all factions, and keep their Guard/Scientist appearance. They spawn separately in Entrance and queue an early CASSIE warning. Containment Engineer starts by the HCZ Micro H.I.D.; map geometry must provide a safe point. Head Scientist reuses S03 with its research-coordinator keycard.
+- Rogue Guard/Scientist stay real Guard/Scientist roles but can damage, and be damaged by, everyone including their own side. They spawn separately in Entrance and queue an early CASSIE warning. Containment Engineer starts just outside the HCZ Micro H.I.D. room; map geometry must provide a safe point. Head Scientist reuses S03 with its research-coordinator keycard.
+- Rank roles only roll from their listed ranks (for example Scout from MTF Private or Chaos Rifleman). Captured Insurgent rolls from a Class-D spawn and becomes an empty-handed Chaos Conscript in the cells. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.
 - Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks and non-interactable doors keep their native restrictions.
 - Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.
 

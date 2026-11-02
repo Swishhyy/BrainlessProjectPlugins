@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 6, 0);
+        public override Version Version => new Version(0, 7, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -58,7 +58,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 3 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 4 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -120,10 +120,7 @@ namespace Brainless.Roles
             U.UpgradingInventoryItem -= UpgradeInventory;
             foreach (var player in active.Keys.ToArray())
             {
-                var definition = active[player].Definition;
                 Remove(player);
-                if (definition.Neutral && player.IsConnected && player.IsAlive && player.Role.Type == RoleTypeId.Tutorial)
-                    player.Role.Set(definition.BaseRole, SpawnReason.ForceClass, RoleSpawnFlags.None);
             }
 
             bursts.Clear();
@@ -270,19 +267,19 @@ namespace Brainless.Roles
                 return "requires " + definition.BaseRole + " or matching faction";
             if (player != null && definition.SpawnArea != RoleSpawnArea.Normal && !TryProfileSpawn(player, definition.SpawnArea, out _))
                 return "no safe " + definition.SpawnArea + " spawn is available";
-            if (player != null && definition.Id == "C03" && !player.Items.Any(i => i.Type == ItemType.GunAK))
-                return "requires a Chaos subtype with an AK";
             if (!admin && player != null && player.IsHuman)
             {
                 int living = Player.List.Count(p => p.IsHuman && p.IsAlive);
-                if (active.Count(p => p.Key.IsHuman && p.Key.IsAlive) >= Math.Max(1, living / 2))
+                int cap = Math.Max(1, (int)Math.Ceiling(living * Config.CustomHumanSharePercent / 100));
+                if (active.Count(p => p.Key.IsHuman && p.Key.IsAlive) >= cap)
                     return "living-human specialist cap reached";
                 if (population < 12 && player.Role.Type == RoleTypeId.FacilityGuard && active.Any(p => p.Key.Role.Type == RoleTypeId.FacilityGuard))
                     return "small-lobby Guard specialist cap reached";
                 if (definition.Id.StartsWith("M") || definition.Id.StartsWith("C"))
                 {
                     int currentWaveCount = Time.time - waveStart > 8 ? 0 : waveCount;
-                    if (currentWaveCount >= Rules.WaveCap(population) || active.Any(p => p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
+                    bool waveFull = Config.ReinforcementSpecialistsPerWave > 0 && currentWaveCount >= Config.ReinforcementSpecialistsPerWave;
+                    if (waveFull || active.Any(p => p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
                         return "reinforcement wave cap or duplicate-specialist limit reached";
                 }
             }
@@ -315,8 +312,10 @@ namespace Brainless.Roles
                 int extra = 0;
                 if (definition.Id == "D03")
                     extra++;
-                if (definition.Id == "S04")
-                    extra += Config.ApprovedCandy.Count == 0 ? 3 : 1;
+                if (definition.Id == "S04" || definition.Id == "C12")
+                    extra++;
+                if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "C10" || definition.Id == "C11")
+                    extra++;
                 if (definition.InventorySlots(player.Items.Count, removed, extra) > 8)
                     return "insufficient inventory space for the complete role kit";
             }
@@ -397,11 +396,12 @@ namespace Brainless.Roles
                 customSpawn = destination;
             }
 
-            if (definition.Neutral)
+            if (!revived && definition.SpawnAs != RoleTypeId.None && definition.SpawnAs != player.Role.Type)
             {
-                player.Role.Set(RoleTypeId.Tutorial, SpawnReason.ForceClass, RoleSpawnFlags.None);
-                if (player.Role.Type != RoleTypeId.Tutorial)
-                    throw new InvalidOperationException("The neutral role change was blocked.");
+                // Change role in place (keeps the spawn position, e.g. the Class-D cells).
+                player.Role.Set(definition.SpawnAs, SpawnReason.ForceClass, RoleSpawnFlags.None);
+                if (player.Role.Type != definition.SpawnAs)
+                    throw new InvalidOperationException("The role change to " + definition.SpawnAs + " was blocked.");
             }
 
             var state = new ActiveRole(player, definition);
@@ -418,7 +418,7 @@ namespace Brainless.Roles
                     foreach (var type in definition.Add)
                         if (player.AddItem(type) is Firearm added)
                             added.MagazineAmmo = added.MaxMagazineAmmo;
-                    if (definition.Id == "C01" || definition.Id == "C04")
+                    if (definition.Id == "C04")
                     {
                         var item = player.Items.FirstOrDefault(i => i.Type == ItemType.GrenadeHE) ?? player.Items.FirstOrDefault(i => i.Type == ItemType.Medkit);
                         if (item != null)
@@ -427,8 +427,6 @@ namespace Brainless.Roles
 
                     foreach (var ammo in player.Ammo.ToArray())
                         player.SetAmmo(ammo.Key.GetAmmoType(), (ushort)(ammo.Value * definition.ReserveMultiplier));
-                    if (definition.Id == "M03" || definition.Id == "M04")
-                        player.ClearAmmo();
                     if (definition.Id == "S01")
                         player.SetAmmo(AmmoType.Ammo44Cal, (ushort)Math.Max((int)player.GetAmmo(AmmoType.Ammo44Cal), 6));
                     foreach (uint id in definition.CustomItems)
@@ -456,8 +454,14 @@ namespace Brainless.Roles
                         Thief(player);
                     if (definition.Id == "D03")
                         Candy(player, 1);
-                    if (definition.Id == "S04")
+                    if (definition.Id == "S04" || definition.Id == "C12")
                         Candy(player, Config.CandyManCandyCount);
+                    if (definition.Id == "C07" || definition.Id == "M14")
+                        GiveSquadCard(player);
+                    if (definition.Id == "C10" && random.NextDouble() < .3)
+                        player.AddItem(ItemType.SCP1344);
+                    if (definition.Id == "C11")
+                        player.AddItem(Catalog.ScpItems[random.Next(Catalog.ScpItems.Length)]);
                     if (definition.Id == "G02")
                     {
                         player.ClearAmmo();
@@ -582,6 +586,14 @@ namespace Brainless.Roles
             card.KeycardLevels = new Interactables.Interobjects.DoorUtils.KeycardLevels(tier > 0 ? 1 : 0, tier == 2 ? 2 : 1, 1, true);
             card.ItemName = id == "G01" ? "Guard Captain Badge" : "Facility Security Badge";
             badges[card.Serial] = tier;
+        }
+
+        // Squad Leaders: every door except the Alpha Warhead (Containment 3, Armory 3, Admin 2).
+        private static void GiveSquadCard(Player player)
+        {
+            var card = (Exiled.API.Features.Items.Keycards.CustomKeycardItem)player.AddItem(ItemType.KeycardCustomTaskForce);
+            card.KeycardLevels = new Interactables.Interobjects.DoorUtils.KeycardLevels(3, 3, 2, true);
+            card.ItemName = "Squad Leader Keycard";
         }
 
         private void UpgradePickup(UpgradingPickupEventArgs ev)
@@ -827,8 +839,7 @@ namespace Brainless.Roles
             internal float MaxHealth, MaxShield, Shield, Stamina, StaminaApplied = 1, Start;
             internal float? RegenCooldown, RegenRate;
             internal QuietStepLayer QuietSteps = new QuietStepLayer();
-            internal Func<Player, Exiled.API.Structs.RoleData> RogueAppearance;
-            internal float? TutorialDamage;
+            internal string PreviousUniqueRole;
             internal bool ShieldOverridden, BreakneckKill;
             internal Vector3 Scale;
             internal string Info;

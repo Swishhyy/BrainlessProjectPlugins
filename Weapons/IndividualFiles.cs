@@ -13,10 +13,7 @@ namespace Brainless.Weapons
                 return;
             var sections = new Dictionary<uint, ItemFiles.Section>
             {
-                [7201] = ItemFiles.Bind(config.Tuning, "Nullifier"),
-                [7203] = ItemFiles.Bind(config.Tuning, "BreachShotgun"),
-                [7206] = ItemFiles.Bind(config.Tuning, "Ricochet"),
-                [7208] = ItemFiles.Bind(config.Tuning, "Railgun")
+                [7206] = ItemFiles.Bind(config.Tuning, "Ricochet")
             };
             var launcher = new LauncherFileRoot();
             foreach (var property in typeof(LauncherFileTuning).GetProperties())
