@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 1);
+        public override Version Version => new Version(0, 8, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 9;
+            bool migrateConfig = Config.CatalogRevision < 10;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();

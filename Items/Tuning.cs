@@ -81,8 +81,8 @@ namespace Brainless.Items
         [Tune(1, 3600)]
         public float DurationSeconds { get; set; } = 30;
 
-        [Description("One tantrum puddle stretched to the radius. Off places a grid of normal-size puddles instead.")]
-        public bool SinglePuddle { get; set; } = true;
+        [Description("Experimental: one tantrum puddle stretched to the radius. Off (default) places a grid of normal-size puddles, exactly like SCP-173's own tantrum.")]
+        public bool SinglePuddle { get; set; }
 
         [Description("Radius in meters covered with puddles.")]
         [Tune(.5, 30)]

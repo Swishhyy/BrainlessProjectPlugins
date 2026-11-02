@@ -1,4 +1,10 @@
-# Items 0.8.1
+# Items 0.8.2
+
+Works around the server crash when containment foam was thrown with right-click (a short throw that lands next to you, so the thrower starts inside the puddle). The stretched single puddle, the only part that differs from the game's own tantrum, is no longer the default: foam now places a grid of normal-size SCP-173 tantrum puddles (radius 6 m, spacing 3 m, at most 12), each created exactly like SCP-173's own tantrum. Existing configs switch to the grid automatically. `single_puddle: true` still selects the stretched puddle, but it is experimental.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.8.1
 
 Fixes a client crash when containment foam spreads its tantrum puddles. Puddles are now created exactly like SCP-173's own tantrum (positioned 1.25 m above the floor and registered on the network once by the game); EXILED's PlaceTantrum registered each puddle twice.
 

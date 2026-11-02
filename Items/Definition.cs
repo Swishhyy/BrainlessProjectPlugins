@@ -140,7 +140,12 @@ namespace Brainless.Items
                 Tuning.ContainmentFoam.MaxPuddles = 12;
             }
 
-            CatalogRevision = Math.Max(9, CatalogRevision);
+            // Revision 10: the stretched single puddle crashed the server when a player
+            // stood in it at spawn (short throws), so the native-size grid is the default.
+            if (CatalogRevision < 10)
+                Tuning.ContainmentFoam.SinglePuddle = false;
+
+            CatalogRevision = Math.Max(10, CatalogRevision);
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();
