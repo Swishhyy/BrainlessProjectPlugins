@@ -235,30 +235,7 @@ namespace Brainless.RoundEvents
             }
         }
 
-        // A random, clear floor point inside the given zones, away from hazards.
-        private Vector3? FacilityPoint(List<ZoneType> zones)
-        {
-            var avoid = new HashSet<RoomType> { RoomType.Pocket, RoomType.Hcz106, RoomType.HczTesla, RoomType.Hcz079, RoomType.EzCollapsedTunnel, RoomType.HczTestRoom, RoomType.Unknown };
-            var rooms = Room.List.Where(r => r != null && (zones.Count == 0 ? r.Zone == ZoneType.HeavyContainment || r.Zone == ZoneType.Entrance : zones.Contains(r.Zone)) && !avoid.Contains(r.Type)).OrderBy(_ => random.Next()).ToArray();
-            foreach (var room in rooms.Take(12))
-                for (int attempt = 0; attempt < 10; attempt++)
-                {
-                    float radius = .5f + attempt % 5;
-                    float angle = (float)random.NextDouble() * Mathf.PI * 2;
-                    Vector3 probe = room.Position + new Vector3(Mathf.Cos(angle) * radius, 3, Mathf.Sin(angle) * radius);
-                    foreach (var hit in Physics.RaycastAll(probe, Vector3.down, 7, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
-                    {
-                        if (hit.collider.GetComponentInParent<ReferenceHub>() != null || hit.collider.GetComponentInParent<InventorySystem.Items.Pickups.ItemPickupBase>() != null || hit.collider.GetComponentInParent<AdminToys.AdminToyBase>() != null || hit.normal.y < .8f)
-                            continue;
-                        Vector3 candidate = hit.point + Vector3.up * 1.1f;
-                        if (Room.Get(candidate) != room || Physics.CheckCapsule(hit.point + Vector3.up * .4f, hit.point + Vector3.up * 1.65f, .3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
-                            break;
-                        return candidate;
-                    }
-                }
-
-            return null;
-        }
+        private Vector3? FacilityPoint(List<ZoneType> zones) => FacilitySpawns.Anywhere(zones, random);
 
         internal void Spawning(SpawningEventArgs ev)
         {

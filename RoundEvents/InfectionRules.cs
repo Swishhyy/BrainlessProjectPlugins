@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Brainless.RoundEvents
 {
@@ -128,6 +129,105 @@ namespace Brainless.RoundEvents
             DeadLife = deadLife;
             Payload = payload;
             Epoch = epoch;
+        }
+    }
+}
+
+namespace Brainless.RoundEvents
+{
+    // Chooses start rooms for Infection so nobody begins on top of a skeleton:
+    // skeletons are spread as far apart as possible, survivors only use rooms at
+    // least minimumGap away from every skeleton, and survivors fill different
+    // rooms before any room gets a second player.
+    internal static class SpreadPlanner
+    {
+        internal struct Point
+        {
+            internal double X, Y, Z;
+            internal Point(double x, double y, double z)
+            {
+                X = x;
+                Y = y;
+                Z = z;
+            }
+
+            internal double Distance(Point other) => Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y) + (Z - other.Z) * (Z - other.Z));
+        }
+
+        // Returns one room index per player: the first `infected` entries are the
+        // skeletons, the rest are survivors. Empty input gives -1 for everyone.
+        internal static int[] Plan(IReadOnlyList<Point> rooms, int infected, int humans, double minimumGap, Random random)
+        {
+            var result = new int[Math.Max(0, infected) + Math.Max(0, humans)];
+            if (rooms == null || rooms.Count == 0)
+            {
+                for (int i = 0; i < result.Length; i++)
+                    result[i] = -1;
+                return result;
+            }
+
+            var order = new List<int>();
+            for (int i = 0; i < rooms.Count; i++)
+                order.Insert(random.Next(order.Count + 1), i);
+
+            var skeletons = new List<int>();
+            for (int i = 0; i < infected; i++)
+            {
+                int pick = Farthest(rooms, order, skeletons, skeletons);
+                skeletons.Add(pick);
+                result[i] = pick;
+            }
+
+            double Nearest(int room) => skeletons.Count == 0 ? double.MaxValue : skeletons.Min(s => rooms[room].Distance(rooms[s]));
+            var safe = order.Where(r => !skeletons.Contains(r) && Nearest(r) >= minimumGap).ToList();
+            if (safe.Count == 0)
+            {
+                // Small or crowded map: use the half of the free rooms farthest from skeletons.
+                var free = order.Where(r => !skeletons.Contains(r)).OrderByDescending(Nearest).ToList();
+                safe = free.Count == 0 ? order.OrderByDescending(Nearest).Take(Math.Max(1, order.Count / 2)).ToList() : free.Take(Math.Max(1, (free.Count + 1) / 2)).ToList();
+            }
+
+            var survivors = new List<int>();
+            var taken = new List<int>(skeletons);
+            for (int i = 0; i < humans; i++)
+            {
+                int pick;
+                if (survivors.Count < safe.Count)
+                {
+                    pick = Farthest(rooms, safe, taken, survivors);
+                    taken.Add(pick);
+                }
+                else
+                    pick = survivors[i % safe.Count]; // every safe room used: share them evenly
+                survivors.Add(pick);
+                result[infected + i] = pick;
+            }
+
+            return result;
+        }
+
+        // The candidate whose nearest already-chosen room is farthest away; candidates
+        // already in `used` are skipped unless every candidate is used.
+        private static int Farthest(IReadOnlyList<Point> rooms, List<int> candidates, List<int> chosen, List<int> used)
+        {
+            var open = candidates.Where(c => !used.Contains(c)).ToList();
+            if (open.Count == 0)
+                return candidates[used.Count % candidates.Count];
+            if (chosen.Count == 0)
+                return open[0];
+            int best = open[0];
+            double bestGap = -1;
+            foreach (int candidate in open)
+            {
+                double gap = chosen.Min(c => rooms[candidate].Distance(rooms[c]));
+                if (gap > bestGap)
+                {
+                    bestGap = gap;
+                    best = candidate;
+                }
+            }
+
+            return best;
         }
     }
 }
