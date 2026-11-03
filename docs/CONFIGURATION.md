@@ -57,9 +57,9 @@ Startup saves migrated Roles, Items and voice fields into your existing file wit
 
 Each role exposes `add`, `remove`, `replace_inventory`, `fill_ammo_to_limit`, `spawn_area` and its stat fields. Keep Rogue `neutral: true` for its unaffiliated team; `Entrance` and `MicroRoom` spawn areas require a safe point. Facility lockdowns still block Locksmith. Capture conversion happens only while cuffed at the normal surface escape zone with a living enemy military captor; Rogues can join either faction.
 
-## Stats privacy and Discord
+## Stats privacy, API and Discord
 
-Core 0.2.0 counts connected playtime, including lobby/spectator time. It does not award XP for time alone. [Discord setup](owner/Core.md) enables `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-link` and `/pb-optout`.
+Core counts connected playtime, including lobby/spectator time. It does not award XP for time alone. Core 0.3.0 serves a stats API for the website leaderboard and the Discord bot; follow the [stats API and Discord bot setup](STATS_API.md). The bot enables `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-link` and `/pb-optout`.
 
 F1 `.pbprivacy optout` or native DNT erases the player's stored profile and link and suppresses further tracking. Salted suppression markers persist the preference across restarts. Manual opt-out survives DNT being turned off. `.pbprivacy optin` starts fresh with DNT off. Preserve the `stats.json.privacy` file and its backup during normal maintenance; they hold those preferences. See [Core notes](owner/Core.md) for storage scope and recovery.
 
@@ -77,7 +77,7 @@ Download selected DLLs or the combined ZIP from [Releases](https://github.com/Sw
 | Loot routing and percentage details | [Natural loot](NATURAL_LOOT.md) |
 | Updater setup / rollback | [Updates](UPDATES.md) |
 | Role gates and defaults | [Role availability](ROLE_STATUS.md) |
-| Discord bot / XP setup | [Core notes](owner/Core.md) |
+| Stats API / Discord bot / XP setup | [Setup guide](STATS_API.md) · [Core notes](owner/Core.md) |
 | SCP-914 / XP capture | [Fixes notes](owner/SlFixes.md) |
 | Per-item override files / imported SUP features | [SUP settings](SUP_MIGRATION.md) |
 | Developer boundaries / testing | [Architecture](ARCHITECTURE.md) / [Playtest](PLAYTEST.md) |

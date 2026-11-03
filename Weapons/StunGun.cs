@@ -70,7 +70,10 @@ namespace Brainless.Weapons
             var ragdoll = Ragdoll.CreateAndSpawn(target.Role.Type, target.Nickname, "Stunned", target.Position, target.Rotation);
             var stun = new Stun { Role = target.Role.Base, Ragdoll = ragdoll };
             stuns[target] = stun;
+            // Hide the body standing over its own ragdoll two ways: EXILED's ghost mode
+            // and the game's own SCP-268 invisibility, which also covers dummies.
             fpc.IsInvisible = true;
+            target.EnableEffect(EffectType.Invisible, cfg.StunSeconds);
             target.EnableEffect(EffectType.Ensnared, cfg.StunSeconds);
             if (cfg.BlindTarget)
                 target.EnableEffect(EffectType.Blinded, cfg.StunSeconds);
@@ -83,14 +86,19 @@ namespace Brainless.Weapons
             if (!stuns.TryGetValue(target, out var current) || !ReferenceEquals(current, stun))
                 return;
             stuns.Remove(target);
-            Safe.Run(() =>
+            try
             {
                 if (stun.Ragdoll?.Base != null)
                     stun.Ragdoll.Destroy();
-            });
+            }
+            catch (System.Exception e)
+            {
+                Log.Error($"[Stun Gun] Could not remove the stun ragdoll of {target.Nickname}: {e}");
+            }
             if (target.IsConnected && target.Role.Base == stun.Role && target.Role is FpcRole fpc)
             {
                 fpc.IsInvisible = false;
+                target.DisableEffect(EffectType.Invisible);
                 target.DisableEffect(EffectType.Ensnared);
                 target.DisableEffect(EffectType.Blinded);
             }

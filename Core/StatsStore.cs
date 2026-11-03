@@ -167,10 +167,17 @@ namespace Brainless.Core
                 return string.IsNullOrWhiteSpace(discordId) ? null : database.Players.Values.FirstOrDefault(p => p.DiscordUserId == discordId && CanTrackLocked(p.UserId))?.Copy();
         }
 
-        public PlayerStats[] Top(int count = 10)
+        public PlayerStats[] Top(int count = 10) => Top(count, false);
+
+        // Leaderboard by XP (default) or by playtime. Opted-out players never appear.
+        public PlayerStats[] Top(int count, bool byPlaytime)
         {
             lock (gate)
-                return database.Players.Values.Where(p => CanTrackLocked(p.UserId)).OrderByDescending(p => p.Xp).ThenBy(p => p.Name, StringComparer.Ordinal).Take(Math.Max(1, Math.Min(25, count))).Select(p => p.Copy()).ToArray();
+            {
+                var tracked = database.Players.Values.Where(p => CanTrackLocked(p.UserId));
+                var ordered = byPlaytime ? tracked.OrderByDescending(p => p.PlaytimeSeconds).ThenByDescending(p => p.Xp) : tracked.OrderByDescending(p => p.Xp).ThenByDescending(p => p.PlaytimeSeconds);
+                return ordered.ThenBy(p => p.Name, StringComparer.Ordinal).Take(Math.Max(1, Math.Min(100, count))).Select(p => p.Copy()).ToArray();
+            }
         }
 
         public string CreateLinkCode(string userId, string name, DateTime now)

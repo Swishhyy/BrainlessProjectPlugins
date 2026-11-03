@@ -46,6 +46,8 @@ CandyTests.Run(Check);
 AudioTests.Run(Check);
 StatsTests.Run(Check);
 StatsPrivacyTests.Run(Check);
+StatsApiTests.Run(Check);
+StatsApiServerTests.Run(Check);
 CaptureTests.Run(Check);
 HumanProfileTests.Run(Check);
 SupTests.Run(Check);

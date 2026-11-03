@@ -10,6 +10,7 @@ Eight separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.
 | [Staff Quick Guide](docs/STAFF_GUIDE.md) | Giving equipment, testing roles, running events and common fixes |
 | [Command Table](docs/COMMANDS.md) | Exact commands and permission nodes |
 | [Owner Settings](docs/CONFIGURATION.md) | Percentages, reloads, updates and detailed references |
+| [Stats API](docs/STATS_API.md) | Website leaderboard and Discord bot API behind Cloudflare |
 
 The combined ZIP includes these pages. Start with `CATALOG.md` for content or `STAFF_GUIDE.md` for commands.
 
@@ -22,11 +23,11 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 | [Weapons](Weapons) | `Brainless.Weapons.dll` | 3 weapons: a grenade launcher, a stun gun and the experimental Ricochet Pistol |
 | [BetterCoinflips](BetterCoinflips) | `BetterCoinflips.dll` | Ordinary coin-flip outcomes |
 | [ScpProximityChat](ScpProximityChat) | `Brainless.ScpProximityChat.dll` | Nearby SCP voice and receive controls |
-| [Core](Core) | `Brainless.Core.dll` | XP, playtime, privacy controls, optional Discord bot and update services |
+| [Core](Core) | `Brainless.Core.dll` | XP, playtime, privacy controls, stats API (leaderboard + Discord bot) and update services |
 | [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | Captive recruitment, guard escape, SCP-914 additions and action tracking |
 | [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection, Deathmatch and Juggernaut events |
 
-Current component versions: Roles **0.8.0**, Items **0.8.1**, Weapons **0.9.0**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.2.2**, Fixes **0.4.1**, Events **0.3.0**.
+Current component versions: Roles **0.8.0**, Items **0.8.2**, Weapons **0.9.1**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.3.0**, Fixes **0.4.1**, Events **0.3.0**.
 
 ## Install / update
 

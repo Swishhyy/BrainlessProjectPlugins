@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Brainless.Internal.Updates;
 using Exiled.API.Interfaces;
 
@@ -12,15 +13,7 @@ namespace Brainless.Core
         public int SaveIntervalSeconds { get; set; } = 30;
         public int XpPerLevelSquared { get; set; } = 100;
         public int MaxXpPerPlayerPerRound { get; set; } = 500;
-        public DiscordConfig Discord { get; set; } = new DiscordConfig();
-    }
-
-    public sealed class DiscordConfig
-    {
-        public bool Enabled { get; set; }
-        public string Token { get; set; } = "";
-        public string TokenEnvironmentVariable { get; set; } = "BRAINLESS_DISCORD_TOKEN";
-        public string GuildId { get; set; } = "";
-        public string CommandPrefix { get; set; } = "pb";
+        [Description("Stats API for the website leaderboard and the Discord bot (BrainlessDiscordBot repo). Put it behind Cloudflare for HTTPS; see docs/STATS_API.md.")]
+        public StatsApiConfig StatsApi { get; set; } = new StatsApiConfig();
     }
 }

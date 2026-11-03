@@ -1,4 +1,10 @@
-# Weapons 0.9.0
+# Weapons 0.9.1
+
+Stun Gun: the stunned player is now also hidden with the game's own SCP-268 invisibility, so their body no longer stands visibly over their ragdoll (seen on dummies). A failed ragdoll cleanup is now logged as an error instead of being skipped silently.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.9.0
 
 Adds the Stun Gun (7209, COM-18 body, 6 rounds + 12 spare). Each hit deals 1 damage and knocks the target down: a ragdoll of them drops (the death animation) while the real player is hidden, rooted and blinded for 3 seconds, then they get up where they fell. It never kills and makes no death or CASSIE announcement, including on SCPs. Stunned players cannot shoot or deal damage, and the same target cannot be stunned again for 10 seconds (`tuning.stun_gun`). It joins natural loot as a COM-18 replacement.
 

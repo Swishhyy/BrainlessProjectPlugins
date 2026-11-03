@@ -11,6 +11,10 @@
     <Compile Include="../../Shared/AudioRules.cs" Link="AudioRules.cs" />
     <Compile Include="../../Core/StatsStore.cs" Link="StatsStore.cs" />
     <Compile Include="../../Core/StatsPrivacy.cs" Link="StatsPrivacy.cs" />
+    <Compile Include="../../Core/StatsText.cs" Link="StatsText.cs" />
+    <Compile Include="../../Core/StatsApiRules.cs" Link="StatsApiRules.cs" />
+    <Compile Include="../../Core/StatsApiConfig.cs" Link="StatsApiConfig.cs" />
+    <Compile Include="../../Core/StatsApi.cs" Link="StatsApi.cs" />
     <Compile Include="../../Shared/CoreBridge.cs" Link="CoreBridge.cs" />
     <Compile Include="../../Shared/EffectAudioTuning.cs" Link="EffectAudioTuning.cs" />
     <Compile Include="../../Shared/Tuning.cs" Link="Tuning.cs" />
@@ -52,7 +56,6 @@
     <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />
     <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />
     <Compile Include="../../ScpProximityChat/Config.cs" Link="ScpChatConfig.cs" />
-    <Compile Include="../../Core/DiscordProtocol.cs" Link="DiscordProtocol.cs" />
     <Compile Include="../../SlFixes/Config.cs" Link="FixesConfig.cs" />
     <Reference Include="Assembly-CSharp" HintPath="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" Private="true" />
     <Reference Include="Exiled.API" HintPath="$(ReferencesPath)/Exiled.API.dll" Private="true" />
