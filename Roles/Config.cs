@@ -358,7 +358,10 @@ namespace Brainless.Roles
                 }
             }
 
-            foreach (var role in Roles.Where(r => (r.Id.Equals("X01", StringComparison.OrdinalIgnoreCase) || r.Id.Equals("X02", StringComparison.OrdinalIgnoreCase)) && r.ChancePercent == 0))
+            // A roster the owner switched off entirely (every chance 0) stays off.
+            bool IsAnyHuman(RoleDefinition r) => r.Id.Equals("X01", StringComparison.OrdinalIgnoreCase) || r.Id.Equals("X02", StringComparison.OrdinalIgnoreCase);
+            bool rosterActive = Roles.Any(r => !IsAnyHuman(r) && !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && r.ChancePercent > 0);
+            foreach (var role in Roles.Where(r => rosterActive && IsAnyHuman(r) && r.ChancePercent == 0))
             {
                 decimal used = Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Where(t => Catalog.MatchesNative(role, t)).Select(t => Roles.Where(r => r != role && !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && Catalog.MatchesNative(r, t)).Sum(r => (decimal)(r.ChancePercent ?? 0))).DefaultIfEmpty(0).Max();
                 role.ChancePercent = (double)Math.Max(0, Math.Min((decimal)fresh[role.Id].ChancePercent.Value, 100m - used));
