@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 0);
+        public override Version Version => new Version(0, 8, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -58,7 +58,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 5 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 6 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -684,8 +684,10 @@ namespace Brainless.Roles
                 multiplier = 2;
             if (state.Movement.IsOwnBoost(player))
                 nativeBoost = player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
-            if (player.IsHuman && (nativeBoost || player.CurrentArmor?.Type == ItemType.ArmorHeavy))
+            // Heavy armor or a native speed boost cancels a role's speed bonus, never its slowdown.
+            if (player.IsHuman && multiplier > 1 && (nativeBoost || player.CurrentArmor?.Type == ItemType.ArmorHeavy))
                 multiplier = 1;
+            TryResilient(player, state);
             if (state.ResilientActive)
                 multiplier = Math.Max(multiplier, 1) * Config.Resilient.SpeedMultiplier;
             state.Movement.Set(player, multiplier);
@@ -717,6 +719,15 @@ namespace Brainless.Roles
                 state.ShieldOverridden = true;
                 player.MaxHumeShield = 0;
                 player.HumeShield = 0;
+                return;
+            }
+
+            if (definition.Shield > 0)
+            {
+                // Fixed shield (e.g. Anger Issue's 120).
+                state.ShieldOverridden = true;
+                player.MaxHumeShield = definition.Shield;
+                player.HumeShield = refill ? definition.Shield : Math.Min(player.HumeShield, player.MaxHumeShield);
                 return;
             }
 

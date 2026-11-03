@@ -51,6 +51,10 @@ namespace Brainless.Roles
         [Tune(0, 100)]
         public float ShieldMultiplier { get; set; } = 1;
 
+        [Description("Fixed maximum hume shield; 0 uses shield_multiplier instead.")]
+        [Tune(0, 100000)]
+        public float Shield { get; set; }
+
         [Tune(.01, 10)]
         public float SpeedMultiplier { get; set; } = 1;
 
@@ -200,7 +204,7 @@ namespace Brainless.Roles
             r = R("G03", "Trained Agent", RoleTypeId.FacilityGuard, "A faster guard with combat armor. Heavy armor removes the speed bonus.");
             r.Remove.Add(ItemType.ArmorLight);
             r.Add.AddRange(new[] { ItemType.ArmorCombat, ItemType.Flashlight });
-            r.SpeedMultiplier = 1.05f;
+            r.SpeedMultiplier = 1.02f;
             r.ReserveMultiplier = .75f;
             list.Add(r);
             r = R("G04", "Coward", RoleTypeId.FacilityGuard, "Sprints for longer without armor. Wearing armor removes the bonus.");
@@ -253,7 +257,7 @@ namespace Brainless.Roles
             r = R("P03", "Tickler", RoleTypeId.Scp049, "A faster SCP-049 with quicker attacks, but less health and shields.");
             r.HealthMultiplier = .85f;
             r.ShieldMultiplier = .85f;
-            r.SpeedMultiplier = 1.05f;
+            r.SpeedMultiplier = 1.12f;
             r.Traits.AttackCooldownMultiplier = .9f;
             list.Add(r);
             r = R("Z01", "Giant", RoleTypeId.Scp0492, "A larger, tougher zombie that moves more slowly.");
@@ -295,11 +299,12 @@ namespace Brainless.Roles
             list.Add(r);
             r = R("L03", "Hyper", RoleTypeId.Scp106, "Moves faster, but gains vigor more slowly.");
             r.SpeedMultiplier = 1.18f;
-            r.Traits.VigorGainMultiplier = .5f;
+            r.Traits.VigorGainMultiplier = .35f;
             list.Add(r);
-            r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans, but it walks more slowly. Medical supplies cure the poison.");
+            r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans, but it walks a little slower and gains vigor more slowly. Medical supplies cure the poison.");
             r.HealthMultiplier = .9f;
-            r.SpeedMultiplier = .85f;
+            r.SpeedMultiplier = .95f;
+            r.Traits.VigorGainMultiplier = .75f;
             r.Traits.PoisonDamagePerSecond = 4;
             r.Traits.PoisonDurationSeconds = 5;
             list.Add(r);
@@ -346,9 +351,9 @@ namespace Brainless.Roles
             r.Traits.PoisonDurationSeconds = 4;
             r.Traits.PoisonInCloud = true;
             list.Add(r);
-            r = R("R01", "Anger Issue", RoleTypeId.Scp096, "Enrages immediately, but has less health and shields.");
-            r.HealthMultiplier = .7f;
-            r.ShieldMultiplier = .8f;
+            r = R("R01", "Anger Issue", RoleTypeId.Scp096, "Enrages immediately, with 1,400 health and a 120 hume shield.");
+            r.Health = 1400;
+            r.Shield = 120;
             r.Traits.RageWindupSeconds = 0;
             list.Add(r);
             r = R("R02", "Ill Temperature", RoleTypeId.Scp096, "Moves faster while calm.");
@@ -473,10 +478,11 @@ namespace Brainless.Roles
             r.Health = 150;
             r.SpeedMultiplier = 1.1f;
             list.Add(r);
-            r = R("M11", "General", RoleTypeId.NtfCaptain, "A Captain with 110 health, an Irritant Gas Grenade and a Cluster Grenade.");
+            r = R("M11", "General", RoleTypeId.NtfCaptain, "A Captain with 110 health who trades the frag grenade for an Irritant Gas Grenade and a Cluster Grenade.");
             r.MatchRoles.Add(RoleTypeId.NtfCaptain);
             r.ChancePercent = 15;
             r.Health = 110;
+            r.Remove.Add(ItemType.GrenadeHE);
             r.CustomItems.AddRange(new uint[] { 7101, 7102 });
             list.Add(r);
             r = R("M12", "Blubber", RoleTypeId.NtfCaptain, "Carries far more spare ammo, but moves more slowly.");
@@ -509,7 +515,7 @@ namespace Brainless.Roles
             r.MaxPerRound = 2;
             r.HealthMultiplier = 1.5f;
             r.SpeedMultiplier = .85f;
-            r.WidthScale = 1.3f;
+            r.WidthScale = 1.15f;
             list.Add(r);
             FillMissingChances(list, DefaultFamilyChance);
             return list;

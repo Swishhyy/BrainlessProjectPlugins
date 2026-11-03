@@ -1,4 +1,23 @@
-# Roles 0.8.0
+# Roles 0.8.1
+
+Playtest fixes:
+
+- **Slow roles really are slower now.** Heavy armor (and native speed boosts) reset every human role to normal speed, which cancelled the slowdown of Paranoid (C10) and the MTF Juggernaut (M13), and of Big Boi when wearing heavy armor. Heavy armor now only cancels speed *bonuses*, such as Trained Agent's.
+- **General (M11) is no longer blocked.** Its kit needed 9 inventory slots on a Captain, so it could never be assigned. It now trades the Captain's frag grenade for the Irritant Gas and Cluster grenades.
+- **Resilient (X01)** also checks health on every update tick, so the last stand triggers even when damage skips the hurt event. If the revision 5 upgrade left Resilient or Big Boi at 0%, the chance is restored when the role groups have room.
+- **Big Boi (X02)** is narrower (1.15× width instead of 1.3×) and shows a hint with its bonus healing from medical items.
+- **Balance:**
+  - Trained Agent: +2% speed (was +5%).
+  - Poisonous 106: 5% slower (was 15%) and gains vigor at 75% speed.
+  - Hyper 106: gains vigor at 35% speed (was 50%).
+  - Tickler: +12% speed (was +5%).
+  - Anger Issue: 1,400 HP and a 120 hume shield, using a new fixed `shield` setting.
+
+Existing configs migrate once (role catalog revision 6). Only untouched old values change; your own edits are kept.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.8.0
 
 Adds two rare "any human" roles (catalog revision 5 appends them without overfilling any pool).
 
