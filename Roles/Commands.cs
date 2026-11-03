@@ -31,7 +31,7 @@ namespace Brainless.Roles
         {
             "myrole"
         };
-        public string Description => "Inspect roles, test with bprole set <roleID> [playerID], or reload tuning with bprole reload.";
+        public string Description => "Inspect roles, test with bprole set <roleID> [playerID], check the role panel with bprole hud [playerID], or reload tuning with bprole reload.";
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
@@ -40,6 +40,18 @@ namespace Brainless.Roles
             string[] args = arguments.ToArray();
             if (args.Length == 1 && args[0].Equals("reload", StringComparison.OrdinalIgnoreCase))
                 return plugin.ReloadTuning(out response);
+            if (args.Length >= 1 && args.Length <= 2 && args[0].Equals("hud", StringComparison.OrdinalIgnoreCase))
+            {
+                Player who = RoleCommands.Target(args.Length == 2 ? args[1] : null, sender);
+                if (!RoleCommands.Valid(who))
+                {
+                    response = "Usage: bprole hud [playerID]";
+                    return false;
+                }
+
+                response = plugin.HudDiagnosis(who);
+                return true;
+            }
             if (args.Length == 1 && (args[0] == "*" || args[0].Equals("all", StringComparison.OrdinalIgnoreCase)))
             {
                 response = string.Join("\n\n", Player.List.Where(RoleCommands.Valid).OrderBy(p => p.Id).Select(plugin.Inspect));

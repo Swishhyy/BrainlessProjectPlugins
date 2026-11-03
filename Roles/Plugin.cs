@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 2);
+        public override Version Version => new Version(0, 8, 3);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -325,6 +325,7 @@ namespace Brainless.Roles
 
         private CustomItem FindCustom(uint id) => CustomItem.Registered.FirstOrDefault(i => i.Id == id);
         private int Count(string id) => issued.TryGetValue(id, out int count) ? count : 0;
+        internal string HudDiagnosis(Player player) => roleHud?.Diagnose(player) ?? "Role HUD is not running.";
         internal string RoleId(Player player) => player != null && active.TryGetValue(player, out var a) ? a.Definition.Id : null;
         internal string Inspect(Player player)
         {
