@@ -115,10 +115,10 @@ About 80% of each spawn group rolls a custom role by default; the rest keep the 
 | Event | What happens | Staff controls |
 | --- | --- | --- |
 | Infection | Everyone is spread across Heavy Containment and Entrance, survivors in separate rooms away from the skeletons. Low-health SCP-3114 hunt humans; their direct kills convert victims at the death point. Other deaths stay dead. | `bpevent infection next` or `bpevent infection start` |
-| Deathmatch | Chaos has taken the facility (spawns in Heavy Containment and Entrance); MTF raids from the surface. No SCPs. Both sides respawn in waves every 15s; first to 40 kills, or the leader after 15 minutes, wins. | `bpevent deathmatch next` or `bpevent deathmatch start` |
-| Juggernaut | One Chaos Juggernaut in heavy armor (1000 HP + 150 per hunter, heals 75 per kill) against NTF hunters, who get its location every 30s. Killing the Juggernaut makes you the next one (+3 points); Juggernaut kills are +1. First to 20 points, or the leader after 10 minutes, wins. | `bpevent juggernaut next` or `bpevent juggernaut start` |
+| Deathmatch | Chaos has taken the facility (spawns in Heavy Containment and Entrance); MTF raids from the surface. No SCPs; Light Containment is locked off. Both sides respawn in waves every 15s; first to 40 kills, or the leader after 15 minutes, wins. | `bpevent deathmatch next` or `bpevent deathmatch start` |
+| Juggernaut | One Chaos Juggernaut in heavy armor (1000 HP + 150 per hunter, heals 75 per kill) against NTF hunters. Everyone has SCP-1344 goggle vision, and hunters get a live tracker with the Juggernaut’s distance, direction, room and HP. Light Containment is locked off. Killing the Juggernaut makes you the next one (+3 points); Juggernaut kills are +1. First to 20 points, or the leader after 10 minutes, wins. | `bpevent juggernaut next` or `bpevent juggernaut start` |
 
-Staff commands need four players. Automatic selection is off by default; when enabled it has a 3% chance per round, never runs two rounds in a row, and needs 12 players for Infection, 16 for Deathmatch and 10 for Juggernaut. Arena events lock the warhead and decontamination and block normal respawn waves. `bpevent status` checks progress; `bpevent stop` stops the rules, then restart the round for normal roles.
+Staff commands need four players. Automatic selection is off by default; when enabled it has a 3% chance per round, never runs two rounds in a row, and needs 12 players for Infection, 16 for Deathmatch and 10 for Juggernaut. Arena events lock the warhead, decontamination and the Light Containment checkpoints/elevators, and block normal respawn waves. `bpevent status` checks progress; `bpevent stop` stops the rules, then restart the round for normal roles.
 
 ## Other features
 

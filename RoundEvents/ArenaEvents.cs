@@ -4,6 +4,7 @@ using System.Linq;
 using Brainless.Internal;
 using Exiled.API.Enums;
 using Exiled.API.Features;
+using Exiled.API.Features.Doors;
 using Exiled.API.Features.Items;
 using Exiled.Events.EventArgs.Player;
 using Exiled.Events.EventArgs.Server;
@@ -42,6 +43,11 @@ namespace Brainless.RoundEvents
         private readonly HashSet<string> waiting = new HashSet<string>();
         private readonly HashSet<Player> owned = new HashSet<Player>();
         private readonly Dictionary<Player, Vector3> placement = new Dictionary<Player, Vector3>();
+        private readonly List<Door> lczLocks = new List<Door>();
+        private readonly HashSet<Player> goggles = new HashSet<Player>();
+
+        // Our own lock flag, so ending the event never removes a lock staff or the game set.
+        private const DoorLockType LczLock = DoorLockType.Isolation;
         private int chaosKills, mtfKills;
         private float started, nextWave, nextReveal, nextScoreboard;
         private string juggernaut, pendingJuggernaut;
@@ -98,6 +104,9 @@ namespace Brainless.RoundEvents
                 DecontaminationController.Singleton.DecontaminationOverride = DecontaminationController.DecontaminationStatus.Disabled;
             }
 
+            if (mode == ArenaMode.Deathmatch ? Config.Deathmatch.LockLightContainment : Config.Juggernaut.LockLightContainment)
+                LockLightContainment();
+
             if (mode == ArenaMode.Deathmatch)
             {
                 for (int i = 0; i < players.Length; i++)
@@ -137,9 +146,52 @@ namespace Brainless.RoundEvents
             Clear();
         }
 
+        // Close and lock the LCZ checkpoints and LCZ elevators so nobody leaves the arena.
+        private void LockLightContainment()
+        {
+            var doors = Door.List.Where(d => d != null && (d.Type == DoorType.CheckpointLczA || d.Type == DoorType.CheckpointLczB || d.Type == DoorType.ElevatorLczA || d.Type == DoorType.ElevatorLczB)).ToList();
+            foreach (var type in new[] { ElevatorType.LczA, ElevatorType.LczB })
+            {
+                var lift = Lift.Get(type);
+                if (lift != null)
+                    doors.AddRange(lift.Doors);
+            }
+
+            foreach (var door in doors.Distinct())
+                Safe.Run(() =>
+                {
+                    door.IsOpen = false;
+                    if (!door.DoorLockType.HasFlag(LczLock))
+                    {
+                        door.Lock(LczLock);
+                        lczLocks.Add(door);
+                    }
+                });
+            Log.Info($"[PB Round Events] Light Containment locked ({lczLocks.Count} checkpoint/elevator doors).");
+        }
+
+        private void UnlockLightContainment()
+        {
+            foreach (var door in lczLocks)
+                Safe.Run(() =>
+                {
+                    if (door?.Base != null && door.DoorLockType.HasFlag(LczLock))
+                        door.ChangeLock(LczLock); // removes only our flag
+                });
+            lczLocks.Clear();
+        }
+
         private void Clear()
         {
             lifetime.Clear();
+            UnlockLightContainment();
+            foreach (var player in goggles)
+                Safe.Run(() =>
+                {
+                    if (player != null && player.IsConnected)
+                        player.DisableEffect(EffectType.Scp1344);
+                });
+            goggles.Clear();
             if (Active)
             {
                 Warhead.IsLocked = previousWarheadLock;
@@ -225,6 +277,13 @@ namespace Brainless.RoundEvents
                     player.Position = point.Value;
                 if (protection > 0)
                     player.EnableEffect(EffectType.SpawnProtected, protection);
+                if (Mode == ArenaMode.Juggernaut && Config.Juggernaut.GogglesForEveryone)
+                {
+                    // Duration 0 keeps the goggle vision until the event ends (a respawn reapplies it).
+                    player.EnableEffect(EffectType.Scp1344, 0);
+                    goggles.Add(player);
+                }
+
                 waiting.Remove(player.UserId);
                 return true;
             }
@@ -416,7 +475,7 @@ namespace Brainless.RoundEvents
                 nextScoreboard = now + 15;
                 string clock = Clock(Math.Max(0, Limit - (now - started)));
                 string text = Mode == ArenaMode.Deathmatch ? $"<color=#2ecc40>Chaos {chaosKills}</color> / <color=#3fa9f5>MTF {mtfKills}</color>  |  first to {Config.Deathmatch.KillTarget}  |  {clock} left" : $"Leader: {Leader()}  |  first to {Config.Juggernaut.ScoreTarget}  |  {clock} left";
-                foreach (var player in Player.List.Where(p => Real(p) && p.IsAlive))
+                foreach (var player in Player.List.Where(p => Real(p) && p.IsAlive && (Mode != ArenaMode.Juggernaut || p.UserId == juggernaut)))
                     player.ShowHint(text, 3);
             }
         }
@@ -437,12 +496,22 @@ namespace Brainless.RoundEvents
                 return;
             }
 
-            if (current == null || now < nextReveal)
+            if (current == null || !current.IsAlive || now < nextReveal)
                 return;
-            nextReveal = now + Config.Juggernaut.RevealIntervalSeconds;
-            string where = current.CurrentRoom == null ? current.Zone.ToString() : current.Zone + " - " + current.CurrentRoom.Type;
+            float interval = Config.Juggernaut.RevealIntervalSeconds;
+            nextReveal = now + interval;
+            Vector3 target = current.Position;
+            string zone = current.Zone.ToString();
+            string room = current.CurrentRoom == null ? "" : current.CurrentRoom.Type.ToString();
+            string score = $"\n<size=70%>Leader: {Leader()}  |  first to {Config.Juggernaut.ScoreTarget}  |  {Clock(Math.Max(0, Limit - (now - started)))} left</size>";
             foreach (var hunter in Player.List.Where(p => Real(p) && p.IsAlive && p.UserId != juggernaut))
-                hunter.ShowHint($"<color=#e74c3c>Juggernaut</color> last seen: {where}", 4);
+                Safe.Run(() =>
+                {
+                    Vector3 offset = target - hunter.Position;
+                    Vector3 facing = hunter.CameraTransform.forward;
+                    string arrow = TrackerRules.Arrow(facing.x, facing.z, offset.x, offset.z);
+                    hunter.ShowHint(TrackerRules.Describe(zone, room, offset.magnitude, arrow, TrackerRules.Height(offset.y), current.Health) + score, interval + 1);
+                });
         }
     }
 }

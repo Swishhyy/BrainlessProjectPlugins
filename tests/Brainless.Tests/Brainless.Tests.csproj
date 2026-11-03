@@ -4,6 +4,7 @@
     <Compile Include="../../Shared/SupRules.cs" Link="SupRules.cs" />
     <Compile Include="../../Shared/GameplayText.cs" Link="GameplayText.cs" />
     <Compile Include="../../RoundEvents/InfectionRules.cs" Link="InfectionRules.cs" />
+    <Compile Include="../../RoundEvents/TrackerRules.cs" Link="TrackerRules.cs" />
     <Compile Include="../../SlFixes/CaptureRules.cs" Link="CaptureRules.cs" />
     <Compile Include="../../Shared/Updates/UpdateDiagnostics.cs" Link="Updates/UpdateDiagnostics.cs" />
     <Compile Include="../../Shared/Rules.cs" Link="Rules.cs" />
