@@ -27,7 +27,7 @@ The combined ZIP includes these pages. Start with `CATALOG.md` for content or `S
 | [SlFixes](SlFixes) | `Brainless.SlFixes.dll` | Captive recruitment, guard escape, SCP-914 additions and action tracking |
 | [RoundEvents](RoundEvents) | `Brainless.RoundEvents.dll` | Infection, Deathmatch and Juggernaut events |
 
-Current component versions: Roles **0.8.2**, Items **0.8.2**, Weapons **0.9.1**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.3.2**, Fixes **0.5.0**, Events **0.3.1**.
+Current component versions: Roles **0.8.3**, Items **0.8.2**, Weapons **0.9.1**, BetterCoinflips **5.1.9**, SCP voice **0.2.2**, Core **0.3.2**, Fixes **0.5.0**, Events **0.3.1**.
 
 ## Install / update
 

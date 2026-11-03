@@ -16,6 +16,7 @@
 | `bprole all` | Inspects everyone’s roles | `brainless.roles` |
 | `bproles [playerID]` | Lists roles, active percentages and blocked reasons | `brainless.roles` |
 | `bprole set <roleID> [playerID]` | Assigns a custom profile for testing | `brainless.roles` |
+| `bprole hud [playerID]` | Explains what the role panel shows for a player (or who they are spectating) and why | `brainless.roles` |
 | `bprole reload` | Applies role config edits | `brainless.roles` |
 | `bpscpchat status` | Shows active speech gain and range | `brainless.scpchat.configure` |
 | `bpscpchat volume <0-20>` | Changes speech volume immediately; default 10 | `brainless.scpchat.configure` |

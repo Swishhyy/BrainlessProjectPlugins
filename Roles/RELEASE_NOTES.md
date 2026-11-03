@@ -1,4 +1,14 @@
-# Roles 0.8.2
+# Roles 0.8.3
+
+Spectator role panel fixes:
+
+- **Always shows something:** spectators see the panel for any living player they watch. Without a subclass it shows the role with "no subclass", so it's clear the panel is working.
+- **Can't be starved:** if another plugin's hints keep the spectator panel hidden for more than 4 seconds, it shows anyway. Living players still never have another plugin's hint replaced.
+- **New admin check:** `bprole hud [playerID]` explains what the panel sees for a player: who they're watching, that player's subclass, and whether the panel is shown or waiting.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs.
+
+## Previous: 0.8.2
 
 **Spectators see subclasses.** While spectating, you see the custom role of the player you're watching (name, ID and description) in the same role panel players get, under a small "Spectating <name>" line. It only appears when that player has a custom role. Turn it off with `show_spectated_role: false`.
 
