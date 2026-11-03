@@ -33,13 +33,15 @@ namespace Brainless.Core
         private readonly Dictionary<string, Cached> cache = new Dictionary<string, Cached>(StringComparer.Ordinal);
         private readonly Task worker;
         private readonly Func<ServerSnapshot> status;
+        private readonly Func<bool> idle;
         private int disposed;
 
         internal bool PrivateEndpointsEnabled => signatures.Enabled;
 
-        internal StatsApi(StatsApiConfig config, StatsStore store, int step, Action<string> log, Func<ServerSnapshot> status = null)
+        internal StatsApi(StatsApiConfig config, StatsStore store, int step, Action<string> log, Func<ServerSnapshot> status = null, Func<bool> idle = null)
         {
             this.status = status ?? (() => null);
+            this.idle = idle ?? (() => false);
             this.config = config;
             this.store = store;
             this.step = step;
@@ -149,7 +151,7 @@ namespace Brainless.Core
 
             if (method == "GET" && route == "status")
             {
-                Respond(context, 200, StatsApiRules.Status(status(), DateTime.UtcNow), true, "public, max-age=5");
+                Respond(context, 200, StatsApiRules.Status(status(), DateTime.UtcNow, idle()), true, "public, max-age=5");
                 return;
             }
 

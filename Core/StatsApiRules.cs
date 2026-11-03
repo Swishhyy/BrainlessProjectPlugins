@@ -98,10 +98,16 @@ namespace Brainless.Core
         }
 
         // Public server status for the website and the Discord bot. A snapshot older
-        // than 30 seconds means the game loop is not running, so report offline.
-        internal static string Status(ServerSnapshot snapshot, DateTime now)
+        // than 30 seconds means the game loop is not running, so report offline. The
+        // server's idle mode (nobody online) slows the game loop on purpose: that is
+        // reported as online with 0 players.
+        internal static string Status(ServerSnapshot snapshot, DateTime now, bool idle = false)
         {
-            if (snapshot == null || (now - snapshot.Captured).TotalSeconds > 30)
+            if (snapshot == null)
+                return "{\"online\":false}";
+            if (idle)
+                return "{\"online\":true,\"players\":0,\"maxPlayers\":" + snapshot.MaxPlayers + ",\"roundStarted\":false,\"roundSeconds\":0,\"idle\":true,\"updated\":" + Json(now.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)) + "}";
+            if ((now - snapshot.Captured).TotalSeconds > 30)
                 return "{\"online\":false}";
             return "{\"online\":true,\"players\":" + snapshot.Players + ",\"maxPlayers\":" + snapshot.MaxPlayers + ",\"roundStarted\":" + (snapshot.RoundStarted ? "true" : "false") + ",\"roundSeconds\":" + snapshot.RoundSeconds + ",\"updated\":" + Json(snapshot.Captured.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)) + "}";
         }
