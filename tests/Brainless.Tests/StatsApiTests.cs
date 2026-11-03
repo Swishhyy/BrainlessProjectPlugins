@@ -59,6 +59,8 @@ internal static class StatsApiTests
         using (var json = System.Text.Json.JsonDocument.Parse(StatsApiRules.Status(snapshot, at.AddSeconds(3))))
             check(json.RootElement.GetProperty("online").GetBoolean() && json.RootElement.GetProperty("players").GetInt32() == 8 && json.RootElement.GetProperty("maxPlayers").GetInt32() == 25 && json.RootElement.GetProperty("roundStarted").GetBoolean(), "the status endpoint reports players, max players and round state");
         check(StatsApiRules.Status(snapshot, at.AddSeconds(45)) == "{\"online\":false}" && StatsApiRules.Status(null, at) == "{\"online\":false}", "a stale or missing game-thread snapshot reports the server offline");
+        using (var json = System.Text.Json.JsonDocument.Parse(StatsApiRules.Status(snapshot, at.AddMinutes(10), idle: true)))
+            check(json.RootElement.GetProperty("online").GetBoolean() && json.RootElement.GetProperty("players").GetInt32() == 0 && json.RootElement.GetProperty("maxPlayers").GetInt32() == 25 && json.RootElement.GetProperty("idle").GetBoolean(), "an idle server (nobody online) reports online with 0 players even while its game loop is slowed");
         check(StatsText.Playtime(90061) == "25h 1m", "server playtime display does not wrap back to zero after one day");
         check(!StatsText.SafeName("@everyone **test**\n").Contains('@') && !StatsText.SafeName("@everyone **test**\n").Contains('\n'), "leaderboard names cannot generate mentions or inject extra output lines");
     }

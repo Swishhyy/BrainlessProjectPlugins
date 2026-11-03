@@ -1,4 +1,10 @@
-# Core 0.3.1
+# Core 0.3.2
+
+Fixes the status endpoint reporting the server **offline** while it was in idle mode, which happens when nobody is online. Idle mode slows game time to 1% and runs the server at 1 FPS, so the once-a-second status refresh ran only about every 100 seconds and looked stale. The refresh now follows a real-time clock. An idle server always reports `online` with 0 players and `"idle":true`.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs.
+
+## Previous: 0.3.1
 
 New public stats API endpoint: `GET /api/v1/status` returns `{"online":true,"players":8,"maxPlayers":25,"roundStarted":true,"roundSeconds":125,"updated":"…"}`. The Discord bot uses it for its "Watching … 8/25" status and the population alerts, and the website can use it too. The count is captured on the game thread every second; a snapshot older than 30 seconds reports `{"online":false}`. Player counts are public in the server list, so the endpoint needs no secret.
 

@@ -17,7 +17,7 @@ namespace Brainless.Core
         public override string Name => "ProjectBrainlessCore";
         public override string Prefix => "project_brainless_core";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 3, 1);
+        public override Version Version => new Version(0, 3, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Highest;
         public static Plugin Instance { get; private set; }
@@ -73,7 +73,7 @@ namespace Brainless.Core
                 {
                     try
                     {
-                        Http = new StatsApi(Config.StatsApi, store, Config.XpPerLevelSquared, messages.Enqueue, () => serverStatus);
+                        Http = new StatsApi(Config.StatsApi, store, Config.XpPerLevelSquared, messages.Enqueue, () => serverStatus, () => IdleMode.IdleModeActive);
                     }
                     catch (Exception failure)
                     {
@@ -96,11 +96,22 @@ namespace Brainless.Core
         private volatile ServerSnapshot serverStatus;
 
         // Runs on the game thread: flushes log lines and refreshes the server status
-        // snapshot that the stats API serves at /api/v1/status.
+        // snapshot that the stats API serves at /api/v1/status. It checks a real-time
+        // clock every frame instead of waiting on game time, because the server's idle
+        // mode slows game time to 1% (and runs at 1 FPS) when nobody is online.
         private System.Collections.Generic.IEnumerator<float> FlushMessages()
         {
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            long next = 0;
             while (true)
             {
+                if (clock.ElapsedMilliseconds < next)
+                {
+                    yield return Timing.WaitForOneFrame;
+                    continue;
+                }
+
+                next = clock.ElapsedMilliseconds + 1000;
                 while (messages.TryDequeue(out string message))
                     Log.Info("[Project Brainless Core] " + message);
                 try
@@ -112,7 +123,7 @@ namespace Brainless.Core
                     // The next tick tries again; a stale snapshot reports offline.
                 }
 
-                yield return Timing.WaitForSeconds(1);
+                yield return Timing.WaitForOneFrame;
             }
         }
 
