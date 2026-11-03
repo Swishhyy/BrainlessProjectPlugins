@@ -1,4 +1,23 @@
-# Round Events 0.3.0
+# Round Events 0.3.1
+
+Infection now spreads everyone out when it starts. Before, a skeleton could start right on top of a crowd, such as 20 Class-D in the cells.
+
+- Skeletons start in rooms as far apart from each other as possible.
+- Survivors start in separate rooms, each at least 35 m from every skeleton (`minimum_spawn_distance`). Rooms are only shared once every safe room is in use, and then evenly.
+- Everyone gets 5 seconds of spawn protection (`start_protection_seconds`).
+- Starts use Heavy Containment and Entrance (`spawn_zones`). Light Containment isn't recommended because decontamination still runs. Hazard rooms (Tesla, 106, 079, Pocket) are never used.
+- `spread_players: false` restores the old behaviour, where everyone starts where they stand.
+
+**Deathmatch and Juggernaut lock Light Containment.** The LCZ checkpoint doors and LCZ elevators are closed and locked for the whole event, then unlocked at the end (`lock_light_containment`). The event uses its own lock flag, so a lock set by staff stays in place.
+
+**The Juggernaut is easy to find:**
+- Everyone gets SCP-1344 goggle vision for the whole event, so players show through walls within about 22 m, or 44 m on the surface (`goggles_for_everyone`).
+- Hunters get a live tracker every 2 seconds showing the Juggernaut's distance, a direction arrow relative to where you're looking, whether it's above or below you, its zone and room, and its HP. The scoreboard is shown under the tracker.
+- Untouched 30-second reveal intervals migrate to 2 seconds (`reveal_interval_seconds`).
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.3.0
 
 Automatic events are rarer and safer: 3% per round by default (untouched 10% configs migrate), never two rounds in a row, and each needs its own player count: Infection 12, Deathmatch 16, Juggernaut 10 (`automatic_minimum_players`). Staff commands are unchanged.
 

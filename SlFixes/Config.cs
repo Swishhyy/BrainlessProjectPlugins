@@ -21,6 +21,9 @@ namespace Brainless.SlFixes
 
         [Description("An uncuffed Facility Guard who reaches the surface escape zone joins MTF.")]
         public GuardEscapeConfig GuardEscape { get; set; } = new GuardEscapeConfig();
+
+        [Description("When the round ends, turn on friendly fire so everyone can attack everyone until the next round. The game does not punish friendly fire after the round ends.")]
+        public EndOfRoundFriendlyFireConfig EndOfRoundFriendlyFire { get; set; } = new EndOfRoundFriendlyFireConfig();
         public int MaxCraftXpAwardsPerPlayerPerRound { get; set; } = 3;
         public int MaxTeleportXpAwardsPerPlayerPerRound { get; set; } = 3;
         public int MinimumRoundSecondsForXp { get; set; } = 120;
@@ -88,6 +91,8 @@ namespace Brainless.SlFixes
         };
         internal void Validate()
         {
+            if (EndOfRoundFriendlyFire == null || EndOfRoundFriendlyFire.BroadcastSeconds > 60 || EndOfRoundFriendlyFire.Message == null)
+                throw new InvalidOperationException("end_of_round_friendly_fire needs a message and broadcast_seconds of 0-60.");
             if (CaptureConversions == null || double.IsNaN(CaptureConversions.MinimumAliveSeconds) || double.IsInfinity(CaptureConversions.MinimumAliveSeconds) || CaptureConversions.MinimumAliveSeconds < 0 || CaptureConversions.MinimumAliveSeconds > 3600 || !(CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosConscript || CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosRifleman || CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosMarauder || CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosRepressor) || !(CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfPrivate || CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfSergeant || CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfSpecialist || CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfCaptain))
                 throw new InvalidOperationException("Invalid capture conversion role or minimum_alive_seconds.");
             if (double.IsNaN(RoughTeleportChance) || double.IsInfinity(RoughTeleportChance) || RoughTeleportChance < 0 || RoughTeleportChance > 100 || MaxCraftXpAwardsPerPlayerPerRound < 0 || MaxTeleportXpAwardsPerPlayerPerRound < 0 || MinimumRoundSecondsForXp < 0)
@@ -125,6 +130,15 @@ namespace Brainless.SlFixes
     public sealed partial class Config
     {
         private static readonly uint[] RetiredRecipes = { 7104, 7106, 7109, 7111, 7118, 7121, 7201, 7203, 7208 };
+    }
+
+    public sealed class EndOfRoundFriendlyFireConfig
+    {
+        public bool Enabled { get; set; } = true;
+
+        [Description("Seconds to show the broadcast; 0 for none.")]
+        public ushort BroadcastSeconds { get; set; } = 5;
+        public string Message { get; set; } = "<b><color=#e74c3c>FRIENDLY FIRE IS ON</color></b>\nThe round is over. Everyone can attack everyone!";
     }
 
     public sealed class GuardEscapeConfig

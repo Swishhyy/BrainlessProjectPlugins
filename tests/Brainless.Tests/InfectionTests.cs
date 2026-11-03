@@ -1,10 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Brainless.RoundEvents;
 
 internal static class InfectionTests
 {
     internal static void Run(Action<bool, string> check)
     {
+        SpreadTests(check);
+        check(TrackerRules.Arrow(0, 1, 0, 10) == "↑" && TrackerRules.Arrow(0, 1, 10, 0) == "→" && TrackerRules.Arrow(0, 1, 0, -10) == "↓" && TrackerRules.Arrow(0, 1, -10, 0) == "←", "the Juggernaut tracker arrow points ahead, right, behind and left relative to the hunter");
+        check(TrackerRules.Arrow(1, 0, 0, 10) == "←" && TrackerRules.Arrow(0, 1, 7, 7) == "↗" && TrackerRules.Arrow(0, 1, 0, 0) == "•", "the tracker arrow follows the hunter's facing and handles diagonals and standing on top");
+        check(TrackerRules.Height(12) == " above you" && TrackerRules.Height(-12) == " below you" && TrackerRules.Height(2) == "", "the tracker says when the Juggernaut is on another floor");
+        check(TrackerRules.Describe("HeavyContainment", "HczNuke", 47.6, "↗", "", 1234.4).Contains("48 m") && TrackerRules.Describe("Entrance", "", 5, "↑", "", 1).Contains("Entrance · 1 HP"), "the tracker shows distance, zone, room and health");
         check(InfectionRules.SeedCount(4, 3, 20, 8, 2) == 2 && InfectionRules.SeedCount(10, 3, 20, 8, 2) == 3, "infection starts a swarm while preserving the minimum survivors in small lobbies");
         check(InfectionRules.SeedCount(40, 3, 20, 8, 2) == 8 && InfectionRules.SeedCount(100, 3, 100, 8, 2) == 8, "percentage seeding respects its configured hard maximum");
         check(InfectionRules.SeedCount(1, 3, 20, 8, 2) == 0, "too few living players cannot seed an unwinnable all-infected round");
@@ -56,6 +63,13 @@ internal static class InfectionTests
         config = new Brainless.RoundEvents.Config(); config.Infection.SurvivorRole = PlayerRoles.RoleTypeId.Scp3114;
         invalid = false; try { config.Validate(); } catch (InvalidOperationException) { invalid = true; }
         check(invalid, "the survivor side cannot be configured as another SCP faction");
+        config = new Brainless.RoundEvents.Config();
+        check(config.Juggernaut.GogglesForEveryone && config.Juggernaut.LockLightContainment && config.Deathmatch.LockLightContainment && config.Juggernaut.RevealIntervalSeconds == 2 && config.Infection.SpreadPlayers, "arena events lock Light Containment, Juggernaut gives everyone goggles with a live tracker, and Infection spreads players by default");
+        config = new Brainless.RoundEvents.Config { EventBalanceRevision = 1 };
+        config.Juggernaut.RevealIntervalSeconds = 30; config.Validate();
+        var edited = new Brainless.RoundEvents.Config { EventBalanceRevision = 1 };
+        edited.Juggernaut.RevealIntervalSeconds = 45; edited.Validate();
+        check(config.Juggernaut.RevealIntervalSeconds == 2 && edited.Juggernaut.RevealIntervalSeconds == 45 && config.EventBalanceRevision == 2, "untouched 30-second Juggernaut reveals migrate to the live tracker while edited intervals are kept");
         var native = (PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler));
         typeof(PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler).GetProperty("Subtype").SetValue(native, PlayerRoles.PlayableScps.Scp3114.Scp3114DamageHandler.HandlerType.Slap);
         check(NativeAttack.Classify(native) == InfectionAttack.Slap, "the actual game slap handler is recognized as an infection source");
@@ -68,4 +82,36 @@ internal static class InfectionTests
         check(NativeAttack.Classify(native) == InfectionAttack.Other, "synthetic starting-ragdoll data cannot infect a player");
     }
 #endif
+
+    // A 10 x 6 grid of rooms 20 m apart, like a spread-out facility.
+    private static List<SpreadPlanner.Point> Grid(int width, int depth, double spacing) =>
+        Enumerable.Range(0, width * depth).Select(i => new SpreadPlanner.Point(i % width * spacing, 0, i / width * spacing)).ToList();
+
+    private static void SpreadTests(Action<bool, string> check)
+    {
+        var rooms = Grid(10, 6, 20);
+        var random = new Random(4);
+        int[] plan = SpreadPlanner.Plan(rooms, 4, 20, 35, random);
+        var skeletons = plan.Take(4).ToArray();
+        var survivors = plan.Skip(4).ToArray();
+        double Gap(int a, int b) => rooms[a].Distance(rooms[b]);
+        check(plan.Length == 24 && plan.All(r => r >= 0 && r < rooms.Count), "every Infection player gets a start room");
+        check(survivors.All(h => skeletons.All(s => Gap(h, s) >= 35)), "no survivor starts within the minimum distance of a skeleton");
+        check(survivors.Distinct().Count() == 20 && !survivors.Intersect(skeletons).Any(), "with enough rooms every survivor starts in a different room from everyone");
+        double skeletonGap = skeletons.SelectMany((a, i) => skeletons.Skip(i + 1).Select(b => Gap(a, b))).Min();
+        check(skeletonGap >= 60, "skeletons start spread across the map instead of together");
+
+        int[] crowded = SpreadPlanner.Plan(Grid(4, 2, 20), 2, 30, 35, new Random(1));
+        var crowdedHumans = crowded.Skip(2).ToArray();
+        var perRoom = crowdedHumans.GroupBy(r => r).Select(g => g.Count()).ToArray();
+        check(crowded.All(r => r >= 0) && perRoom.Max() - perRoom.Min() <= 1, "with more survivors than safe rooms, survivors share rooms evenly");
+
+        int[] tiny = SpreadPlanner.Plan(Grid(2, 1, 10), 1, 5, 35, new Random(2));
+        check(tiny.Skip(1).All(r => r != tiny[0]), "on a map too small for the distance rule, survivors still avoid the skeleton's room");
+        check(SpreadPlanner.Plan(new List<SpreadPlanner.Point>(), 2, 3, 35, new Random(3)).All(r => r == -1), "with no usable rooms everyone keeps their current position");
+        var seen = new HashSet<string>();
+        for (int seed = 0; seed < 20; seed++)
+            seen.Add(string.Join(",", SpreadPlanner.Plan(rooms, 3, 5, 35, new Random(seed)).Take(3).OrderBy(r => r)));
+        check(seen.Count > 5, "skeleton start rooms vary from round to round");
+    }
 }

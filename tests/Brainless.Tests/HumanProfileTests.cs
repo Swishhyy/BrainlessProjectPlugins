@@ -29,6 +29,7 @@ internal static class HumanProfileTests
         check(parsed.HighestLevelValue == 3 && LockpickRules.Duration(parsed.HighestLevelValue, 15, 15) == 45, "a real level-three keycard permission now produces a 45-second pick instead of being rejected");
         var fixes = new Brainless.SlFixes.Config(); fixes.Validate();
         check(fixes.CaptureConversions.Enabled && fixes.CaptureConversions.MinimumAliveSeconds == 10 && fixes.CaptureConversions.ChaosRole == PlayerRoles.RoleTypeId.ChaosConscript && fixes.CaptureConversions.MtfRole == PlayerRoles.RoleTypeId.NtfPrivate, "capture conversion defaults use native opposing military ranks and a ten-second minimum life");
+        check(fixes.EndOfRoundFriendlyFire.Enabled && fixes.EndOfRoundFriendlyFire.BroadcastSeconds == 5 && fixes.EndOfRoundFriendlyFire.Message.Contains("FRIENDLY FIRE"), "friendly fire turns on at round end by default with a short broadcast");
         fixes.CaptureConversions.MtfRole = PlayerRoles.RoleTypeId.Tutorial;
         bool invalid = false;
         try { fixes.Validate(); } catch (InvalidOperationException) { invalid = true; }

@@ -45,11 +45,21 @@ namespace Brainless.RoundEvents
                 EventBalanceRevision = 1;
             }
 
+            if (EventBalanceRevision < 2)
+            {
+                // The Juggernaut tracker now updates live; untouched 30-second reveals speed up.
+                if (Juggernaut != null && Juggernaut.RevealIntervalSeconds == 30)
+                    Juggernaut.RevealIntervalSeconds = 2;
+                EventBalanceRevision = 2;
+            }
+
             if (AutoUpdate == null)
                 throw new InvalidOperationException("auto_update cannot be null.");
             Tuning.Validate(this, "round_events");
             if (Infection.MinimumPlayers <= Infection.MinimumSurvivors)
                 throw new InvalidOperationException("minimum_players must exceed minimum_survivors.");
+            if (Infection.SpawnZones == null)
+                throw new InvalidOperationException("infection.spawn_zones cannot be null (use [] for Heavy Containment and Entrance).");
             if (Deathmatch == null || Juggernaut == null || Deathmatch.ChaosRoles == null || Deathmatch.MtfRoles == null || Deathmatch.ChaosZones == null || Juggernaut.HunterRoles == null || Juggernaut.JuggernautZones == null)
                 throw new InvalidOperationException("Deathmatch and Juggernaut settings and their role/zone lists cannot be null.");
             if (Deathmatch.ChaosRoles.Any(r => !ChaosRoles.Contains(r)) || Deathmatch.MtfRoles.Any(r => !MtfRoles.Contains(r)) || Juggernaut.HunterRoles.Any(r => !MtfRoles.Contains(r)) || !ChaosRoles.Contains(Juggernaut.JuggernautRole))
@@ -100,6 +110,20 @@ namespace Brainless.RoundEvents
 
         [Tune(0, 30)]
         public float EndingGraceSeconds { get; set; } = 3;
+
+        [Description("Move everyone to separate rooms when Infection starts, with skeletons kept away from survivors. Off keeps players where they stand.")]
+        public bool SpreadPlayers { get; set; } = true;
+
+        [Description("Zones used for spread-out starts. Light Containment is not recommended: decontamination still runs during Infection.")]
+        public List<ZoneType> SpawnZones { get; set; } = new List<ZoneType> { ZoneType.HeavyContainment, ZoneType.Entrance };
+
+        [Description("Minimum distance in meters between a survivor's start room and any skeleton's start room (relaxed automatically on small maps).")]
+        [Tune(0, 500)]
+        public float MinimumSpawnDistance { get; set; } = 35;
+
+        [Description("Seconds of spawn protection for everyone at the start, so nobody is killed before they can move.")]
+        [Tune(0, 60)]
+        public float StartProtectionSeconds { get; set; } = 5;
         public bool AllowSlapInfections { get; set; } = true;
         public bool AllowStrangulationInfections { get; set; } = true;
         public bool AllowDisguises { get; set; }
@@ -136,6 +160,9 @@ namespace Brainless.RoundEvents
 
         [Description("Zones where Chaos spawns inside the facility. Light Containment is excluded by default.")]
         public List<ZoneType> ChaosZones { get; set; } = new List<ZoneType> { ZoneType.HeavyContainment, ZoneType.Entrance };
+
+        [Description("Lock the Light Containment checkpoints and elevators for the whole event.")]
+        public bool LockLightContainment { get; set; } = true;
     }
 
     public sealed class JuggernautTuning
@@ -179,8 +206,14 @@ namespace Brainless.RoundEvents
         [Tune(0, 1000)]
         public int PointsForJuggernautKill { get; set; } = 3;
 
-        [Description("How often hunters are told which zone and room the Juggernaut is in.")]
-        [Tune(5, 600)]
-        public float RevealIntervalSeconds { get; set; } = 30;
+        [Description("How often the hunters' Juggernaut tracker (zone, room, distance, direction, HP) refreshes.")]
+        [Tune(1, 600)]
+        public float RevealIntervalSeconds { get; set; } = 2;
+
+        [Description("Give everyone SCP-1344 goggle vision (see players through walls within about 22 m, 44 m on the surface) for the whole event.")]
+        public bool GogglesForEveryone { get; set; } = true;
+
+        [Description("Lock the Light Containment checkpoints and elevators for the whole event.")]
+        public bool LockLightContainment { get; set; } = true;
     }
 }

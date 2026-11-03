@@ -23,7 +23,7 @@ namespace Brainless.RoundEvents
         public override string Name => "Project Brainless Round Events";
         public override string Prefix => "project_brainless_round_events";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 3, 0);
+        public override Version Version => new Version(0, 3, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Last;
         public static Plugin Instance { get; private set; }
@@ -214,13 +214,15 @@ namespace Brainless.RoundEvents
             preparing = true;
             started = Time.time;
             var seeds = new HashSet<Player>(players.Take(count));
+            var spread = cfg.SpreadPlayers ? SpreadStarts(players.Take(count).ToArray(), players.Skip(count).ToArray()) : new Dictionary<Player, Vector3>();
             try
             {
                 foreach (var player in players)
                 {
                     participants.Add(player.UserId);
-                    Vector3? point = player.Role is FpcRole && Finite(player.Position) ? player.Position : (Vector3? )null;
-                    SetRole(player, seeds.Contains(player), point);
+                    Vector3? point = spread.TryGetValue(player, out var start) ? start : player.Role is FpcRole && Finite(player.Position) ? player.Position : (Vector3? )null;
+                    if (SetRole(player, seeds.Contains(player), point) && cfg.StartProtectionSeconds > 0)
+                        player.EnableEffect(EffectType.SpawnProtected, cfg.StartProtectionSeconds);
                 }
             }
             finally
@@ -234,6 +236,44 @@ namespace Brainless.RoundEvents
             Map.Broadcast(12, "<b>INFECTION</b>\nSCP-3114 kills turn humans into skeletons at their death position. Other deaths stay dead.\nSurvivors: eliminate the infected.");
             Log.Info("[PB Round Events] " + response);
             return true;
+        }
+
+        // Start points for a spread-out Infection: skeletons far apart, survivors in
+        // separate rooms at least minimum_spawn_distance from every skeleton.
+        private Dictionary<Player, Vector3> SpreadStarts(Player[] infected, Player[] survivors)
+        {
+            var result = new Dictionary<Player, Vector3>();
+            var random = new System.Random();
+            var rooms = new List<Room>();
+            var anchors = new List<Vector3>();
+            foreach (var room in FacilitySpawns.Rooms(Config.Infection.SpawnZones, random))
+            {
+                var point = FacilitySpawns.PointIn(room, random);
+                if (!point.HasValue)
+                    continue;
+                rooms.Add(room);
+                anchors.Add(point.Value);
+            }
+
+            if (rooms.Count == 0)
+            {
+                Log.Warn("[PB Round Events] Infection could not find clear rooms in spawn_zones; players start where they stand.");
+                return result;
+            }
+
+            var plan = SpreadPlanner.Plan(anchors.Select(a => new SpreadPlanner.Point(a.x, a.y, a.z)).ToList(), infected.Length, survivors.Length, Config.Infection.MinimumSpawnDistance, random);
+            var used = new HashSet<int>();
+            var everyone = infected.Concat(survivors).ToArray();
+            for (int i = 0; i < everyone.Length; i++)
+            {
+                int room = plan[i];
+                if (room < 0)
+                    continue;
+                // The first player in a room takes its checked point; others get their own spot nearby.
+                result[everyone[i]] = used.Add(room) ? anchors[room] : FacilitySpawns.PointIn(rooms[room], random) ?? anchors[room];
+            }
+
+            return result;
         }
 
         private bool SetRole(Player player, bool infected, Vector3? point)
