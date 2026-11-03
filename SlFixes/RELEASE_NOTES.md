@@ -1,4 +1,10 @@
-# SlFixes 0.4.1
+# SlFixes 0.5.0
+
+**End-of-round friendly fire:** when a round ends, friendly fire turns on so everyone can attack everyone until the restart, with a short broadcast. The game already pauses its friendly-fire auto-punish detector at round end, so nobody is kicked or banned for it. When the next round starts, friendly fire goes back to the server's own setting. If friendly fire is already on, nothing changes. Custom grenades and weapons hit teammates too while it's on. Configure it with `end_of_round_friendly_fire` (`enabled`, `broadcast_seconds`, `message`).
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.4.1
 
 Drops SCP-914 recipes for removed items (Bio Grenade, Railgun).
 

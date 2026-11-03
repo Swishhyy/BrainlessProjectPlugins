@@ -73,6 +73,7 @@ lines += ['', 'About 80% of each spawn group rolls a custom role by default; the
           '| Discord stats | Shows your or another linked player’s level, XP and playtime; top 10 and opt-out. | `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-optout`. Link first with `.pblink` → `/pb-link`. |',
           '| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. Either can recruit Rogues. | Escort the captive to the normal surface escape area. |',
           '| Guard escape | An uncuffed Facility Guard who reaches the surface escape area becomes an NTF Sergeant. | Walk to the normal surface escape area. |',
+          '| End-of-round friendly fire | When the round ends, friendly fire turns on so everyone can attack everyone until the restart. It is not punished. | Automatic; owners set `end_of_round_friendly_fire` in the Fixes config. |',
           '| BetterCoinflips | Gives configured random outcomes from ordinary coin flips. | Equip a normal coin and flip it. |',
           '| SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |',
           '| Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |',
