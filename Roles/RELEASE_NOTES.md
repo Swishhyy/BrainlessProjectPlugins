@@ -1,4 +1,10 @@
-# Roles 0.8.1
+# Roles 0.8.2
+
+**Spectators see subclasses.** While spectating, you see the custom role of the player you're watching (name, ID and description) in the same role panel players get, under a small "Spectating <name>" line. It only appears when that player has a custom role. Turn it off with `show_spectated_role: false`.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs. Needs a live playtest.
+
+## Previous: 0.8.1
 
 Playtest fixes:
 

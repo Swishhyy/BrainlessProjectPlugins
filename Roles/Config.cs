@@ -24,6 +24,9 @@ namespace Brainless.Roles
         public bool ShowRoleHud { get; set; } = true;
         public bool RoleHudShowDescription { get; set; } = true;
 
+        [Description("Spectators see the custom role of the player they are watching.")]
+        public bool ShowSpectatedRole { get; set; } = true;
+
         [Description("Screen side for the role HUD: Left or Right.")]
         public HudSide RoleHudSide { get; set; } = HudSide.Left;
 
