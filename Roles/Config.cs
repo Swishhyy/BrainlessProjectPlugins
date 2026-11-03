@@ -144,6 +144,7 @@ namespace Brainless.Roles
             UpgradeReworkedProfiles();
             UpgradeFactionProfiles();
             UpgradeAnyHumanProfiles();
+            UpgradeRoleBalance();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -293,6 +294,79 @@ namespace Brainless.Roles
         private static readonly ItemType ItemTypeE11 = ItemType.GunE11SR;
 
         // Revision 5: append the "any human" profiles without overfilling any pool.
+        // Revision 6: playtest balance. Untouched old values move to the new defaults:
+        // Trained Agent +2% speed, Poisonous 106 5% slower with 75% vigor gain, Hyper 106
+        // 35% vigor gain, Tickler +12% speed, Anger Issue 1,400 HP / 120 shield, Big Boi
+        // 1.15 width. General always drops the frag grenade so its kit fits, and
+        // Resilient/Big Boi get their chance back if the revision 5 cap left them at 0.
+        private void UpgradeRoleBalance()
+        {
+            if (RoleCatalogRevision >= 6)
+                return;
+            var fresh = Catalog.Create().ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+            bool Near(float a, float b) => Math.Abs(a - b) < .001f;
+            foreach (var role in Roles)
+            {
+                switch (role.Id.ToUpperInvariant())
+                {
+                    case "G03":
+                        if (Near(role.SpeedMultiplier, 1.05f))
+                            role.SpeedMultiplier = 1.02f;
+                        break;
+                    case "L04":
+                        if (Near(role.SpeedMultiplier, .85f))
+                            role.SpeedMultiplier = .95f;
+                        if (Near(role.Traits.VigorGainMultiplier, 1))
+                            role.Traits.VigorGainMultiplier = .75f;
+                        if (role.Hint == "Touches poison humans, but it walks more slowly. Medical supplies cure the poison.")
+                            role.Hint = fresh["L04"].Hint;
+                        break;
+                    case "L03":
+                        if (Near(role.Traits.VigorGainMultiplier, .5f))
+                            role.Traits.VigorGainMultiplier = .35f;
+                        break;
+                    case "P03":
+                        if (Near(role.SpeedMultiplier, 1.05f))
+                            role.SpeedMultiplier = 1.12f;
+                        break;
+                    case "R01":
+                        if (role.Health == 0 && Near(role.HealthMultiplier, .7f))
+                        {
+                            role.Health = 1400;
+                            role.HealthMultiplier = 1;
+                        }
+
+                        if (role.Shield == 0 && Near(role.ShieldMultiplier, .8f))
+                        {
+                            role.Shield = 120;
+                            role.ShieldMultiplier = 1;
+                        }
+
+                        if (role.Hint == "Enrages immediately, but has less health and shields.")
+                            role.Hint = fresh["R01"].Hint;
+                        break;
+                    case "M11":
+                        if (role.CustomItems.Count > 0 && !role.Remove.Contains(ItemType.GrenadeHE))
+                            role.Remove.Add(ItemType.GrenadeHE);
+                        if (role.Hint == "A Captain with 110 health, an Irritant Gas Grenade and a Cluster Grenade.")
+                            role.Hint = fresh["M11"].Hint;
+                        break;
+                    case "X02":
+                        if (Near(role.WidthScale, 1.3f))
+                            role.WidthScale = 1.15f;
+                        break;
+                }
+            }
+
+            foreach (var role in Roles.Where(r => (r.Id.Equals("X01", StringComparison.OrdinalIgnoreCase) || r.Id.Equals("X02", StringComparison.OrdinalIgnoreCase)) && r.ChancePercent == 0))
+            {
+                decimal used = Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Where(t => Catalog.MatchesNative(role, t)).Select(t => Roles.Where(r => r != role && !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && Catalog.MatchesNative(r, t)).Sum(r => (decimal)(r.ChancePercent ?? 0))).DefaultIfEmpty(0).Max();
+                role.ChancePercent = (double)Math.Max(0, Math.Min((decimal)fresh[role.Id].ChancePercent.Value, 100m - used));
+            }
+
+            RoleCatalogRevision = 6;
+        }
+
         private void UpgradeAnyHumanProfiles()
         {
             if (RoleCatalogRevision >= 5)

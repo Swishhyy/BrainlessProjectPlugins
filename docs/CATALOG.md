@@ -72,7 +72,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | L01 | Stalker | Quieter footsteps, but less health. | Move normally; quieter footsteps are automatic. | Enabled |
 | L02 | Wormhole | Gains vigor faster, but moves more slowly. | Use the normal stalk/atlas controls. | Enabled |
 | L03 | Hyper | Moves faster, but gains vigor more slowly. | Move normally; conserve vigor. | Enabled |
-| L04 | Poisonous | Touches poison humans, but it walks more slowly. Medical supplies cure the poison. | Touch humans to poison them. | Enabled |
+| L04 | Poisonous | Touches poison humans, but it walks a little slower and gains vigor more slowly. Medical supplies cure the poison. | Touch humans to poison them. | Enabled |
 | B01 | Raisian | Smaller and faster, but has half the normal health. | Move and blink normally. | Enabled |
 | B02 | Escape's | Kills refresh breakneck speed and its cooldown. | Kill a human to refresh breakneck speed. | Enabled |
 | B03 | Cocoon | Tougher and slower, with shields that recover more slowly. | Move and blink normally; allow more time for shields to recover. | Enabled |
@@ -81,7 +81,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | H02 | Alpha | Larger and tougher, but slower. | Attack normally. | Enabled |
 | H03 | Mimic | Reuses mimic sounds much faster, but has less health. | Use mimic sound controls; they recharge quickly. | Enabled |
 | H04 | Venomous | Claws and amnestic clouds poison humans. Medical supplies cure it. | Claw humans or place an amnestic cloud. | Enabled |
-| R01 | Anger Issue | Enrages immediately, but has less health and shields. | Use the normal rage control when targets are available. | Enabled |
+| R01 | Anger Issue | Enrages immediately, with 1,400 health and a 120 hume shield. | Use the normal rage control when targets are available. | Enabled |
 | R02 | Ill Temperature | Moves faster while calm. | Move normally while calm. | Enabled |
 | C05 | Cowboy | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | Enabled |
 | G07 | Rogue Guard | An unaffiliated guard, hostile to everyone. Can be captured and recruited. | Fight anyone, including other guards; get cuffed and escorted to escape to change sides. | Enabled |
@@ -101,7 +101,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | M08 | Leader | A Sergeant with 115 health, but no grenade. | Lead the squad; you have more health but no grenade. | Enabled |
 | M09 | Explosiphile | Carries a Cluster Grenade and an Impact Grenade, with a Crossvec as the main gun. | Throw the Cluster and Impact grenades; fight with the Crossvec. | Enabled |
 | M10 | Swordsman | Fights with SCP-1509, with 150 health and a little more speed. | Close in and fight with SCP-1509. | Enabled |
-| M11 | General | A Captain with 110 health, an Irritant Gas Grenade and a Cluster Grenade. | Throw the gas grenade for cover and the Cluster Grenade at groups. | Enabled |
+| M11 | General | A Captain with 110 health who trades the frag grenade for an Irritant Gas Grenade and a Cluster Grenade. | Throw the gas grenade for cover and the Cluster Grenade at groups. | Enabled |
 | M12 | Blubber | Carries far more spare ammo, but moves more slowly. | Keep firing; you carry far more spare ammo but move slowly. | Enabled |
 | M13 | Juggernaut | A Captain with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled |
 | M14 | Squad Leader | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled |
