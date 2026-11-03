@@ -12,7 +12,8 @@ namespace Brainless.Core
     // certificate and encryption to visitors, and private endpoints are additionally
     // HMAC-signed so the shared secret is never sent over any connection.
     //
-    // Public:  GET  /api/v1/health
+    // Public:  GET  /api/v1/status   (players, max players, round state)
+    //          GET  /api/v1/health
     //          GET  /api/v1/leaderboard?sort=xp|playtime&limit=1-100
     // Signed:  GET  /api/v1/discord/{discordId}
     //          POST /api/v1/discord/{discordId}/link?code=CODE
@@ -31,12 +32,14 @@ namespace Brainless.Core
         private readonly SemaphoreSlim concurrency = new SemaphoreSlim(32, 32);
         private readonly Dictionary<string, Cached> cache = new Dictionary<string, Cached>(StringComparer.Ordinal);
         private readonly Task worker;
+        private readonly Func<ServerSnapshot> status;
         private int disposed;
 
         internal bool PrivateEndpointsEnabled => signatures.Enabled;
 
-        internal StatsApi(StatsApiConfig config, StatsStore store, int step, Action<string> log)
+        internal StatsApi(StatsApiConfig config, StatsStore store, int step, Action<string> log, Func<ServerSnapshot> status = null)
         {
+            this.status = status ?? (() => null);
             this.config = config;
             this.store = store;
             this.step = step;
@@ -141,6 +144,12 @@ namespace Brainless.Core
             if (method == "GET" && route == "health")
             {
                 Respond(context, 200, "{\"ok\":true,\"bot\":" + (signatures.Enabled ? "true" : "false") + "}", true);
+                return;
+            }
+
+            if (method == "GET" && route == "status")
+            {
+                Respond(context, 200, StatsApiRules.Status(status(), DateTime.UtcNow), true, "public, max-age=5");
                 return;
             }
 

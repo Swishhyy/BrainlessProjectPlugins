@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Brainless.Internal.Updates;
@@ -16,7 +17,7 @@ namespace Brainless.Core
         public override string Name => "ProjectBrainlessCore";
         public override string Prefix => "project_brainless_core";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 3, 0);
+        public override Version Version => new Version(0, 3, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Highest;
         public static Plugin Instance { get; private set; }
@@ -72,7 +73,7 @@ namespace Brainless.Core
                 {
                     try
                     {
-                        Http = new StatsApi(Config.StatsApi, store, Config.XpPerLevelSquared, messages.Enqueue);
+                        Http = new StatsApi(Config.StatsApi, store, Config.XpPerLevelSquared, messages.Enqueue, () => serverStatus);
                     }
                     catch (Exception failure)
                     {
@@ -92,12 +93,25 @@ namespace Brainless.Core
         }
 
         private void RoundStarted() => Store?.BeginRound();
+        private volatile ServerSnapshot serverStatus;
+
+        // Runs on the game thread: flushes log lines and refreshes the server status
+        // snapshot that the stats API serves at /api/v1/status.
         private System.Collections.Generic.IEnumerator<float> FlushMessages()
         {
             while (true)
             {
                 while (messages.TryDequeue(out string message))
                     Log.Info("[Project Brainless Core] " + message);
+                try
+                {
+                    serverStatus = new ServerSnapshot(Player.List.Count(p => p != null && p.IsConnected && !p.IsHost && !p.IsNPC), Server.MaxPlayerCount, Round.IsStarted, Round.IsStarted ? (int)Round.ElapsedTime.TotalSeconds : 0, DateTime.UtcNow);
+                }
+                catch (Exception)
+                {
+                    // The next tick tries again; a stale snapshot reports offline.
+                }
+
                 yield return Timing.WaitForSeconds(1);
             }
         }

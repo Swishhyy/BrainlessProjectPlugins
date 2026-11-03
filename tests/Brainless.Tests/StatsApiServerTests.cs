@@ -22,7 +22,7 @@ internal static class StatsApiServerTests
         store.Record("76561198000000002@steam", "Bravo", "escape", 100, "b");
         var config = new StatsApiConfig { Enabled = true, Port = port, BindHost = "127.0.0.1", SharedSecret = StatsApiTests.Secret, AllowedOrigin = "https://example.com", RequestsPerMinute = 100, LeaderboardCacheSeconds = 0 };
         config.Validate();
-        var api = new StatsApi(config, store, 100, _ => { });
+        var api = new StatsApi(config, store, 100, _ => { }, () => new ServerSnapshot(12, 25, true, 60, DateTime.UtcNow));
         using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:" + port) };
         HttpResponseMessage Send(HttpMethod method, string path, bool signed = true, long? at = null, string nonceOverride = null)
         {
@@ -46,6 +46,7 @@ internal static class StatsApiServerTests
             string boardJson = Body(board);
             check(board.StatusCode == HttpStatusCode.OK && boardJson.Contains("\"name\":\"Alpha\"") && boardJson.IndexOf("Alpha", StringComparison.Ordinal) < boardJson.IndexOf("Bravo", StringComparison.Ordinal) && !boardJson.Contains("@steam"), "the live leaderboard endpoint serves ranked players without account IDs");
             check(board.Headers.GetValues("Access-Control-Allow-Origin").Single() == "https://example.com", "the leaderboard allows the configured website to read it from a browser");
+            check(Body(Send(HttpMethod.Get, "/api/v1/status", false)).Contains("\"players\":12,\"maxPlayers\":25"), "the live status endpoint is public and reports the population");
             check(Send(HttpMethod.Get, "/api/v1/discord/123", false).StatusCode == HttpStatusCode.Unauthorized, "private endpoints refuse unsigned requests");
             check(Send(HttpMethod.Get, "/api/v1/discord/123").StatusCode == HttpStatusCode.OK && Body(Send(HttpMethod.Get, "/api/v1/discord/123")) == "{\"linked\":false}", "a signed lookup of an unlinked Discord account answers not linked");
             long stamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 1;

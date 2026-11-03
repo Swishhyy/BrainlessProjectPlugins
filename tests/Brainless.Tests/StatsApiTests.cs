@@ -54,6 +54,11 @@ internal static class StatsApiTests
         check(StatsApiRules.Player(null, 100) == "{\"linked\":false}", "an unlinked Discord account gets a plain not-linked reply");
         check(StatsApiRules.Limit("500", 10, 100) == 100 && StatsApiRules.Limit("x", 10, 100) == 10 && StatsApiRules.Limit("-3", 10, 100) == 1, "leaderboard sizes are clamped to 1-100");
         check(StatsApiRules.DiscordId.IsMatch("123456789012345678") && !StatsApiRules.DiscordId.IsMatch("12a") && StatsApiRules.LinkCode.IsMatch("ABCD2345") && !StatsApiRules.LinkCode.IsMatch("AB/../x"), "Discord IDs and link codes are validated before use");
+        var at = new DateTime(2026, 11, 3, 12, 0, 0, DateTimeKind.Utc);
+        var snapshot = new ServerSnapshot(8, 25, true, 125, at);
+        using (var json = System.Text.Json.JsonDocument.Parse(StatsApiRules.Status(snapshot, at.AddSeconds(3))))
+            check(json.RootElement.GetProperty("online").GetBoolean() && json.RootElement.GetProperty("players").GetInt32() == 8 && json.RootElement.GetProperty("maxPlayers").GetInt32() == 25 && json.RootElement.GetProperty("roundStarted").GetBoolean(), "the status endpoint reports players, max players and round state");
+        check(StatsApiRules.Status(snapshot, at.AddSeconds(45)) == "{\"online\":false}" && StatsApiRules.Status(null, at) == "{\"online\":false}", "a stale or missing game-thread snapshot reports the server offline");
         check(StatsText.Playtime(90061) == "25h 1m", "server playtime display does not wrap back to zero after one day");
         check(!StatsText.SafeName("@everyone **test**\n").Contains('@') && !StatsText.SafeName("@everyone **test**\n").Contains('\n'), "leaderboard names cannot generate mentions or inject extra output lines");
     }

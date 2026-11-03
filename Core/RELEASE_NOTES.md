@@ -1,4 +1,10 @@
-# Core 0.3.0
+# Core 0.3.1
+
+New public stats API endpoint: `GET /api/v1/status` returns `{"online":true,"players":8,"maxPlayers":25,"roundStarted":true,"roundSeconds":125,"updated":"…"}`. The Discord bot uses it for its "Watching … 8/25" status and the population alerts, and the website can use it too. The count is captured on the game thread every second; a snapshot older than 30 seconds reports `{"online":false}`. Player counts are public in the server list, so the endpoint needs no secret.
+
+Built for EXILED 9.15.3 / SCP:SL 14.2.9. Fully restart after replacing DLLs.
+
+## Previous: 0.3.0
 
 The Discord bot no longer runs inside the game server. Core now serves a small **stats API** instead, and the bot is a separate free **Cloudflare Worker** ([BrainlessDiscordBot](https://github.com/Swishhyy/BrainlessDiscordBot)).
 
