@@ -97,12 +97,41 @@ namespace Brainless.Core
             return "{\"linked\":true,\"name\":" + Json(StatsText.SafeName(player.Name)) + ",\"level\":" + player.Level(step) + ",\"xp\":" + player.Xp + ",\"playtimeSeconds\":" + player.PlaytimeSeconds + ",\"actions\":{" + actions + "}}";
         }
 
+        // Public server status for the website and the Discord bot. A snapshot older
+        // than 30 seconds means the game loop is not running, so report offline.
+        internal static string Status(ServerSnapshot snapshot, DateTime now)
+        {
+            if (snapshot == null || (now - snapshot.Captured).TotalSeconds > 30)
+                return "{\"online\":false}";
+            return "{\"online\":true,\"players\":" + snapshot.Players + ",\"maxPlayers\":" + snapshot.MaxPlayers + ",\"roundStarted\":" + (snapshot.RoundStarted ? "true" : "false") + ",\"roundSeconds\":" + snapshot.RoundSeconds + ",\"updated\":" + Json(snapshot.Captured.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)) + "}";
+        }
+
         internal static int Limit(string raw, int fallback, int max)
         {
             if (!int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
                 value = fallback;
             return Math.Max(1, Math.Min(max, value));
         }
+    }
+
+    // Player count and round state, captured on the game thread every couple of
+    // seconds so API threads never touch Unity or EXILED objects.
+    internal sealed class ServerSnapshot
+    {
+        internal ServerSnapshot(int players, int maxPlayers, bool roundStarted, int roundSeconds, DateTime captured)
+        {
+            Players = players;
+            MaxPlayers = maxPlayers;
+            RoundStarted = roundStarted;
+            RoundSeconds = roundSeconds;
+            Captured = captured;
+        }
+
+        internal int Players { get; }
+        internal int MaxPlayers { get; }
+        internal bool RoundStarted { get; }
+        internal int RoundSeconds { get; }
+        internal DateTime Captured { get; }
     }
 
     // Checks private-endpoint signatures and remembers recent ones so a captured

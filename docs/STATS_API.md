@@ -75,6 +75,7 @@ Set `allowed_origin` to your website's address so browsers allow the request. Re
 | Method | Path | Access |
 | --- | --- | --- |
 | GET | `/api/v1/health` | Public |
+| GET | `/api/v1/status` (`online`, `players`, `maxPlayers`, `roundStarted`, `roundSeconds`) | Public |
 | GET | `/api/v1/leaderboard?sort=xp\|playtime&limit=1-100` | Public |
 | GET | `/api/v1/discord/{discordId}` | Signed |
 | POST | `/api/v1/discord/{discordId}/link?code=CODE` | Signed |
