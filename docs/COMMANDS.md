@@ -68,6 +68,8 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.scpswap <scp>` | Asks the SCP playing it to swap (e.g. `.scpswap 173`), or takes it if nobody plays it |
 | `.scpswap yes` / `.scpswap no` | Accepts or declines a swap request |
 | `.scpswap cancel` | Cancels your outgoing request |
+| `.optin` | Takes the place of a player who opted out of being a zombie (spectators) |
+| `.fill` | Volunteers to replace an SCP who left early in the round |
 
 **Discord, when the stats API and bot are set up ([setup](../README.md#stats-api-and-discord-bot)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
 

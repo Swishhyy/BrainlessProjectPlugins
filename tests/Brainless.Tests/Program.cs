@@ -159,7 +159,8 @@ if (args.Length > 0)
         "Core/Brainless.Core.dll",
         "SlFixes/Brainless.SlFixes.dll",
         "RoundEvents/Brainless.RoundEvents.dll",
-        "ScpSwap/Brainless.ScpSwap.dll"
+        "ScpSwap/Brainless.ScpSwap.dll",
+        "ZombieOptOut/Brainless.ZombieOptOut.dll"
     };
     var ownAssemblies = names.Select(p => Path.GetFileNameWithoutExtension(p)).ToArray();
     foreach (string relative in names)

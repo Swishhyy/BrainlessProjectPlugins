@@ -336,7 +336,8 @@ internal static class UpdaterTests
                             "Brainless.Core",
                             "Brainless.SlFixes",
                             "Brainless.RoundEvents",
-                            "Brainless.ScpSwap"
+                            "Brainless.ScpSwap",
+                            "Brainless.ZombieOptOut"
                         }
 
                         )

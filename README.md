@@ -1,6 +1,6 @@
 # Project Brainless Plugins
 
-Nine separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.9** (`net48`).
+Ten separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.9** (`net48`).
 
 - **[docs/CATALOG.md](docs/CATALOG.md)** — every item, weapon, role (with default chances), event and SCP-914 recipe, and how to use it. Generated; do not edit by hand.
 - **[docs/COMMANDS.md](docs/COMMANDS.md)** — every Remote Admin, F1 and Discord command with its permission node.
@@ -15,13 +15,14 @@ This README is the single overview of the project: what each plugin does, where 
 | `Items` | `Brainless.Items.dll` | 0.8.2 | `brainless_items` | 12 custom grenades, tools and consumables (IDs 71xx) |
 | `Weapons` | `Brainless.Weapons.dll` | 0.9.1 | `brainless_weapons` | Grenade Launcher, Stun Gun, opt-in Ricochet Pistol (IDs 72xx) |
 | `BetterCoinflips` | `BetterCoinflips.dll` | 5.2.0 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
-| `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.2.2 | `brainless_scp_proximity_chat` | Nearby SCP voice and receive controls |
+| `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.3.0 | `brainless_scp_proximity_chat` | Nearby SCP voice (SCP-939 from its mimic point), receive controls, HUD status |
 | `Core` | `Brainless.Core.dll` | 0.3.2 | `project_brainless_core` | XP/playtime storage, privacy, stats API (leaderboard + Discord bot), shared update service |
 | `SlFixes` | `Brainless.SlFixes.dll` | 0.5.1 | `project_brainless_sl_fixes` | Captive recruitment, guard escape, SCP-914 rough teleport/crafting, XP action tracking, end-of-round FF |
 | `RoundEvents` | `Brainless.RoundEvents.dll` | 0.3.1 | `project_brainless_round_events` | Infection, Deathmatch and Juggernaut events |
 | `ScpSwap` | `Brainless.ScpSwap.dll` | 0.1.0 | `brainless_scp_swap` | Round-start SCP swaps that keep Brainless SCP variants |
+| `ZombieOptOut` | `Brainless.ZombieOptOut.dll` | 0.1.0 | `brainless_zombie_opt_out` | Zombie opt-out/auto-fill and early-round SCP replacement (`.fill`), keeping Brainless roles |
 
-Each DLL has its own project, version, config and updater. None has a hard reference to another; optional integrations (Roles ↔ Items/Weapons equipment, BetterCoinflips/ScpSwap → Roles via `Shared/RolesBridge.cs` → `Brainless.Roles.RolesApi`, everything → Core) go through reflection or EXILED's CustomItems registry, so any subset can be installed. They share one game process, so a crash is not sandboxed.
+Each DLL has its own project, version, config and updater. None has a hard reference to another; optional integrations (Roles ↔ Items/Weapons equipment, BetterCoinflips/ScpSwap/ZombieOptOut → Roles via `Shared/RolesBridge.cs` → `Brainless.Roles.RolesApi`, Roles HUD → SCP voice via `Roles/VoiceBridge.cs` → `Brainless.ScpProximityChat.VoiceApi`, everything → Core) go through reflection or EXILED's CustomItems registry, so any subset can be installed. They share one game process, so a crash is not sandboxed.
 
 ## Repository layout
 
@@ -82,6 +83,10 @@ map_rules:                # 10% Cluster + 20% Impact, 70% stays a normal HE gren
 **Other notable settings.** Each role has editable `traits`, `add`/`remove`/`replace_inventory`, `spawn_area` and stats; `allow_model_scaling`, `allow_experimental_roles`, `explosive_scp173`, `enable_doctor_event`, `force_class_custom_roles` (staff forceclass rolls a custom role with normal chances), per-role `traits.health_regen_per_second`/`health_regen_delay_seconds`/`health_regen_max` (out-of-combat healing; Anger Issue heals 20 HP/s up to 900), lockpick durations/cooldowns, `show_role_hud`. SCP voice: `volume` (10), `full_volume_range` (12), `voice_range` (16). Fixes: `capture_conversions.*`, `end_of_round_friendly_fire`, `rough_teleport_rooms` (rooms SCP-914 Rough may teleport players to; open corridors by default so nobody gets stuck). Round events: automatic selection is off by default.
 
 **BetterCoinflips ↔ Brainless.** `custom_item_chance` + `custom_items` (heads gives a listed Brainless item/weapon), `cursed_custom_item_chance` + `cursed_custom_items` (tails), `custom_items_ignore_supply`, `custom_role_chance` + `custom_roles` (heads grants a fitting custom role in place; empty list = any), `roll_custom_role_on_class_change` (Turn into SCP / UNO reverse roll a role for the new class). Chances are proportional like the other coin effects and drop to 0 automatically when the needed DLL is missing. Coins lean toward goodies and pranks with a little gambling: `lucky_tails_percent` (30) turns some tails into a heads outcome, nothing sends players to spectator by default (kick, spectator swap, instant explosion and Tesla teleport are 0; damage effects leave 1 HP), and `bad_effects` has no lethal effects. `balance_revision: 2` marks the migration; untouched old values update automatically.
+
+**HUD and voice.** Roles registers Server Specific settings at `hud_settings_id_base` (58100): a fade keybind (`hud_toggle_key`, default H) and a Role HUD shown/hidden switch; `hud_fade_seconds` (0.6). The HUD's proximity chat line comes from `show_hud_status` in the voice config; `scp939_voice_from_mimic_point` plays SCP-939's nearby voice from its active mimic point. Setting ID ranges: voice 58000–58003, HUD 58100–58102, zombie opt-out 58200–58202.
+
+**Zombie opt-out.** `zombie_fill_duration` (10 s), `health_compensation` (200), `afk_replacement` + `afk_replacement_valid_time` (200 s), `scp_fill_duration` (15 s), `fill_chance_multiplier_for_no_custom_role` (4), `zombie_fill_xp`/`scp_fill_xp` (Core XP). Ported from [KadavasKingdom/ZombieOptOut](https://github.com/KadavasKingdom/ZombieOptOut) (MIT, `ZombieOptOut/LICENSE`).
 
 **SCP swap.** `swap_window_seconds` (60), `request_timeout_seconds` (20), `max_swaps_per_player` (1, 0 = unlimited), `allow_unplayed_scps`, `swappable_scps`, `custom_role_mode`: `FollowScp` (default: the variant stays with its SCP; an unplayed SCP gets a normal roll), `Reroll` or `None`. Only SCPs from the round-start/late-join spawn can swap, so event and staff assignments stay put.
 

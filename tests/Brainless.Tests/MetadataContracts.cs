@@ -92,6 +92,9 @@ internal static class MetadataContracts
             var state = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceState");
             var names = state.GetMethods().Select(voice.GetMethodDefinition).Select(m => voice.GetString(m.Name)).ToArray();
             check(System.Linq.Enumerable.Contains(names, "KeyPressed") && !System.Linq.Enumerable.Contains(names, "SetMode") && !System.Linq.Enumerable.Contains(names, "get_HoldMode"), "the compiled voice state has toggle input and no hold-mode transition");
+            // Brainless Roles reads the HUD status line through VoiceBridge by name.
+            var voiceApi = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceApi");
+            check(voiceApi.GetMethods().Select(voice.GetMethodDefinition).Any(m => voice.GetString(m.Name) == "HudStatus" && m.GetParameters().Count == 1 && (m.Attributes & System.Reflection.MethodAttributes.Static) != 0 && (m.Attributes & System.Reflection.MethodAttributes.Public) != 0), "the compiled voice plugin exposes the HUD status method the Roles HUD calls");
         }
     }
 }

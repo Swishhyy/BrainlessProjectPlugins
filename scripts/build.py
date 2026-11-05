@@ -21,6 +21,7 @@ PROJECTS = {
     'RoundEvents': ('RoundEvents/Brainless.RoundEvents.csproj', 'Brainless.RoundEvents.dll'),
     'SlFixes': ('SlFixes/Brainless.SlFixes.csproj', 'Brainless.SlFixes.dll'),
     'ScpSwap': ('ScpSwap/Brainless.ScpSwap.csproj', 'Brainless.ScpSwap.dll'),
+    'ZombieOptOut': ('ZombieOptOut/Brainless.ZombieOptOut.csproj', 'Brainless.ZombieOptOut.dll'),
 }
 parser = argparse.ArgumentParser()
 parser.add_argument('--plugin', choices=list(PROJECTS))

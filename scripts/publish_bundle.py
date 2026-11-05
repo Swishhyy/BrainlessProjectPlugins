@@ -43,7 +43,7 @@ def prepare_bundle(assets, output, repository):
     components = collect(assets, repository)
     output.mkdir(parents=True, exist_ok=True)
     install = ('# Project Brainless Plugins\n\n'
-               'Nine separate plugins for EXILED 9.15.3 / SCP:SL 14.2.9.\n\n'
+               'Ten separate plugins for EXILED 9.15.3 / SCP:SL 14.2.9.\n\n'
                '1. Fully stop the server.\n'
                '2. Copy the DLLs you want from Plugins/ into EXILED/Plugins, replacing prior copies.\n'
                '3. Keep existing configuration and start the server. New settings are generated.\n\n'

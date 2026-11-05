@@ -24,6 +24,16 @@ namespace Brainless.Roles
         public bool ShowRoleHud { get; set; } = true;
         public bool RoleHudShowDescription { get; set; } = true;
 
+        [Description("Server Specific Settings IDs base..base+2 for the HUD fade keybind and show/hide switch. Change if another plugin uses them.")]
+        public int HudSettingsIdBase { get; set; } = 58100;
+
+        [Description("Suggested key for fading the role / SCP chat HUD in and out. Players can rebind it in Settings > Server-specific.")]
+        public UnityEngine.KeyCode HudToggleKey { get; set; } = UnityEngine.KeyCode.H;
+
+        [Description("Seconds the role HUD takes to fade in or out.")]
+        [Tune(0, 3)]
+        public float HudFadeSeconds { get; set; } = .6f;
+
         [Description("Spectators see the custom role of the player they are watching.")]
         public bool ShowSpectatedRole { get; set; } = true;
 

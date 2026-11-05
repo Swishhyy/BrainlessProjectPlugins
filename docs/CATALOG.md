@@ -134,7 +134,10 @@ Staff commands need four players. Automatic selection is off by default; when en
 
 | Feature | What it does | How to use |
 | --- | --- | --- |
-| SCP nearby voice | Lets enabled SCPs speak to nearby living players. | Tap N or use F1 `.scpchat`; hold the normal voice key to talk. |
+| SCP nearby voice | Lets enabled SCPs (including SCP-939) speak to nearby living players. SCP-939 is heard from its mimic point while one is placed. The role HUD shows whether it is on. | Tap N or use F1 `.scpchat`; hold the normal voice key to talk. |
+| Role HUD | Your role (or the spectated player's) and SCP proximity chat status on the side of the screen. | Fade it in/out with the HUD key (default H) or the Role HUD switch in Settings → Server Specific. |
+| Zombie opt-out | Players can skip being revived as SCP-049-2; a spectator takes the spot and keeps the zombie's custom role, or SCP-049 gets +200 HP. | Settings → Server Specific → Zombie Opt-out. Spectators type F1 `.optin` or turn on Auto-fill. |
+| SCP fill | If an SCP disconnects or jumps into a pit in the first 200 seconds, another player can take over its SCP, custom role and remaining health. | F1 `.fill` when the broadcast appears. |
 | XP and stats | Tracks completed actions and connected playtime. DNT and opt-out erase stats. | F1 `.pbxp`, `.pbxp top` or `.pbprivacy`. |
 | Discord stats | Shows your or another linked player’s level, XP and playtime; top 10 and opt-out. | `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-optout`. Link first with `.pblink` → `/pb-link`. |
 | Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. Either can recruit Rogues. | Escort the captive to the normal surface escape area. |

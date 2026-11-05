@@ -17,16 +17,58 @@ namespace Brainless.Roles
         // When another plugin's hints block a spectator's panel for this long, show it anyway.
         private const float SpectatorStarvationSeconds = 4;
         private readonly Dictionary<Player, float> blockedSince = new Dictionary<Player, float>();
-        private float nextRefresh;
+        // Per-viewer fade state for the show/hide switch and keybind.
+        private readonly Dictionary<Player, View> views = new Dictionary<Player, View>();
+        private float nextRefresh, lastUpdate;
+
+        private sealed class View
+        {
+            internal bool Visible = true;
+            internal float Alpha = 1;
+            internal bool Pressed;
+        }
         internal RoleHud(Config config, Func<Player, RoleDefinition> getRole)
         {
             this.config = config;
             this.getRole = getRole;
         }
 
+        // Show/hide switch from Server Specific Settings.
+        internal void SetVisible(Player player, bool visible) => ViewOf(player).Visible = visible;
+
+        // Fade keybind: each press flips the HUD between shown and hidden.
+        internal void KeyPressed(Player player, bool down)
+        {
+            var view = ViewOf(player);
+            if (down && !view.Pressed)
+                view.Visible = !view.Visible;
+            view.Pressed = down;
+        }
+
+        private View ViewOf(Player player)
+        {
+            if (!views.TryGetValue(player, out var view))
+                views[player] = view = new View();
+            return view;
+        }
+
         internal void Update()
         {
-            if (Time.time < nextRefresh)
+            float elapsed = Time.time - lastUpdate;
+            lastUpdate = Time.time;
+            // Fades step every role tick (0.2s); a steady HUD only refreshes every 0.75s.
+            float step = config.HudFadeSeconds <= 0 ? 1 : Math.Min(1, elapsed / config.HudFadeSeconds);
+            bool fading = false;
+            foreach (var view in views.Values)
+            {
+                float target = view.Visible ? 1 : 0;
+                if (view.Alpha == target)
+                    continue;
+                view.Alpha = view.Alpha < target ? Math.Min(target, view.Alpha + step) : Math.Max(target, view.Alpha - step);
+                fading = true;
+            }
+
+            if (!fading && Time.time < nextRefresh)
                 return;
             nextRefresh = Time.time + .75f;
             foreach (var player in owned.Keys.Where(p => !p.IsConnected || !config.ShowRoleHud || Subject(p) == null).ToArray())
@@ -38,6 +80,14 @@ namespace Brainless.Roles
                 var subject = Subject(player);
                 if (subject == null)
                     continue;
+                float alpha = views.TryGetValue(player, out var view) ? view.Alpha : 1;
+                if (alpha <= 0)
+                {
+                    // Fully faded out: release the hint area entirely.
+                    Forget(player);
+                    continue;
+                }
+
                 bool spectating = subject != player;
                 // Let item instructions, combat warnings and CedMod hints finish; never
                 // replace a hint we did not send. Spectators get an exception: if other
@@ -53,7 +103,8 @@ namespace Brainless.Roles
                 blockedSince.Remove(player);
                 RoleDefinition role = getRole(subject);
                 string name = Escape(SingleLine(role?.Name ?? subject.Role.Name));
-                string color = ColorUtility.ToHtmlStringRGB(subject.Role.Color);
+                string a = ((int)Math.Round(alpha * 255)).ToString("X2");
+                string color = ColorUtility.ToHtmlStringRGB(subject.Role.Color) + a;
                 bool right = config.RoleHudSide == HudSide.Right;
                 float padding = Bounded(config.RoleHudEdgePaddingPercent, 0, 12, .5f);
                 float width = Bounded(config.RoleHudWidthPercent, 20, 40, 30);
@@ -64,17 +115,26 @@ namespace Brainless.Roles
                 // Fixed line height and an explicit pixel offset on every line avoid
                 // voffset changing the gap between the name and its description.
                 if (spectating)
-                    text.Append("<voffset=").Append(vertical).Append("><size=13><color=#AAAAAA>Spectating ").Append(Escape(SingleLine(subject.Nickname))).Append("</color></size></voffset>\n");
+                    text.Append("<voffset=").Append(vertical).Append("><size=13><color=#AAAAAA" + a + ">Spectating ").Append(Escape(SingleLine(subject.Nickname))).Append("</color></size></voffset>\n");
                 text.Append("<voffset=").Append(vertical).Append("><size=20><nobr><b><color=#").Append(color).Append(">").Append(name).Append("</color></b>");
                 if (role == null && spectating)
-                    text.Append(" <size=12><color=#AAAAAA>no subclass</color></size>");
+                    text.Append(" <size=12><color=#AAAAAA" + a + ">no subclass</color></size>");
                 if (role != null)
-                    text.Append(" <size=12><color=#AAAAAA>[").Append(Escape(SingleLine(role.Id))).Append("]</color></size>");
+                    text.Append(" <size=12><color=#AAAAAA" + a + ">[").Append(Escape(SingleLine(role.Id))).Append("]</color></size>");
                 text.Append("</nobr></size></voffset>");
                 if (role != null && config.RoleHudShowDescription)
                 {
                     foreach (string line in Wrap(role.Hint, 34, 4))
-                        text.Append("\n<voffset=").Append(vertical).Append("><size=14><color=#CCCCCC>").Append(Escape(line)).Append("</color></size></voffset>");
+                        text.Append("\n<voffset=").Append(vertical).Append("><size=14><color=#CCCCCC" + a + ">").Append(Escape(line)).Append("</color></size></voffset>");
+                }
+
+                // SCP voice mode from the proximity chat plugin, under the role.
+                string voice = VoiceBridge.Status(subject);
+                if (voice != null)
+                {
+                    string label = voice == "nearby" ? "Proximity chat: <b>ON</b>" : voice == "mimic" ? "Proximity chat: <b>ON</b> (mimic point)" : "Proximity chat: off (team)";
+                    string tint = voice == "nearby" ? "7CFC9A" : voice == "mimic" ? "C08CFF" : "AAAAAA";
+                    text.Append("\n<voffset=").Append(vertical).Append("><size=14><color=#").Append(tint).Append(a).Append(">").Append(label).Append("</color></size></voffset>");
                 }
 
                 text.Append("</line-height></margin></align>");
@@ -117,6 +177,13 @@ namespace Brainless.Roles
             string what = role == null ? "no subclass (" + target.Role.Type + ")" : role.Id + " - " + role.Name;
             string state = owned.TryGetValue(player, out var hint) && ReferenceEquals(player.CurrentHint, hint) ? "shown" : Blocked(player) ? "waiting for another plugin's hint (shown anyway after " + SpectatorStarvationSeconds + "s)" : "will show on the next refresh";
             return player.Nickname + " is watching " + target.Nickname + ": " + what + ". Panel: " + state + ".";
+        }
+
+        // A disconnecting player also loses their HUD preference.
+        internal void Leave(Player player)
+        {
+            Forget(player);
+            views.Remove(player);
         }
 
         internal void Forget(Player player)

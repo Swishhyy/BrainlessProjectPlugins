@@ -96,6 +96,7 @@ namespace Brainless.Roles
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
             lifetime.Run(Tick());
+            RegisterHudSettings();
             if (migrateConfig)
                 ConfigMigration.Save(this);
             base.OnEnabled();
@@ -130,6 +131,7 @@ namespace Brainless.Roles
             lifetime.Clear();
             lockpicking?.Clear();
             lockpicking = null;
+            UnregisterHudSettings();
             roleHud?.Clear();
             roleHud = null;
             harmony?.UnpatchAll(harmony.Id);
@@ -166,7 +168,7 @@ namespace Brainless.Roles
         private void Left(LeftEventArgs ev)
         {
             ForgetPoisons(ev.Player);
-            roleHud?.Forget(ev.Player);
+            roleHud?.Leave(ev.Player);
             Remove(ev.Player);
             generations.Remove(ev.Player);
             reasons.Remove(ev.Player);
