@@ -51,6 +51,7 @@ StatsApiServerTests.Run(Check);
 CaptureTests.Run(Check);
 HumanProfileTests.Run(Check);
 ScpSwapTests.Run(Check);
+CoinBalanceTests.Run(Check);
 SupTests.Run(Check);
 InfectionTests.Run(Check);
 JsonAndTextTests.Run(Check);

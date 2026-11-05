@@ -71,17 +71,17 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | Z05 | Doctor | A weakened SCP-049 that can revive the dead. Low health, slower, and never has a hume shield. | Revive corpses with the normal SCP-049 controls; stay behind your zombies. | 25 (event) | Event: 25% per round | — | 12 |
 | L01 | Stalker | Quieter footsteps, but less health. | Move normally; quieter footsteps are automatic. | 20 | Enabled | — | 0 |
 | L02 | Wormhole | Gains vigor faster, but moves more slowly. | Use the normal stalk/atlas controls. | 20 | Enabled | — | 0 |
-| L03 | Hyper | Moves faster, but gains vigor more slowly. | Move normally; conserve vigor. | 20 | Enabled | — | 0 |
-| L04 | Poisonous | Touches poison humans, but it walks a little slower and gains vigor more slowly. Medical supplies cure the poison. | Touch humans to poison them. | 20 | Enabled | — | 0 |
+| L03 | Hyper | Moves a little faster, but gains vigor more slowly. | Move normally; conserve vigor. | 20 | Enabled | — | 0 |
+| L04 | Poisonous | Touches poison humans, but has a weaker 200 hume shield and gains vigor more slowly. Medical supplies cure the poison. | Touch humans to poison them. | 20 | Enabled | — | 0 |
 | B01 | Raisian | Smaller and faster, but has half the normal health. | Move and blink normally. | 20 | Enabled | — | 0 |
-| B02 | Escape's | Kills refresh breakneck speed and its cooldown. | Kill a human to refresh breakneck speed. | 20 | Enabled | — | 0 |
+| B02 | Escape's | Kills refresh breakneck speed and its cooldown, but it has much less health. | Kill a human to refresh breakneck speed. | 20 | Enabled | — | 0 |
 | B03 | Cocoon | Tougher and slower, with shields that recover more slowly. | Move and blink normally; allow more time for shields to recover. | 20 | Enabled | — | 0 |
 | B04 | Boom Boom | Immune to explosions. Explodes after death. | Automatic explosion after death. | 20 | Enabled | — | 0 |
 | H01 | Ambusher | Quieter footsteps and faster movement, but less health. | Move normally; quieter footsteps also work while sprinting. | 20 | Enabled | — | 0 |
 | H02 | Alpha | Larger and tougher, but slower. | Attack normally. | 20 | Enabled | — | 0 |
 | H03 | Mimic | Reuses mimic sounds much faster, but has less health. | Use mimic sound controls; they recharge quickly. | 20 | Enabled | — | 0 |
 | H04 | Venomous | Claws and amnestic clouds poison humans. Medical supplies cure it. | Claw humans or place an amnestic cloud. | 20 | Enabled | — | 0 |
-| R01 | Anger Issue | Enrages immediately, with 1,400 health and a 120 hume shield. | Use the normal rage control when targets are available. | 40 | Enabled | — | 0 |
+| R01 | Anger Issue | Enrages immediately, with 1,400 health. Heals after a few seconds out of combat. | Use the normal rage control when targets are available. | 40 | Enabled | — | 0 |
 | R02 | Ill Temperature | Moves faster while calm. | Move normally while calm. | 40 | Enabled | — | 0 |
 | C05 | Cowboy | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | 8 | Enabled | — | 0 |
 | G07 | Rogue Guard | An unaffiliated guard, hostile to everyone. Can be captured and recruited. | Fight anyone, including other guards; get cuffed and escorted to escape to change sides. | 2.58 | Enabled | — | 0 |
@@ -100,7 +100,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | M07 | Personnel | Carries a shotgun and a Cluster Grenade. | Push close with the shotgun; throw the Cluster Grenade at groups. | 20 | Enabled | 7102 | 0 |
 | M08 | Leader | A Sergeant with 115 health, but no grenade. | Lead the squad; you have more health but no grenade. | 20 | Enabled | — | 0 |
 | M09 | Explosiphile | Carries a Cluster Grenade and an Impact Grenade, with a Crossvec as the main gun. | Throw the Cluster and Impact grenades; fight with the Crossvec. | 20 | Enabled | 7102, 7113 | 0 |
-| M10 | Swordsman | Fights with SCP-1509, with 150 health and a little more speed. | Close in and fight with SCP-1509. | 20 | Enabled | — | 0 |
+| M10 | Swordsman | Fights with SCP-1509, with 200 health, more speed and an adrenaline shot to close the gap. | Close in and fight with SCP-1509. | 20 | Enabled | — | 0 |
 | M11 | General | A Captain with 110 health who trades the frag grenade for an Irritant Gas Grenade and a Cluster Grenade. | Throw the gas grenade for cover and the Cluster Grenade at groups. | 15 | Enabled | 7101, 7102 | 0 |
 | M12 | Blubber | Carries far more spare ammo, but moves more slowly. | Keep firing; you carry far more spare ammo but move slowly. | 15 | Enabled | — | 0 |
 | M13 | Juggernaut | A Captain with 200 health, but slower. | Soak damage at the front; you are slower. | 15 | Enabled | — | 0 |

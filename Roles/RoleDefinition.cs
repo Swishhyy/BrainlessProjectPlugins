@@ -128,7 +128,7 @@ namespace Brainless.Roles
         internal static readonly HashSet<uint> RetiredItemsV4 = new HashSet<uint> { 7104, 7106, 7111, 7118, 7201, 7203, 7208 };
         internal static readonly ItemType[] Firearms = { ItemType.GunAK, ItemType.GunLogicer, ItemType.GunShotgun, ItemType.GunCrossvec, ItemType.GunA7, ItemType.GunRevolver, ItemType.GunFRMG0, ItemType.GunE11SR, ItemType.GunFSP9, ItemType.GunCOM15, ItemType.GunCOM18 };
         internal static readonly ItemType[] ScpItems = { ItemType.SCP500, ItemType.SCP207, ItemType.AntiSCP207, ItemType.SCP018, ItemType.SCP268, ItemType.SCP1853, ItemType.SCP2176, ItemType.SCP244a, ItemType.SCP244b, ItemType.SCP1576, ItemType.SCP1344 };
-        internal const float EscapeHealth = .71f;
+        internal const float EscapeHealth = .55f;
         internal static readonly RoleTypeId[] HumanRoles = { RoleTypeId.ClassD, RoleTypeId.Scientist, RoleTypeId.FacilityGuard, RoleTypeId.NtfPrivate, RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist, RoleTypeId.NtfCaptain, RoleTypeId.ChaosConscript, RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder, RoleTypeId.ChaosRepressor };
         private static double DefaultFamilyChance(RoleDefinition role) => GroupChancePercent;
         private static RoleDefinition R(string id, string name, RoleTypeId baseRole, string hint) => new RoleDefinition
@@ -297,13 +297,13 @@ namespace Brainless.Roles
             r.SpeedMultiplier = .9f;
             r.Traits.VigorGainMultiplier = 1.5f;
             list.Add(r);
-            r = R("L03", "Hyper", RoleTypeId.Scp106, "Moves faster, but gains vigor more slowly.");
-            r.SpeedMultiplier = 1.18f;
+            r = R("L03", "Hyper", RoleTypeId.Scp106, "Moves a little faster, but gains vigor more slowly.");
+            r.SpeedMultiplier = 1.08f;
             r.Traits.VigorGainMultiplier = .35f;
             list.Add(r);
-            r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans, but it walks a little slower and gains vigor more slowly. Medical supplies cure the poison.");
+            r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans, but has a weaker 200 hume shield and gains vigor more slowly. Medical supplies cure the poison.");
             r.HealthMultiplier = .9f;
-            r.SpeedMultiplier = .95f;
+            r.Shield = 200;
             r.Traits.VigorGainMultiplier = .75f;
             r.Traits.PoisonDamagePerSecond = 4;
             r.Traits.PoisonDurationSeconds = 5;
@@ -314,7 +314,7 @@ namespace Brainless.Roles
             r.HealthMultiplier = .5f;
             r.ShieldMultiplier = .75f;
             list.Add(r);
-            r = R("B02", "Escape's", RoleTypeId.Scp173, "Kills refresh breakneck speed and its cooldown.");
+            r = R("B02", "Escape's", RoleTypeId.Scp173, "Kills refresh breakneck speed and its cooldown, but it has much less health.");
             r.HealthMultiplier = EscapeHealth;
             r.Traits.RefreshBreakneckOnKill = true;
             list.Add(r);
@@ -351,10 +351,11 @@ namespace Brainless.Roles
             r.Traits.PoisonDurationSeconds = 4;
             r.Traits.PoisonInCloud = true;
             list.Add(r);
-            r = R("R01", "Anger Issue", RoleTypeId.Scp096, "Enrages immediately, with 1,400 health and a 120 hume shield.");
+            r = R("R01", "Anger Issue", RoleTypeId.Scp096, "Enrages immediately, with 1,400 health. Heals after a few seconds out of combat.");
             r.Health = 1400;
-            r.Shield = 120;
             r.Traits.RageWindupSeconds = 0;
+            r.Traits.HealthRegenPerSecond = 20;
+            r.Traits.HealthRegenDelaySeconds = 8;
             list.Add(r);
             r = R("R02", "Ill Temperature", RoleTypeId.Scp096, "Moves faster while calm.");
             r.Traits.CalmSpeedMultiplier = 1.25f;
@@ -470,13 +471,13 @@ namespace Brainless.Roles
             r.Add.Add(ItemType.GunCrossvec);
             r.CustomItems.AddRange(new uint[] { 7102, 7113 });
             list.Add(r);
-            r = R("M10", "Swordsman", RoleTypeId.NtfSergeant, "Fights with SCP-1509, with 150 health and a little more speed.");
+            r = R("M10", "Swordsman", RoleTypeId.NtfSergeant, "Fights with SCP-1509, with 200 health, more speed and an adrenaline shot to close the gap.");
             r.MatchRoles.Add(RoleTypeId.NtfSergeant);
             r.ChancePercent = 20;
             r.Remove.AddRange(new[] { ItemType.GunE11SR, ItemType.GunCrossvec });
-            r.Add.Add(ItemType.SCP1509);
-            r.Health = 150;
-            r.SpeedMultiplier = 1.1f;
+            r.Add.AddRange(new[] { ItemType.SCP1509, ItemType.Adrenaline });
+            r.Health = 200;
+            r.SpeedMultiplier = 1.2f;
             list.Add(r);
             r = R("M11", "General", RoleTypeId.NtfCaptain, "A Captain with 110 health who trades the frag grenade for an Irritant Gas Grenade and a Cluster Grenade.");
             r.MatchRoles.Add(RoleTypeId.NtfCaptain);

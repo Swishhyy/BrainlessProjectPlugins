@@ -59,6 +59,7 @@
     <Compile Include="../../ScpProximityChat/Config.cs" Link="ScpChatConfig.cs" />
     <Compile Include="../../SlFixes/Config.cs" Link="FixesConfig.cs" />
     <Compile Include="../../ScpSwap/SwapRules.cs" Link="SwapRules.cs" />
+    <Compile Include="../../BetterCoinflips/Configs/Config.cs" Link="CoinConfig.cs" />
     <Reference Include="Assembly-CSharp" HintPath="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" Private="true" />
     <Reference Include="Exiled.API" HintPath="$(ReferencesPath)/Exiled.API.dll" Private="true" />
     <Reference Include="YamlDotNet" HintPath="$(ReferencesPath)/YamlDotNet.dll" Private="true" />

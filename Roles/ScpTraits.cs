@@ -45,6 +45,13 @@ namespace Brainless.Roles
         [Tune(0, 120)]
         public float PoisonDurationSeconds { get; set; }
         public bool PoisonInCloud { get; set; }
+
+        [Description("Health regained per second after the SCP has taken no damage for health_regen_delay_seconds (like SCP-173's shield, but for health). 0 disables.")]
+        [Tune(0, 1000)]
+        public float HealthRegenPerSecond { get; set; }
+
+        [Tune(0, 120)]
+        public float HealthRegenDelaySeconds { get; set; } = 10;
     }
 
     internal static class ScpTraitRules

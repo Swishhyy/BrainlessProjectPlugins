@@ -57,7 +57,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -151,6 +151,7 @@ namespace Brainless.Roles
             UpgradeFactionProfiles();
             UpgradeAnyHumanProfiles();
             UpgradeRoleBalance();
+            UpgradePlaytestBalance();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -374,6 +375,69 @@ namespace Brainless.Roles
             }
 
             RoleCatalogRevision = 6;
+        }
+
+        // Revision 7: playtest balance. Only untouched old stock values change:
+        // Escape's 173 55% health, Hyper 106 +8% speed, Poisonous 106 normal speed with a
+        // 200 hume shield, Anger Issue native shield plus out-of-combat health regen, and
+        // Swordsman 200 HP, +20% speed and an adrenaline shot.
+        private void UpgradePlaytestBalance()
+        {
+            if (RoleCatalogRevision >= 7)
+                return;
+            var fresh = Catalog.Create().ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+            bool Near(float a, float b) => Math.Abs(a - b) < .001f;
+            void Hint(RoleDefinition role, string old)
+            {
+                if (role.Hint == old)
+                    role.Hint = fresh[role.Id].Hint;
+            }
+
+            foreach (var role in Roles)
+            {
+                switch (role.Id.ToUpperInvariant())
+                {
+                    case "B02":
+                        if (Near(role.HealthMultiplier, .71f))
+                            role.HealthMultiplier = Catalog.EscapeHealth;
+                        Hint(role, "Kills refresh breakneck speed and its cooldown.");
+                        break;
+                    case "L03":
+                        if (Near(role.SpeedMultiplier, 1.18f))
+                            role.SpeedMultiplier = 1.08f;
+                        Hint(role, "Moves faster, but gains vigor more slowly.");
+                        break;
+                    case "L04":
+                        if (Near(role.SpeedMultiplier, .95f))
+                            role.SpeedMultiplier = 1;
+                        if (role.Shield == 0 && Near(role.ShieldMultiplier, 1))
+                            role.Shield = 200;
+                        Hint(role, "Touches poison humans, but it walks a little slower and gains vigor more slowly. Medical supplies cure the poison.");
+                        break;
+                    case "R01":
+                        if (Near(role.Shield, 120))
+                            role.Shield = 0;
+                        if (role.Traits.HealthRegenPerSecond == 0)
+                        {
+                            role.Traits.HealthRegenPerSecond = 20;
+                            role.Traits.HealthRegenDelaySeconds = 8;
+                        }
+
+                        Hint(role, "Enrages immediately, with 1,400 health and a 120 hume shield.");
+                        break;
+                    case "M10":
+                        if (Near(role.Health, 150))
+                            role.Health = 200;
+                        if (Near(role.SpeedMultiplier, 1.1f))
+                            role.SpeedMultiplier = 1.2f;
+                        if (role.Add.Contains(ItemType.SCP1509) && !role.Add.Contains(ItemType.Adrenaline))
+                            role.Add.Add(ItemType.Adrenaline);
+                        Hint(role, "Fights with SCP-1509, with 150 health and a little more speed.");
+                        break;
+                }
+            }
+
+            RoleCatalogRevision = 7;
         }
 
         private void UpgradeAnyHumanProfiles()

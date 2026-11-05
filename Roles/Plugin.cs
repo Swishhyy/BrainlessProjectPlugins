@@ -59,7 +59,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 6 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 7 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -422,12 +422,19 @@ namespace Brainless.Roles
                 {
                     if (definition.ReplaceInventory)
                         player.ClearInventory();
+                    var removedAmmo = new HashSet<AmmoType>();
                     foreach (var type in definition.Remove)
                         foreach (var item in player.Items.Where(i => i.Type == type).ToArray())
+                        {
+                            if (item is Firearm removedGun)
+                                removedAmmo.Add(removedGun.AmmoType);
                             player.RemoveItem(item);
+                        }
+
                     foreach (var type in definition.Add)
                         if (player.AddItem(type) is Firearm added)
                             added.MagazineAmmo = added.MaxMagazineAmmo;
+                    MoveOrphanedAmmo(player, removedAmmo);
                     if (definition.Id == "C04")
                     {
                         var item = player.Items.FirstOrDefault(i => i.Type == ItemType.GrenadeHE) ?? player.Items.FirstOrDefault(i => i.Type == ItemType.Medkit);
@@ -537,6 +544,29 @@ namespace Brainless.Roles
                 if (player.IsConnected && player.IsAlive)
                     player.Role.Set(fallbackRole, RoleSpawnFlags.AssignInventory);
                 throw;
+            }
+        }
+
+        // A kit that swaps guns (e.g. Scout: AK -> FSP-9) moves the reserve of an ammo type
+        // no remaining gun uses onto a remaining gun that has none, so it is not left
+        // with 7.62 for a 9 mm gun.
+        private static void MoveOrphanedAmmo(Player player, HashSet<AmmoType> removed)
+        {
+            var guns = player.Items.OfType<Firearm>().ToArray();
+            var used = new HashSet<AmmoType>(guns.Select(g => g.AmmoType));
+            int spare = 0;
+            foreach (var type in removed.Where(t => !used.Contains(t)))
+            {
+                spare += player.GetAmmo(type);
+                player.SetAmmo(type, 0);
+            }
+
+            if (spare == 0)
+                return;
+            foreach (var gun in guns.Where(g => player.GetAmmo(g.AmmoType) == 0))
+            {
+                player.SetAmmo(gun.AmmoType, (ushort)Math.Min(spare, player.GetAmmoLimit(gun.AmmoType)));
+                return;
             }
         }
 
@@ -689,13 +719,13 @@ namespace Brainless.Roles
             float multiplier = state.Definition.SpeedMultiplier;
             if (player.Role is Exiled.API.Features.Roles.Scp096Role shy && shy.RageState == PlayerRoles.PlayableScps.Scp096.Scp096RageState.Docile)
                 multiplier *= state.Definition.Traits.CalmSpeedMultiplier;
-            bool nativeBoost = player.GetEffect(EffectType.MovementBoost)?.IsEnabled == true || player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
             if (state.Definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                 multiplier = 2;
-            if (state.Movement.IsOwnBoost(player))
-                nativeBoost = player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
-            // Heavy armor or a native speed boost cancels a role's speed bonus, never its slowdown.
-            if (player.IsHuman && multiplier > 1 && (nativeBoost || player.CurrentArmor?.Type == ItemType.ArmorHeavy))
+            // Heavy armor cancels a human role's speed bonus, never its slowdown. SCP-207 and
+            // other speed effects stack on top instead of replacing the bonus (they used to
+            // cancel it, so cola slowed fast roles and SCP-207 never wore off). A stronger
+            // external Movement Boost still takes precedence inside the movement layer.
+            if (player.IsHuman && multiplier > 1 && player.CurrentArmor?.Type == ItemType.ArmorHeavy)
                 multiplier = 1;
             TryResilient(player, state);
             if (state.ResilientActive)
@@ -711,8 +741,19 @@ namespace Brainless.Roles
             fpc.StaminaUsageMultiplier = fpc.StaminaUsageMultiplier / state.StaminaApplied * nextStamina;
             state.StaminaApplied = nextStamina;
             ApplyShield(player, state, false);
+            RegenerateHealth(player, state);
             if (state.Definition.Traits.RefreshBreakneckOnKill)
                 ClearRefreshedCooldown(player, state);
+        }
+
+        // Out-of-combat health regen (e.g. Anger Issue): heals once the SCP has taken no
+        // damage for the configured delay. Runs on the 0.2-second role tick.
+        private static void RegenerateHealth(Player player, ActiveRole state)
+        {
+            var traits = state.Definition.Traits;
+            if (traits.HealthRegenPerSecond <= 0 || player.Health >= player.MaxHealth || Time.time - state.LastHurt < traits.HealthRegenDelaySeconds)
+                return;
+            player.Health = Math.Min(player.MaxHealth, player.Health + traits.HealthRegenPerSecond * .2f);
         }
 
         private static bool NoShield(RoleDefinition definition) => definition.Id == "Z05" || definition.ShieldMultiplier <= 0;
@@ -752,6 +793,8 @@ namespace Brainless.Roles
         {
             if (ev.IsAllowed && ev.Amount > 0)
                 lockpicking?.Cancel(ev.Player, "you took damage");
+            if (ev.IsAllowed && ev.Amount > 0 && active.TryGetValue(ev.Player, out var hurt))
+                hurt.LastHurt = Time.time;
             if (Traits(ev.Player)?.ExplosionImmune == true && ev.DamageHandler.Type == DamageType.Explosion)
                 ev.IsAllowed = false;
             if (ev.IsAllowed && ev.Amount > 0 && IsScpAttack(ev.DamageHandler.Type))
@@ -866,6 +909,7 @@ namespace Brainless.Roles
             internal QuietStepLayer QuietSteps = new QuietStepLayer();
             internal string PreviousUniqueRole;
             internal bool ShieldOverridden, BreakneckKill, ResilientActive;
+            internal float LastHurt = float.NegativeInfinity;
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();

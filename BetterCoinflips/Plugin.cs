@@ -21,6 +21,8 @@ namespace BetterCoinflips
         public override void OnEnabled()
         {
             Instance = this;
+            if (Config.UpgradeBalance())
+                Brainless.Internal.ConfigMigration.Save(this);
             RegisterEvents();
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "BetterCoinflips", Config.AutoUpdate);

@@ -15,6 +15,9 @@ namespace BetterCoinflips.Configs
         public bool Debug { get; set; } = false;
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
+        [Description("Balance migration marker. Revision 1 makes tails less punishing (rarer SCP-fy, kicks off, rarer warhead/spectator swap/instant explosion) and drops lethal effects (Decontaminating, CardiacArrest, PocketCorroding) from bad_effects. Only untouched stock values change; set 1 to keep old values.")]
+        public int BalanceRevision { get; set; }
+
         [Description("The amount of base game spawned coins that should be removed. Default: 4")]
         public int DefaultCoinsAmount { get; set; } = 4;
 
@@ -58,9 +61,7 @@ namespace BetterCoinflips.Configs
             EffectType.Burned,
             EffectType.Concussed,
             EffectType.Corroding,
-            EffectType.CardiacArrest,
             EffectType.Deafened,
-            EffectType.Decontaminating,
             EffectType.Disabled,
             EffectType.Ensnared,
             EffectType.Exhausted,
@@ -69,7 +70,6 @@ namespace BetterCoinflips.Configs
             EffectType.Hypothermia,
             EffectType.InsufficientLighting,
             EffectType.Poisoned,
-            EffectType.PocketCorroding,
             EffectType.SeveredHands,
             EffectType.SinkHole,
             EffectType.Stained,
@@ -271,28 +271,52 @@ namespace BetterCoinflips.Configs
         public int RandomItemChance { get; set; } = 35;
 
         [Description("The chance of these bad effects happening. It's a proportional chance not a % chance.")]
-        public int HpReductionChance { get; set; } = 20;
+        public int HpReductionChance { get; set; } = 15;
         public int TpToClassDCellsChance { get; set; } = 5;
-        public int RandomBadEffectChance { get; set; } = 20;
-        public int WarheadChance { get; set; } = 10;
+        public int RandomBadEffectChance { get; set; } = 15;
+        public int WarheadChance { get; set; } = 3;
         public int LightsOutChance { get; set; } = 20;
-        public int LiveHeChance { get; set; } = 30;
+        public int LiveHeChance { get; set; } = 15;
         public int TrollFlashChance { get; set; } = 50;
-        public int ScpTpChance { get; set; } = 20;
-        public int OneHpLeftChance { get; set; } = 15;
+        public int ScpTpChance { get; set; } = 12;
+        public int OneHpLeftChance { get; set; } = 8;
         public int PrimedVaseChance { get; set; } = 20;
         public int ShitPantsChance { get; set; } = 40;
         public int FakeCassieChance { get; set; } = 50;
-        public int TurnIntoScpChance { get; set; } = 30;
-        public int InventoryResetChance { get; set; } = 20;
-        public int ClassSwapChance { get; set; } = 10;
-        public int InstantExplosionChance { get; set; } = 10;
+        public int TurnIntoScpChance { get; set; } = 8;
+        public int InventoryResetChance { get; set; } = 6;
+        public int ClassSwapChance { get; set; } = 6;
+        public int InstantExplosionChance { get; set; } = 4;
         public int PlayerSwapChance { get; set; } = 20;
-        public int KickChance { get; set; } = 5;
-        public int SpectSwapChance { get; set; } = 10;
-        public int TeslaTpChance { get; set; } = 15;
-        public int InventorySwapChance { get; set; } = 20;
-        public int HandcuffChance { get; set; } = 10;
+        public int KickChance { get; set; } = 0;
+        public int SpectSwapChance { get; set; } = 3;
+        public int TeslaTpChance { get; set; } = 6;
+        public int InventorySwapChance { get; set; } = 12;
+        public int HandcuffChance { get; set; } = 6;
         public int RandomTeleportChance { get; set; } = 15;
+
+        private static readonly EffectType[] LethalEffects = { EffectType.Decontaminating, EffectType.CardiacArrest, EffectType.PocketCorroding };
+        private static readonly EffectType[] OldBadEffects = { EffectType.Asphyxiated, EffectType.Bleeding, EffectType.Blinded, EffectType.Burned, EffectType.Concussed, EffectType.Corroding, EffectType.CardiacArrest, EffectType.Deafened, EffectType.Decontaminating, EffectType.Disabled, EffectType.Ensnared, EffectType.Exhausted, EffectType.Flashed, EffectType.Hemorrhage, EffectType.Hypothermia, EffectType.InsufficientLighting, EffectType.Poisoned, EffectType.PocketCorroding, EffectType.SeveredHands, EffectType.SinkHole, EffectType.Stained, EffectType.Traumatized };
+
+        // Returns true when values changed and should be saved.
+        internal bool UpgradeBalance()
+        {
+            if (BalanceRevision >= 1)
+                return false;
+            var stock = new Config();
+            var properties = typeof(Config).GetProperties();
+            var old = new Dictionary<string, int> { { "HpReductionChance", 20 }, { "WarheadChance", 10 }, { "ScpTpChance", 20 }, { "OneHpLeftChance", 15 }, { "TurnIntoScpChance", 30 }, { "InventoryResetChance", 20 }, { "ClassSwapChance", 10 }, { "InstantExplosionChance", 10 }, { "KickChance", 5 }, { "SpectSwapChance", 10 }, { "TeslaTpChance", 15 }, { "InventorySwapChance", 20 }, { "HandcuffChance", 10 }, { "LiveHeChance", 30 }, { "RandomBadEffectChance", 20 } };
+            foreach (var pair in old)
+            {
+                var property = System.Array.Find(properties, p => p.Name == pair.Key);
+                if ((int)property.GetValue(this) == pair.Value)
+                    property.SetValue(this, property.GetValue(stock));
+            }
+
+            if (BadEffects != null && BadEffects.SetEquals(OldBadEffects))
+                BadEffects.ExceptWith(LethalEffects);
+            BalanceRevision = 1;
+            return true;
+        }
     }
 }
