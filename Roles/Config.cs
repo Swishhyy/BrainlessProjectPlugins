@@ -67,7 +67,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -162,6 +162,7 @@ namespace Brainless.Roles
             UpgradeAnyHumanProfiles();
             UpgradeRoleBalance();
             UpgradePlaytestBalance();
+            UpgradeHyperVigor();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -471,6 +472,16 @@ namespace Brainless.Roles
                 foreach (var role in pool)
                     role.ChancePercent = (double)(Math.Floor((decimal)role.ChancePercent.Value * (total + share) / total * 100) / 100);
             }
+        }
+
+        // Revision 8: Hyper 106 gains vigor a little faster (35% -> 45% of normal).
+        private void UpgradeHyperVigor()
+        {
+            if (RoleCatalogRevision >= 8)
+                return;
+            foreach (var role in Roles.Where(r => r.Id.Equals("L03", StringComparison.OrdinalIgnoreCase) && Math.Abs(r.Traits.VigorGainMultiplier - .35f) < .001f))
+                role.Traits.VigorGainMultiplier = .45f;
+            RoleCatalogRevision = 8;
         }
 
         private void UpgradeAnyHumanProfiles()

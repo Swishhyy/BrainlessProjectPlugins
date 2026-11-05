@@ -38,7 +38,7 @@ internal static class HumanProfileTests
         old.Roles.RemoveAll(r => r.Id == "C05" || r.Id == "G07" || r.Id == "S07" || r.Id == "S08");
         foreach (var role in old.Roles.Where(r => r.Id.StartsWith("C") && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman))) role.ChancePercent = 25;
         old.Prepare();
-        check(old.Roles.Count == 66 && old.RoleCatalogRevision == 7 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Single(r => r.Id == "C02").ChancePercent == 8 && old.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).Sum(r => (decimal)r.ChancePercent.Value) <= 100 && !old.Roles.Any(r => Catalog.RetiredRoles.Contains(r.Id)), "revision 4 removes retired profiles and resets MTF/Chaos pools to the rank-aware defaults");
+        check(old.Roles.Count == 66 && old.RoleCatalogRevision == 8 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Single(r => r.Id == "C02").ChancePercent == 8 && old.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).Sum(r => (decimal)r.ChancePercent.Value) <= 100 && !old.Roles.Any(r => Catalog.RetiredRoles.Contains(r.Id)), "revision 4 removes retired profiles and resets MTF/Chaos pools to the rank-aware defaults");
         old.Roles.RemoveAll(r => r.Id == "S07"); old.Prepare();
         check(!old.Roles.Any(r => r.Id == "S07"), "removing a new profile after migration is respected on later reloads");
         var balance = new Config { RoleCatalogRevision = 5 };
@@ -47,15 +47,23 @@ internal static class HumanProfileTests
         B("R01").Health = 0; B("R01").HealthMultiplier = .7f; B("R01").Shield = 0; B("R01").ShieldMultiplier = .8f; B("X02").WidthScale = 1.3f; B("M11").Remove.Clear(); B("X01").ChancePercent = 0;
         B("C10").SpeedMultiplier = .9f; // an owner edit is kept
         balance.Prepare();
-        check(balance.RoleCatalogRevision == 7 && B("G03").SpeedMultiplier == 1.02f && B("L04").SpeedMultiplier == 1 && B("L04").Traits.VigorGainMultiplier == .75f && B("L03").Traits.VigorGainMultiplier == .35f && B("P03").SpeedMultiplier == 1.12f, "revision 6 applies the playtest speed and vigor balance to untouched roles");
+        check(balance.RoleCatalogRevision == 8 && B("G03").SpeedMultiplier == 1.02f && B("L04").SpeedMultiplier == 1 && B("L04").Traits.VigorGainMultiplier == .75f && B("L03").Traits.VigorGainMultiplier == .45f && B("P03").SpeedMultiplier == 1.12f, "revision 6 applies the playtest speed and vigor balance to untouched roles");
         check(B("R01").Health == 1400 && B("R01").Shield == 0 && B("R01").Traits.HealthRegenPerSecond == 20 && B("X02").WidthScale == 1.15f && B("M11").Remove.Contains(ItemType.GrenadeHE) && B("C10").SpeedMultiplier == .9f, "Anger Issue ends at 1,400 HP with its native shield and health regen, Big Boi is narrower, General drops the frag grenade, and owner edits are kept");
         var v7 = new Config { RoleCatalogRevision = 6 };
         RoleDefinition V(string id) => v7.Roles.Single(r => r.Id == id);
         V("B02").HealthMultiplier = .71f; V("L03").SpeedMultiplier = 1.18f; V("L04").SpeedMultiplier = .95f; V("L04").Shield = 0; V("R01").Shield = 120; V("R01").Traits.HealthRegenPerSecond = 0;
         V("M10").Health = 150; V("M10").SpeedMultiplier = 1.1f; V("M10").Add.Remove(ItemType.Adrenaline); V("M10").Hint = "Fights with SCP-1509, with 150 health and a little more speed.";
         v7.Prepare();
-        check(v7.RoleCatalogRevision == 7 && V("B02").HealthMultiplier == .55f && V("L03").SpeedMultiplier == 1.08f && V("L04").SpeedMultiplier == 1 && V("L04").Shield == 200 && V("R01").Shield == 0 && V("R01").Traits.HealthRegenPerSecond == 20 && V("R01").Traits.HealthRegenDelaySeconds == 8 && V("R01").Traits.HealthRegenMax == 900, "revision 7 nerfs Escape's and Hyper, gives Poisonous normal speed with a 200 shield, and gives Anger Issue its native shield plus health regen up to 900");
+        check(v7.RoleCatalogRevision == 8 && V("B02").HealthMultiplier == .55f && V("L03").SpeedMultiplier == 1.08f && V("L04").SpeedMultiplier == 1 && V("L04").Shield == 200 && V("R01").Shield == 0 && V("R01").Traits.HealthRegenPerSecond == 20 && V("R01").Traits.HealthRegenDelaySeconds == 8 && V("R01").Traits.HealthRegenMax == 900, "revision 7 nerfs Escape's and Hyper, gives Poisonous normal speed with a 200 shield, and gives Anger Issue its native shield plus health regen up to 900");
         check(V("M10").Health == 200 && V("M10").SpeedMultiplier == 1.2f && V("M10").Add.Contains(ItemType.Adrenaline) && V("M10").Hint.Contains("200 health"), "revision 7 buffs the Swordsman's health, speed and kit");
+        var hyper = new Config { RoleCatalogRevision = 7 };
+        hyper.Roles.Single(r => r.Id == "L03").Traits.VigorGainMultiplier = .35f;
+        hyper.Prepare();
+        check(hyper.RoleCatalogRevision == 8 && hyper.Roles.Single(r => r.Id == "L03").Traits.VigorGainMultiplier == .45f, "revision 8 raises Hyper's untouched vigor gain from 35% to 45%");
+        var hyperEdited = new Config { RoleCatalogRevision = 7 };
+        hyperEdited.Roles.Single(r => r.Id == "L03").Traits.VigorGainMultiplier = .6f;
+        hyperEdited.Prepare();
+        check(hyperEdited.Roles.Single(r => r.Id == "L03").Traits.VigorGainMultiplier == .6f, "revision 8 keeps an owner-edited Hyper vigor gain");
         var edited = new Config { RoleCatalogRevision = 6 };
         edited.Roles.Single(r => r.Id == "B02").HealthMultiplier = .8f;
         edited.Roles.Single(r => r.Id == "M10").Health = 175;

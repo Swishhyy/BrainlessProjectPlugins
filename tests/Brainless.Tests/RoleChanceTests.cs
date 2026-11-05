@@ -63,7 +63,7 @@ internal static class RoleChanceTests
         check(Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().All(t => Pool(t) <= 100) && new[] { PlayerRoles.RoleTypeId.ClassD, PlayerRoles.RoleTypeId.Scientist, PlayerRoles.RoleTypeId.FacilityGuard, PlayerRoles.RoleTypeId.NtfPrivate, PlayerRoles.RoleTypeId.NtfSergeant, PlayerRoles.RoleTypeId.NtfCaptain, PlayerRoles.RoleTypeId.ChaosRifleman, PlayerRoles.RoleTypeId.ChaosRepressor }.All(t => Pool(t) >= 79), "every native role pool fits its 100-percent budget and the main spawns give custom roles about 80%");
         var legacy = reader.Deserialize<Config>("class_d_chance: 40\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 1\n- id: D02\n  name: Second\n  base_role: ClassD\n  weight: 3\n");
         legacy.Prepare();
-        check(legacy.Roles[0].ChancePercent == 20 && legacy.Roles[1].ChancePercent == 60 && legacy.RoleCatalogRevision == 7, "old YAML without percentages keeps its relative weights and is raised once to the 80% group total");
+        check(legacy.Roles[0].ChancePercent == 20 && legacy.Roles[1].ChancePercent == 60 && legacy.RoleCatalogRevision == 8, "old YAML without percentages keeps its relative weights and is raised once to the 80% group total");
         legacy.Prepare();
         check(legacy.Roles[0].ChancePercent == 20 && legacy.Roles[1].ChancePercent == 60, "the one-time chance raise does not repeat on later loads");
         var explicitChance = reader.Deserialize<Config>("class_d_chance: 0\nrole_catalog_revision: 3\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 0\n  chance_percent: 12.5\n");
