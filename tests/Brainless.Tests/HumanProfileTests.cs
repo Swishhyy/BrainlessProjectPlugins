@@ -6,22 +6,39 @@ internal static class HumanProfileTests
 {
     internal static void Run(Action<bool, string> check)
     {
-        check(RoleLookup.Matches("S03", "Head Scientist", "chief_scientist") && RoleLookup.Matches("G07", "Rogue Guard", "rouge"), "old scientist names and the requested Rogue spelling remain usable in admin commands");
+        check(RoleLookup.Matches("S03", "Head Scientist", "chief_scientist"), "old scientist names remain usable in admin commands");
 #if NATIVE_CONFIG_TESTS
         var config = new Config(); config.Prepare();
         var cowboy = config.Roles.Single(r => r.Id == "C05");
         check(cowboy.ReplaceInventory && cowboy.FillAmmoToLimit && cowboy.Add.Contains(ItemType.GunRevolver) && cowboy.Add.Contains(ItemType.ArmorLight) && cowboy.Add.Count(i => i == ItemType.Adrenaline) == 2 && cowboy.Add.Contains(ItemType.Painkillers), "Cowboy replaces every Chaos subtype kit with a revolver, full light-armor ammo, two stims and painkillers");
-        check(cowboy.InventorySlots(8, 0, 0) == 6 && config.Roles.Single(r => r.Id == "G07").InventorySlots(8, 0, 0) == 5, "replacement Cowboy and Rogue kits fit even when the original inventory is full");
+        check(cowboy.InventorySlots(8, 0, 0) == 6, "the replacement Cowboy kit fits even when the original inventory is full");
         var oversized = new RoleDefinition { ReplaceInventory = true, Add = Enumerable.Repeat(ItemType.Medkit, 9).ToList() };
         check(oversized.InventorySlots(8, 0, 0) > 8 && new RoleDefinition { Add = new System.Collections.Generic.List<ItemType> { ItemType.Medkit } }.InventorySlots(8, 0, 0) > 8, "inventory preflight still rejects oversized replacements and overflowing additive kits");
-        check(new[] { "G07", "S08" }.All(id => config.Roles.Single(r => r.Id == id).Neutral && config.Roles.Single(r => r.Id == id).SpawnArea == RoleSpawnArea.Entrance), "both Rogue appearances have a neutral affiliation and separated Entrance spawns");
+        check(!config.Roles.Any(r => r.Id == "G07" || r.Id == "S08") && config.Roles.Count == 66, "Rogue Guard and Rogue Scientist are no longer shipped");
+        var rogues = new Config { RoleCatalogRevision = 6 };
+        rogues.Roles.Add(new RoleDefinition { Id = "G07", Name = "Rogue Guard", BaseRole = PlayerRoles.RoleTypeId.FacilityGuard, Hint = "Rogue", Neutral = true, SpawnArea = RoleSpawnArea.Entrance, ChancePercent = 0 });
+        rogues.Roles.Add(new RoleDefinition { Id = "S08", Name = "Rogue Scientist", BaseRole = PlayerRoles.RoleTypeId.Scientist, Hint = "Rogue", Neutral = true, SpawnArea = RoleSpawnArea.Entrance, ChancePercent = 0 });
+        decimal Pool(Config c, PlayerRoles.RoleTypeId native) => c.Roles.Where(r => r.Id != "Z05" && r.Enabled && Catalog.MatchesNative(r, native)).Sum(r => (decimal)(r.ChancePercent ?? 0));
+        // Make room for an 8% rogue share in each pool, as an old config would have had.
+        foreach (var native in new[] { PlayerRoles.RoleTypeId.FacilityGuard, PlayerRoles.RoleTypeId.Scientist })
+        {
+            var top = rogues.Roles.Where(r => r.Id != "Z05" && r.MatchRoles.Count == 0 && r.BaseRole == native && r.ChancePercent > 8).First();
+            top.ChancePercent -= 8;
+        }
+
+        rogues.Roles.Single(r => r.Id == "G07").ChancePercent = 8;
+        rogues.Roles.Single(r => r.Id == "S08").ChancePercent = 8;
+        decimal guards = Pool(rogues, PlayerRoles.RoleTypeId.FacilityGuard), scientists = Pool(rogues, PlayerRoles.RoleTypeId.Scientist);
+        rogues.Prepare();
+        check(!rogues.Roles.Any(r => r.Id == "G07" || r.Id == "S08"), "revision 7 removes Rogue Guard and Rogue Scientist from existing configs");
+        check(Pool(rogues, PlayerRoles.RoleTypeId.FacilityGuard) <= guards && guards - Pool(rogues, PlayerRoles.RoleTypeId.FacilityGuard) < .2m && scientists - Pool(rogues, PlayerRoles.RoleTypeId.Scientist) < .2m, "the removed rogue share goes to the remaining guard and scientist profiles, so custom roles stay as common");
         check(config.Roles.Single(r => r.Id == "S07").SpawnArea == RoleSpawnArea.MicroRoom && config.Roles.Single(r => r.Id == "S07").Add.Contains(ItemType.KeycardContainmentEngineer), "Containment Engineer receives its native card and HCZ Micro-room spawn");
         check(config.Roles.Single(r => r.Id == "S03").Name == "Head Scientist" && config.Roles.Single(r => r.Id == "S03").Add.Contains(ItemType.KeycardResearchCoordinator), "Head Scientist reuses the existing S03 profile and native research-coordinator card");
         var old = new Config { RoleCatalogRevision = 1 };
         old.Roles.RemoveAll(r => r.Id == "C05" || r.Id == "G07" || r.Id == "S07" || r.Id == "S08");
         foreach (var role in old.Roles.Where(r => r.Id.StartsWith("C") && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman))) role.ChancePercent = 25;
         old.Prepare();
-        check(old.Roles.Count == 68 && old.RoleCatalogRevision == 7 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Single(r => r.Id == "C02").ChancePercent == 8 && old.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).Sum(r => (decimal)r.ChancePercent.Value) <= 100 && !old.Roles.Any(r => Catalog.RetiredRoles.Contains(r.Id)), "revision 4 removes retired profiles and resets MTF/Chaos pools to the rank-aware defaults");
+        check(old.Roles.Count == 66 && old.RoleCatalogRevision == 7 && old.Roles.Single(r => r.Id == "C05").ChancePercent == 0 && old.Roles.Single(r => r.Id == "C02").ChancePercent == 8 && old.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, PlayerRoles.RoleTypeId.ChaosRifleman)).Sum(r => (decimal)r.ChancePercent.Value) <= 100 && !old.Roles.Any(r => Catalog.RetiredRoles.Contains(r.Id)), "revision 4 removes retired profiles and resets MTF/Chaos pools to the rank-aware defaults");
         old.Roles.RemoveAll(r => r.Id == "S07"); old.Prepare();
         check(!old.Roles.Any(r => r.Id == "S07"), "removing a new profile after migration is respected on later reloads");
         var balance = new Config { RoleCatalogRevision = 5 };

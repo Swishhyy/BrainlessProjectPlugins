@@ -36,7 +36,7 @@ assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usa
 
 # Per-role availability (chance, gate, required equipment, population) for the role table.
 audit_blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
-assert len(audit_blocks) == 68
+assert len(audit_blocks) == 66
 known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
 availability = {}
 for block in audit_blocks:
@@ -52,7 +52,7 @@ for block in audit_blocks:
 
 lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
-         'Current shipped content: **12 items, 3 weapons, 68 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **12 items, 3 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
@@ -83,7 +83,7 @@ lines += ['', 'About 80% of each spawn group rolls a custom role by default; the
           '- Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults share an 80% total per group (two decimals, rounded down).',
           '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. A blocked profile\'s percentage is not redistributed to another role.',
           '- Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.',
-          '- Rogue Guard/Scientist can damage, and be damaged by, everyone including their own side. They spawn separately in Entrance and queue an early CASSIE warning. Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.',
+          '- Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.',
           '- Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks still apply.',
           '- Remote Admin forceclass rolls a profile with the normal chances (force_class_custom_roles); escapes and plugin role changes do not reroll. `bprole set <ID> [playerID]` ignores natural chance/population/supply limits but honors disabled content and missing providers.',
           '- SCP variants use normal SCP controls. Stalker and Ambusher reduce footsteps. Poison refreshes one effect, does not stack, and medical supplies cure it. Brute, Giant, Muncher, Raisian and Alpha apply model sizes only when allow_model_scaling is true. Boom Boom uses its separate explosive_scp173 settings.', '',
@@ -99,7 +99,7 @@ lines += ['', 'About 80% of each spawn group rolls a custom role by default; the
           '| SCP fill | If an SCP disconnects or jumps into a pit in the first 200 seconds, another player can take over its SCP, custom role and remaining health. | F1 `.fill` when the broadcast appears. |',
           '| XP and stats | Tracks completed actions and connected playtime. DNT and opt-out erase stats. | F1 `.pbxp`, `.pbxp top` or `.pbprivacy`. |',
           '| Discord stats | Shows your or another linked player’s level, XP and playtime; top 10 and opt-out. | `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-optout`. Link first with `.pblink` → `/pb-link`. |',
-          '| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. Either can recruit Rogues. | Escort the captive to the normal surface escape area. |',
+          '| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. | Escort the captive to the normal surface escape area. |',
           '| Guard escape | An uncuffed Facility Guard who reaches the surface escape area becomes an NTF Sergeant. | Walk to the normal surface escape area. |',
           '| End-of-round friendly fire | When the round ends, friendly fire turns on so everyone can attack everyone until the restart. It is not punished. | Automatic; owners set `end_of_round_friendly_fire` in the Fixes config. |',
           '| BetterCoinflips | Gives configured random outcomes from ordinary coin flips. Heads can give a Brainless item or weapon or turn you into a fitting custom role; tails can give a cursed item. Coin class changes roll a custom role for the new class. | Equip a normal coin and flip it. |',
@@ -122,6 +122,6 @@ for body, setting, ident, name in recipes:
     setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
     lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
-assert len(roles) == 68
+assert len(roles) == 66
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 12 items, 3 weapons, 68 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 12 items, 3 weapons, 66 roles (with availability), 3 events and 10 recipes; all have usage instructions.')

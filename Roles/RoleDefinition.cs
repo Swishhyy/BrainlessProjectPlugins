@@ -124,6 +124,8 @@ namespace Brainless.Roles
         internal static readonly string[] ReworkedKits = { "S01", "S05", "S06", "G05", "M01", "M02", "C02", "C03" };
         // Revision 4: profiles removed from the catalog and kits rebuilt again.
         internal static readonly HashSet<string> RetiredRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "D07", "M02", "M04", "C01", "C03" };
+        // Revision 7: Rogue Guard and Rogue Scientist were removed.
+        internal static readonly HashSet<string> RetiredRolesV7 = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "G07", "S08" };
         internal static readonly string[] ReworkedKitsV4 = { "S06", "M03" };
         internal static readonly HashSet<uint> RetiredItemsV4 = new HashSet<uint> { 7104, 7106, 7111, 7118, 7201, 7203, 7208 };
         internal static readonly ItemType[] Firearms = { ItemType.GunAK, ItemType.GunLogicer, ItemType.GunShotgun, ItemType.GunCrossvec, ItemType.GunA7, ItemType.GunRevolver, ItemType.GunFRMG0, ItemType.GunE11SR, ItemType.GunFSP9, ItemType.GunCOM15, ItemType.GunCOM18 };
@@ -367,31 +369,12 @@ namespace Brainless.Roles
             r.Add.AddRange(new[] { ItemType.KeycardChaosInsurgency, ItemType.GunRevolver, ItemType.ArmorLight, ItemType.Adrenaline, ItemType.Adrenaline, ItemType.Painkillers });
             r.ChancePercent = 8;
             list.Add(r);
-            r = R("G07", "Rogue Guard", RoleTypeId.FacilityGuard, "An unaffiliated guard, hostile to everyone. Can be captured and recruited.");
-            r.Neutral = true;
-            r.ReplaceInventory = true;
-            r.SpawnArea = RoleSpawnArea.Entrance;
-            r.Health = 100;
-            r.Weight = 2;
-            r.MaxPerRound = 1;
-            r.Add.AddRange(new[] { ItemType.KeycardGuard, ItemType.GunFSP9, ItemType.ArmorLight, ItemType.Medkit, ItemType.Radio });
-            r.FillAmmoToLimit = true;
-            list.Add(r);
             r = R("S07", "Containment Engineer", RoleTypeId.Scientist, "Starts just outside HCZ's Micro room with a containment engineer keycard.");
             r.Remove.Add(ItemType.KeycardScientist);
             r.Add.Add(ItemType.KeycardContainmentEngineer);
             r.SpawnArea = RoleSpawnArea.MicroRoom;
             r.Weight = 5;
             r.MaxPerRound = 1;
-            list.Add(r);
-            r = R("S08", "Rogue Scientist", RoleTypeId.Scientist, "An unaffiliated scientist, hostile to everyone. Can be captured and recruited.");
-            r.Neutral = true;
-            r.ReplaceInventory = true;
-            r.SpawnArea = RoleSpawnArea.Entrance;
-            r.Health = 100;
-            r.Weight = 2;
-            r.MaxPerRound = 1;
-            r.Add.AddRange(new[] { ItemType.KeycardScientist, ItemType.Medkit, ItemType.Flashlight });
             list.Add(r);
             r = R("D08", "Captured Insurgent", RoleTypeId.ClassD, "A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment.");
             r.SpawnAs = RoleTypeId.ChaosConscript;

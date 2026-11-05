@@ -11,7 +11,7 @@ This README is the single overview of the project: what each plugin does, where 
 
 | Folder | DLL | Version | Config section | Purpose |
 | --- | --- | --- | --- | --- |
-| `Roles` | `Brainless.Roles.dll` | 0.9.0 | `brainless_roles` | 68 role profiles, per-role percentages, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
+| `Roles` | `Brainless.Roles.dll` | 0.9.0 | `brainless_roles` | 66 role profiles, per-role percentages, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
 | `Items` | `Brainless.Items.dll` | 0.8.2 | `brainless_items` | 12 custom grenades, tools and consumables (IDs 71xx) |
 | `Weapons` | `Brainless.Weapons.dll` | 0.9.1 | `brainless_weapons` | Grenade Launcher, Stun Gun, opt-in Ricochet Pistol (IDs 72xx) |
 | `BetterCoinflips` | `BetterCoinflips.dll` | 5.2.0 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
@@ -30,7 +30,7 @@ Each DLL has its own project, version, config and updater. None has a hard refer
 | --- | --- |
 | `<Plugin>/` | One `.csproj` per plugin: `Plugin.cs` (entry, version), `Config.cs`, `Commands.cs`, feature files |
 | `Roles/RolesApi.cs` | Public API other plugins call by reflection (profile ID/name, assign, roll, grant) and the forceclass hook |
-| `Roles/RoleDefinition.cs` | All 68 role profiles (`R("ID", "Name", RoleTypeId.X, "hint")`, weights, kits, gates) |
+| `Roles/RoleDefinition.cs` | All 66 role profiles (`R("ID", "Name", RoleTypeId.X, "hint")`, weights, kits, gates) |
 | `Items/Definition.cs`, `Items/SupCatalog.cs`, `Weapons/Definition.cs` | Item/weapon specs (ID, name, description) |
 | `SlFixes/Config.cs` | SCP-914 crafting recipes |
 | `Shared/` | Source compiled into each plugin that needs it (not a shared DLL): config migration/reload, distribution rules, explosions, audio, `Updates/` updater |

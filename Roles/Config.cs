@@ -67,7 +67,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -395,6 +395,7 @@ namespace Brainless.Roles
         {
             if (RoleCatalogRevision >= 7)
                 return;
+            RetireRogues();
             var fresh = Catalog.Create().ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
             bool Near(float a, float b) => Math.Abs(a - b) < .001f;
             void Hint(RoleDefinition role, string old)
@@ -452,6 +453,24 @@ namespace Brainless.Roles
             }
 
             RoleCatalogRevision = 7;
+        }
+
+        // Rogue Guard / Rogue Scientist are removed. Their share goes to the other active
+        // profiles of the same pool (proportionally, rounded down) so custom roles stay
+        // as common as before; a pool the owner switched off stays off.
+        private void RetireRogues()
+        {
+            foreach (var rogue in Roles.Where(r => Catalog.RetiredRolesV7.Contains(r.Id)).ToArray())
+            {
+                Roles.Remove(rogue);
+                decimal share = (decimal)(rogue.ChancePercent ?? 0);
+                var pool = Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && r.Enabled && r.ChancePercent > 0 && Catalog.ChanceGroup(r) == Catalog.ChanceGroup(rogue)).ToArray();
+                decimal total = pool.Sum(r => (decimal)r.ChancePercent.Value);
+                if (share <= 0 || total <= 0)
+                    continue;
+                foreach (var role in pool)
+                    role.ChancePercent = (double)(Math.Floor((decimal)role.ChancePercent.Value * (total + share) / total * 100) / 100);
+            }
         }
 
         private void UpgradeAnyHumanProfiles()

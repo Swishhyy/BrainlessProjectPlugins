@@ -58,7 +58,7 @@ internal static class RoleChanceTests
         var writer = new YamlDotNet.Serialization.SerializerBuilder().WithNamingConvention(YamlDotNet.Serialization.NamingConventions.UnderscoredNamingConvention.Instance).Build();
         var config = new Config();
         config.Prepare();
-        check(config.Roles.Count == 68 && config.Roles.All(r => r.ChancePercent.HasValue), "every shipped role has a numeric default percentage");
+        check(config.Roles.Count == 66 && config.Roles.All(r => r.ChancePercent.HasValue), "every shipped role has a numeric default percentage");
         decimal Pool(PlayerRoles.RoleTypeId native) => config.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, native)).Sum(r => (decimal)r.ChancePercent.Value);
         check(Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().All(t => Pool(t) <= 100) && new[] { PlayerRoles.RoleTypeId.ClassD, PlayerRoles.RoleTypeId.Scientist, PlayerRoles.RoleTypeId.FacilityGuard, PlayerRoles.RoleTypeId.NtfPrivate, PlayerRoles.RoleTypeId.NtfSergeant, PlayerRoles.RoleTypeId.NtfCaptain, PlayerRoles.RoleTypeId.ChaosRifleman, PlayerRoles.RoleTypeId.ChaosRepressor }.All(t => Pool(t) >= 79), "every native role pool fits its 100-percent budget and the main spawns give custom roles about 80%");
         var legacy = reader.Deserialize<Config>("class_d_chance: 40\nroles:\n- id: D01\n  name: First\n  base_role: ClassD\n  weight: 1\n- id: D02\n  name: Second\n  base_role: ClassD\n  weight: 3\n");

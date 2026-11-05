@@ -2,7 +2,7 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **12 items, 3 weapons, 68 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **12 items, 3 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -45,18 +45,18 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | D04 | Thief | Starts with one random stolen item. | Use the random starting item. | 8.88 | Enabled | — | 0 |
 | D05 | Survivor | Carries a Zone Manager keycard and painkillers, but has less health. | Use the starting keycard/medicine. | 8.88 | Enabled | — | 0 |
 | D06 | Locksmith | Picks any keycard door. Higher access takes longer. | Interact with a denied keycard door and stay nearby; higher access takes longer. | 8.88 | Enabled | — | 0 |
-| S01 | Mad Scientist | An armed scientist with a revolver, a spare cylinder and a can of SCP-207. | Shoot with the revolver; drink SCP-207 for speed when you need it. | 13.79 | Enabled | — | 0 |
-| S02 | Pharmacist | Carries extra medkits and painkillers to share. | Use or share the starting medicine. | 13.79 | Enabled | — | 0 |
-| S03 | Head Scientist | Carries a head scientist keycard with improved research access. | Use the head scientist keycard for research access. | 1.37 | Enabled | — | 12 |
-| S04 | Candy Man | Carries a bag of SCP-330 candy. | Open the SCP-330 bag and choose candy. | 13.79 | Enabled | — | 0 |
-| S05 | Auditor | Carries a Zone Manager keycard for wider access and a radio. | Use the Zone Manager card for wider access; coordinate on the radio. | 13.79 | Enabled | — | 0 |
-| S06 | Anomaly Handler | Carries an Irritant Gas Grenade to cover an escape. | Throw the gas grenade to cover an escape. | 13.79 | Enabled | 7101 | 0 |
-| G01 | Guard Captain | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. | Use the Crossvec and upgraded keycard. | 12.9 | Enabled | — | 0 |
-| G02 | New Hire | A lightly equipped guard with a pistol and extra flashbangs. | Use the pistol and flashbangs. | 12.9 | Enabled | — | 0 |
-| G03 | Trained Agent | A faster guard with combat armor. | Move normally; the speed bonus is automatic. | 12.9 | Enabled | — | 0 |
-| G04 | Coward | Sprints for longer without armor. Wearing armor removes the bonus. | Sprint without armor. | 12.9 | Enabled | — | 0 |
-| G05 | Quartermaster | Carries an extra medkit and painkillers, but less spare ammo. | Use or share the extra medkit and painkillers. | 12.9 | Enabled | — | 0 |
-| G06 | Maintenance Liaison | Carries a Door Jammer keycard, but less spare ammo. | Use the Door Jammer card on a closed door. | 12.9 | Enabled | 7105 | 0 |
+| S01 | Mad Scientist | An armed scientist with a revolver, a spare cylinder and a can of SCP-207. | Shoot with the revolver; drink SCP-207 for speed when you need it. | 14.28 | Enabled | — | 0 |
+| S02 | Pharmacist | Carries extra medkits and painkillers to share. | Use or share the starting medicine. | 14.28 | Enabled | — | 0 |
+| S03 | Head Scientist | Carries a head scientist keycard with improved research access. | Use the head scientist keycard for research access. | 1.42 | Enabled | — | 12 |
+| S04 | Candy Man | Carries a bag of SCP-330 candy. | Open the SCP-330 bag and choose candy. | 14.28 | Enabled | — | 0 |
+| S05 | Auditor | Carries a Zone Manager keycard for wider access and a radio. | Use the Zone Manager card for wider access; coordinate on the radio. | 14.28 | Enabled | — | 0 |
+| S06 | Anomaly Handler | Carries an Irritant Gas Grenade to cover an escape. | Throw the gas grenade to cover an escape. | 14.28 | Enabled | 7101 | 0 |
+| G01 | Guard Captain | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. | Use the Crossvec and upgraded keycard. | 13.33 | Enabled | — | 0 |
+| G02 | New Hire | A lightly equipped guard with a pistol and extra flashbangs. | Use the pistol and flashbangs. | 13.33 | Enabled | — | 0 |
+| G03 | Trained Agent | A faster guard with combat armor. | Move normally; the speed bonus is automatic. | 13.33 | Enabled | — | 0 |
+| G04 | Coward | Sprints for longer without armor. Wearing armor removes the bonus. | Sprint without armor. | 13.33 | Enabled | — | 0 |
+| G05 | Quartermaster | Carries an extra medkit and painkillers, but less spare ammo. | Use or share the extra medkit and painkillers. | 13.33 | Enabled | — | 0 |
+| G06 | Maintenance Liaison | Carries a Door Jammer keycard, but less spare ammo. | Use the Door Jammer card on a closed door. | 13.33 | Enabled | 7105 | 0 |
 | M01 | Field Medic | Carries an extra medkit and adrenaline for the squad, but less spare ammo. | Heal the squad with the extra medkit; use adrenaline in a pinch. | 10 | Enabled | — | 0 |
 | M03 | Containment Specialist | Carries containment foam that covers a wide area in SCP-173's sticky mess. | Throw the containment foam in a corridor to leave a wide sticky area. | 10 | Enabled | 7103 | 0 |
 | C02 | Courier | A lightly armored runner with extra stamina and an adrenaline shot. | Sprint between objectives; use adrenaline to keep running. | 8 | Enabled | — | 0 |
@@ -84,9 +84,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | R01 | Anger Issue | Enrages immediately, with 1,400 health. Heals back up to 900 after a few seconds out of combat. | Use the normal rage control when targets are available. | 40 | Enabled | — | 0 |
 | R02 | Ill Temperature | Moves faster while calm. | Move normally while calm. | 40 | Enabled | — | 0 |
 | C05 | Cowboy | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | 8 | Enabled | — | 0 |
-| G07 | Rogue Guard | An unaffiliated guard, hostile to everyone. Can be captured and recruited. | Fight anyone, including other guards; get cuffed and escorted to escape to change sides. | 2.58 | Enabled | — | 0 |
-| S07 | Containment Engineer | Starts just outside HCZ's Micro room with a containment engineer keycard. | Grab the Micro H.I.D. from the room next to you. | 6.89 | Enabled | — | 0 |
-| S08 | Rogue Scientist | An unaffiliated scientist, hostile to everyone. Can be captured and recruited. | Fight anyone, including other scientists; get cuffed and escorted to escape to change sides. | 2.75 | Enabled | — | 0 |
+| S07 | Containment Engineer | Starts just outside HCZ's Micro room with a containment engineer keycard. | Grab the Micro H.I.D. from the room next to you. | 7.14 | Enabled | — | 0 |
 | D08 | Captured Insurgent | A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment. | Break out of the cells with the Class-D; you have no equipment. | 8.88 | Enabled | — | 0 |
 | C06 | Juggernaut | A Repressor with 200 health, but slower. | Soak damage at the front; you are slower. | 16 | Enabled | — | 0 |
 | C07 | Squad Leader | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | 16 | Enabled | — | 0 |
@@ -115,7 +113,7 @@ About 80% of each spawn group rolls a custom role by default; the rest keep the 
 - Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults share an 80% total per group (two decimals, rounded down).
 - Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. A blocked profile's percentage is not redistributed to another role.
 - Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.
-- Rogue Guard/Scientist can damage, and be damaged by, everyone including their own side. They spawn separately in Entrance and queue an early CASSIE warning. Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.
+- Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.
 - Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks still apply.
 - Remote Admin forceclass rolls a profile with the normal chances (force_class_custom_roles); escapes and plugin role changes do not reroll. `bprole set <ID> [playerID]` ignores natural chance/population/supply limits but honors disabled content and missing providers.
 - SCP variants use normal SCP controls. Stalker and Ambusher reduce footsteps. Poison refreshes one effect, does not stack, and medical supplies cure it. Brute, Giant, Muncher, Raisian and Alpha apply model sizes only when allow_model_scaling is true. Boom Boom uses its separate explosive_scp173 settings.
@@ -140,7 +138,7 @@ Staff commands need four players. Automatic selection is off by default; when en
 | SCP fill | If an SCP disconnects or jumps into a pit in the first 200 seconds, another player can take over its SCP, custom role and remaining health. | F1 `.fill` when the broadcast appears. |
 | XP and stats | Tracks completed actions and connected playtime. DNT and opt-out erase stats. | F1 `.pbxp`, `.pbxp top` or `.pbprivacy`. |
 | Discord stats | Shows your or another linked player’s level, XP and playtime; top 10 and opt-out. | `/pb-stats [user]`, `/pb-playtime [user]`, `/pb-top`, `/pb-optout`. Link first with `.pblink` → `/pb-link`. |
-| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. Either can recruit Rogues. | Escort the captive to the normal surface escape area. |
+| Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. | Escort the captive to the normal surface escape area. |
 | Guard escape | An uncuffed Facility Guard who reaches the surface escape area becomes an NTF Sergeant. | Walk to the normal surface escape area. |
 | End-of-round friendly fire | When the round ends, friendly fire turns on so everyone can attack everyone until the restart. It is not punished. | Automatic; owners set `end_of_round_friendly_fire` in the Fixes config. |
 | BetterCoinflips | Gives configured random outcomes from ordinary coin flips. Heads can give a Brainless item or weapon or turn you into a fitting custom role; tails can give a cursed item. Coin class changes roll a custom role for the new class. | Equip a normal coin and flip it. |
