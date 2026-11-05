@@ -35,6 +35,9 @@ namespace BetterCoinflips.Configs
         public string ForceRespawnMessage { get; set; } = "Someone respawned... probably.";
         public string SizeChangeMessage { get; set; } = "You got gnomed.";
         public string RandomItemMessage { get; set; } = "You got a random item!";
+        public string CustomItemMessage { get; set; } = "You got a {item}!";
+        public string CustomRoleMessage { get; set; } = "The coin made you a {role}!";
+        public string CursedItemMessage { get; set; } = "The coin cursed you with {item}...";
 
         [Description("Here you can set the message for each of these bad coin effects.")]
         public string HpReductionMessage { get; set; } = "Your hp got reduced by 30%.";

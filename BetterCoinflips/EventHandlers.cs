@@ -92,7 +92,8 @@ namespace BetterCoinflips
                 Config.TeslaTpChance,
                 Config.InventorySwapChance,
                 Config.RandomTeleportChance,
-                Config.HandcuffChance
+                Config.HandcuffChance,
+                BrainlessContent.HasItems(Config.CursedCustomItems) ? Config.CursedCustomItemChance : 0
             }
 
             : new[]
@@ -111,7 +112,9 @@ namespace BetterCoinflips
                 Config.EmptyHidChance,
                 Config.ForceRespawnChance,
                 Config.SizeChangeChance,
-                Config.RandomItemChance
+                Config.RandomItemChance,
+                BrainlessContent.HasItems(Config.CustomItems) ? Config.CustomItemChance : 0,
+                BrainlessContent.HasRoles ? Config.CustomRoleChance : 0
             };
             int effectIndex = Rules.WeightedIndex(weights, random);
             if (effectIndex < 0)

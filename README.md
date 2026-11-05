@@ -1,6 +1,6 @@
 # Project Brainless Plugins
 
-Eight separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.9** (`net48`).
+Nine separate SCP: Secret Laboratory plugins for **EXILED 9.15.3 / SCP:SL 14.2.9** (`net48`).
 
 - **[docs/CATALOG.md](docs/CATALOG.md)** — every item, weapon, role (with default chances), event and SCP-914 recipe, and how to use it. Generated; do not edit by hand.
 - **[docs/COMMANDS.md](docs/COMMANDS.md)** — every Remote Admin, F1 and Discord command with its permission node.
@@ -11,22 +11,24 @@ This README is the single overview of the project: what each plugin does, where 
 
 | Folder | DLL | Version | Config section | Purpose |
 | --- | --- | --- | --- | --- |
-| `Roles` | `Brainless.Roles.dll` | 0.8.3 | `brainless_roles` | 68 role profiles, per-role percentages, SCP variants, lockpicking, role HUD |
+| `Roles` | `Brainless.Roles.dll` | 0.9.0 | `brainless_roles` | 68 role profiles, per-role percentages, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
 | `Items` | `Brainless.Items.dll` | 0.8.2 | `brainless_items` | 12 custom grenades, tools and consumables (IDs 71xx) |
 | `Weapons` | `Brainless.Weapons.dll` | 0.9.1 | `brainless_weapons` | Grenade Launcher, Stun Gun, opt-in Ricochet Pistol (IDs 72xx) |
-| `BetterCoinflips` | `BetterCoinflips.dll` | 5.1.9 | `better_coinflips` | Random outcomes from ordinary coin flips |
+| `BetterCoinflips` | `BetterCoinflips.dll` | 5.2.0 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
 | `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.2.2 | `brainless_scp_proximity_chat` | Nearby SCP voice and receive controls |
 | `Core` | `Brainless.Core.dll` | 0.3.2 | `project_brainless_core` | XP/playtime storage, privacy, stats API (leaderboard + Discord bot), shared update service |
 | `SlFixes` | `Brainless.SlFixes.dll` | 0.5.0 | `project_brainless_sl_fixes` | Captive recruitment, guard escape, SCP-914 rough teleport/crafting, XP action tracking, end-of-round FF |
 | `RoundEvents` | `Brainless.RoundEvents.dll` | 0.3.1 | `project_brainless_round_events` | Infection, Deathmatch and Juggernaut events |
+| `ScpSwap` | `Brainless.ScpSwap.dll` | 0.1.0 | `brainless_scp_swap` | Round-start SCP swaps that keep Brainless SCP variants |
 
-Each DLL has its own project, version, config and updater. None has a hard reference to another; optional integrations (Roles ↔ Items/Weapons equipment, everything → Core) go through reflection or EXILED's CustomItems registry, so any subset can be installed. They share one game process, so a crash is not sandboxed.
+Each DLL has its own project, version, config and updater. None has a hard reference to another; optional integrations (Roles ↔ Items/Weapons equipment, BetterCoinflips/ScpSwap → Roles via `Shared/RolesBridge.cs` → `Brainless.Roles.RolesApi`, everything → Core) go through reflection or EXILED's CustomItems registry, so any subset can be installed. They share one game process, so a crash is not sandboxed.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
 | `<Plugin>/` | One `.csproj` per plugin: `Plugin.cs` (entry, version), `Config.cs`, `Commands.cs`, feature files |
+| `Roles/RolesApi.cs` | Public API other plugins call by reflection (profile ID/name, assign, roll, grant) and the forceclass hook |
 | `Roles/RoleDefinition.cs` | All 68 role profiles (`R("ID", "Name", RoleTypeId.X, "hint")`, weights, kits, gates) |
 | `Items/Definition.cs`, `Items/SupCatalog.cs`, `Weapons/Definition.cs` | Item/weapon specs (ID, name, description) |
 | `SlFixes/Config.cs` | SCP-914 crafting recipes |
@@ -77,7 +79,11 @@ map_rules:                # 10% Cluster + 20% Impact, 70% stays a normal HE gren
   zones: [LightContainment, HeavyContainment, Entrance]
 ```
 
-**Other notable settings.** Each role has editable `traits`, `add`/`remove`/`replace_inventory`, `spawn_area` and stats; `allow_model_scaling`, `allow_experimental_roles`, `explosive_scp173`, `enable_doctor_event`, lockpick durations/cooldowns, `show_role_hud`. SCP voice: `volume` (10), `full_volume_range` (12), `voice_range` (16). Fixes: `capture_conversions.*`, `end_of_round_friendly_fire`. Round events: automatic selection is off by default.
+**Other notable settings.** Each role has editable `traits`, `add`/`remove`/`replace_inventory`, `spawn_area` and stats; `allow_model_scaling`, `allow_experimental_roles`, `explosive_scp173`, `enable_doctor_event`, `force_class_custom_roles` (staff forceclass rolls a custom role with normal chances), lockpick durations/cooldowns, `show_role_hud`. SCP voice: `volume` (10), `full_volume_range` (12), `voice_range` (16). Fixes: `capture_conversions.*`, `end_of_round_friendly_fire`. Round events: automatic selection is off by default.
+
+**BetterCoinflips ↔ Brainless.** `custom_item_chance` + `custom_items` (heads gives a listed Brainless item/weapon), `cursed_custom_item_chance` + `cursed_custom_items` (tails), `custom_items_ignore_supply`, `custom_role_chance` + `custom_roles` (heads grants a fitting custom role in place; empty list = any), `roll_custom_role_on_class_change` (Turn into SCP / UNO reverse roll a role for the new class). Chances are proportional like the other coin effects and drop to 0 automatically when the needed DLL is missing.
+
+**SCP swap.** `swap_window_seconds` (60), `request_timeout_seconds` (20), `max_swaps_per_player` (1, 0 = unlimited), `allow_unplayed_scps`, `swappable_scps`, `custom_role_mode`: `FollowScp` (default: the variant stays with its SCP; an unplayed SCP gets a normal roll), `Reroll` or `None`. Only SCPs from the round-start/late-join spawn can swap, so event and staff assignments stay put.
 
 ## Stats API and Discord bot
 

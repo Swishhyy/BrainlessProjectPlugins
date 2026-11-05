@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 3);
+        public override Version Version => new Version(0, 9, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -42,6 +42,7 @@ namespace Brainless.Roles
         private readonly Dictionary<Player, ActiveRole> active = new Dictionary<Player, ActiveRole>();
         private readonly Dictionary<Player, int> generations = new Dictionary<Player, int>();
         private readonly Dictionary<Player, SpawnReason> reasons = new Dictionary<Player, SpawnReason>();
+        private readonly HashSet<Player> adminForced = new HashSet<Player>();
         private readonly Dictionary<string, RoleDefinition> zombieHistory = new Dictionary<string, RoleDefinition>();
         private readonly Dictionary<string, int> issued = new Dictionary<string, int>();
         private readonly Dictionary<Player, string> assignmentNotes = new Dictionary<Player, string>();
@@ -149,6 +150,7 @@ namespace Brainless.Roles
             pendingBursts.Clear();
             poisons.Clear();
             reasons.Clear();
+            adminForced.Clear();
             zombieHistory.Clear();
             issued.Clear();
             assignmentNotes.Clear();
@@ -168,6 +170,7 @@ namespace Brainless.Roles
             Remove(ev.Player);
             generations.Remove(ev.Player);
             reasons.Remove(ev.Player);
+            adminForced.Remove(ev.Player);
             assignmentNotes.Remove(ev.Player);
             pendingBursts.Forget(ev.Player);
         }
@@ -181,6 +184,10 @@ namespace Brainless.Roles
             Remove(ev.Player);
             generations[ev.Player] = Generation(ev.Player) + 1;
             reasons[ev.Player] = ev.Reason;
+            if (ev.Reason == SpawnReason.ForceClass && ForceClassScope.Active)
+                adminForced.Add(ev.Player);
+            else
+                adminForced.Remove(ev.Player);
             assignmentNotes[ev.Player] = "Waiting for spawn assignment (" + ev.Reason + ").";
             if (ev.NewRole != RoleTypeId.Scp0492 && ev.NewRole != RoleTypeId.Spectator)
                 zombieHistory.Remove(ev.Player.UserId);
@@ -201,7 +208,7 @@ namespace Brainless.Roles
         {
             if (active.ContainsKey(player) || !Round.IsStarted)
                 return;
-            if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived))
+            if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived || (reason == SpawnReason.ForceClass && Config.ForceClassCustomRoles && adminForced.Contains(player))))
             {
                 assignmentNotes[player] = "Native role kept for spawn reason " + reason + "; use bprole set for an explicit admin test.";
                 return;
@@ -246,10 +253,12 @@ namespace Brainless.Roles
             Apply(player, selected, false);
         }
 
-        internal string Availability(RoleDefinition definition, Player player = null, bool admin = false)
+        internal string Availability(RoleDefinition definition, Player player = null, bool admin = false, bool inPlace = false)
         {
             if (!definition.Enabled)
                 return "disabled in roles config";
+            if (inPlace && (definition.SpawnArea != RoleSpawnArea.Normal || definition.SpawnAs != RoleTypeId.None || definition.Neutral || definition.Id == "Z05"))
+                return "needs a fresh spawn";
             if (definition.Experimental && !Config.AllowExperimentalRoles)
                 return "requires allow_experimental_roles";
             if (definition.Id == "Z05" && !Config.EnableDoctorEvent)
@@ -271,15 +280,15 @@ namespace Brainless.Roles
             {
                 int living = Player.List.Count(p => p.IsHuman && p.IsAlive);
                 int cap = Math.Max(1, (int)Math.Ceiling(living * Config.CustomHumanSharePercent / 100));
-                if (active.Count(p => p.Key.IsHuman && p.Key.IsAlive) >= cap)
+                if (active.Count(p => p.Key != player && p.Key.IsHuman && p.Key.IsAlive) >= cap)
                     return "living-human specialist cap reached";
-                if (population < 12 && player.Role.Type == RoleTypeId.FacilityGuard && active.Any(p => p.Key.Role.Type == RoleTypeId.FacilityGuard))
+                if (population < 12 && player.Role.Type == RoleTypeId.FacilityGuard && active.Any(p => p.Key != player && p.Key.Role.Type == RoleTypeId.FacilityGuard))
                     return "small-lobby Guard specialist cap reached";
                 if (definition.Id.StartsWith("M") || definition.Id.StartsWith("C"))
                 {
                     int currentWaveCount = Time.time - waveStart > 8 ? 0 : waveCount;
                     bool waveFull = Config.ReinforcementSpecialistsPerWave > 0 && currentWaveCount >= Config.ReinforcementSpecialistsPerWave;
-                    if (waveFull || active.Any(p => p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
+                    if (waveFull || active.Any(p => p.Key != player && p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
                         return "reinforcement wave cap or duplicate-specialist limit reached";
                 }
             }

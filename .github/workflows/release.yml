@@ -5,7 +5,7 @@ on:
       plugin:
         description: Plugins to publish (All uses one combined release)
         type: choice
-        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents]
+        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents, ScpSwap]
         default: All
       prerelease:
         description: Publish as a prerelease

@@ -63,6 +63,9 @@
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.RoundEvents'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'BetterCoinflips' Or '$(MSBuildProjectName)' == 'Brainless.ScpSwap'">
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/RolesBridge.cs" Link="Internal/RolesBridge.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.SlFixes'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/CoreBridge.cs" Link="Internal/CoreBridge.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />

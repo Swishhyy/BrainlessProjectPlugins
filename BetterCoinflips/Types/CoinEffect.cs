@@ -67,6 +67,54 @@ namespace BetterCoinflips.Types
             return new CoinFlipEffect(red ? Translations.RedCardMessage : Translations.ContainmentEngineerCardMessage, player => Pickup.CreateAndSpawn(red ? ItemType.KeycardFacilityManager : ItemType.KeycardContainmentEngineer, player.Position, Quaternion.identity));
         }
 
+        private static void RandomItem(Player player)
+        {
+            if (Config.ItemsToGive?.Count > 0)
+                Item.Create(Config.ItemsToGive.ToList().RandomItem()).CreatePickup(player.Position);
+        }
+
+        private static CoinFlipEffect CustomItemReward()
+        {
+            CoinFlipEffect effect = null;
+            effect = new CoinFlipEffect(Translations.RandomItemMessage, player =>
+            {
+                string name = BrainlessContent.GiveRandomItem(player, Config.CustomItems, Config.CustomItemsIgnoreSupply);
+                if (name == null)
+                    RandomItem(player);
+                else
+                    effect.Message = Translations.CustomItemMessage.Replace("{item}", name);
+            });
+            return effect;
+        }
+
+        private static CoinFlipEffect CustomRoleReward()
+        {
+            CoinFlipEffect effect = null;
+            effect = new CoinFlipEffect(Translations.RandomItemMessage, player =>
+            {
+                string name = BrainlessContent.GrantRandomRole(player, Config.CustomRoles);
+                if (name == null)
+                    RandomItem(player);
+                else
+                    effect.Message = Translations.CustomRoleMessage.Replace("{role}", name);
+            });
+            return effect;
+        }
+
+        private static CoinFlipEffect CursedItemPunishment()
+        {
+            CoinFlipEffect effect = null;
+            effect = new CoinFlipEffect(Translations.SmallDamageMessage, player =>
+            {
+                string name = BrainlessContent.GiveRandomItem(player, Config.CursedCustomItems, Config.CustomItemsIgnoreSupply);
+                if (name == null)
+                    player.Hurt(15);
+                else
+                    effect.Message = Translations.CursedItemMessage.Replace("{item}", name);
+            });
+            return effect;
+        }
+
         // GoodEffects list
         public static List<CoinFlipEffect> GoodEffects => new()
         {
@@ -153,11 +201,11 @@ namespace BetterCoinflips.Types
                 player.Scale = new Vector3(1.13f, 0.5f, 1.13f);
             }),
             // 14: Spawns a random item for the player.
-            new CoinFlipEffect(Translations.RandomItemMessage, player =>
-            {
-                if (Config.ItemsToGive?.Count > 0)
-                    Item.Create(Config.ItemsToGive.ToList().RandomItem()).CreatePickup(player.Position);
-            }),
+            new CoinFlipEffect(Translations.RandomItemMessage, RandomItem),
+            // 15: Brainless: gives a custom item or weapon (falls back to a random item).
+            CustomItemReward(),
+            // 16: Brainless: turns the player into a fitting custom role (falls back to a random item).
+            CustomRoleReward(),
         };
         // BadEffects list
         public static List<CoinFlipEffect> BadEffects => new()
@@ -266,7 +314,9 @@ namespace BetterCoinflips.Types
                 if (Config.ValidScps == null || Config.ValidScps.Count == 0)
                     return;
                 var randomScp = Config.ValidScps.ToList().RandomItem();
+                var before = player.Role.Base;
                 player.Role.Set(randomScp, RoleSpawnFlags.AssignInventory);
+                BrainlessContent.RollAfterClassChange(player, before);
                 //prevents the player from staying in PD forever
                 if (player.CurrentRoom.Type == RoomType.Pocket)
                     player.EnableEffect(EffectType.PocketCorroding);
@@ -281,6 +331,7 @@ namespace BetterCoinflips.Types
             new CoinFlipEffect(Translations.ClassSwapMessage, player =>
             {
                 player.DropItems();
+                var before = player.Role.Base;
                 switch (player.Role.Type)
                 {
                     case RoleTypeId.Scientist:
@@ -314,6 +365,8 @@ namespace BetterCoinflips.Types
                         player.Role.Set(roles.RandomItem(), RoleSpawnFlags.AssignInventory);
                         break;
                 }
+
+                BrainlessContent.RollAfterClassChange(player, before);
 
                 //prevents the player from staying in PD forever
                 if (player.CurrentRoom.Type == RoomType.Pocket)
@@ -437,6 +490,8 @@ namespace BetterCoinflips.Types
                 player.Handcuff();
                 player.DropItems();
             }),
+            // 23: Brainless: gives a cursed custom item (falls back to a small amount of damage).
+            CursedItemPunishment(),
         };
     }
 }

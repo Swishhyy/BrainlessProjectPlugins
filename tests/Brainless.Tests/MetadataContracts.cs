@@ -63,6 +63,8 @@ internal static class MetadataContracts
         var highest = Method("Interactables.Interobjects.DoorUtils", "KeycardLevels", "get_HighestLevelValue");
         var levelMembers = VoiceNativeContracts.Calls(pe.GetMethodBody(highest.RelativeVirtualAddress).GetILBytes(), md, true).ToArray();
         check(levelMembers.Contains("Containment") && levelMembers.Contains("Armory") && levelMembers.Contains("Admin"), "Locksmith timing uses the highest native containment, armory or administration requirement");
+        var forceRole = Method("CommandSystem.Commands.RemoteAdmin", "ForceRoleCommand", "Execute");
+        check((forceRole.Attributes & System.Reflection.MethodAttributes.Public) != 0, "Roles hooks the native Remote Admin forceclass command by name to roll custom roles for staff force-classes");
         string rolePath = Path.Combine(root, "Roles/bin/Release/Brainless.Roles.dll");
         if (File.Exists(rolePath))
         {
@@ -73,6 +75,12 @@ internal static class MetadataContracts
             var candy = plugin.GetMethods().Select(roles.GetMethodDefinition).Single(m => roles.GetString(m.Name) == "Candy");
             var calls = VoiceNativeContracts.Calls(rolePe.GetMethodBody(candy.RelativeVirtualAddress).GetILBytes(), roles).ToArray();
             check(System.Linq.Enumerable.Contains(calls, "Resolve") && Array.IndexOf(calls, "Clear") < Array.IndexOf(calls, "AddCandy") && Array.IndexOf(calls, "Clear") >= 0, "the compiled role candy path selects registered candies and clears native seed candy before filling the bag");
+            // BetterCoinflips and ScpSwap reach these by name through RolesBridge.
+            var rolesApi = roles.TypeDefinitions.Select(roles.GetTypeDefinition).Single(t => roles.GetString(t.Namespace) == "Brainless.Roles" && roles.GetString(t.Name) == "RolesApi");
+            var exposed = rolesApi.GetMethods().Select(roles.GetMethodDefinition)
+                .Where(m => (m.Attributes & System.Reflection.MethodAttributes.Public) != 0 && (m.Attributes & System.Reflection.MethodAttributes.Static) != 0)
+                .Select(m => roles.GetString(m.Name) + "/" + m.GetParameters().Count).ToArray();
+            check(new[] { "get_IsReady/0", "ProfileId/1", "ProfileName/1", "AssignProfile/2", "RollProfile/2", "GrantRandomProfile/2" }.All(name => exposed.Contains(name)), "the compiled Roles API exposes every public static method the cross-plugin bridge calls");
         }
 
         string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");

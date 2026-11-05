@@ -19,6 +19,7 @@ PROJECTS = {
     'Core': ('Brainless.Core', 'Core/Brainless.Core.csproj'),
     'RoundEvents': ('Brainless.RoundEvents', 'RoundEvents/Brainless.RoundEvents.csproj'),
     'SlFixes': ('Brainless.SlFixes', 'SlFixes/Brainless.SlFixes.csproj'),
+    'ScpSwap': ('Brainless.ScpSwap', 'ScpSwap/Brainless.ScpSwap.csproj'),
 }
 
 def prepare(plugin, output):

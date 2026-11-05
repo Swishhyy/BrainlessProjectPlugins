@@ -105,6 +105,9 @@ namespace Brainless.Roles
         public bool EnableDoctorEvent { get; set; } = true;
         public bool ExtremeMuncherEventPreset { get; set; }
 
+        [Description("When staff use the Remote Admin forceclass command, roll a custom role for the new class with the normal per-role chances. Plugin role changes (events, bprole set) are unaffected.")]
+        public bool ForceClassCustomRoles { get; set; } = true;
+
         [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float ClassDChance { get; set; } = 45;

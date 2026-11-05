@@ -36,6 +36,8 @@
 | `pbcore status` / `pbcore save` | Checks services / saves stats | `projectbrainless.core` |
 | `pbfixes status` / `pbfixes reload` | Checks Fixes / applies its config | `projectbrainless.fixes` |
 | `pbxp <playerID>` | Inspects another player’s stats | `projectbrainless.stats` |
+| `bpscpswap <playerID> <playerID>` | Swaps two SCPs any time (variants follow the swap mode) | `brainless.scpswap` |
+| `bpscpswap <playerID> <scp173\|scp096\|…>` | Moves an SCP to that SCP, swapping with whoever plays it | `brainless.scpswap` |
 | `getserial [playerID]` | Shows the held item’s serial | `bc.getserial` |
 | `coinuses get player [playerID]` | Checks held coin uses | `bc.coinuses.get` |
 | `coinuses get serial <serial>` | Checks a coin by serial | `bc.coinuses.get` |
@@ -62,6 +64,10 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.pbprivacy [status]` | Shows whether your stats are tracked |
 | `.pbprivacy optout` | Stops tracking and deletes your saved stats and Discord link |
 | `.pbprivacy optin` | Starts fresh; requires native DNT off |
+| `.scpswap list` | Shows SCPs, their custom variants and the swap time left |
+| `.scpswap <scp>` | Asks the SCP playing it to swap (e.g. `.scpswap 173`), or takes it if nobody plays it |
+| `.scpswap yes` / `.scpswap no` | Accepts or declines a swap request |
+| `.scpswap cancel` | Cancels your outgoing request |
 
 **Discord, when the stats API and bot are set up ([setup](../README.md#stats-api-and-discord-bot)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
 

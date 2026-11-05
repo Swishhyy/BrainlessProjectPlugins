@@ -215,6 +215,44 @@ namespace BetterCoinflips.Configs
             RoomType.Surface,
         };
 
+        [Description("Brainless integration. Heads can give a Brainless custom item (needs the Items/Weapons DLLs). Proportional chance like the effects below; skipped automatically when none of the listed items is installed.")]
+        public int CustomItemChance { get; set; } = 30;
+
+        [Description("Brainless item/weapon IDs that heads can give (see docs/CATALOG.md). Empty = any installed Brainless item or weapon.")]
+        public List<uint> CustomItems { get; set; } = new()
+        {
+            7101,
+            7102,
+            7103,
+            7105,
+            7113,
+            7114,
+            7115,
+            7117,
+            7119,
+            7209,
+        };
+
+        [Description("Tails can give a cursed Brainless item. Proportional chance; skipped automatically when none of the listed items is installed.")]
+        public int CursedCustomItemChance { get; set; } = 15;
+        public List<uint> CursedCustomItems { get; set; } = new()
+        {
+            7116,
+            7122,
+        };
+
+        [Description("Give coin custom items even when their natural per-round supply is used up. Disabled items are never given.")]
+        public bool CustomItemsIgnoreSupply { get; set; } = false;
+
+        [Description("Heads can turn you into a random Brainless custom role that fits your current class, without moving you (needs the Roles DLL). Proportional chance; falls back to a random item if no role fits.")]
+        public int CustomRoleChance { get; set; } = 20;
+
+        [Description("Role IDs or names heads can grant, e.g. [C05, S04]. Empty = any enabled profile that fits the player's class.")]
+        public List<string> CustomRoles { get; set; } = new();
+
+        [Description("When a coin changes your class (Turn into SCP, UNO reverse), roll a Brainless custom role for the new class using the normal role chances (needs the Roles DLL).")]
+        public bool RollCustomRoleOnClassChange { get; set; } = true;
+
         [Description("The chance of these good effects happening. It's a proportional chance not a % chance.")]
         public int KeycardChance { get; set; } = 20;
         public int MedicalKitChance { get; set; } = 35;
