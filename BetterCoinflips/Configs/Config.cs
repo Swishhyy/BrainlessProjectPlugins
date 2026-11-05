@@ -262,11 +262,11 @@ namespace BetterCoinflips.Configs
         public int MoreHpChance { get; set; } = 10;
         public int HatChance { get; set; } = 10;
         public int RandomGoodEffectChance { get; set; } = 30;
-        public int OneAmmoLogicerChance { get; set; } = 1;
+        public int OneAmmoLogicerChance { get; set; } = 0;
         public int LightbulbChance { get; set; } = 15;
         public int PinkCandyChance { get; set; } = 10;
         public int BadRevoChance { get; set; } = 5;
-        public int EmptyHidChance { get; set; } = 5;
+        public int EmptyHidChance { get; set; } = 0;
         public int ForceRespawnChance { get; set; } = 15;
         public int SizeChangeChance { get; set; } = 20;
         public int RandomItemChance { get; set; } = 35;
@@ -307,6 +307,17 @@ namespace BetterCoinflips.Configs
         public int LuckyCoinChance { get; set; } = 10;
         public int SecondChanceChance { get; set; } = 8;
         public int FullHealChance { get; set; } = 15;
+        public int ArmorUpgradeChance { get; set; } = 15;
+        public int GrenadePackChance { get; set; } = 15;
+        public int ExtraCoinChance { get; set; } = 10;
+        public int LoadedUpChance { get; set; } = 15;
+        public int RegenerationChance { get; set; } = 15;
+        public int SilentStepsChance { get; set; } = 10;
+        public int CleanseChance { get; set; } = 10;
+        public int MedicAuraChance { get; set; } = 12;
+        public int RallyChance { get; set; } = 8;
+        public int ReinforcementChance { get; set; } = 6;
+        public int JackpotChance { get; set; } = 3;
 
         [Description("Extra bad outcomes. Proportional chances like the ones above. None of them can kill.")]
         public int FrozenChance { get; set; } = 15;
@@ -357,7 +368,7 @@ namespace BetterCoinflips.Configs
                 return false;
             var stock = new Config();
             var properties = typeof(Config).GetProperties();
-            var history = new Dictionary<string, int[]> { { "HpReductionChance", new[] { 20, 15 } }, { "WarheadChance", new[] { 10, 3 } }, { "ScpTpChance", new[] { 20, 12 } }, { "OneHpLeftChance", new[] { 15, 8 } }, { "TurnIntoScpChance", new[] { 30, 8 } }, { "InventoryResetChance", new[] { 20, 6 } }, { "ClassSwapChance", new[] { 10, 6 } }, { "InstantExplosionChance", new[] { 10, 4 } }, { "KickChance", new[] { 5, 0 } }, { "SpectSwapChance", new[] { 10, 3 } }, { "TeslaTpChance", new[] { 15, 6 } }, { "InventorySwapChance", new[] { 20, 12 } }, { "HandcuffChance", new[] { 10, 6 } }, { "LiveHeChance", new[] { 30, 15 } }, { "RandomBadEffectChance", new[] { 20, 15 } }, { "CustomItemChance", new[] { 30 } }, { "CustomRoleChance", new[] { 20 } } };
+            var history = new Dictionary<string, int[]> { { "OneAmmoLogicerChance", new[] { 1 } }, { "EmptyHidChance", new[] { 5 } }, { "HpReductionChance", new[] { 20, 15 } }, { "WarheadChance", new[] { 10, 3 } }, { "ScpTpChance", new[] { 20, 12 } }, { "OneHpLeftChance", new[] { 15, 8 } }, { "TurnIntoScpChance", new[] { 30, 8 } }, { "InventoryResetChance", new[] { 20, 6 } }, { "ClassSwapChance", new[] { 10, 6 } }, { "InstantExplosionChance", new[] { 10, 4 } }, { "KickChance", new[] { 5, 0 } }, { "SpectSwapChance", new[] { 10, 3 } }, { "TeslaTpChance", new[] { 15, 6 } }, { "InventorySwapChance", new[] { 20, 12 } }, { "HandcuffChance", new[] { 10, 6 } }, { "LiveHeChance", new[] { 30, 15 } }, { "RandomBadEffectChance", new[] { 20, 15 } }, { "CustomItemChance", new[] { 30 } }, { "CustomRoleChance", new[] { 20 } } };
             foreach (var pair in history)
             {
                 var property = System.Array.Find(properties, p => p.Name == pair.Key);
@@ -401,5 +412,11 @@ namespace BetterCoinflips.Configs
         public float ToughSkinPercent { get; set; } = 20;
         public float SecondWindSeconds { get; set; } = 30;
         public int LuckyCoinFlips { get; set; } = 2;
+        public float RegenerationPerSecond { get; set; } = 3;
+        public float RegenerationSeconds { get; set; } = 20;
+        public float SilentStepsSeconds { get; set; } = 60;
+        public float MedicAuraHeal { get; set; } = 30;
+        public float MedicAuraRange { get; set; } = 10;
+        public int JackpotRewards { get; set; } = 3;
     }
 }

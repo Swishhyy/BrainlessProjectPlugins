@@ -25,9 +25,13 @@ internal static class CoinBalanceTests
         var props = typeof(BetterCoinflips.Configs.Config).GetProperties();
         int Weight(string name) => (int)System.Array.Find(props, p => p.Name == name).GetValue(fresh);
         string[] newTails = { "FrozenChance", "SlowedChance", "ExhaustedChance", "SinkholeChance", "ButterfingersChance", "DropHeldItemChance", "LoseAmmoChance", "EmptyMagazineChance", "BlindedChance", "DeafenedChance", "ConcussedChance", "FlashedChance", "LocationLeakChance", "CassieCalloutChance", "LockedInChance", "RoomBlackoutChance", "DropKeycardsChance", "DropArmorChance", "CursedMaxHpChance", "BleedingChance", "HypothermiaChance", "StaminaDrainedChance", "PoisonedChance", "HuntedChance", "BackToSpawnChance", "JunkSwapChance", "TripChance", "WeakArmsChance", "GlassJawChance", "UnluckyCoinChance" };
-        string[] newHeads = { "SpeedBoostChance", "ShieldUpChance", "ToughSkinChance", "SecondWindChance", "AmmoRefillChance", "KeycardUpgradeChance", "RandomScpItemChance", "LuckyCoinChance", "SecondChanceChance", "FullHealChance" };
+        string[] newHeads = { "ArmorUpgradeChance", "GrenadePackChance", "ExtraCoinChance", "LoadedUpChance", "RegenerationChance", "SilentStepsChance", "CleanseChance", "MedicAuraChance", "RallyChance", "ReinforcementChance", "JackpotChance", "SpeedBoostChance", "ShieldUpChance", "ToughSkinChance", "SecondWindChance", "AmmoRefillChance", "KeycardUpgradeChance", "RandomScpItemChance", "LuckyCoinChance", "SecondChanceChance", "FullHealChance" };
         check(newTails.All(n => Weight(n) > 0) && newTails.Length >= 30, "all thirty extra tails outcomes are on by default");
-        check(newHeads.All(n => Weight(n) > 0), "all ten extra heads outcomes are on by default");
+        check(newHeads.All(n => Weight(n) > 0) && newHeads.Length == 21, "all twenty-one extra heads outcomes are on by default");
+        check(fresh.OneAmmoLogicerChance == 0 && fresh.EmptyHidChance == 0, "the 1-ammo Logicer and empty Micro HID are off by default");
+        var oldJunk = new BetterCoinflips.Configs.Config { OneAmmoLogicerChance = 1, EmptyHidChance = 5 };
+        oldJunk.UpgradeBalance();
+        check(oldJunk.OneAmmoLogicerChance == 0 && oldJunk.EmptyHidChance == 0, "existing configs lose the Logicer and Micro HID outcomes too");
         check(fresh.ItemWipeChancePercent == 0.1 && System.Array.Find(props, p => p.Name == "LuckyTailsPercent") == null, "the item wipe is a separate 0.1% roll and lucky tails is gone, so coins are a straight 50/50");
 #endif
     }

@@ -45,6 +45,25 @@ namespace BetterCoinflips.Types
             W(() => Config.LuckyCoinChance, () => Text.LuckyCoinMessage.Replace("{flips}", T.LuckyCoinFlips.ToString()), p => AdjustCoin(p, T.LuckyCoinFlips)),
             W(() => Config.SecondChanceChance, () => Text.SecondChanceMessage, p => Modifiers.GrantSecondChance(p)),
             W(() => Config.FullHealChance, () => Text.FullHealMessage, p => p.Health = p.MaxHealth),
+            W(() => Config.ArmorUpgradeChance, () => Text.ArmorUpgradeMessage, ArmorUpgrade),
+            W(() => Config.GrenadePackChance, () => Text.GrenadePackMessage, p =>
+            {
+                Pickup.CreateAndSpawn(ItemType.GrenadeHE, p.Position, Quaternion.identity);
+                Pickup.CreateAndSpawn(ItemType.GrenadeFlash, p.Position, Quaternion.identity);
+            }),
+            W(() => Config.ExtraCoinChance, () => Text.ExtraCoinMessage, p => Pickup.CreateAndSpawn(ItemType.Coin, p.Position, Quaternion.identity)),
+            W(() => Config.LoadedUpChance, () => Text.LoadedUpMessage, LoadedUp),
+            W(() => Config.RegenerationChance, () => Text.RegenerationMessage, Regenerate),
+            W(() => Config.SilentStepsChance, () => Text.SilentStepsMessage, p => p.EnableEffect(EffectType.SilentWalk, 10, T.SilentStepsSeconds)),
+            W(() => Config.CleanseChance, () => Text.CleanseMessage, Cleanse),
+            W(() => Config.MedicAuraChance, () => Text.MedicAuraMessage, p =>
+            {
+                foreach (var ally in Player.List.Where(a => a.IsAlive && a.Role.Side == p.Role.Side && (a.Position - p.Position).sqrMagnitude <= T.MedicAuraRange * T.MedicAuraRange))
+                    ally.Heal(T.MedicAuraHeal);
+            }),
+            W(() => Config.RallyChance, Rally),
+            W(() => Config.ReinforcementChance, Reinforcement),
+            W(() => Config.JackpotChance, Jackpot),
         };
 
         // ---- Tails --------------------------------------------------------------------
@@ -85,6 +104,131 @@ namespace BetterCoinflips.Types
             W(() => Config.GlassJawChance, () => Text.GlassJawMessage, p => Modifiers.Taken(p, 1 + T.GlassJawPercent / 100, T.GlassJawSeconds)),
             W(() => Config.UnluckyCoinChance, () => Text.UnluckyCoinMessage, p => AdjustCoin(p, -1000)),
         };
+
+        private static CoinFlipEffect Rally()
+        {
+            CoinFlipEffect effect = null;
+            effect = new CoinFlipEffect(Text.RallyMessage, p =>
+            {
+                var allies = Player.List.Where(a => a != p && a.IsAlive && a.Role.Side == p.Role.Side && a.Role.Type != RoleTypeId.Scp079).ToArray();
+                if (allies.Length == 0)
+                {
+                    p.Health = p.MaxHealth;
+                    effect.Message = Text.FullHealMessage;
+                    return;
+                }
+
+                p.Teleport(allies[Rd.Next(allies.Length)].Position);
+            });
+            return effect;
+        }
+
+        // A random spectator respawns next to the flipper in the same class.
+        private static CoinFlipEffect Reinforcement()
+        {
+            CoinFlipEffect effect = null;
+            effect = new CoinFlipEffect(Text.FullHealMessage, p =>
+            {
+                var spectators = Player.List.Where(s => s.IsConnected && !s.IsHost && !s.IsNPC && s.Role.Type == RoleTypeId.Spectator).ToArray();
+                if (spectators.Length == 0)
+                {
+                    p.Health = p.MaxHealth;
+                    return;
+                }
+
+                var helper = spectators[Rd.Next(spectators.Length)];
+                var position = p.Position;
+                helper.Role.Set(p.Role.Type, SpawnReason.ForceClass, RoleSpawnFlags.AssignInventory);
+                helper.Position = position;
+                Plugin.Instance.Later(.3f, () =>
+                {
+                    if (helper.IsConnected && helper.IsAlive)
+                        helper.Position = position;
+                });
+                effect.Message = Text.ReinforcementMessage.Replace("{player}", helper.Nickname);
+                EventHandlers.SendBroadcast(helper, Text.ReinforcementJoinMessage.Replace("{player}", p.Nickname));
+            });
+            return effect;
+        }
+
+        // Several other good extra outcomes at once.
+        private static CoinFlipEffect Jackpot()
+        {
+            CoinFlipEffect effect = null;
+            effect = new CoinFlipEffect(Text.JackpotMessage, p =>
+            {
+                // Never Jackpot itself.
+                var pool = Good.Where(g => g.Weight() > 0 && g.Create.Method.Name != nameof(Jackpot)).ToList();
+                var parts = new List<string>();
+                for (int i = 0; i < Math.Max(1, T.JackpotRewards) && pool.Count > 0; i++)
+                {
+                    int total = pool.Sum(g => g.Weight());
+                    int roll = Rd.Next(total);
+                    var pick = pool.First(g => (roll -= g.Weight()) < 0);
+                    pool.Remove(pick);
+                    var reward = pick.Create();
+                    reward.Execute(p);
+                    parts.Add(reward.Message);
+                }
+
+                effect.Message = Text.JackpotMessage + string.Join(" ", parts);
+            });
+            return effect;
+        }
+
+        private static void ArmorUpgrade(Player player)
+        {
+            ItemType next = player.CurrentArmor == null ? ItemType.ArmorLight : player.CurrentArmor.Type == ItemType.ArmorLight ? ItemType.ArmorCombat : player.CurrentArmor.Type == ItemType.ArmorCombat ? ItemType.ArmorHeavy : ItemType.None;
+            if (next == ItemType.None)
+            {
+                player.AddAhp(T.ShieldUpAhp, T.ShieldUpAhp, 0.4f);
+                return;
+            }
+
+            if (player.CurrentArmor != null)
+                player.RemoveItem(player.CurrentArmor);
+            player.AddItem(next);
+        }
+
+
+        private static void LoadedUp(Player player)
+        {
+            if (!(player.CurrentItem is Firearm gun))
+            {
+                AmmoRefill(player);
+                return;
+            }
+
+            gun.MagazineAmmo = gun.MaxMagazineAmmo;
+            player.SetAmmo(gun.AmmoType, player.GetAmmoLimit(gun.AmmoType));
+        }
+
+        private static void Regenerate(Player player)
+        {
+            var life = player.Role.Base;
+            for (int second = 1; second <= Math.Max(1, (int)T.RegenerationSeconds); second++)
+                Plugin.Instance.Later(second, () =>
+                {
+                    if (player.IsConnected && player.IsAlive && player.Role.Base == life)
+                        player.Health = Math.Min(player.MaxHealth, player.Health + T.RegenerationPerSecond);
+                });
+        }
+
+        private static readonly EffectType[] Ailments =
+        {
+            EffectType.Bleeding, EffectType.Poisoned, EffectType.Burned, EffectType.Concussed, EffectType.Blinded, EffectType.Deafened,
+            EffectType.Ensnared, EffectType.Exhausted, EffectType.Flashed, EffectType.Hemorrhage, EffectType.Hypothermia, EffectType.SinkHole,
+            EffectType.Stained, EffectType.Traumatized, EffectType.Disabled, EffectType.Asphyxiated, EffectType.Corroding, EffectType.AmnesiaVision,
+            EffectType.AmnesiaItems, EffectType.Slowness,
+        };
+
+        // Removes negative status effects and the coin's own Weak arms / Glass jaw.
+        private static void Cleanse(Player player)
+        {
+            foreach (var ailment in Ailments)
+                player.DisableEffect(ailment);
+            Modifiers.ClearCurses(player);
+        }
 
         // The 0.1% item wipe is rolled separately, before any other tails outcome.
         internal static CoinFlipEffect ItemWipe() => new(Text.ItemWipeMessage, p => p.ClearInventory());
@@ -272,6 +416,14 @@ namespace BetterCoinflips.Types
                 else
                     ev.Amount = ev.Player.Health - 1;
             }
+        }
+
+        // Cleanse: drop Weak arms and Glass jaw but keep Tough skin and Second chance.
+        internal static void ClearCurses(Player player)
+        {
+            dealt.Remove(player);
+            if (taken.TryGetValue(player, out var t) && t.multiplier > 1)
+                taken.Remove(player);
         }
 
         internal static void Forget(Player player)

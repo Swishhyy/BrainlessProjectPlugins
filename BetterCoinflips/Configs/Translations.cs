@@ -80,6 +80,18 @@ namespace BetterCoinflips.Configs
         public string WeakArmsMessage { get; set; } = "Your arms feel weak.";
         public string GlassJawMessage { get; set; } = "You feel fragile...";
         public string UnluckyCoinMessage { get; set; } = "The coin crumbled in your hand.";
+        public string ArmorUpgradeMessage { get; set; } = "Your armor got an upgrade!";
+        public string GrenadePackMessage { get; set; } = "Grenades! Use them wisely.";
+        public string ExtraCoinMessage { get; set; } = "Another coin! Keep gambling.";
+        public string LoadedUpMessage { get; set; } = "Locked and loaded!";
+        public string RegenerationMessage { get; set; } = "You feel your wounds closing...";
+        public string SilentStepsMessage { get; set; } = "Your footsteps went silent.";
+        public string CleanseMessage { get; set; } = "All your ailments are gone!";
+        public string MedicAuraMessage { get; set; } = "A healing wave washes over you and your team!";
+        public string RallyMessage { get; set; } = "You rallied to a teammate!";
+        public string ReinforcementMessage { get; set; } = "Backup has arrived: {player} joins you!";
+        public string ReinforcementJoinMessage { get; set; } = "The coin brought you back to help {player}!";
+        public string JackpotMessage { get; set; } = "JACKPOT! ";
         public string CursedItemMessage { get; set; } = "The coin cursed you with {item}...";
 
         [Description("Here you can set the message for each of these bad coin effects.")]
