@@ -11,7 +11,7 @@ namespace Brainless.Roles
             string key = Key(query);
             if (key.Length == 0)
                 return false;
-            return key == Key(id) || key == Key(name) || (id == "Z04" && (key == "explosivezombie" || key == "bomberzombie")) || (id == "S03" && (key == "chiefscientist" || key == "headscientist")) || (id == "G07" && (key == "rogue" || key == "rouge" || key == "rougeguard")) || (id == "S08" && key == "rougescientist");
+            return key == Key(id) || key == Key(name) || (id == "Z04" && (key == "explosivezombie" || key == "bomberzombie")) || (id == "S03" && (key == "chiefscientist" || key == "headscientist"));
         }
     }
 }

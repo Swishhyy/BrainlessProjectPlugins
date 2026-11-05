@@ -63,6 +63,8 @@ internal static class MetadataContracts
         var highest = Method("Interactables.Interobjects.DoorUtils", "KeycardLevels", "get_HighestLevelValue");
         var levelMembers = VoiceNativeContracts.Calls(pe.GetMethodBody(highest.RelativeVirtualAddress).GetILBytes(), md, true).ToArray();
         check(levelMembers.Contains("Containment") && levelMembers.Contains("Armory") && levelMembers.Contains("Admin"), "Locksmith timing uses the highest native containment, armory or administration requirement");
+        var forceRole = Method("CommandSystem.Commands.RemoteAdmin", "ForceRoleCommand", "Execute");
+        check((forceRole.Attributes & System.Reflection.MethodAttributes.Public) != 0, "Roles hooks the native Remote Admin forceclass command by name to roll custom roles for staff force-classes");
         string rolePath = Path.Combine(root, "Roles/bin/Release/Brainless.Roles.dll");
         if (File.Exists(rolePath))
         {
@@ -73,6 +75,25 @@ internal static class MetadataContracts
             var candy = plugin.GetMethods().Select(roles.GetMethodDefinition).Single(m => roles.GetString(m.Name) == "Candy");
             var calls = VoiceNativeContracts.Calls(rolePe.GetMethodBody(candy.RelativeVirtualAddress).GetILBytes(), roles).ToArray();
             check(System.Linq.Enumerable.Contains(calls, "Resolve") && Array.IndexOf(calls, "Clear") < Array.IndexOf(calls, "AddCandy") && Array.IndexOf(calls, "Clear") >= 0, "the compiled role candy path selects registered candies and clears native seed candy before filling the bag");
+            // BetterCoinflips and ScpSwap reach these by name through RolesBridge.
+            var rolesApi = roles.TypeDefinitions.Select(roles.GetTypeDefinition).Single(t => roles.GetString(t.Namespace) == "Brainless.Roles" && roles.GetString(t.Name) == "RolesApi");
+            var exposed = rolesApi.GetMethods().Select(roles.GetMethodDefinition)
+                .Where(m => (m.Attributes & System.Reflection.MethodAttributes.Public) != 0 && (m.Attributes & System.Reflection.MethodAttributes.Static) != 0)
+                .Select(m => roles.GetString(m.Name) + "/" + m.GetParameters().Count).ToArray();
+            check(new[] { "get_IsReady/0", "ProfileId/1", "ProfileName/1", "AssignProfile/2", "RollProfile/2", "GrantRandomProfile/2" }.All(name => exposed.Contains(name)), "the compiled Roles API exposes every public static method the cross-plugin bridge calls");
+        }
+
+        string itemsPath = Path.Combine(root, "Items/bin/Release/Brainless.Items.dll");
+        if (File.Exists(itemsPath))
+        {
+            using var itemsStream = File.OpenRead(itemsPath);
+            using var itemsPe = new PEReader(itemsStream);
+            var items = itemsPe.GetMetadataReader();
+            var itemPlugin = items.TypeDefinitions.Select(items.GetTypeDefinition).Single(t => items.GetString(t.Namespace) == "Brainless.Items" && items.GetString(t.Name) == "Plugin");
+            var methods = itemPlugin.GetMethods().Select(items.GetMethodDefinition).Select(md => items.GetString(md.Name)).ToArray();
+            check(methods.Contains("UsingCompleted") && methods.Contains("PillUsing") && methods.Contains("CursedLootRound") && methods.Contains("WarheadPanel"), "pills use the native use animation and cursed items have their door, warhead and loot hooks");
+            var catalog = items.TypeDefinitions.Select(items.GetTypeDefinition).Single(t => items.GetString(t.Namespace) == "Brainless.Items" && items.GetString(t.Name) == "SupCatalog");
+            check(catalog.GetMethods().Select(items.GetMethodDefinition).Any(md => items.GetString(md.Name) == "CursedDefaults"), "the compiled item catalog ships the cursed item definitions");
         }
 
         string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
@@ -84,6 +105,9 @@ internal static class MetadataContracts
             var state = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceState");
             var names = state.GetMethods().Select(voice.GetMethodDefinition).Select(m => voice.GetString(m.Name)).ToArray();
             check(System.Linq.Enumerable.Contains(names, "KeyPressed") && !System.Linq.Enumerable.Contains(names, "SetMode") && !System.Linq.Enumerable.Contains(names, "get_HoldMode"), "the compiled voice state has toggle input and no hold-mode transition");
+            // Brainless Roles reads the HUD status line through VoiceBridge by name.
+            var voiceApi = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceApi");
+            check(voiceApi.GetMethods().Select(voice.GetMethodDefinition).Any(m => voice.GetString(m.Name) == "HudStatus" && m.GetParameters().Count == 1 && (m.Attributes & System.Reflection.MethodAttributes.Static) != 0 && (m.Attributes & System.Reflection.MethodAttributes.Public) != 0), "the compiled voice plugin exposes the HUD status method the Roles HUD calls");
         }
     }
 }

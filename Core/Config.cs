@@ -13,7 +13,7 @@ namespace Brainless.Core
         public int SaveIntervalSeconds { get; set; } = 30;
         public int XpPerLevelSquared { get; set; } = 100;
         public int MaxXpPerPlayerPerRound { get; set; } = 500;
-        [Description("Stats API for the website leaderboard and the Discord bot (BrainlessDiscordBot repo). Put it behind Cloudflare for HTTPS; see docs/STATS_API.md.")]
+        [Description("Stats API for the website leaderboard and the Discord bot (BrainlessDiscordBot repo). Put it behind Cloudflare for HTTPS; see the Stats API section of the repository README.")]
         public StatsApiConfig StatsApi { get; set; } = new StatsApiConfig();
     }
 }

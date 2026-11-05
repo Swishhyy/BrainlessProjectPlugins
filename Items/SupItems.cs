@@ -107,7 +107,7 @@ namespace Brainless.Items
 
         private bool ActivateSup(Player player, Item held, RegisteredItem item, bool hold)
         {
-            if (item.Id < 7114 || item.Id > 7122)
+            if ((item.Id < 7114 || item.Id > 7122) && !IsPill(item.Id))
                 return false;
             if (item.Id == 7119)
             {
@@ -121,75 +121,98 @@ namespace Brainless.Items
                 return true;
             }
 
-            PillTuning tuning = item.Id == 7114 ? Config.Sup.AdrenalinePills : item.Id == 7115 ? Config.Sup.Anti096Pills : item.Id == 7116 ? Config.Sup.ExpiredPills : item.Id == 7117 ? Config.Sup.InvisibilityPills : (PillTuning)Config.Sup.VolatilePills;
-            string key = player.UserId + ":" + item.Id;
-            if (pillCooldowns.TryGetValue(key, out float until) && until > Time.time)
+            // Pills and cursed consumables are used like a normal SCP-500/adrenaline
+            // (native use animation); see Using and UsingCompleted.
+            if (IsPill(item.Id))
             {
-                player.ShowHint($"Pills available in {until - Time.time:0.#}s.", 3);
+                player.ShowHint("Use it like a normal " + item.Type + ".", 3);
                 return true;
             }
 
-            if (item.Id == 7115 && !Targets096(player).Any())
-            {
-                player.ShowHint("You are not an SCP-096 target. Pills retained.", 3);
-                return true;
-            }
-
-            if (item.Id == 7117 && Config.Sup.InvisibilityPills.OncePerPlayerPerRound && invisibleUsed.Contains(player.UserId))
-            {
-                player.ShowHint("Invisibility pills can be used once per round.", 3);
-                return true;
-            }
-
-            Begin(player, tuning.UseSeconds, held, hold, () =>
-            {
-                if (item.Id == 7115 && !Targets096(player).Any())
-                    return;
-                if (!Spend(player, held))
-                    return;
-                pillCooldowns[key] = Time.time + tuning.CooldownSeconds;
-                switch (item.Id)
-                {
-                    case 7114:
-                        if (boosts.TryGetValue(player, out var old))
-                            old.Layer.Clear();
-                        boosts[player] = new Boost
-                        {
-                            Role = player.Role.Base,
-                            Expires = Time.time + Config.Sup.AdrenalinePills.DurationSeconds,
-                            Multiplier = Config.Sup.AdrenalinePills.SpeedMultiplier,
-                            Exhaustion = Config.Sup.AdrenalinePills.ExhaustionSeconds
-                        };
-                        player.Stamina = Mathf.Min(player.StaminaStat.MaxValue, player.Stamina + player.StaminaStat.MaxValue * Config.Sup.AdrenalinePills.StaminaRestorePercent / 100);
-                        player.ShowHint("Adrenaline active.", 3);
-                        break;
-                    case 7115:
-                        foreach (var scp in Targets096(player))
-                            scp.RemoveTarget(player);
-                        if (Config.Sup.Anti096Pills.ProvideTemporaryImmunity)
-                            anti096[player] = Time.time + Config.Sup.Anti096Pills.ImmunitySeconds;
-                        player.ShowHint("Removed from SCP-096's target list.", 3);
-                        break;
-                    case 7116:
-                        RandomPill(player);
-                        break;
-                    case 7117:
-                        StopStealth(player);
-                        invisibleUsed.Add(player.UserId);
-                        invisible[player] = new Stealth
-                        {
-                            Role = player.Role.Base,
-                            Expires = Time.time + Config.Sup.InvisibilityPills.DurationSeconds
-                        };
-                        invisible[player].Effect.Refresh(player);
-                        player.ShowHint($"Invisible for {Config.Sup.InvisibilityPills.DurationSeconds:0.#}s. Attacking can break stealth.", 3);
-                        break;
-                    case 7122:
-                        Volatile(player);
-                        break;
-                }
-            });
             return true;
+        }
+
+        internal static bool IsPill(uint id) => id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline || id == SupCatalog.CursedMedkit || id == SupCatalog.CursedHat || id == SupCatalog.CursedCola;
+
+        private PillTuning Tuning(uint id) => id == 7114 ? Config.Sup.AdrenalinePills : id == 7115 ? Config.Sup.Anti096Pills : id == 7116 ? Config.Sup.ExpiredPills : id == 7117 ? Config.Sup.InvisibilityPills : id == 7122 ? Config.Sup.VolatilePills : null;
+
+        // Reasons a pill can't be used right now (checked when use starts and again when it finishes).
+        private string PillBlocked(Player player, RegisteredItem item)
+        {
+            if (pillCooldowns.TryGetValue(player.UserId + ":" + item.Id, out float until) && until > Time.time)
+                return $"Pills available in {until - Time.time:0.#}s.";
+            if (item.Id == 7115 && !Targets096(player).Any())
+                return "You are not an SCP-096 target. Pills retained.";
+            if (item.Id == 7117 && Config.Sup.InvisibilityPills.OncePerPlayerPerRound && invisibleUsed.Contains(player.UserId))
+                return "Invisibility pills can be used once per round.";
+            return null;
+        }
+
+        private void PillEffect(Player player, RegisteredItem item)
+        {
+            var tuning = Tuning(item.Id);
+            if (tuning != null)
+                pillCooldowns[player.UserId + ":" + item.Id] = Time.time + tuning.CooldownSeconds;
+            switch (item.Id)
+            {
+                case 7114:
+                    if (boosts.TryGetValue(player, out var old))
+                        old.Layer.Clear();
+                    boosts[player] = new Boost
+                    {
+                        Role = player.Role.Base,
+                        Expires = Time.time + Config.Sup.AdrenalinePills.DurationSeconds,
+                        Multiplier = Config.Sup.AdrenalinePills.SpeedMultiplier,
+                        Exhaustion = Config.Sup.AdrenalinePills.ExhaustionSeconds
+                    };
+                    player.Stamina = Mathf.Min(player.StaminaStat.MaxValue, player.Stamina + player.StaminaStat.MaxValue * Config.Sup.AdrenalinePills.StaminaRestorePercent / 100);
+                    player.ShowHint("Adrenaline active.", 3);
+                    break;
+                case 7115:
+                    foreach (var scp in Targets096(player))
+                        scp.RemoveTarget(player);
+                    if (Config.Sup.Anti096Pills.ProvideTemporaryImmunity)
+                        anti096[player] = Time.time + Config.Sup.Anti096Pills.ImmunitySeconds;
+                    player.ShowHint("Removed from SCP-096's target list.", 3);
+                    break;
+                case 7116:
+                    RandomPill(player);
+                    break;
+                case 7117:
+                    StopStealth(player);
+                    invisibleUsed.Add(player.UserId);
+                    invisible[player] = new Stealth
+                    {
+                        Role = player.Role.Base,
+                        Expires = Time.time + Config.Sup.InvisibilityPills.DurationSeconds
+                    };
+                    invisible[player].Effect.Refresh(player);
+                    player.ShowHint($"Invisible for {Config.Sup.InvisibilityPills.DurationSeconds:0.#}s. Attacking can break stealth.", 3);
+                    break;
+                case 7122:
+                    Volatile(player);
+                    break;
+                case SupCatalog.CursedScp500:
+                    CursedScp500(player);
+                    break;
+                case SupCatalog.CursedAdrenaline:
+                    CursedAdrenaline(player);
+                    break;
+                case SupCatalog.CursedMedkit:
+                    player.MaxHealth = Mathf.Max(1, player.MaxHealth - Config.Cursed.MedkitMaxHpLoss);
+                    player.Health = player.MaxHealth;
+                    player.ShowHint($"Fully healed. Max HP is now {player.MaxHealth:0}.", 3);
+                    break;
+                case SupCatalog.CursedHat:
+                    player.EnableEffect(EffectType.Invisible, 1, Config.Cursed.HatInvisibleSeconds);
+                    player.EnableEffect(EffectType.Slowness, Config.Cursed.HatSlowPercent, Config.Cursed.HatInvisibleSeconds);
+                    player.ShowHint($"Invisible for {Config.Cursed.HatInvisibleSeconds:0}s... and slower.", 3);
+                    break;
+                case SupCatalog.CursedCola:
+                    player.EnableEffect(EffectType.Scp207, Config.Cursed.ColaStacks, 0);
+                    player.ShowHint("<b>FOUR COLAS.</b> Your health is draining fast.", 3);
+                    break;
+            }
         }
 
         private static IEnumerable<Scp096Role> Targets096(Player target) => Player.List.Where(p => p.Role.Type == RoleTypeId.Scp096).Select(p => p.Role.As<Scp096Role>()).Where(r => r.HasTarget(target)).ToArray();

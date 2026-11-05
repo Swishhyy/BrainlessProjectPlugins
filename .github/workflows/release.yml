@@ -5,7 +5,7 @@ on:
       plugin:
         description: Plugins to publish (All uses one combined release)
         type: choice
-        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents]
+        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents, ScpSwap, ZombieOptOut]
         default: All
       prerelease:
         description: Publish as a prerelease
@@ -31,7 +31,7 @@ jobs:
       - name: Validate staff content coverage
         run: |
           python3 scripts/generate_catalog.py
-          git diff --exit-code -- docs/CATALOG.md docs/ROLE_STATUS.md
+          git diff --exit-code -- docs/CATALOG.md
       - id: select
         env:
           REQUESTED_PLUGIN: ${{ inputs.plugin || 'All' }}

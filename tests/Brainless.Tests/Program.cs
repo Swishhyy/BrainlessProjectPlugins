@@ -50,6 +50,8 @@ StatsApiTests.Run(Check);
 StatsApiServerTests.Run(Check);
 CaptureTests.Run(Check);
 HumanProfileTests.Run(Check);
+ScpSwapTests.Run(Check);
+CoinBalanceTests.Run(Check);
 SupTests.Run(Check);
 InfectionTests.Run(Check);
 JsonAndTextTests.Run(Check);
@@ -156,7 +158,9 @@ if (args.Length > 0)
         "ScpProximityChat/Brainless.ScpProximityChat.dll",
         "Core/Brainless.Core.dll",
         "SlFixes/Brainless.SlFixes.dll",
-        "RoundEvents/Brainless.RoundEvents.dll"
+        "RoundEvents/Brainless.RoundEvents.dll",
+        "ScpSwap/Brainless.ScpSwap.dll",
+        "ZombieOptOut/Brainless.ZombieOptOut.dll"
     };
     var ownAssemblies = names.Select(p => Path.GetFileNameWithoutExtension(p)).ToArray();
     foreach (string relative in names)

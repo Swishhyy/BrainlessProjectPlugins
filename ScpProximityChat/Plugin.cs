@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 2, 2);
+        public override Version Version => new Version(0, 3, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 
@@ -125,9 +125,32 @@ namespace Brainless.ScpProximityChat
             return state;
         }
 
-        // SCP-939 is excluded: its voice module also carries mimicry, and rerouting
-        // its stream through speakers disconnected players. It keeps native team voice.
-        internal static bool Excluded(RoleTypeId role) => role == RoleTypeId.Scp079 || role == RoleTypeId.Scp3114 || role == RoleTypeId.Scp939;
+        // SCP-079 and SCP-3114 keep their native voice mechanics. SCP-939 can use nearby
+        // chat: only its normal SCP channel is rerouted, never its mimicry channel, and
+        // other 939s keep hearing team voice natively (their client records voices).
+        internal static bool Excluded(RoleTypeId role) => role == RoleTypeId.Scp079 || role == RoleTypeId.Scp3114;
+
+        // Text for the role HUD's status line, or null when the player has no SCP voice choice.
+        internal string HudStatus(Player player)
+        {
+            if (!Config.ShowHudStatus || !Eligible(player))
+                return null;
+            if (!IsLocal(player))
+                return "team";
+            return MimicPoint(player).HasValue ? "mimic" : "nearby";
+        }
+
+        // Where a nearby SCP's voice plays from: its head, or SCP-939's active mimic point.
+        private Vector3 Origin(Player player) => MimicPoint(player) ?? player.CameraTransform.position;
+
+        private Vector3? MimicPoint(Player player)
+        {
+            if (!Config.Scp939VoiceFromMimicPoint || !(player.Role.Base is PlayerRoles.PlayableScps.Scp939.Scp939Role scp939))
+                return null;
+            if (!scp939.SubroutineModule.TryGetSubroutine(out PlayerRoles.PlayableScps.Scp939.Mimicry.MimicPointController point) || !point.Active || point.MimicPointTransform == null)
+                return null;
+            return point.MimicPointTransform.position;
+        }
         internal bool Eligible(Player player) => player != null && player.IsConnected && player.IsAlive && !player.IsHost && player.IsScp && !Excluded(player.Role.Type) && Config.AllowedRoles?.Contains(player.Role.Type) == true;
         private bool IsLocal(Player player) => Eligible(player) && states.TryGetValue(player, out var state) && state.Local;
         internal string AudioStatus(Player player)
@@ -296,7 +319,12 @@ namespace Brainless.ScpProximityChat
             if (receiver == null || !receiver.IsConnected || receiver.IsHost || !(receiver.Role.Base is IVoiceRole role))
                 return false;
             bool nativeAllowed = role.VoiceModule.ValidateReceive(sender.ReferenceHub, VoiceChatChannel.Proximity) == VoiceChatChannel.Proximity;
-            return State(receiver).CanHear(sender.UserId, receiver.IsAlive, sender == receiver, nativeAllowed, (role.VoiceModule.ReceiveFlags & GroupMuteFlags.Alive) != 0, (receiver.Position - sender.Position).sqrMagnitude, Config.VoiceRange);
+            // The native proximity check measures from SCP-939's body; a mimic-point voice
+            // is judged by the mimic point's distance instead (still alive receivers only).
+            var mimic = MimicPoint(sender);
+            if (mimic.HasValue && receiver.IsAlive)
+                nativeAllowed = true;
+            return State(receiver).CanHear(sender.UserId, receiver.IsAlive, sender == receiver, nativeAllowed, (role.VoiceModule.ReceiveFlags & GroupMuteFlags.Alive) != 0, (receiver.Position - (mimic ?? sender.Position)).sqrMagnitude, Config.VoiceRange);
         }
 
         private void Receiving(ReceivingVoiceMessageEventArgs ev)
@@ -318,7 +346,8 @@ namespace Brainless.ScpProximityChat
             Player sender = Player.Get(message.Speaker);
             if (!IsLocal(sender) || !(sender.Role.Base is IVoiceRole voice) || voice.VoiceModule.CurrentChannel != VoiceChatChannel.ScpChat)
                 return false;
-            // SCP-939 listeners stay on the untouched native path (normal team voice).
+            // SCP-939 listeners stay on the untouched native path (normal team voice), so
+            // their client never receives an SCP's voice it could record for mimicry.
             if (Player.Get(connection.identity)?.Role.Type == RoleTypeId.Scp939)
                 return false;
             if (message.Channel != VoiceChatChannel.Proximity)
@@ -331,7 +360,7 @@ namespace Brainless.ScpProximityChat
                 Player receiver = Player.Get(connection.identity);
                 if (VoiceChatMutes.IsMuted(sender.ReferenceHub, false) || !CanReceive(sender, receiver) || !speakers.TryGetValue(sender, out var speaker) || speaker.Base == null || message.Data == null || message.DataLength <= 0 || message.DataLength > message.Data.Length)
                     return;
-                speaker.Position = sender.CameraTransform.position;
+                speaker.Position = Origin(sender);
                 connection.Send(new AudioMessage(speaker.ControllerId, message.Data, message.DataLength), channelId);
                 State(sender).AudioSends++;
             });
@@ -393,7 +422,7 @@ namespace Brainless.ScpProximityChat
                         if (!IsLocal(pair.Key) || pair.Value.Base == null)
                             ForgetSpeaker(pair.Key);
                         else
-                            pair.Value.Position = pair.Key.CameraTransform.position;
+                            pair.Value.Position = Origin(pair.Key);
                     });
             }
         }

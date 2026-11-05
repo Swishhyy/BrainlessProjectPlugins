@@ -335,7 +335,9 @@ internal static class UpdaterTests
                             "Brainless.ScpProximityChat",
                             "Brainless.Core",
                             "Brainless.SlFixes",
-                            "Brainless.RoundEvents"
+                            "Brainless.RoundEvents",
+                            "Brainless.ScpSwap",
+                            "Brainless.ZombieOptOut"
                         }
 
                         )

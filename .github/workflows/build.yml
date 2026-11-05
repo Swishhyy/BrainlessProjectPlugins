@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        plugin: [Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents]
+        plugin: [Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents, ScpSwap, ZombieOptOut]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -58,4 +58,4 @@ jobs:
       - name: Validate staff content coverage
         run: |
           python scripts/generate_catalog.py
-          git diff --exit-code -- docs/CATALOG.md docs/ROLE_STATUS.md
+          git diff --exit-code -- docs/CATALOG.md

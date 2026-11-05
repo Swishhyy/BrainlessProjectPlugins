@@ -1,6 +1,6 @@
 # Project Brainless — Command Table
 
-[Staff quick guide](STAFF_GUIDE.md) · [Content IDs and usage](CATALOG.md) · [Owner settings](CONFIGURATION.md)
+[Content IDs and usage](CATALOG.md) · [Project overview and settings](../README.md)
 
 **Remote Admin:** no leading slash/dot. `<value>` is required; `[value]` is optional. Omit `[playerID]` to target yourself in-game.
 
@@ -36,6 +36,8 @@
 | `pbcore status` / `pbcore save` | Checks services / saves stats | `projectbrainless.core` |
 | `pbfixes status` / `pbfixes reload` | Checks Fixes / applies its config | `projectbrainless.fixes` |
 | `pbxp <playerID>` | Inspects another player’s stats | `projectbrainless.stats` |
+| `bpscpswap <playerID> <playerID>` | Swaps two SCPs any time (variants follow the swap mode) | `brainless.scpswap` |
+| `bpscpswap <playerID> <scp173\|scp096\|…>` | Moves an SCP to that SCP, swapping with whoever plays it | `brainless.scpswap` |
 | `getserial [playerID]` | Shows the held item’s serial | `bc.getserial` |
 | `coinuses get player [playerID]` | Checks held coin uses | `bc.coinuses.get` |
 | `coinuses get serial <serial>` | Checks a coin by serial | `bc.coinuses.get` |
@@ -62,8 +64,14 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.pbprivacy [status]` | Shows whether your stats are tracked |
 | `.pbprivacy optout` | Stops tracking and deletes your saved stats and Discord link |
 | `.pbprivacy optin` | Starts fresh; requires native DNT off |
+| `.scpswap list` | Shows SCPs, their custom variants and the swap time left |
+| `.scpswap <scp>` | Asks the SCP playing it to swap (e.g. `.scpswap 173`), or takes it if nobody plays it |
+| `.scpswap yes` / `.scpswap no` | Accepts or declines a swap request |
+| `.scpswap cancel` | Cancels your outgoing request |
+| `.optin` | Takes the place of a player who opted out of being a zombie (spectators) |
+| `.fill` | Volunteers to replace an SCP who left early in the round |
 
-**Discord, when the stats API and bot are set up ([guide](STATS_API.md)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
+**Discord, when the stats API and bot are set up ([setup](../README.md#stats-api-and-discord-bot)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
 
 | Command | What it does |
 | --- | --- |
@@ -74,3 +82,15 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `/pb-optout` | Deletes your linked stats and stops tracking; affects only you |
 
 An unlinked player can opt out in-game. Turning DNT off does not cancel a separate manual opt-out. Use `.pbprivacy optin` to rejoin tracking; old progress and links are not restored.
+
+## Examples and common fixes
+
+`ci give 7102 4` gives player 4 a Cluster Grenade. `bprole set Z04` makes you Explosive Zombie. `bprole set S04 4` makes player 4 Candy Man.
+
+1. **Equipment won’t give:** check ID, enabled state, free inventory space and that the target is alive/unrestrained. Admin grants need no `--force`.
+2. **Role won’t roll:** read `bproles`. Disabled/experimental profiles and missing equipment still block admin tests. Setting a role replaces the current kit.
+3. **Events:** need four living players. Starting one replaces combat roles/kits. After `bpevent stop`, restart the round for normal roles.
+4. **Voice:** players use F1 `.scpchat` or tap N, then hold their normal voice key. Staff can adjust `bpscpchat volume <0-20>` live.
+5. **Capture:** cuff enemy military and escort them to the normal surface escape zone. The captor must be alive and the prisoner alive for at least ten seconds.
+6. **Locksmith:** interact with a denied keycard door and stay nearby. Level 1/2/3 takes 15/30/45 seconds, then a 120/180/240-second cooldown. Facility lockdowns still apply.
+7. **Config edits:** save the YAML, then run the matching `reload` command above. A newly installed or updated DLL needs a full server restart.

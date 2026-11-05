@@ -28,12 +28,13 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 9, 1);
+        public override Version Version => new Version(0, 10, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
 
         private readonly Lifetime lifetime = new Lifetime();
+        private readonly System.Random cursedRandom = new System.Random();
         private readonly LimitedBudget budget = new LimitedBudget();
         private readonly ShotLedger shots = new ShotLedger();
         private readonly FragProjectiles grenades = new FragProjectiles();
@@ -154,6 +155,16 @@ namespace Brainless.Weapons
         {
             EnsureCapacity();
             distribution?.RoundStarted();
+            // Rare Cursed Pistols in place of native pistols, after the map's own loot.
+            lifetime.Later(Config.Distribution.MapDelaySeconds + 1, () =>
+            {
+                if (!registered.TryGetValue(Weapons.Config.CursedPistolId, out var pistol))
+                    return;
+                var entries = new List<CursedLoot.Entry> { new CursedLoot.Entry { Id = Weapons.Config.CursedPistolId, Sources = new[] { ItemType.GunCOM15, ItemType.GunCOM18 }, Spawn = position => pistol.TrySpawn(position, true, out var pickup) == null ? pickup : null } };
+                if (registered.TryGetValue(Weapons.Config.CursedShotgunId, out var shotgun))
+                    entries.Add(new CursedLoot.Entry { Id = Weapons.Config.CursedShotgunId, Sources = new[] { ItemType.GunShotgun }, Spawn = position => shotgun.TrySpawn(position, true, out var pickup) == null ? pickup : null });
+                CursedLoot.Run(entries, Config.CursedLootChancePercent, Config.CursedLootMaxPerRound, cursedRandom);
+            });
         }
 
         private IEnumerable<NaturalContent> NaturalContent() => registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
@@ -290,6 +301,18 @@ namespace Brainless.Weapons
             var state = Find(ev.Item);
             if (state == null || !ev.IsAllowed)
                 return;
+            // Cursed Pistol jam: the trigger clicks and the round is wasted.
+            if (state.Definition.Id == Weapons.Config.CursedPistolId && cursedRandom.NextDouble() * 100 < Config.CursedPistolJamPercent)
+            {
+                ev.IsAllowed = false;
+                if (ev.Firearm.MagazineAmmo > 0)
+                    ev.Firearm.MagazineAmmo--;
+                ev.Player.ShowHint("<b>*click*</b> Jammed!", 1);
+                return;
+            }
+
+            if (state.Definition.Id == Weapons.Config.CursedShotgunId)
+                ShotgunRecoil(ev.Player);
             Clamp(ev.Firearm);
             if (FixedAmmo(state) && shots.Remaining(ev.Item.Serial) < 1)
             {
@@ -334,6 +357,22 @@ namespace Brainless.Weapons
                 });
             }
         });
+        // Pushes the shooter back (only if there is room behind them) and drains stamina.
+        private void ShotgunRecoil(Player player)
+        {
+            Vector3 back = -player.CameraTransform.forward;
+            back.y = 0;
+            if (back.sqrMagnitude > .01f)
+            {
+                back.Normalize();
+                float distance = Config.CursedShotgunKnockback;
+                if (distance > 0 && !Physics.Raycast(player.Position + Vector3.up * .3f, back, distance + .4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                    player.Position += back * distance;
+            }
+
+            player.Stamina = Mathf.Max(0, player.Stamina - Config.CursedShotgunStaminaCost);
+        }
+
         private static bool FixedAmmo(WeaponState state) => state != null && state.Definition.Id == 7207;
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Hurting(HurtingEventArgs ev) => Safe.Run(() =>

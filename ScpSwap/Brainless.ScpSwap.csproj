@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.ScpSwap</AssemblyName>
+    <RootNamespace>Brainless.ScpSwap</RootNamespace>
+    <Version>0.1.0</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Authors>Brainless Project</Authors>
+  </PropertyGroup>
+</Project>

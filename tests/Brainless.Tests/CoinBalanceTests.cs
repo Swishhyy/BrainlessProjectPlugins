@@ -1,0 +1,44 @@
+using System;
+using System.Linq;
+
+internal static class CoinBalanceTests
+{
+    internal static void Run(Action<bool, string> check)
+    {
+#if NATIVE_CONFIG_TESTS
+        // A 5.1.x config: every stock value from before the rebalance.
+        var old = new BetterCoinflips.Configs.Config { TurnIntoScpChance = 30, KickChance = 5, WarheadChance = 10, SpectSwapChance = 10, LiveHeChance = 30, InstantExplosionChance = 10, TeslaTpChance = 15 };
+        old.BadEffects.UnionWith(new[] { Exiled.API.Enums.EffectType.Decontaminating, Exiled.API.Enums.EffectType.CardiacArrest, Exiled.API.Enums.EffectType.PocketCorroding });
+        check(old.UpgradeBalance() && old.BalanceRevision == 2, "coin balance migration runs once on old configs");
+        check(old.TurnIntoScpChance == 0 && old.WarheadChance == 0 && old.InventorySwapChance == 0 && old.InventoryResetChance == 0 && old.LiveHeChance == 8, "Turn into SCP, warhead, inventory swap and the old inventory reset are off; the live grenade is rarer");
+        check(old.KickChance == 0 && old.SpectSwapChance == 0 && old.InstantExplosionChance == 0 && old.TeslaTpChance == 0, "outcomes that send players to spectator are off by default");
+        check(!old.BadEffects.Contains(Exiled.API.Enums.EffectType.Decontaminating) && !old.BadEffects.Contains(Exiled.API.Enums.EffectType.CardiacArrest) && !old.BadEffects.Contains(Exiled.API.Enums.EffectType.PocketCorroding) && old.BadEffects.Contains(Exiled.API.Enums.EffectType.Bleeding), "the stock bad-effect list loses only its lethal effects");
+        check(!old.UpgradeBalance(), "coin balance migration does not repeat");
+        var first = new BetterCoinflips.Configs.Config { BalanceRevision = 1, SpectSwapChance = 3, InstantExplosionChance = 4, TeslaTpChance = 6, LiveHeChance = 15 };
+        first.UpgradeBalance();
+        check(first.SpectSwapChance == 0 && first.InstantExplosionChance == 0 && first.TeslaTpChance == 0 && first.LiveHeChance == 8, "configs saved by the first rebalance also reach the current defaults");
+        var edited = new BetterCoinflips.Configs.Config { TurnIntoScpChance = 50, KickChance = 5 };
+        edited.BadEffects.Add(Exiled.API.Enums.EffectType.Decontaminating);
+        edited.UpgradeBalance();
+        check(edited.TurnIntoScpChance == 50 && edited.KickChance == 0 && edited.BadEffects.Contains(Exiled.API.Enums.EffectType.Decontaminating), "owner-edited coin weights and custom effect lists are kept");
+        var fresh = new BetterCoinflips.Configs.Config();
+        var props = typeof(BetterCoinflips.Configs.Config).GetProperties();
+        int Weight(string name) => (int)System.Array.Find(props, p => p.Name == name).GetValue(fresh);
+        string[] newTails = { "FrozenChance", "SlowedChance", "ExhaustedChance", "SinkholeChance", "ButterfingersChance", "DropHeldItemChance", "LoseAmmoChance", "EmptyMagazineChance", "BlindedChance", "DeafenedChance", "ConcussedChance", "FlashedChance", "LocationLeakChance", "CassieCalloutChance", "LockedInChance", "RoomBlackoutChance", "DropKeycardsChance", "DropArmorChance", "CursedMaxHpChance", "BleedingChance", "HypothermiaChance", "StaminaDrainedChance", "PoisonedChance", "HuntedChance", "BackToSpawnChance", "JunkSwapChance", "TripChance", "WeakArmsChance", "GlassJawChance", "UnluckyCoinChance" };
+        string[] newHeads = { "ArmorUpgradeChance", "GrenadePackChance", "ExtraCoinChance", "LoadedUpChance", "RegenerationChance", "SilentStepsChance", "CleanseChance", "MedicAuraChance", "RallyChance", "ReinforcementChance", "JackpotChance", "SpeedBoostChance", "ShieldUpChance", "ToughSkinChance", "SecondWindChance", "AmmoRefillChance", "KeycardUpgradeChance", "RandomScpItemChance", "LuckyCoinChance", "SecondChanceChance", "FullHealChance" };
+        check(newTails.All(n => Weight(n) > 0) && newTails.Length >= 30, "all thirty extra tails outcomes are on by default");
+        check(newHeads.All(n => Weight(n) > 0) && newHeads.Length == 21, "all twenty-one extra heads outcomes are on by default");
+        check(fresh.OneAmmoLogicerChance == 0 && fresh.EmptyHidChance == 0, "the 1-ammo Logicer and empty Micro HID are off by default");
+        var oldJunk = new BetterCoinflips.Configs.Config { OneAmmoLogicerChance = 1, EmptyHidChance = 5 };
+        oldJunk.UpgradeBalance();
+        check(oldJunk.OneAmmoLogicerChance == 0 && oldJunk.EmptyHidChance == 0, "existing configs lose the Logicer and Micro HID outcomes too");
+        check(fresh.ItemWipeChancePercent == 0.1 && System.Array.Find(props, p => p.Name == "LuckyTailsPercent") == null, "the item wipe is a separate 0.1% roll and lucky tails is gone, so coins are a straight 50/50");
+        string[] wishes = { "FastThenWindedChance", "TankButHeavyChance", "UnkillableThenOneHpChance", "SilentButDeafChance", "StrongButFragileChance", "EndlessAmmoThenNoneChance", "FullHealThenBlindChance", "GhostThenExposedChance", "RichesButFrailChance", "FreeExitItemsLeftChance", "LuckyThenCursedChance" };
+        check(wishes.All(n => Weight(n) > 0) && fresh.MonkeysPawId == 7126, "the Monkey's Paw (7126) can grant all eleven twisted wishes");
+        check(new uint[] { 7123, 7124, 7125, 7126, 7127, 7128, 7129, 7130, 7131, 7132, 7210, 7211 }.All(fresh.CursedCustomItems.Contains) && !fresh.CursedCustomItems.Contains(7116) && !fresh.CursedCustomItems.Contains(7122), "coin tails hands out only the new cursed items");
+        var oldCursed = new BetterCoinflips.Configs.Config { CursedCustomItems = new System.Collections.Generic.List<uint> { 7116, 7122 } };
+        oldCursed.UpgradeBalance();
+        check(oldCursed.CursedCustomItems.Contains(7210) && !oldCursed.CursedCustomItems.Contains(7116), "the old pill-only cursed list migrates to the new cursed items");
+#endif
+    }
+}

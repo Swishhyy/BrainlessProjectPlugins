@@ -27,7 +27,7 @@ namespace Brainless.SlFixes
         public override string Name => "Project Brainless SCP SL Fixes";
         public override string Prefix => "project_brainless_sl_fixes";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 5, 0);
+        public override Version Version => new Version(0, 5, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Last;
         public static Plugin Instance { get; private set; }
@@ -209,15 +209,23 @@ namespace Brainless.SlFixes
         });
         private bool TryDestination(Player player, out Vector3 destination)
         {
-            var rooms = Room.List.Where(r => r != player.CurrentRoom && r.Type != RoomType.Pocket && (r.Zone == ZoneType.HeavyContainment || r.Zone == ZoneType.Entrance || (r.Zone == ZoneType.LightContainment && !Map.IsLczDecontaminated))).OrderBy(_ => random.Next()).ToArray();
+            destination = Vector3.zero;
+            // After detonation every facility room is lethal; keep the normal 914 output.
+            if (Warhead.IsDetonated || Config.RoughTeleportRooms == null || Config.RoughTeleportRooms.Count == 0)
+                return false;
+            var allowed = new HashSet<RoomType>(Config.RoughTeleportRooms);
+            var rooms = Room.List.Where(r => r != player.CurrentRoom && allowed.Contains(r.Type) && (r.Zone == ZoneType.HeavyContainment || r.Zone == ZoneType.Entrance || (r.Zone == ZoneType.LightContainment && !Map.IsLczDecontaminated))).OrderBy(_ => random.Next()).ToArray();
             foreach (var room in rooms.Take(24))
                 for (int attempt = 0; attempt < 6; attempt++)
                 {
-                    Vector3 candidate = room.Position + new Vector3((float)(random.NextDouble() * 8 - 4), 3, (float)(random.NextDouble() * 8 - 4));
-                    if (!Physics.Raycast(candidate, Vector3.down, out var hit, 6, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) || hit.normal.y < .8f)
+                    // Corridor centres are walkable; stay near the middle and probe from head
+                    // height so the ray cannot start above the ceiling and land on the roof.
+                    Vector3 candidate = room.Position + new Vector3((float)(random.NextDouble() * 3 - 1.5), 1.5f, (float)(random.NextDouble() * 3 - 1.5));
+                    if (!Physics.Raycast(candidate, Vector3.down, out var hit, 3, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) || hit.normal.y < .8f)
                         continue;
                     Vector3 point = hit.point + Vector3.up * 1.1f;
-                    if (Room.Get(point) != room || Physics.CheckCapsule(hit.point + Vector3.up * .4f, hit.point + Vector3.up * 1.65f, .3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                    // Clearance for the whole player plus headroom (the capsule reaches 2.3 m).
+                    if (Room.Get(point) != room || Physics.CheckCapsule(hit.point + Vector3.up * .4f, hit.point + Vector3.up * 1.9f, .4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                         continue;
                     destination = point;
                     return true;

@@ -24,6 +24,16 @@ namespace Brainless.Roles
         public bool ShowRoleHud { get; set; } = true;
         public bool RoleHudShowDescription { get; set; } = true;
 
+        [Description("Server Specific Settings IDs base..base+2 for the HUD fade keybind and show/hide switch. Change if another plugin uses them.")]
+        public int HudSettingsIdBase { get; set; } = 58100;
+
+        [Description("Suggested key for fading the role / SCP chat HUD in and out. Players can rebind it in Settings > Server-specific.")]
+        public UnityEngine.KeyCode HudToggleKey { get; set; } = UnityEngine.KeyCode.H;
+
+        [Description("Seconds the role HUD takes to fade in or out.")]
+        [Tune(0, 3)]
+        public float HudFadeSeconds { get; set; } = .6f;
+
         [Description("Spectators see the custom role of the player they are watching.")]
         public bool ShowSpectatedRole { get; set; } = true;
 
@@ -57,7 +67,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -105,6 +115,9 @@ namespace Brainless.Roles
         public bool EnableDoctorEvent { get; set; } = true;
         public bool ExtremeMuncherEventPreset { get; set; }
 
+        [Description("When staff use the Remote Admin forceclass command, roll a custom role for the new class with the normal per-role chances. Plugin role changes (events, bprole set) are unaffected.")]
+        public bool ForceClassCustomRoles { get; set; } = true;
+
         [Description("Legacy migration only for profiles with missing/null chance_percent. Explicit per-role percentages override this field.")]
         [Tune(0, 100)]
         public float ClassDChance { get; set; } = 45;
@@ -148,6 +161,7 @@ namespace Brainless.Roles
             UpgradeFactionProfiles();
             UpgradeAnyHumanProfiles();
             UpgradeRoleBalance();
+            UpgradePlaytestBalance();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -371,6 +385,92 @@ namespace Brainless.Roles
             }
 
             RoleCatalogRevision = 6;
+        }
+
+        // Revision 7: playtest balance. Only untouched old stock values change:
+        // Escape's 173 55% health, Hyper 106 +8% speed, Poisonous 106 normal speed with a
+        // 200 hume shield, Anger Issue native shield plus out-of-combat health regen, and
+        // Swordsman 200 HP, +20% speed and an adrenaline shot.
+        private void UpgradePlaytestBalance()
+        {
+            if (RoleCatalogRevision >= 7)
+                return;
+            RetireRogues();
+            var fresh = Catalog.Create().ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+            bool Near(float a, float b) => Math.Abs(a - b) < .001f;
+            void Hint(RoleDefinition role, string old)
+            {
+                if (role.Hint == old)
+                    role.Hint = fresh[role.Id].Hint;
+            }
+
+            foreach (var role in Roles)
+            {
+                switch (role.Id.ToUpperInvariant())
+                {
+                    case "G03":
+                        Hint(role, "A faster guard with combat armor. Heavy armor removes the speed bonus.");
+                        break;
+                    case "B02":
+                        if (Near(role.HealthMultiplier, .71f))
+                            role.HealthMultiplier = Catalog.EscapeHealth;
+                        Hint(role, "Kills refresh breakneck speed and its cooldown.");
+                        break;
+                    case "L03":
+                        if (Near(role.SpeedMultiplier, 1.18f))
+                            role.SpeedMultiplier = 1.08f;
+                        Hint(role, "Moves faster, but gains vigor more slowly.");
+                        break;
+                    case "L04":
+                        if (Near(role.SpeedMultiplier, .95f))
+                            role.SpeedMultiplier = 1;
+                        if (role.Shield == 0 && Near(role.ShieldMultiplier, 1))
+                            role.Shield = 200;
+                        Hint(role, "Touches poison humans, but it walks a little slower and gains vigor more slowly. Medical supplies cure the poison.");
+                        break;
+                    case "R01":
+                        if (Near(role.Shield, 120))
+                            role.Shield = 0;
+                        if (role.Traits.HealthRegenPerSecond == 0)
+                        {
+                            role.Traits.HealthRegenPerSecond = 20;
+                            role.Traits.HealthRegenDelaySeconds = 8;
+                            role.Traits.HealthRegenMax = 900;
+                        }
+
+                        Hint(role, "Enrages immediately, with 1,400 health and a 120 hume shield.");
+                        break;
+                    case "M10":
+                        if (Near(role.Health, 150))
+                            role.Health = 200;
+                        if (Near(role.SpeedMultiplier, 1.1f))
+                            role.SpeedMultiplier = 1.2f;
+                        if (role.Add.Contains(ItemType.SCP1509) && !role.Add.Contains(ItemType.Adrenaline))
+                            role.Add.Add(ItemType.Adrenaline);
+                        Hint(role, "Fights with SCP-1509, with 150 health and a little more speed.");
+                        break;
+                }
+            }
+
+            RoleCatalogRevision = 7;
+        }
+
+        // Rogue Guard / Rogue Scientist are removed. Their share goes to the other active
+        // profiles of the same pool (proportionally, rounded down) so custom roles stay
+        // as common as before; a pool the owner switched off stays off.
+        private void RetireRogues()
+        {
+            foreach (var rogue in Roles.Where(r => Catalog.RetiredRolesV7.Contains(r.Id)).ToArray())
+            {
+                Roles.Remove(rogue);
+                decimal share = (decimal)(rogue.ChancePercent ?? 0);
+                var pool = Roles.Where(r => !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && r.Enabled && r.ChancePercent > 0 && Catalog.ChanceGroup(r) == Catalog.ChanceGroup(rogue)).ToArray();
+                decimal total = pool.Sum(r => (decimal)r.ChancePercent.Value);
+                if (share <= 0 || total <= 0)
+                    continue;
+                foreach (var role in pool)
+                    role.ChancePercent = (double)(Math.Floor((decimal)role.ChancePercent.Value * (total + share) / total * 100) / 100);
+            }
         }
 
         private void UpgradeAnyHumanProfiles()

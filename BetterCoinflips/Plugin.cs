@@ -9,7 +9,7 @@ namespace BetterCoinflips
     public class Plugin : Plugin<Config, Configs.Translations>
     {
         public override Version RequiredExiledVersion => new(9, 15, 3);
-        public override Version Version => new(5, 1, 9);
+        public override Version Version => new(5, 2, 0);
         public override string Author => "Miki_hero";
         public override string Name => "BetterCoinflips";
 
@@ -18,9 +18,12 @@ namespace BetterCoinflips
         private readonly Brainless.Internal.Lifetime _lifetime = new();
         private IDisposable updates;
         public void Later(float delay, Action action) => _lifetime.Later(delay, action);
+        internal void Run(System.Collections.Generic.IEnumerator<float> routine) => _lifetime.Run(routine);
         public override void OnEnabled()
         {
             Instance = this;
+            if (Config.UpgradeBalance())
+                Brainless.Internal.ConfigMigration.Save(this);
             RegisterEvents();
             base.OnEnabled();
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "BetterCoinflips", Config.AutoUpdate);
@@ -43,6 +46,8 @@ namespace BetterCoinflips
             Map.SpawningItem += _eventHandler.OnSpawningItem;
             Map.FillingLocker += _eventHandler.OnFillingLocker;
             Player.Left += _eventHandler.OnLeft;
+            Player.Hurting += Types.Modifiers.Hurting;
+            Player.ChangingRole += Types.Modifiers.ChangingRole;
             Exiled.Events.Handlers.Server.WaitingForPlayers += ResetRound;
             Exiled.Events.Handlers.Server.RestartingRound += ResetRound;
         }
@@ -53,6 +58,9 @@ namespace BetterCoinflips
             Map.SpawningItem -= _eventHandler.OnSpawningItem;
             Map.FillingLocker -= _eventHandler.OnFillingLocker;
             Player.Left -= _eventHandler.OnLeft;
+            Player.Hurting -= Types.Modifiers.Hurting;
+            Player.ChangingRole -= Types.Modifiers.ChangingRole;
+            Types.Modifiers.Clear();
             Exiled.Events.Handlers.Server.WaitingForPlayers -= ResetRound;
             Exiled.Events.Handlers.Server.RestartingRound -= ResetRound;
             _eventHandler = null;
@@ -61,6 +69,7 @@ namespace BetterCoinflips
         private void ResetRound()
         {
             _lifetime.Clear();
+            Types.Modifiers.Clear();
             _eventHandler?.Reset();
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Brainless.Internal;
 using Exiled.API.Features;
@@ -38,6 +39,9 @@ namespace Brainless.Items
         public bool WorldLoot { get; set; } = true;
         public int ToolKeybindId { get; set; } = 7100;
         public SupTuning Sup { get; set; } = new SupTuning();
+
+        [Description("Cursed items (7123-7126): trade-off strengths and rare natural loot.")]
+        public CursedTuning Cursed { get; set; } = new CursedTuning();
         public bool IndividualItemFiles { get; set; }
         public ItemTuning Tuning { get; set; } = new ItemTuning();
         public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
@@ -81,7 +85,7 @@ namespace Brainless.Items
                 BaseType = ItemType.KeycardJanitor
             },
             CreateImpact(),
-        }.Concat(SupCatalog.Defaults()).ToList();
+        }.Concat(SupCatalog.Defaults()).Concat(SupCatalog.CursedDefaults()).ToList();
 
         private static ItemSpec CreateImpact() => new ItemSpec
         {
@@ -145,7 +149,14 @@ namespace Brainless.Items
             if (CatalogRevision < 10)
                 Tuning.ContainmentFoam.SinglePuddle = false;
 
-            CatalogRevision = Math.Max(10, CatalogRevision);
+            // Revision 11: cursed items; revision 12: six more cursed items.
+            if (CatalogRevision < 12)
+                foreach (var spec in SupCatalog.CursedDefaults())
+                    if (!Items.Any(i => i.Id == spec.Id))
+                        Items.Add(spec);
+            CatalogRevision = Math.Max(12, CatalogRevision);
+            if (Cursed == null)
+                throw new InvalidOperationException("cursed cannot be null.");
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();
@@ -154,16 +165,16 @@ namespace Brainless.Items
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
-            Distribution.Validate(id => id >= 7101 && id <= 7122 && id != 7110 && !Retired.Contains(id));
+            Distribution.Validate(id => id >= 7101 && id <= 7132 && id != 7110 && !Retired.Contains(id));
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
-            if (Items.Any(i => i.Id < 7101 || i.Id > 7122 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
-                throw new InvalidOperationException("Item IDs must be 7101-7122 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
+            if (Items.Any(i => i.Id < 7101 || i.Id > 7132 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
+                throw new InvalidOperationException("Item IDs must be 7101-7132 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
             if (Items.Select(i => i.Id).Distinct().Count() != Items.Count || Items.Any(i => string.IsNullOrWhiteSpace(i.Name)) || Items.Select(i => i.Name).Distinct().Count() != Items.Count)
                 throw new InvalidOperationException("Item IDs/names must be nonempty and unique.");
-            foreach (var expected in SupCatalog.Defaults())
+            foreach (var expected in SupCatalog.Defaults().Concat(SupCatalog.CursedDefaults()))
                 if (Items.Any(i => i.Id == expected.Id && i.BaseType != expected.BaseType))
-                    throw new InvalidOperationException("SUP item " + expected.Id + " must keep its native body.");
+                    throw new InvalidOperationException("Item " + expected.Id + " must keep its native body.");
             foreach (var i in Items)
             {
                 bool throwable = i.Id == 7101 || i.Id == 7102 || i.Id == 7103 || i.Id == 7113;
@@ -324,5 +335,35 @@ namespace Brainless.Items
 
             return null;
         }
+    }
+
+    public sealed class CursedTuning
+    {
+        [Description("Percent of matching native map pickups replaced by each cursed item at round start (the same kind of item; any low keycard for the Cursed Keycard). 0 disables.")]
+        public double LootChancePercent { get; set; } = 5;
+
+        [Description("Most of each cursed item placed by natural loot per round.")]
+        public int LootMaxPerItem { get; set; } = 2;
+        public double Scp500SuccessPercent { get; set; } = 50;
+        public float Scp500Ahp { get; set; } = 50;
+        public float Scp500RegenPerSecond { get; set; } = 3;
+        public float Scp500RegenSeconds { get; set; } = 20;
+        public byte AdrenalineSpeedPercent { get; set; } = 60;
+        public float AdrenalineSeconds { get; set; } = 10;
+        public float AdrenalineFreezeSeconds { get; set; } = 5;
+        public float AdrenalineBlindSeconds { get; set; } = 3;
+        public float MedkitMaxHpLoss { get; set; } = 10;
+        public double GrenadeBackfirePercent { get; set; } = 25;
+        public float GrenadeRadius { get; set; } = 10;
+        public float GrenadeHumanDamage { get; set; } = 200;
+        public float GrenadeScpDamage { get; set; } = 500;
+        public float FlashbangRadius { get; set; } = 14;
+        public float FlashbangBlindSeconds { get; set; } = 8;
+        public float FlashbangSelfBlindSeconds { get; set; } = 5;
+        public float HatInvisibleSeconds { get; set; } = 60;
+        public byte HatSlowPercent { get; set; } = 30;
+        public byte ColaStacks { get; set; } = 4;
+        public float LanternBlackoutSeconds { get; set; } = 30;
+        public float LanternSelfBlindSeconds { get; set; } = 8;
     }
 }

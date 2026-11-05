@@ -40,6 +40,7 @@ namespace BetterCoinflips
         {
             if (ev.Player.UserId != null)
                 cooldowns.Remove(ev.Player.UserId);
+            Types.Modifiers.Forget(ev.Player);
         }
 
         public static void SendBroadcast(Player player, string message, bool showHint = false, bool isTails = false)
@@ -58,7 +59,9 @@ namespace BetterCoinflips
         {
             if (!ev.IsAllowed || ev.Item == null || ev.Item.Type != ItemType.Coin || !ev.Player.IsAlive)
                 return;
-            if (CustomItem.Registered.Any(item => item.Check(ev.Item)))
+            // Custom coins are skipped, except the Monkey's Paw (Brainless Items).
+            var custom = CustomItem.Registered.FirstOrDefault(item => item.Check(ev.Item));
+            if (custom != null && custom.Id != Config.MonkeysPawId)
                 return;
             string user = ev.Player.UserId ?? ev.Player.Id.ToString();
             if (cooldowns.TryGetValue(user, out var last) && (DateTime.UtcNow - last).TotalSeconds < Math.Max(0, Config.CoinCooldown))
@@ -68,7 +71,18 @@ namespace BetterCoinflips
                 return;
             }
 
-            int[] weights = ev.IsTails ? new[]
+            if (custom != null)
+            {
+                MonkeysPaw(ev, custom, user);
+                return;
+            }
+
+            // "Lucky, then cursed" can force the next results; otherwise a strict 50/50.
+            bool? forced = TwistedWishes.NextForced(ev.Player);
+            if (forced.HasValue)
+                ev.IsTails = forced.Value;
+            bool bad = ev.IsTails;
+            int[] weights = bad ? new[]
             {
                 Config.HpReductionChance,
                 Config.TpToClassDCellsChance,
@@ -92,7 +106,8 @@ namespace BetterCoinflips
                 Config.TeslaTpChance,
                 Config.InventorySwapChance,
                 Config.RandomTeleportChance,
-                Config.HandcuffChance
+                Config.HandcuffChance,
+                BrainlessContent.HasItems(Config.CursedCustomItems) ? Config.CursedCustomItemChance : 0
             }
 
             : new[]
@@ -111,9 +126,15 @@ namespace BetterCoinflips
                 Config.EmptyHidChance,
                 Config.ForceRespawnChance,
                 Config.SizeChangeChance,
-                Config.RandomItemChance
+                Config.RandomItemChance,
+                BrainlessContent.HasItems(Config.CustomItems) ? Config.CustomItemChance : 0,
+                BrainlessContent.HasRoles ? Config.CustomRoleChance : 0
             };
-            int effectIndex = Rules.WeightedIndex(weights, random);
+            var extras = bad ? CoinExtras.Bad : CoinExtras.Good;
+            weights = weights.Concat(extras.Select(e => Math.Max(0, e.Weight()))).ToArray();
+            // The very rare item wipe is rolled before any other tails outcome.
+            bool wipe = bad && random.NextDouble() * 100 < Config.ItemWipeChancePercent;
+            int effectIndex = wipe ? 0 : Rules.WeightedIndex(weights, random);
             if (effectIndex < 0)
                 return;
             ushort serial = ev.Item.Serial;
@@ -134,7 +155,8 @@ namespace BetterCoinflips
 
             cooldowns[user] = DateTime.UtcNow;
             CoinUses[serial] = uses - 1;
-            var effect = (ev.IsTails ? CoinFlipEffect.BadEffects : CoinFlipEffect.GoodEffects)[effectIndex];
+            var builtIn = bad ? CoinFlipEffect.BadEffects : CoinFlipEffect.GoodEffects;
+            var effect = wipe ? CoinExtras.ItemWipe() : effectIndex < builtIn.Count ? builtIn[effectIndex] : extras[effectIndex - builtIn.Count].Create();
             try
             {
                 effect.Execute(ev.Player);
@@ -146,13 +168,41 @@ namespace BetterCoinflips
             }
 
             string message = effect.Message;
-            if (uses == 1)
+            // Read the live count: Lucky coin adds flips and Unlucky coin breaks it.
+            if (!CoinUses.TryGetValue(serial, out int left) || left <= 0)
             {
                 RemoveCoin(serial);
                 message += Translations.CoinBreaksMessage;
             }
 
             SendBroadcast(ev.Player, message, true, ev.IsTails);
+        }
+
+        // One twisted wish, then the paw crumbles.
+        private void MonkeysPaw(FlippingCoinEventArgs ev, CustomItem paw, string user)
+        {
+            var wish = TwistedWishes.Roll();
+            if (wish == null)
+                return;
+            cooldowns[user] = DateTime.UtcNow;
+            try
+            {
+                wish.Execute(ev.Player);
+            }
+            catch (Exception exception)
+            {
+                Log.Error($"BetterCoinflips Monkey's Paw wish: {exception}");
+            }
+
+            var player = ev.Player;
+            var item = ev.Item;
+            Plugin.Instance.Later(1f, () =>
+            {
+                paw.TrackedSerials.Remove(item.Serial);
+                if (player.IsConnected && player.Items.Contains(item))
+                    player.RemoveItem(item);
+            });
+            SendBroadcast(player, Translations.MonkeysPawPrefix + wish.Message + Translations.PawCrumblesMessage);
         }
 
         private static void RemoveCoin(ushort serial)

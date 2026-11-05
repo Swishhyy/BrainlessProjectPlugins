@@ -15,6 +15,25 @@ namespace Brainless.SlFixes
         public AutoUpdateConfig AutoUpdate { get; set; } = new AutoUpdateConfig();
         public bool RoughTeleportsPlayers { get; set; } = true;
         public double RoughTeleportChance { get; set; } = 100;
+
+        [Description("Rooms SCP-914 Rough may send players to. Only open corridor-type rooms by default: rooms with machinery, cells or furniture in the middle got players stuck. Light Containment rooms are skipped after decontamination.")]
+        public List<Exiled.API.Enums.RoomType> RoughTeleportRooms { get; set; } = new List<Exiled.API.Enums.RoomType>
+        {
+            Exiled.API.Enums.RoomType.LczStraight,
+            Exiled.API.Enums.RoomType.LczCurve,
+            Exiled.API.Enums.RoomType.LczCrossing,
+            Exiled.API.Enums.RoomType.LczTCross,
+            Exiled.API.Enums.RoomType.HczStraight,
+            Exiled.API.Enums.RoomType.HczStraightC,
+            Exiled.API.Enums.RoomType.HczStraightVariant,
+            Exiled.API.Enums.RoomType.HczCurve,
+            Exiled.API.Enums.RoomType.HczCrossing,
+            Exiled.API.Enums.RoomType.HczIntersection,
+            Exiled.API.Enums.RoomType.EzStraight,
+            Exiled.API.Enums.RoomType.EzCurve,
+            Exiled.API.Enums.RoomType.EzCrossing,
+            Exiled.API.Enums.RoomType.EzTCross,
+        };
         public bool EnableCrafting { get; set; } = true;
         public bool EnableXp { get; set; } = true;
         public CaptureConversionConfig CaptureConversions { get; set; } = new CaptureConversionConfig();

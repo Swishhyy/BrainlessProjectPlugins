@@ -20,6 +20,8 @@ PROJECTS = {
     'Core': ('Core/Brainless.Core.csproj', 'Brainless.Core.dll'),
     'RoundEvents': ('RoundEvents/Brainless.RoundEvents.csproj', 'Brainless.RoundEvents.dll'),
     'SlFixes': ('SlFixes/Brainless.SlFixes.csproj', 'Brainless.SlFixes.dll'),
+    'ScpSwap': ('ScpSwap/Brainless.ScpSwap.csproj', 'Brainless.ScpSwap.dll'),
+    'ZombieOptOut': ('ZombieOptOut/Brainless.ZombieOptOut.csproj', 'Brainless.ZombieOptOut.dll'),
 }
 parser = argparse.ArgumentParser()
 parser.add_argument('--plugin', choices=list(PROJECTS))
@@ -47,7 +49,6 @@ for name, (project, assembly) in PROJECTS.items():
     if folder.exists(): shutil.rmtree(folder)
     folder.mkdir(exist_ok=True)
     shutil.copy2(source, folder/assembly)
-    (folder/'README.md').write_text((ROOT/name/'README.md').read_text().replace('../docs/', 'docs/'))
     for page in (ROOT/'docs').rglob('*.md'):
         destination = folder/'docs'/page.relative_to(ROOT/'docs')
         destination.parent.mkdir(parents=True, exist_ok=True)

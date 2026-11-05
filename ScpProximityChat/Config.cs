@@ -41,6 +41,12 @@ namespace Brainless.ScpProximityChat
             AudioBalanceRevision = System.Math.Max(VoiceAudio.Revision, AudioBalanceRevision);
         }
 
+        [Description("SCP-939 talking in nearby mode is heard from its mimic point while one is placed, instead of from its body.")]
+        public bool Scp939VoiceFromMimicPoint { get; set; } = true;
+
+        [Description("Show the SCP chat mode (team / nearby / mimic point) on the Brainless Roles HUD, under the role. Needs the Roles DLL.")]
+        public bool ShowHudStatus { get; set; } = true;
+
         [Description("Only these living roles can use the alternate nearby voice channel. SCP-079 and SCP-3114 keep their native voice mechanics.")]
         public List<RoleTypeId> AllowedRoles { get; set; } = new List<RoleTypeId>
         {

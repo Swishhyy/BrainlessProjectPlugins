@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 3);
+        public override Version Version => new Version(0, 9, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -42,6 +42,7 @@ namespace Brainless.Roles
         private readonly Dictionary<Player, ActiveRole> active = new Dictionary<Player, ActiveRole>();
         private readonly Dictionary<Player, int> generations = new Dictionary<Player, int>();
         private readonly Dictionary<Player, SpawnReason> reasons = new Dictionary<Player, SpawnReason>();
+        private readonly HashSet<Player> adminForced = new HashSet<Player>();
         private readonly Dictionary<string, RoleDefinition> zombieHistory = new Dictionary<string, RoleDefinition>();
         private readonly Dictionary<string, int> issued = new Dictionary<string, int>();
         private readonly Dictionary<Player, string> assignmentNotes = new Dictionary<Player, string>();
@@ -58,7 +59,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 6 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 7 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -95,6 +96,7 @@ namespace Brainless.Roles
             U.UpgradingPickup += UpgradePickup;
             U.UpgradingInventoryItem += UpgradeInventory;
             lifetime.Run(Tick());
+            RegisterHudSettings();
             if (migrateConfig)
                 ConfigMigration.Save(this);
             base.OnEnabled();
@@ -129,6 +131,7 @@ namespace Brainless.Roles
             lifetime.Clear();
             lockpicking?.Clear();
             lockpicking = null;
+            UnregisterHudSettings();
             roleHud?.Clear();
             roleHud = null;
             harmony?.UnpatchAll(harmony.Id);
@@ -149,6 +152,7 @@ namespace Brainless.Roles
             pendingBursts.Clear();
             poisons.Clear();
             reasons.Clear();
+            adminForced.Clear();
             zombieHistory.Clear();
             issued.Clear();
             assignmentNotes.Clear();
@@ -164,10 +168,11 @@ namespace Brainless.Roles
         private void Left(LeftEventArgs ev)
         {
             ForgetPoisons(ev.Player);
-            roleHud?.Forget(ev.Player);
+            roleHud?.Leave(ev.Player);
             Remove(ev.Player);
             generations.Remove(ev.Player);
             reasons.Remove(ev.Player);
+            adminForced.Remove(ev.Player);
             assignmentNotes.Remove(ev.Player);
             pendingBursts.Forget(ev.Player);
         }
@@ -181,6 +186,10 @@ namespace Brainless.Roles
             Remove(ev.Player);
             generations[ev.Player] = Generation(ev.Player) + 1;
             reasons[ev.Player] = ev.Reason;
+            if (ev.Reason == SpawnReason.ForceClass && ForceClassScope.Active)
+                adminForced.Add(ev.Player);
+            else
+                adminForced.Remove(ev.Player);
             assignmentNotes[ev.Player] = "Waiting for spawn assignment (" + ev.Reason + ").";
             if (ev.NewRole != RoleTypeId.Scp0492 && ev.NewRole != RoleTypeId.Spectator)
                 zombieHistory.Remove(ev.Player.UserId);
@@ -201,7 +210,7 @@ namespace Brainless.Roles
         {
             if (active.ContainsKey(player) || !Round.IsStarted)
                 return;
-            if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived))
+            if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived || (reason == SpawnReason.ForceClass && Config.ForceClassCustomRoles && adminForced.Contains(player))))
             {
                 assignmentNotes[player] = "Native role kept for spawn reason " + reason + "; use bprole set for an explicit admin test.";
                 return;
@@ -246,10 +255,12 @@ namespace Brainless.Roles
             Apply(player, selected, false);
         }
 
-        internal string Availability(RoleDefinition definition, Player player = null, bool admin = false)
+        internal string Availability(RoleDefinition definition, Player player = null, bool admin = false, bool inPlace = false)
         {
             if (!definition.Enabled)
                 return "disabled in roles config";
+            if (inPlace && (definition.SpawnArea != RoleSpawnArea.Normal || definition.SpawnAs != RoleTypeId.None || definition.Neutral || definition.Id == "Z05"))
+                return "needs a fresh spawn";
             if (definition.Experimental && !Config.AllowExperimentalRoles)
                 return "requires allow_experimental_roles";
             if (definition.Id == "Z05" && !Config.EnableDoctorEvent)
@@ -271,15 +282,15 @@ namespace Brainless.Roles
             {
                 int living = Player.List.Count(p => p.IsHuman && p.IsAlive);
                 int cap = Math.Max(1, (int)Math.Ceiling(living * Config.CustomHumanSharePercent / 100));
-                if (active.Count(p => p.Key.IsHuman && p.Key.IsAlive) >= cap)
+                if (active.Count(p => p.Key != player && p.Key.IsHuman && p.Key.IsAlive) >= cap)
                     return "living-human specialist cap reached";
-                if (population < 12 && player.Role.Type == RoleTypeId.FacilityGuard && active.Any(p => p.Key.Role.Type == RoleTypeId.FacilityGuard))
+                if (population < 12 && player.Role.Type == RoleTypeId.FacilityGuard && active.Any(p => p.Key != player && p.Key.Role.Type == RoleTypeId.FacilityGuard))
                     return "small-lobby Guard specialist cap reached";
                 if (definition.Id.StartsWith("M") || definition.Id.StartsWith("C"))
                 {
                     int currentWaveCount = Time.time - waveStart > 8 ? 0 : waveCount;
                     bool waveFull = Config.ReinforcementSpecialistsPerWave > 0 && currentWaveCount >= Config.ReinforcementSpecialistsPerWave;
-                    if (waveFull || active.Any(p => p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
+                    if (waveFull || active.Any(p => p.Key != player && p.Value.Definition.Id == definition.Id && Time.time - p.Value.Start < 8))
                         return "reinforcement wave cap or duplicate-specialist limit reached";
                 }
             }
@@ -413,12 +424,19 @@ namespace Brainless.Roles
                 {
                     if (definition.ReplaceInventory)
                         player.ClearInventory();
+                    var removedAmmo = new HashSet<AmmoType>();
                     foreach (var type in definition.Remove)
                         foreach (var item in player.Items.Where(i => i.Type == type).ToArray())
+                        {
+                            if (item is Firearm removedGun)
+                                removedAmmo.Add(removedGun.AmmoType);
                             player.RemoveItem(item);
+                        }
+
                     foreach (var type in definition.Add)
                         if (player.AddItem(type) is Firearm added)
                             added.MagazineAmmo = added.MaxMagazineAmmo;
+                    MoveOrphanedAmmo(player, removedAmmo);
                     if (definition.Id == "C04")
                     {
                         var item = player.Items.FirstOrDefault(i => i.Type == ItemType.GrenadeHE) ?? player.Items.FirstOrDefault(i => i.Type == ItemType.Medkit);
@@ -528,6 +546,29 @@ namespace Brainless.Roles
                 if (player.IsConnected && player.IsAlive)
                     player.Role.Set(fallbackRole, RoleSpawnFlags.AssignInventory);
                 throw;
+            }
+        }
+
+        // A kit that swaps guns (e.g. Scout: AK -> FSP-9) moves the reserve of an ammo type
+        // no remaining gun uses onto a remaining gun that has none, so it is not left
+        // with 7.62 for a 9 mm gun.
+        private static void MoveOrphanedAmmo(Player player, HashSet<AmmoType> removed)
+        {
+            var guns = player.Items.OfType<Firearm>().ToArray();
+            var used = new HashSet<AmmoType>(guns.Select(g => g.AmmoType));
+            int spare = 0;
+            foreach (var type in removed.Where(t => !used.Contains(t)))
+            {
+                spare += player.GetAmmo(type);
+                player.SetAmmo(type, 0);
+            }
+
+            if (spare == 0)
+                return;
+            foreach (var gun in guns.Where(g => player.GetAmmo(g.AmmoType) == 0))
+            {
+                player.SetAmmo(gun.AmmoType, (ushort)Math.Min(spare, player.GetAmmoLimit(gun.AmmoType)));
+                return;
             }
         }
 
@@ -680,14 +721,12 @@ namespace Brainless.Roles
             float multiplier = state.Definition.SpeedMultiplier;
             if (player.Role is Exiled.API.Features.Roles.Scp096Role shy && shy.RageState == PlayerRoles.PlayableScps.Scp096.Scp096RageState.Docile)
                 multiplier *= state.Definition.Traits.CalmSpeedMultiplier;
-            bool nativeBoost = player.GetEffect(EffectType.MovementBoost)?.IsEnabled == true || player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
             if (state.Definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                 multiplier = 2;
-            if (state.Movement.IsOwnBoost(player))
-                nativeBoost = player.GetEffect(EffectType.Scp207)?.IsEnabled == true || player.GetEffect(EffectType.Invigorated)?.IsEnabled == true;
-            // Heavy armor or a native speed boost cancels a role's speed bonus, never its slowdown.
-            if (player.IsHuman && multiplier > 1 && (nativeBoost || player.CurrentArmor?.Type == ItemType.ArmorHeavy))
-                multiplier = 1;
+            // Role speed always applies. SCP-207 and other speed effects stack on top instead
+            // of replacing it (they used to cancel it, so cola slowed fast roles and SCP-207
+            // never wore off). A stronger external Movement Boost still takes precedence
+            // inside the movement layer. Armor keeps only its native movement penalty.
             TryResilient(player, state);
             if (state.ResilientActive)
                 multiplier = Math.Max(multiplier, 1) * Config.Resilient.SpeedMultiplier;
@@ -702,8 +741,20 @@ namespace Brainless.Roles
             fpc.StaminaUsageMultiplier = fpc.StaminaUsageMultiplier / state.StaminaApplied * nextStamina;
             state.StaminaApplied = nextStamina;
             ApplyShield(player, state, false);
+            RegenerateHealth(player, state);
             if (state.Definition.Traits.RefreshBreakneckOnKill)
                 ClearRefreshedCooldown(player, state);
+        }
+
+        // Out-of-combat health regen (e.g. Anger Issue): heals once the SCP has taken no
+        // damage for the configured delay. Runs on the 0.2-second role tick.
+        private static void RegenerateHealth(Player player, ActiveRole state)
+        {
+            var traits = state.Definition.Traits;
+            float cap = traits.HealthRegenMax > 0 ? Math.Min(traits.HealthRegenMax, player.MaxHealth) : player.MaxHealth;
+            if (traits.HealthRegenPerSecond <= 0 || player.Health >= cap || Time.time - state.LastHurt < traits.HealthRegenDelaySeconds)
+                return;
+            player.Health = Math.Min(cap, player.Health + traits.HealthRegenPerSecond * .2f);
         }
 
         private static bool NoShield(RoleDefinition definition) => definition.Id == "Z05" || definition.ShieldMultiplier <= 0;
@@ -743,6 +794,8 @@ namespace Brainless.Roles
         {
             if (ev.IsAllowed && ev.Amount > 0)
                 lockpicking?.Cancel(ev.Player, "you took damage");
+            if (ev.IsAllowed && ev.Amount > 0 && active.TryGetValue(ev.Player, out var hurt))
+                hurt.LastHurt = Time.time;
             if (Traits(ev.Player)?.ExplosionImmune == true && ev.DamageHandler.Type == DamageType.Explosion)
                 ev.IsAllowed = false;
             if (ev.IsAllowed && ev.Amount > 0 && IsScpAttack(ev.DamageHandler.Type))
@@ -857,6 +910,7 @@ namespace Brainless.Roles
             internal QuietStepLayer QuietSteps = new QuietStepLayer();
             internal string PreviousUniqueRole;
             internal bool ShieldOverridden, BreakneckKill, ResilientActive;
+            internal float LastHurt = float.NegativeInfinity;
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();
