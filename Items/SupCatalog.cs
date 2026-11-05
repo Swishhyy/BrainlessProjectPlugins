@@ -63,5 +63,45 @@ namespace Brainless.Items
                 RoundCap = 1
             }
         };
+
+        // Cursed items: obvious trade-offs, from coin tails and rare natural loot.
+        internal const uint CursedKeycard = 7123, CursedScp500 = 7124, CursedAdrenaline = 7125, MonkeysPaw = 7126;
+
+        internal static IEnumerable<ItemSpec> CursedDefaults() => new[]
+        {
+            new ItemSpec
+            {
+                Id = 7123,
+                Name = "Cursed Keycard",
+                BaseType = ItemType.KeycardO5,
+                Description = "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors.",
+                Charges = 5,
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7124,
+                Name = "Cursed SCP-500",
+                BaseType = ItemType.SCP500,
+                Description = "50/50: a super heal (full heal, cures, +50 AHP and regeneration) or nothing at all.",
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7125,
+                Name = "Cursed Adrenaline",
+                BaseType = ItemType.Adrenaline,
+                Description = "+60% speed for 10 seconds, then you crash: frozen for 5 seconds and blinded for 3.",
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7126,
+                Name = "Monkey's Paw",
+                BaseType = ItemType.Coin,
+                Description = "Flip it to make a wish. You get what you wished for... with a twist. Single use.",
+                RoundCap = 2
+            }
+        };
     }
 }

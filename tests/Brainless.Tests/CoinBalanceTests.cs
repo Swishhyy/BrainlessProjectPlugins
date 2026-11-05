@@ -33,6 +33,12 @@ internal static class CoinBalanceTests
         oldJunk.UpgradeBalance();
         check(oldJunk.OneAmmoLogicerChance == 0 && oldJunk.EmptyHidChance == 0, "existing configs lose the Logicer and Micro HID outcomes too");
         check(fresh.ItemWipeChancePercent == 0.1 && System.Array.Find(props, p => p.Name == "LuckyTailsPercent") == null, "the item wipe is a separate 0.1% roll and lucky tails is gone, so coins are a straight 50/50");
+        string[] wishes = { "FastThenWindedChance", "TankButHeavyChance", "UnkillableThenOneHpChance", "SilentButDeafChance", "StrongButFragileChance", "EndlessAmmoThenNoneChance", "FullHealThenBlindChance", "GhostThenExposedChance", "RichesButFrailChance", "FreeExitItemsLeftChance", "LuckyThenCursedChance" };
+        check(wishes.All(n => Weight(n) > 0) && fresh.MonkeysPawId == 7126, "the Monkey's Paw (7126) can grant all eleven twisted wishes");
+        check(new uint[] { 7123, 7124, 7125, 7126, 7210 }.All(fresh.CursedCustomItems.Contains) && !fresh.CursedCustomItems.Contains(7116) && !fresh.CursedCustomItems.Contains(7122), "coin tails hands out only the new cursed items");
+        var oldCursed = new BetterCoinflips.Configs.Config { CursedCustomItems = new System.Collections.Generic.List<uint> { 7116, 7122 } };
+        oldCursed.UpgradeBalance();
+        check(oldCursed.CursedCustomItems.Contains(7210) && !oldCursed.CursedCustomItems.Contains(7116), "the old pill-only cursed list migrates to the new cursed items");
 #endif
     }
 }

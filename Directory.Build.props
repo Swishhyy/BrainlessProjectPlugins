@@ -55,6 +55,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Shared/DistributionConfig.cs" Link="Internal/DistributionConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/NaturalDistribution.cs" Link="Internal/NaturalDistribution.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/EffectAudioTuning.cs" Link="Internal/EffectAudioTuning.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/CursedLoot.cs" Link="Internal/CursedLoot.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/FragProjectiles.cs" Link="Internal/FragProjectiles.cs" />

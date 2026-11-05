@@ -83,6 +83,19 @@ internal static class MetadataContracts
             check(new[] { "get_IsReady/0", "ProfileId/1", "ProfileName/1", "AssignProfile/2", "RollProfile/2", "GrantRandomProfile/2" }.All(name => exposed.Contains(name)), "the compiled Roles API exposes every public static method the cross-plugin bridge calls");
         }
 
+        string itemsPath = Path.Combine(root, "Items/bin/Release/Brainless.Items.dll");
+        if (File.Exists(itemsPath))
+        {
+            using var itemsStream = File.OpenRead(itemsPath);
+            using var itemsPe = new PEReader(itemsStream);
+            var items = itemsPe.GetMetadataReader();
+            var itemPlugin = items.TypeDefinitions.Select(items.GetTypeDefinition).Single(t => items.GetString(t.Namespace) == "Brainless.Items" && items.GetString(t.Name) == "Plugin");
+            var methods = itemPlugin.GetMethods().Select(items.GetMethodDefinition).Select(md => items.GetString(md.Name)).ToArray();
+            check(methods.Contains("UsingCompleted") && methods.Contains("PillUsing") && methods.Contains("CursedLootRound") && methods.Contains("WarheadPanel"), "pills use the native use animation and cursed items have their door, warhead and loot hooks");
+            var catalog = items.TypeDefinitions.Select(items.GetTypeDefinition).Single(t => items.GetString(t.Namespace) == "Brainless.Items" && items.GetString(t.Name) == "SupCatalog");
+            check(catalog.GetMethods().Select(items.GetMethodDefinition).Any(md => items.GetString(md.Name) == "CursedDefaults"), "the compiled item catalog ships the cursed item definitions");
+        }
+
         string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
         if (File.Exists(voicePath))
         {

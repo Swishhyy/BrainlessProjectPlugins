@@ -390,12 +390,14 @@ namespace BetterCoinflips.Types
         private static readonly Dictionary<Player, (float multiplier, float until)> dealt = new();
         private static readonly Dictionary<Player, float> hazardSafeUntil = new();
         private static readonly HashSet<Player> secondChance = new();
+        private static readonly Dictionary<Player, float> unkillableUntil = new();
         private static readonly DamageType[] HazardDamage = { DamageType.Bleeding, DamageType.Poison, DamageType.Hypothermia };
 
         internal static void Taken(Player player, float multiplier, float seconds) => taken[player] = (multiplier, Time.time + seconds);
         internal static void Dealt(Player player, float multiplier, float seconds) => dealt[player] = (multiplier, Time.time + seconds);
         internal static void ProtectFromHazards(Player player, float seconds) => hazardSafeUntil[player] = Time.time + seconds;
         internal static void GrantSecondChance(Player player) => secondChance.Add(player);
+        internal static void Unkillable(Player player, float seconds) => unkillableUntil[player] = Time.time + seconds;
 
         internal static void Hurting(HurtingEventArgs ev)
         {
@@ -409,7 +411,8 @@ namespace BetterCoinflips.Types
             if (!lethal)
                 return;
             bool hazard = hazardSafeUntil.TryGetValue(ev.Player, out float until) && Time.time < until && HazardDamage.Contains(ev.DamageHandler.Type);
-            if (hazard || secondChance.Remove(ev.Player))
+            bool unkillable = unkillableUntil.TryGetValue(ev.Player, out float safe) && Time.time < safe;
+            if (hazard || unkillable || secondChance.Remove(ev.Player))
             {
                 if (ev.Player.Health <= 1)
                     ev.IsAllowed = false;
@@ -432,6 +435,7 @@ namespace BetterCoinflips.Types
             dealt.Remove(player);
             hazardSafeUntil.Remove(player);
             secondChance.Remove(player);
+            unkillableUntil.Remove(player);
         }
 
         internal static void ChangingRole(ChangingRoleEventArgs ev)
@@ -446,6 +450,8 @@ namespace BetterCoinflips.Types
             dealt.Clear();
             hazardSafeUntil.Clear();
             secondChance.Clear();
+            unkillableUntil.Clear();
+            TwistedWishes.Clear();
         }
     }
 }

@@ -92,6 +92,24 @@ namespace BetterCoinflips.Configs
         public string ReinforcementMessage { get; set; } = "Backup has arrived: {player} joins you!";
         public string ReinforcementJoinMessage { get; set; } = "The coin brought you back to help {player}!";
         public string JackpotMessage { get; set; } = "JACKPOT! ";
+        public string MonkeysPawPrefix { get; set; } = "Monkey's Paw: ";
+        public string PawCrumblesMessage { get; set; } = "\nThe paw crumbles to dust.";
+        public string FastThenWindedMessage { get; set; } = "You wished for speed. Enjoy it while it lasts...";
+        public string WindedMessage { get; set; } = "The Monkey's Paw wants its speed back: your stamina recovers slowly now.";
+        public string TankButHeavyMessage { get; set; } = "You wished to be tougher. You are... and heavier.";
+        public string UnkillableMessage { get; set; } = "Nothing can kill you for a few seconds. Make them count.";
+        public string UnkillableEndMessage { get; set; } = "The protection is gone... and so is your health.";
+        public string SilentButDeafMessage { get; set; } = "Your steps are silent. So is everything else.";
+        public string StrongButFragileMessage { get; set; } = "You hit harder. So does everyone else.";
+        public string EndlessAmmoMessage { get; set; } = "Your gun will never run dry... for now.";
+        public string NoAmmoMessage { get; set; } = "The Monkey's Paw took your spare ammo.";
+        public string FullHealThenBlindMessage { get; set; } = "Fully healed! But at what cost...";
+        public string GhostMessage { get; set; } = "You vanish from sight...";
+        public string GhostEndMessage { get; set; } = "You reappear, and the SCPs know where.";
+        public string GhostHint { get; set; } = "{player} reappeared in {zone}.";
+        public string RichesButFrailMessage { get; set; } = "Riches at your feet! Your body feels weaker.";
+        public string FreeExitMessage { get; set; } = "A free exit! Your belongings stayed behind.";
+        public string LuckyThenCursedMessage { get; set; } = "Your next {flips} flips are lucky. The {flips} after that are not.";
         public string CursedItemMessage { get; set; } = "The coin cursed you with {item}...";
 
         [Description("Here you can set the message for each of these bad coin effects.")]

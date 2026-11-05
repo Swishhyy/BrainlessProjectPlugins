@@ -11,12 +11,17 @@
     "7117": "Use the pill; attacking ends the effect.",
     "7119": "Equip and interact with an eligible door, or hold the tool key while looking at it.",
     "7120": "Hold the tool key to call a native mini wave for your faction.",
-    "7122": "Eat the pill to detonate; usually fatal to the user."
+    "7122": "Eat the pill to detonate; usually fatal to the user.",
+    "7123": "Use it on any door except the Alpha Warhead. Each door it opens pings the SCPs; it crumbles after 5 doors.",
+    "7124": "Use it like a normal SCP-500. 50% super heal, 50% nothing.",
+    "7125": "Use it like normal adrenaline. Run during the rush, then hide before the crash.",
+    "7126": "Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use."
   },
   "weapons": {
     "7206": "Shoot toward solid geometry for one reflected shot.",
     "7207": "Fire normally; each bullet launches a grenade. No reload.",
-    "7209": "Shoot a target to knock them down with a fake death for a few seconds; it never kills."
+    "7209": "Shoot a target to knock them down with a fake death for a few seconds; it never kills.",
+    "7210": "Shoot normally; every hit does double damage, but about 1 in 3 pulls jams."
   },
   "roles": {
     "D01": "Sprint normally.",

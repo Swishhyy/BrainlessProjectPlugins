@@ -2,7 +2,7 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **12 items, 3 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **16 items, 4 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -22,6 +22,10 @@ Current shipped content: **12 items, 3 weapons, 66 role profiles and 3 round eve
 | 7119 | Hacking Chip | Use this card to hack doors below level 3. | Equip and interact with an eligible door, or hold the tool key while looking at it. |
 | 7120 | Reinforcement Radio | Calls a native mini wave for your faction. | Hold the tool key to call a native mini wave for your faction. |
 | 7122 | SCP500-E Volatile Pills | Makes you explode. You have a small chance to survive. | Eat the pill to detonate; usually fatal to the user. |
+| 7123 | Cursed Keycard | Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors. | Use it on any door except the Alpha Warhead. Each door it opens pings the SCPs; it crumbles after 5 doors. |
+| 7124 | Cursed SCP-500 | 50/50: a super heal (full heal, cures, +50 AHP and regeneration) or nothing at all. | Use it like a normal SCP-500. 50% super heal, 50% nothing. |
+| 7125 | Cursed Adrenaline | +60% speed for 10 seconds, then you crash: frozen for 5 seconds and blinded for 3. | Use it like normal adrenaline. Run during the rush, then hide before the crash. |
+| 7126 | Monkey's Paw | Flip it to make a wish. You get what you wished for... with a twist. Single use. | Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use. |
 
 ## Weapons
 
@@ -30,6 +34,7 @@ Current shipped content: **12 items, 3 weapons, 66 role profiles and 3 round eve
 | 7206 | Ricochet Pistol **(opt-in)** | Shots can bounce once off solid surfaces. | Shoot toward solid geometry for one reflected shot. |
 | 7207 | Grenade Launcher | Fires a grenade with each shot. Holds up to 16; cannot reload. | Fire normally; each bullet launches a grenade. No reload. |
 | 7209 | Stun Gun | Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills. | Shoot a target to knock them down with a fake death for a few seconds; it never kills. |
+| 7210 | Cursed Pistol | Every hit does double damage, but about 1 in 3 trigger pulls jams and wastes the round. | Shoot normally; every hit does double damage, but about 1 in 3 pulls jams. |
 
 Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.
 

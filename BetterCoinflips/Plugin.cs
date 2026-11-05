@@ -18,6 +18,7 @@ namespace BetterCoinflips
         private readonly Brainless.Internal.Lifetime _lifetime = new();
         private IDisposable updates;
         public void Later(float delay, Action action) => _lifetime.Later(delay, action);
+        internal void Run(System.Collections.Generic.IEnumerator<float> routine) => _lifetime.Run(routine);
         public override void OnEnabled()
         {
             Instance = this;

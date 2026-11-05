@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 8, 2);
+        public override Version Version => new Version(0, 9, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 10;
+            bool migrateConfig = Config.CatalogRevision < 11;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -76,6 +76,7 @@ namespace Brainless.Items
             toolKey = new KeybindSetting(Config.ToolKeybindId, "Use custom item or nearby device", KeyCode.V, true, false, "Hold for tools, devices and specimens.", onChanged: KeyChanged);
             SettingBase.Register(new[] { toolKey }).ToArray();
             SupSubscribe();
+            CursedSubscribe();
             P.UsingItem += Using;
             P.FlippingCoin += Coin;
             P.TogglingRadio += Radio;
@@ -114,6 +115,7 @@ namespace Brainless.Items
             updates?.Dispose();
             updates = null;
             SupUnsubscribe();
+            CursedUnsubscribe();
             P.UsingItem -= Using;
             P.FlippingCoin -= Coin;
             P.TogglingRadio -= Radio;
@@ -188,6 +190,7 @@ namespace Brainless.Items
             roundStartedAt = Time.time;
             EnsureCapacity();
             distribution?.RoundStarted();
+            CursedLootRound();
         }
 
         private void EnsureCapacity()
@@ -270,7 +273,9 @@ namespace Brainless.Items
         });
         private void Coin(FlippingCoinEventArgs ev)
         {
-            if (Find(ev.Item.Serial) == null)
+            // The Monkey's Paw is flipped like a normal coin; BetterCoinflips grants the wish.
+            var coin = Find(ev.Item.Serial);
+            if (coin == null || coin.Id == SupCatalog.MonkeysPaw)
                 return;
             ev.IsAllowed = false;
             Safe.Run(() => Activate(ev.Player, false));
@@ -294,7 +299,11 @@ namespace Brainless.Items
 
         private void Using(UsingItemEventArgs ev)
         {
-            if (Find(ev.Item.Serial) == null)
+            var used = Find(ev.Item.Serial);
+            if (used == null)
+                return;
+            // Pills use the native animation; only the pre-checks run here.
+            if (PillUsing(ev, used))
                 return;
             ev.IsAllowed = false;
             Safe.Run(() => Activate(ev.Player, false));
@@ -420,6 +429,8 @@ namespace Brainless.Items
         private void Door(InteractingDoorEventArgs ev) => Safe.Run(() =>
         {
             var hacking = ev.Player.CurrentItem == null ? null : Find(ev.Player.CurrentItem.Serial);
+            if (hacking?.Id == SupCatalog.CursedKeycard && ev.IsAllowed)
+                CursedDoor(ev.Player, ev.Player.CurrentItem, ev.Door);
             if (hacking?.Id == 7119)
             {
                 ev.IsAllowed = false;

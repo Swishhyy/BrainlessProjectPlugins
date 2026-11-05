@@ -59,7 +59,9 @@ namespace BetterCoinflips
         {
             if (!ev.IsAllowed || ev.Item == null || ev.Item.Type != ItemType.Coin || !ev.Player.IsAlive)
                 return;
-            if (CustomItem.Registered.Any(item => item.Check(ev.Item)))
+            // Custom coins are skipped, except the Monkey's Paw (Brainless Items).
+            var custom = CustomItem.Registered.FirstOrDefault(item => item.Check(ev.Item));
+            if (custom != null && custom.Id != Config.MonkeysPawId)
                 return;
             string user = ev.Player.UserId ?? ev.Player.Id.ToString();
             if (cooldowns.TryGetValue(user, out var last) && (DateTime.UtcNow - last).TotalSeconds < Math.Max(0, Config.CoinCooldown))
@@ -69,7 +71,16 @@ namespace BetterCoinflips
                 return;
             }
 
-            // Strict 50/50: heads gives a good outcome, tails a bad one.
+            if (custom != null)
+            {
+                MonkeysPaw(ev, custom, user);
+                return;
+            }
+
+            // "Lucky, then cursed" can force the next results; otherwise a strict 50/50.
+            bool? forced = TwistedWishes.NextForced(ev.Player);
+            if (forced.HasValue)
+                ev.IsTails = forced.Value;
             bool bad = ev.IsTails;
             int[] weights = bad ? new[]
             {
@@ -165,6 +176,33 @@ namespace BetterCoinflips
             }
 
             SendBroadcast(ev.Player, message, true, ev.IsTails);
+        }
+
+        // One twisted wish, then the paw crumbles.
+        private void MonkeysPaw(FlippingCoinEventArgs ev, CustomItem paw, string user)
+        {
+            var wish = TwistedWishes.Roll();
+            if (wish == null)
+                return;
+            cooldowns[user] = DateTime.UtcNow;
+            try
+            {
+                wish.Execute(ev.Player);
+            }
+            catch (Exception exception)
+            {
+                Log.Error($"BetterCoinflips Monkey's Paw wish: {exception}");
+            }
+
+            var player = ev.Player;
+            var item = ev.Item;
+            Plugin.Instance.Later(1f, () =>
+            {
+                paw.TrackedSerials.Remove(item.Serial);
+                if (player.IsConnected && player.Items.Contains(item))
+                    player.RemoveItem(item);
+            });
+            SendBroadcast(player, Translations.MonkeysPawPrefix + wish.Message + Translations.PawCrumblesMessage);
         }
 
         private static void RemoveCoin(ushort serial)

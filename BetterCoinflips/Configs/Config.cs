@@ -238,8 +238,11 @@ namespace BetterCoinflips.Configs
         public int CursedCustomItemChance { get; set; } = 15;
         public List<uint> CursedCustomItems { get; set; } = new()
         {
-            7116,
-            7122,
+            7123,
+            7124,
+            7125,
+            7126,
+            7210,
         };
 
         [Description("Give coin custom items even when their natural per-round supply is used up. Disabled items are never given.")]
@@ -351,6 +354,22 @@ namespace BetterCoinflips.Configs
         public int GlassJawChance { get; set; } = 10;
         public int UnluckyCoinChance { get; set; } = 6;
 
+        [Description("Custom item ID of the Monkey's Paw (Brainless Items). Flipping it grants one twisted wish and uses it up.")]
+        public uint MonkeysPawId { get; set; } = 7126;
+
+        [Description("Twisted wishes granted by the Monkey's Paw: something good with a catch. Proportional chances.")]
+        public int FastThenWindedChance { get; set; } = 10;
+        public int TankButHeavyChance { get; set; } = 10;
+        public int UnkillableThenOneHpChance { get; set; } = 10;
+        public int SilentButDeafChance { get; set; } = 10;
+        public int StrongButFragileChance { get; set; } = 10;
+        public int EndlessAmmoThenNoneChance { get; set; } = 10;
+        public int FullHealThenBlindChance { get; set; } = 10;
+        public int GhostThenExposedChance { get; set; } = 10;
+        public int RichesButFrailChance { get; set; } = 10;
+        public int FreeExitItemsLeftChance { get; set; } = 10;
+        public int LuckyThenCursedChance { get; set; } = 10;
+
         [Description("Percent chance (checked before any other tails outcome) that tails deletes ALL of the player's items. Default 0.1.")]
         public double ItemWipeChancePercent { get; set; } = 0.1;
 
@@ -376,6 +395,8 @@ namespace BetterCoinflips.Configs
                     property.SetValue(this, property.GetValue(stock));
             }
 
+            if (CursedCustomItems != null && CursedCustomItems.Count == 2 && CursedCustomItems.Contains(7116) && CursedCustomItems.Contains(7122))
+                CursedCustomItems = stock.CursedCustomItems;
             if (BadEffects != null && BadEffects.SetEquals(OldBadEffects))
                 BadEffects.ExceptWith(LethalEffects);
             BalanceRevision = 2;
@@ -418,5 +439,21 @@ namespace BetterCoinflips.Configs
         public float MedicAuraHeal { get; set; } = 30;
         public float MedicAuraRange { get; set; } = 10;
         public int JackpotRewards { get; set; } = 3;
+        public float FastSeconds { get; set; } = 300;
+        public byte FastPercent { get; set; } = 25;
+        public float WindedSeconds { get; set; } = 300;
+        public float WindedRegenPercent { get; set; } = 60;
+        public float TankMaxHp { get; set; } = 50;
+        public byte TankSlowPercent { get; set; } = 15;
+        public float UnkillableSeconds { get; set; } = 15;
+        public float SilentDeafSeconds { get; set; } = 300;
+        public float StrongFragileSeconds { get; set; } = 120;
+        public float StrongFragilePercent { get; set; } = 50;
+        public float EndlessAmmoSeconds { get; set; } = 60;
+        public float FullHealAhp { get; set; } = 75;
+        public float FullHealBlindSeconds { get; set; } = 8;
+        public float GhostSeconds { get; set; } = 30;
+        public float FrailMaxHp { get; set; } = 25;
+        public int LuckyFlips { get; set; } = 3;
     }
 }
