@@ -2,7 +2,7 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **16 items, 4 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -26,6 +26,12 @@ Current shipped content: **16 items, 4 weapons, 66 role profiles and 3 round eve
 | 7124 | Cursed SCP-500 | 50/50: a super heal (full heal, cures, +50 AHP and regeneration) or nothing at all. | Use it like a normal SCP-500. 50% super heal, 50% nothing. |
 | 7125 | Cursed Adrenaline | +60% speed for 10 seconds, then you crash: frozen for 5 seconds and blinded for 3. | Use it like normal adrenaline. Run during the rush, then hide before the crash. |
 | 7126 | Monkey's Paw | Flip it to make a wish. You get what you wished for... with a twist. Single use. | Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use. |
+| 7127 | Cursed Medkit | Heals you to full instantly, but each use lowers your max HP by 10. 3 uses. | Use it like a normal medkit: full heal, but -10 max HP each time. 3 uses. |
+| 7128 | Cursed Grenade | Double blast radius and damage, but a 1 in 4 chance it goes off in your hand when you pull the pin. | Throw normally for a doubled blast; 1 in 4 pin pulls explode in your hand. |
+| 7129 | Cursed Flashbang | Blinds everyone around much longer, but it always blinds you too. | Throw normally; everyone in sight is blinded longer, and so are you. |
+| 7130 | Cursed Hat | Invisible for 60 seconds instead of 15, but you're 30% slower while invisible. 2 uses. | Put it on like SCP-268: 60 s invisible, 30% slower. 2 uses. |
+| 7131 | Cursed Cola | Four colas' worth of speed at once, but your health drains much faster. | Drink it like SCP-207 for four colas' worth of speed; your health drains fast. |
+| 7132 | Cursed Lantern | Throw it to black out your whole zone for 30 seconds, but you're blinded too. | Throw it like SCP-2176: your whole zone blacks out for 30 s and you're blinded. |
 
 ## Weapons
 
@@ -35,6 +41,7 @@ Current shipped content: **16 items, 4 weapons, 66 role profiles and 3 round eve
 | 7207 | Grenade Launcher | Fires a grenade with each shot. Holds up to 16; cannot reload. | Fire normally; each bullet launches a grenade. No reload. |
 | 7209 | Stun Gun | Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills. | Shoot a target to knock them down with a fake death for a few seconds; it never kills. |
 | 7210 | Cursed Pistol | Every hit does double damage, but about 1 in 3 trigger pulls jams and wastes the round. | Shoot normally; every hit does double damage, but about 1 in 3 pulls jams. |
+| 7211 | Cursed Shotgun | Huge damage, but every shot knocks you back and drains your stamina. | Shoot normally for huge damage; each shot knocks you back and drains stamina. |
 
 Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.
 

@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 11;
+            bool migrateConfig = Config.CatalogRevision < 12;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -518,6 +518,8 @@ namespace Brainless.Items
 
         private void Arm(RegisteredItem item, Projectile projectile, Player owner)
         {
+            if (ArmCursed(item, projectile, owner))
+                return;
             if (item.Id == 7113 && projectile is ExplosionGrenadeProjectile impact)
             {
                 var tuning = Config.Tuning.ImpactGrenade;
@@ -536,6 +538,7 @@ namespace Brainless.Items
 
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() =>
         {
+            CursedFlashExploding(ev);
             if (fragments.Exploding(ev))
             {
                 RetireSerial(ev.Projectile.Serial);

@@ -149,12 +149,12 @@ namespace Brainless.Items
             if (CatalogRevision < 10)
                 Tuning.ContainmentFoam.SinglePuddle = false;
 
-            // Revision 11: cursed items.
-            if (CatalogRevision < 11)
+            // Revision 11: cursed items; revision 12: six more cursed items.
+            if (CatalogRevision < 12)
                 foreach (var spec in SupCatalog.CursedDefaults())
                     if (!Items.Any(i => i.Id == spec.Id))
                         Items.Add(spec);
-            CatalogRevision = Math.Max(11, CatalogRevision);
+            CatalogRevision = Math.Max(12, CatalogRevision);
             if (Cursed == null)
                 throw new InvalidOperationException("cursed cannot be null.");
             if (Sup == null)
@@ -165,11 +165,11 @@ namespace Brainless.Items
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
-            Distribution.Validate(id => id >= 7101 && id <= 7126 && id != 7110 && !Retired.Contains(id));
+            Distribution.Validate(id => id >= 7101 && id <= 7132 && id != 7110 && !Retired.Contains(id));
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
-            if (Items.Any(i => i.Id < 7101 || i.Id > 7126 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
-                throw new InvalidOperationException("Item IDs must be 7101-7126 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
+            if (Items.Any(i => i.Id < 7101 || i.Id > 7132 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
+                throw new InvalidOperationException("Item IDs must be 7101-7132 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
             if (Items.Select(i => i.Id).Distinct().Count() != Items.Count || Items.Any(i => string.IsNullOrWhiteSpace(i.Name)) || Items.Select(i => i.Name).Distinct().Count() != Items.Count)
                 throw new InvalidOperationException("Item IDs/names must be nonempty and unique.");
             foreach (var expected in SupCatalog.Defaults().Concat(SupCatalog.CursedDefaults()))
@@ -339,7 +339,7 @@ namespace Brainless.Items
 
     public sealed class CursedTuning
     {
-        [Description("Percent of matching native map pickups replaced by each cursed item at round start (keycards for the Cursed Keycard, SCP-500, adrenaline, coins). 0 disables.")]
+        [Description("Percent of matching native map pickups replaced by each cursed item at round start (the same kind of item; any low keycard for the Cursed Keycard). 0 disables.")]
         public double LootChancePercent { get; set; } = 5;
 
         [Description("Most of each cursed item placed by natural loot per round.")]
@@ -352,5 +352,18 @@ namespace Brainless.Items
         public float AdrenalineSeconds { get; set; } = 10;
         public float AdrenalineFreezeSeconds { get; set; } = 5;
         public float AdrenalineBlindSeconds { get; set; } = 3;
+        public float MedkitMaxHpLoss { get; set; } = 10;
+        public double GrenadeBackfirePercent { get; set; } = 25;
+        public float GrenadeRadius { get; set; } = 10;
+        public float GrenadeHumanDamage { get; set; } = 200;
+        public float GrenadeScpDamage { get; set; } = 500;
+        public float FlashbangRadius { get; set; } = 14;
+        public float FlashbangBlindSeconds { get; set; } = 8;
+        public float FlashbangSelfBlindSeconds { get; set; } = 5;
+        public float HatInvisibleSeconds { get; set; } = 60;
+        public byte HatSlowPercent { get; set; } = 30;
+        public byte ColaStacks { get; set; } = 4;
+        public float LanternBlackoutSeconds { get; set; } = 30;
+        public float LanternSelfBlindSeconds { get; set; } = 8;
     }
 }

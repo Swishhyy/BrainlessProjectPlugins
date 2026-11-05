@@ -15,13 +15,20 @@
     "7123": "Use it on any door except the Alpha Warhead. Each door it opens pings the SCPs; it crumbles after 5 doors.",
     "7124": "Use it like a normal SCP-500. 50% super heal, 50% nothing.",
     "7125": "Use it like normal adrenaline. Run during the rush, then hide before the crash.",
-    "7126": "Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use."
+    "7126": "Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use.",
+    "7127": "Use it like a normal medkit: full heal, but -10 max HP each time. 3 uses.",
+    "7128": "Throw normally for a doubled blast; 1 in 4 pin pulls explode in your hand.",
+    "7129": "Throw normally; everyone in sight is blinded longer, and so are you.",
+    "7130": "Put it on like SCP-268: 60 s invisible, 30% slower. 2 uses.",
+    "7131": "Drink it like SCP-207 for four colas' worth of speed; your health drains fast.",
+    "7132": "Throw it like SCP-2176: your whole zone blacks out for 30 s and you're blinded."
   },
   "weapons": {
     "7206": "Shoot toward solid geometry for one reflected shot.",
     "7207": "Fire normally; each bullet launches a grenade. No reload.",
     "7209": "Shoot a target to knock them down with a fake death for a few seconds; it never kills.",
-    "7210": "Shoot normally; every hit does double damage, but about 1 in 3 pulls jams."
+    "7210": "Shoot normally; every hit does double damage, but about 1 in 3 pulls jams.",
+    "7211": "Shoot normally for huge damage; each shot knocks you back and drains stamina."
   },
   "roles": {
     "D01": "Sprint normally.",

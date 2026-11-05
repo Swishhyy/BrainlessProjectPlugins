@@ -66,6 +66,7 @@ namespace Brainless.Items
 
         // Cursed items: obvious trade-offs, from coin tails and rare natural loot.
         internal const uint CursedKeycard = 7123, CursedScp500 = 7124, CursedAdrenaline = 7125, MonkeysPaw = 7126;
+        internal const uint CursedMedkit = 7127, CursedGrenade = 7128, CursedFlashbang = 7129, CursedHat = 7130, CursedCola = 7131, CursedLantern = 7132;
 
         internal static IEnumerable<ItemSpec> CursedDefaults() => new[]
         {
@@ -100,6 +101,56 @@ namespace Brainless.Items
                 Name = "Monkey's Paw",
                 BaseType = ItemType.Coin,
                 Description = "Flip it to make a wish. You get what you wished for... with a twist. Single use.",
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7127,
+                Name = "Cursed Medkit",
+                BaseType = ItemType.Medkit,
+                Description = "Heals you to full instantly, but each use lowers your max HP by 10. 3 uses.",
+                Charges = 3,
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7128,
+                Name = "Cursed Grenade",
+                BaseType = ItemType.GrenadeHE,
+                Description = "Double blast radius and damage, but a 1 in 4 chance it goes off in your hand when you pull the pin.",
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7129,
+                Name = "Cursed Flashbang",
+                BaseType = ItemType.GrenadeFlash,
+                Description = "Blinds everyone around much longer, but it always blinds you too.",
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7130,
+                Name = "Cursed Hat",
+                BaseType = ItemType.SCP268,
+                Description = "Invisible for 60 seconds instead of 15, but you're 30% slower while invisible. 2 uses.",
+                Charges = 2,
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7131,
+                Name = "Cursed Cola",
+                BaseType = ItemType.SCP207,
+                Description = "Four colas' worth of speed at once, but your health drains much faster.",
+                RoundCap = 2
+            },
+            new ItemSpec
+            {
+                Id = 7132,
+                Name = "Cursed Lantern",
+                BaseType = ItemType.SCP2176,
+                Description = "Throw it to black out your whole zone for 30 seconds, but you're blinded too.",
                 RoundCap = 2
             }
         };

@@ -17,16 +17,92 @@ namespace Brainless.Items
     {
         private readonly System.Random cursedRandom = new System.Random();
 
+        private readonly Dictionary<ushort, Player> cursedFlashes = new Dictionary<ushort, Player>();
+
         private void CursedSubscribe()
         {
             P.UsingItemCompleted += UsingCompleted;
             P.ActivatingWarheadPanel += WarheadPanel;
+            P.ThrowingRequest += PullingPin;
         }
 
         private void CursedUnsubscribe()
         {
             P.UsingItemCompleted -= UsingCompleted;
             P.ActivatingWarheadPanel -= WarheadPanel;
+            P.ThrowingRequest -= PullingPin;
+            cursedFlashes.Clear();
+        }
+
+        // Cursed throwables keep their native projectile; returns true when handled here.
+        private bool ArmCursed(RegisteredItem item, Exiled.API.Features.Pickups.Projectiles.Projectile projectile, Player owner)
+        {
+            var cfg = Config.Cursed;
+            switch (item.Id)
+            {
+                case SupCatalog.CursedGrenade:
+                    // Native fuse and visuals; player damage is the doubled custom blast.
+                    if (projectile is Exiled.API.Features.Pickups.Projectiles.ExplosionGrenadeProjectile grenade)
+                    {
+                        grenade.MaxRadius = cfg.GrenadeRadius;
+                        fragments.Track(grenade, new DamageSource(owner), cfg.GrenadeRadius, cfg.GrenadeHumanDamage, cfg.GrenadeScpDamage);
+                    }
+
+                    return true;
+                case SupCatalog.CursedFlashbang:
+                    if (owner != null)
+                        cursedFlashes[projectile.Serial] = owner;
+                    return true;
+                case SupCatalog.CursedLantern:
+                    // Shatters natively; the whole zone goes dark and the thrower is blinded.
+                    if (owner != null)
+                    {
+                        Exiled.API.Features.Map.TurnOffAllLights(cfg.LanternBlackoutSeconds, owner.Zone);
+                        owner.EnableEffect(EffectType.Blinded, 1, cfg.LanternSelfBlindSeconds);
+                    }
+
+                    return true;
+            }
+
+            return false;
+        }
+
+        // Cursed Grenade: 1 in 4 pin pulls go off in your hand.
+        private void PullingPin(ThrowingRequestEventArgs ev) => Safe.Run(() =>
+        {
+            if (ev.RequestType != ThrowRequest.BeginThrow || ev.Item == null)
+                return;
+            var item = Find(ev.Item.Serial);
+            if (item?.Id != SupCatalog.CursedGrenade || cursedRandom.NextDouble() * 100 >= Config.Cursed.GrenadeBackfirePercent)
+                return;
+            var player = ev.Player;
+            var grenade = ev.Item;
+            lifetime.Later(0, () =>
+            {
+                if (!player.IsConnected || !player.IsAlive || !player.Items.Contains(grenade))
+                    return;
+                player.RemoveItem(grenade);
+                item.TrackedSerials.Remove(grenade.Serial);
+                var cfg = Config.Cursed;
+                fragments.Launch(player.Position + Vector3.up * .5f, Vector3.zero, .05f, new DamageSource(player), cfg.GrenadeRadius, cfg.GrenadeHumanDamage, cfg.GrenadeScpDamage, stationary: true);
+                player.ShowHint("<b>The cursed grenade went off in your hand!</b>", 3);
+            });
+        });
+
+        // Cursed Flashbang: longer blindness for everyone in sight, and always the thrower.
+        private void CursedFlashExploding(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
+        {
+            if (ev.Projectile == null || !cursedFlashes.TryGetValue(ev.Projectile.Serial, out var thrower))
+                return;
+            cursedFlashes.Remove(ev.Projectile.Serial);
+            var cfg = Config.Cursed;
+            foreach (var target in Player.List.Where(p => p.IsAlive && p != thrower && (p.Position - ev.Position).sqrMagnitude <= cfg.FlashbangRadius * cfg.FlashbangRadius && World.ClearLine(ev.Position + Vector3.up * .2f, p.CameraTransform.position)))
+                target.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangBlindSeconds);
+            if (thrower.IsConnected && thrower.IsAlive)
+            {
+                thrower.EnableEffect(EffectType.Flashed, 1, 2);
+                thrower.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangSelfBlindSeconds);
+            }
         }
 
         // Start of use: block early (cooldown, no 096 target...) so the pill isn't wasted.
@@ -161,6 +237,12 @@ namespace Brainless.Items
                 Add(SupCatalog.CursedScp500, ItemType.SCP500);
                 Add(SupCatalog.CursedAdrenaline, ItemType.Adrenaline);
                 Add(SupCatalog.MonkeysPaw, ItemType.Coin);
+                Add(SupCatalog.CursedMedkit, ItemType.Medkit);
+                Add(SupCatalog.CursedGrenade, ItemType.GrenadeHE);
+                Add(SupCatalog.CursedFlashbang, ItemType.GrenadeFlash);
+                Add(SupCatalog.CursedHat, ItemType.SCP268);
+                Add(SupCatalog.CursedCola, ItemType.SCP207);
+                Add(SupCatalog.CursedLantern, ItemType.SCP2176);
                 int placed = CursedLoot.Run(entries, Config.Cursed.LootChancePercent, Config.Cursed.LootMaxPerItem, cursedRandom);
                 if (Config.Debug)
                     Log.Debug("Cursed loot placed: " + placed);

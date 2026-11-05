@@ -52,7 +52,7 @@ for block in audit_blocks:
 
 lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
-         'Current shipped content: **16 items, 4 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
@@ -63,7 +63,7 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
         fields = [re.search(pattern, block) for pattern in (r'\bId\s*=\s*(\d+)', r'\bName\s*=\s*"([^"]+)"', r'\bDescription\s*=\s*"([^"]+)"')]
         if all(fields): entries.append(tuple(field.group(1) for field in fields))
     entries.sort(key=lambda e: int(e[0]))
-    assert len(entries) == (16 if folder == 'Items' else 4)
+    assert len(entries) == (22 if folder == 'Items' else 5)
     controls = usage[folder.lower()]
     assert set(controls) == {e[0] for e in entries}, f'Usage coverage missing for {folder}'
     if folder == 'Weapons':
@@ -124,4 +124,4 @@ for body, setting, ident, name in recipes:
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
 assert len(roles) == 66
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 16 items, 4 weapons, 66 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 22 items, 5 weapons, 66 roles (with availability), 3 events and 10 recipes; all have usage instructions.')

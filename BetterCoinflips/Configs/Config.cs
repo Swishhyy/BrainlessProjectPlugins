@@ -242,7 +242,14 @@ namespace BetterCoinflips.Configs
             7124,
             7125,
             7126,
+            7127,
+            7128,
+            7129,
+            7130,
+            7131,
+            7132,
             7210,
+            7211,
         };
 
         [Description("Give coin custom items even when their natural per-round supply is used up. Disabled items are never given.")]

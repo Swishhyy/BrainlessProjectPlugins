@@ -160,8 +160,10 @@ namespace Brainless.Weapons
             {
                 if (!registered.TryGetValue(Weapons.Config.CursedPistolId, out var pistol))
                     return;
-                var entry = new CursedLoot.Entry { Id = Weapons.Config.CursedPistolId, Sources = new[] { ItemType.GunCOM15, ItemType.GunCOM18 }, Spawn = position => pistol.TrySpawn(position, true, out var pickup) == null ? pickup : null };
-                CursedLoot.Run(new[] { entry }, Config.CursedLootChancePercent, Config.CursedLootMaxPerRound, cursedRandom);
+                var entries = new List<CursedLoot.Entry> { new CursedLoot.Entry { Id = Weapons.Config.CursedPistolId, Sources = new[] { ItemType.GunCOM15, ItemType.GunCOM18 }, Spawn = position => pistol.TrySpawn(position, true, out var pickup) == null ? pickup : null } };
+                if (registered.TryGetValue(Weapons.Config.CursedShotgunId, out var shotgun))
+                    entries.Add(new CursedLoot.Entry { Id = Weapons.Config.CursedShotgunId, Sources = new[] { ItemType.GunShotgun }, Spawn = position => shotgun.TrySpawn(position, true, out var pickup) == null ? pickup : null });
+                CursedLoot.Run(entries, Config.CursedLootChancePercent, Config.CursedLootMaxPerRound, cursedRandom);
             });
         }
 
@@ -309,6 +311,8 @@ namespace Brainless.Weapons
                 return;
             }
 
+            if (state.Definition.Id == Weapons.Config.CursedShotgunId)
+                ShotgunRecoil(ev.Player);
             Clamp(ev.Firearm);
             if (FixedAmmo(state) && shots.Remaining(ev.Item.Serial) < 1)
             {
@@ -353,6 +357,22 @@ namespace Brainless.Weapons
                 });
             }
         });
+        // Pushes the shooter back (only if there is room behind them) and drains stamina.
+        private void ShotgunRecoil(Player player)
+        {
+            Vector3 back = -player.CameraTransform.forward;
+            back.y = 0;
+            if (back.sqrMagnitude > .01f)
+            {
+                back.Normalize();
+                float distance = Config.CursedShotgunKnockback;
+                if (distance > 0 && !Physics.Raycast(player.Position + Vector3.up * .3f, back, distance + .4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                    player.Position += back * distance;
+            }
+
+            player.Stamina = Mathf.Max(0, player.Stamina - Config.CursedShotgunStaminaCost);
+        }
+
         private static bool FixedAmmo(WeaponState state) => state != null && state.Definition.Id == 7207;
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Hurting(HurtingEventArgs ev) => Safe.Run(() =>

@@ -86,7 +86,28 @@ namespace Brainless.Weapons
             CreateLauncher(),
             CreateStunGun(),
             CreateCursedPistol(),
+            CreateCursedShotgun(),
         };
+
+        // Cursed Shotgun: huge damage, but each shot knocks you back and drains stamina.
+        internal const uint CursedShotgunId = 7211;
+
+        private static WeaponSpec CreateCursedShotgun() => new WeaponSpec
+        {
+            Id = 7211,
+            Name = "Cursed Shotgun",
+            Description = "Huge damage, but every shot knocks you back and drains your stamina.",
+            BaseType = ItemType.GunShotgun,
+            Magazine = 14,
+            Reserve = 28,
+            HumanDamage = 2,
+            ScpDamage = 2,
+            RoundCap = 2
+        };
+
+        [System.ComponentModel.Description("Cursed Shotgun recoil: metres pushed back and stamina (0-1) lost per shot.")]
+        public float CursedShotgunKnockback { get; set; } = .8f;
+        public float CursedShotgunStaminaCost { get; set; } = .35f;
 
         // Cursed Pistol: double damage, but about one trigger pull in three jams.
         internal const uint CursedPistolId = 7210;
@@ -107,7 +128,7 @@ namespace Brainless.Weapons
         [System.ComponentModel.Description("Percent of Cursed Pistol trigger pulls that jam (the round is still used).")]
         public double CursedPistolJamPercent { get; set; } = 33;
 
-        [System.ComponentModel.Description("Percent of native COM-15/COM-18 map pickups replaced by a Cursed Pistol at round start, and the most per round. 0 disables.")]
+        [System.ComponentModel.Description("Percent of native pistol (COM-15/18) and shotgun map pickups replaced by the Cursed Pistol / Cursed Shotgun at round start, and the most of each per round. 0 disables.")]
         public double CursedLootChancePercent { get; set; } = 5;
         public int CursedLootMaxPerRound { get; set; } = 2;
 
@@ -160,10 +181,12 @@ namespace Brainless.Weapons
                 Distribution?.UpgradeSupWeapons();
             }
 
-            // Revision 6: Cursed Pistol.
+            // Revision 6: Cursed Pistol; revision 7: Cursed Shotgun.
             if (CatalogRevision < 6 && !Weapons.Any(w => w.Id == CursedPistolId))
                 Weapons.Add(CreateCursedPistol());
-            CatalogRevision = Math.Max(6, CatalogRevision);
+            if (CatalogRevision < 7 && !Weapons.Any(w => w.Id == CursedShotgunId))
+                Weapons.Add(CreateCursedShotgun());
+            CatalogRevision = Math.Max(7, CatalogRevision);
         }
 
         internal void Prepare()
@@ -180,7 +203,7 @@ namespace Brainless.Weapons
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Weapons.Select(w => new KeyValuePair<uint, ItemType>(w.Id, w.BaseType)));
-            Distribution.Validate(id => id >= 7201 && id <= 7210 && !Retired.Contains(id));
+            Distribution.Validate(id => id >= 7201 && id <= 7211 && !Retired.Contains(id));
             if (Weapons.Select(w => w.Id).Distinct().Count() != Weapons.Count || Weapons.Any(w => string.IsNullOrWhiteSpace(w.Name)) || Weapons.Select(w => w.Name).Distinct().Count() != Weapons.Count)
                 throw new InvalidOperationException("Weapon IDs and names must be unique and nonempty.");
             foreach (var w in Weapons)
@@ -193,7 +216,7 @@ namespace Brainless.Weapons
                 }
 
             foreach (var w in Weapons)
-                if (w.Id < 7201 || w.Id > 7210 || w.Magazine < 0 || w.Magazine > 255 || (w.Id == 7207 && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
+                if (w.Id < 7201 || w.Id > 7211 || w.Magazine < 0 || w.Magazine > 255 || (w.Id == 7207 && w.Magazine < 1) || w.Reserve < 0 || w.Reserve > ushort.MaxValue || w.RoundCap < 0 || float.IsNaN(w.HumanDamage) || float.IsInfinity(w.HumanDamage) || w.HumanDamage < 0 || float.IsNaN(w.ScpDamage) || float.IsInfinity(w.ScpDamage) || w.ScpDamage < 0 || float.IsNaN(w.Weight) || float.IsInfinity(w.Weight) || w.Weight < 0)
                     throw new InvalidOperationException("Invalid weapon settings: " + w.Id + ". Magazine must fit 0-255 (finite weapons 1-255), reserve 0-65535; damage, weight and cap must be finite/nonnegative.");
             foreach (var w in Weapons)
                 if (w.Id == 7207 && w.BaseType != ItemType.GunLogicer)

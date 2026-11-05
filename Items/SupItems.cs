@@ -125,14 +125,14 @@ namespace Brainless.Items
             // (native use animation); see Using and UsingCompleted.
             if (IsPill(item.Id))
             {
-                player.ShowHint("Use it like a normal " + (item.Type == ItemType.Adrenaline ? "adrenaline shot." : "SCP-500."), 3);
+                player.ShowHint("Use it like a normal " + item.Type + ".", 3);
                 return true;
             }
 
             return true;
         }
 
-        internal static bool IsPill(uint id) => id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline;
+        internal static bool IsPill(uint id) => id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline || id == SupCatalog.CursedMedkit || id == SupCatalog.CursedHat || id == SupCatalog.CursedCola;
 
         private PillTuning Tuning(uint id) => id == 7114 ? Config.Sup.AdrenalinePills : id == 7115 ? Config.Sup.Anti096Pills : id == 7116 ? Config.Sup.ExpiredPills : id == 7117 ? Config.Sup.InvisibilityPills : id == 7122 ? Config.Sup.VolatilePills : null;
 
@@ -197,6 +197,20 @@ namespace Brainless.Items
                     break;
                 case SupCatalog.CursedAdrenaline:
                     CursedAdrenaline(player);
+                    break;
+                case SupCatalog.CursedMedkit:
+                    player.MaxHealth = Mathf.Max(1, player.MaxHealth - Config.Cursed.MedkitMaxHpLoss);
+                    player.Health = player.MaxHealth;
+                    player.ShowHint($"Fully healed. Max HP is now {player.MaxHealth:0}.", 3);
+                    break;
+                case SupCatalog.CursedHat:
+                    player.EnableEffect(EffectType.Invisible, 1, Config.Cursed.HatInvisibleSeconds);
+                    player.EnableEffect(EffectType.Slowness, Config.Cursed.HatSlowPercent, Config.Cursed.HatInvisibleSeconds);
+                    player.ShowHint($"Invisible for {Config.Cursed.HatInvisibleSeconds:0}s... and slower.", 3);
+                    break;
+                case SupCatalog.CursedCola:
+                    player.EnableEffect(EffectType.Scp207, Config.Cursed.ColaStacks, 0);
+                    player.ShowHint("<b>FOUR COLAS.</b> Your health is draining fast.", 3);
                     break;
             }
         }
