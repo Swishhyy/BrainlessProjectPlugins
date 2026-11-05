@@ -68,7 +68,10 @@ namespace BetterCoinflips
                 return;
             }
 
-            int[] weights = ev.IsTails ? new[]
+            // Some tails flips turn lucky and use the good outcomes instead.
+            bool lucky = ev.IsTails && random.Next(100) < Math.Max(0, Math.Min(100, Config.LuckyTailsPercent));
+            bool bad = ev.IsTails && !lucky;
+            int[] weights = bad ? new[]
             {
                 Config.HpReductionChance,
                 Config.TpToClassDCellsChance,
@@ -137,7 +140,7 @@ namespace BetterCoinflips
 
             cooldowns[user] = DateTime.UtcNow;
             CoinUses[serial] = uses - 1;
-            var effect = (ev.IsTails ? CoinFlipEffect.BadEffects : CoinFlipEffect.GoodEffects)[effectIndex];
+            var effect = (bad ? CoinFlipEffect.BadEffects : CoinFlipEffect.GoodEffects)[effectIndex];
             try
             {
                 effect.Execute(ev.Player);
@@ -148,7 +151,7 @@ namespace BetterCoinflips
                 SendBroadcast(ev.Player, "The coin could not find a valid target for this effect.");
             }
 
-            string message = effect.Message;
+            string message = (lucky ? Translations.LuckyTailsMessage : "") + effect.Message;
             if (uses == 1)
             {
                 RemoveCoin(serial);

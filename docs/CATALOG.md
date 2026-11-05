@@ -53,7 +53,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | S06 | Anomaly Handler | Carries an Irritant Gas Grenade to cover an escape. | Throw the gas grenade to cover an escape. | 13.79 | Enabled | 7101 | 0 |
 | G01 | Guard Captain | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. | Use the Crossvec and upgraded keycard. | 12.9 | Enabled | — | 0 |
 | G02 | New Hire | A lightly equipped guard with a pistol and extra flashbangs. | Use the pistol and flashbangs. | 12.9 | Enabled | — | 0 |
-| G03 | Trained Agent | A faster guard with combat armor. Heavy armor removes the speed bonus. | Move normally; heavy armor removes the speed bonus. | 12.9 | Enabled | — | 0 |
+| G03 | Trained Agent | A faster guard with combat armor. | Move normally; the speed bonus is automatic. | 12.9 | Enabled | — | 0 |
 | G04 | Coward | Sprints for longer without armor. Wearing armor removes the bonus. | Sprint without armor. | 12.9 | Enabled | — | 0 |
 | G05 | Quartermaster | Carries an extra medkit and painkillers, but less spare ammo. | Use or share the extra medkit and painkillers. | 12.9 | Enabled | — | 0 |
 | G06 | Maintenance Liaison | Carries a Door Jammer keycard, but less spare ammo. | Use the Door Jammer card on a closed door. | 12.9 | Enabled | 7105 | 0 |
@@ -81,7 +81,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | H02 | Alpha | Larger and tougher, but slower. | Attack normally. | 20 | Enabled | — | 0 |
 | H03 | Mimic | Reuses mimic sounds much faster, but has less health. | Use mimic sound controls; they recharge quickly. | 20 | Enabled | — | 0 |
 | H04 | Venomous | Claws and amnestic clouds poison humans. Medical supplies cure it. | Claw humans or place an amnestic cloud. | 20 | Enabled | — | 0 |
-| R01 | Anger Issue | Enrages immediately, with 1,400 health. Heals after a few seconds out of combat. | Use the normal rage control when targets are available. | 40 | Enabled | — | 0 |
+| R01 | Anger Issue | Enrages immediately, with 1,400 health. Heals back up to 900 after a few seconds out of combat. | Use the normal rage control when targets are available. | 40 | Enabled | — | 0 |
 | R02 | Ill Temperature | Moves faster while calm. | Move normally while calm. | 40 | Enabled | — | 0 |
 | C05 | Cowboy | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | 8 | Enabled | — | 0 |
 | G07 | Rogue Guard | An unaffiliated guard, hostile to everyone. Can be captured and recruited. | Fight anyone, including other guards; get cuffed and escorted to escape to change sides. | 2.58 | Enabled | — | 0 |

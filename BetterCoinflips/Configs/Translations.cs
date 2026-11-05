@@ -38,6 +38,7 @@ namespace BetterCoinflips.Configs
         public string CustomItemMessage { get; set; } = "You got a {item}!";
         public string CustomRoleMessage { get; set; } = "The coin made you a {role}!";
         public string CursedItemMessage { get; set; } = "The coin cursed you with {item}...";
+        public string LuckyTailsMessage { get; set; } = "Tails... but the coin feels generous! ";
 
         [Description("Here you can set the message for each of these bad coin effects.")]
         public string HpReductionMessage { get; set; } = "Your hp got reduced by 30%.";

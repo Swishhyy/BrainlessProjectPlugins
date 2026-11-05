@@ -67,6 +67,9 @@ namespace BetterCoinflips.Types
             return new CoinFlipEffect(red ? Translations.RedCardMessage : Translations.ContainmentEngineerCardMessage, player => Pickup.CreateAndSpawn(red ? ItemType.KeycardFacilityManager : ItemType.KeycardContainmentEngineer, player.Position, Quaternion.identity));
         }
 
+        // Damage that always leaves the player alive.
+        private static void Sting(Player player, float amount) => player.Health = Math.Max(1, player.Health - amount);
+
         private static void RandomItem(Player player)
         {
             if (Config.ItemsToGive?.Count > 0)
@@ -108,7 +111,7 @@ namespace BetterCoinflips.Types
             {
                 string name = BrainlessContent.GiveRandomItem(player, Config.CursedCustomItems, Config.CustomItemsIgnoreSupply);
                 if (name == null)
-                    player.Hurt(15);
+                    Sting(player, 15);
                 else
                     effect.Message = Translations.CursedItemMessage.Replace("{item}", name);
             });
@@ -213,20 +216,21 @@ namespace BetterCoinflips.Types
             // 0: Reduces player's health by 30%
             new CoinFlipEffect(Translations.HpReductionMessage, player =>
             {
-                if ((int)player.Health == 1)
-                    player.Kill(DamageType.CardiacArrest);
-                else
-                    player.Health *= 0.7f;
+                // Never lethal: a coin should not send anyone to spectator.
+                player.Health = Math.Max(1, player.Health * 0.7f);
             }),
             // 1: Teleports the player to the class D cells.
-            new CoinFlipEffect(Warhead.IsDetonated ? Translations.TpToClassDCellsAfterWarheadMessage : Translations.TpToClassDCellsMessage, player =>
+            new CoinFlipEffect(Warhead.IsDetonated ? Translations.SmallDamageMessage : Translations.TpToClassDCellsMessage, player =>
             {
-                player.DropHeldItem();
-                player.Teleport(Door.Get(DoorType.PrisonDoor));
+                // After detonation the facility is lethal, so take a small hit instead.
                 if (Warhead.IsDetonated)
                 {
-                    player.Kill(DamageType.Decontamination);
+                    Sting(player, 15);
+                    return;
                 }
+
+                player.DropHeldItem();
+                player.Teleport(Door.Get(DoorType.PrisonDoor));
             }),
             // 2: Applies a random bad effect to the player.
             new CoinFlipEffect(Translations.RandomBadEffectMessage, player =>
@@ -278,15 +282,12 @@ namespace BetterCoinflips.Types
                     return;
                 }
 
-                player.Hurt(15);
+                Sting(player, 15);
             }),
-            // 8: Sets player hp to 1 or kills if it was already 1
+            // 8: Sets player hp to 1 (never lethal)
             new CoinFlipEffect(Translations.HugeDamageMessage, player =>
             {
-                if ((int)player.Health == 1)
-                    player.Kill(DamageType.CardiacArrest);
-                else
-                    player.Health = 1;
+                player.Health = 1;
             }),
             // 9: Spawns a primed SCP-244 vase for the player.
             new CoinFlipEffect(Translations.PrimedVaseMessage, player =>
@@ -431,16 +432,18 @@ namespace BetterCoinflips.Types
                 EventHandlers.SendBroadcast(spect, Translations.SpectSwapSpectMessage);
             }),
             // 19: Teleports to a random Tesla gate if warhead is not detonated
-            new CoinFlipEffect(Warhead.IsDetonated ? Translations.TeslaTpAfterWarheadMessage : Translations.TeslaTpMessage, player =>
+            new CoinFlipEffect(Warhead.IsDetonated ? Translations.SmallDamageMessage : Translations.TeslaTpMessage, player =>
             {
+                if (Warhead.IsDetonated)
+                {
+                    Sting(player, 15);
+                    return;
+                }
+
                 player.DropHeldItem();
                 var teslas = Exiled.API.Features.TeslaGate.List.ToList();
                 if (teslas.Count > 0)
                     player.Teleport(teslas.RandomItem());
-                if (Warhead.IsDetonated)
-                {
-                    player.Kill(DamageType.Decontamination);
-                }
             }),
             // 20: Swaps inventory and ammo with another random player
             new CoinFlipEffect(Player.List.Where(x => !Config.InventorySwapIgnoredRoles.Contains(x.Role.Type)).Count(x => x.IsAlive) <= 1 ? Translations.InventorySwapOnePlayerMessage : Translations.InventorySwapMessage, player =>
@@ -448,7 +451,7 @@ namespace BetterCoinflips.Types
                 List<Player> playerList = Player.List.Where(x => x != player && x.IsAlive && !Config.InventorySwapIgnoredRoles.Contains(x.Role.Type)).ToList();
                 if (playerList.Count == 0)
                 {
-                    player.Hurt(50);
+                    Sting(player, 50);
                     return;
                 }
 

@@ -37,7 +37,7 @@ internal static class HumanProfileTests
         V("B02").HealthMultiplier = .71f; V("L03").SpeedMultiplier = 1.18f; V("L04").SpeedMultiplier = .95f; V("L04").Shield = 0; V("R01").Shield = 120; V("R01").Traits.HealthRegenPerSecond = 0;
         V("M10").Health = 150; V("M10").SpeedMultiplier = 1.1f; V("M10").Add.Remove(ItemType.Adrenaline); V("M10").Hint = "Fights with SCP-1509, with 150 health and a little more speed.";
         v7.Prepare();
-        check(v7.RoleCatalogRevision == 7 && V("B02").HealthMultiplier == .55f && V("L03").SpeedMultiplier == 1.08f && V("L04").SpeedMultiplier == 1 && V("L04").Shield == 200 && V("R01").Shield == 0 && V("R01").Traits.HealthRegenPerSecond == 20 && V("R01").Traits.HealthRegenDelaySeconds == 8, "revision 7 nerfs Escape's and Hyper, gives Poisonous normal speed with a 200 shield, and gives Anger Issue its native shield plus health regen");
+        check(v7.RoleCatalogRevision == 7 && V("B02").HealthMultiplier == .55f && V("L03").SpeedMultiplier == 1.08f && V("L04").SpeedMultiplier == 1 && V("L04").Shield == 200 && V("R01").Shield == 0 && V("R01").Traits.HealthRegenPerSecond == 20 && V("R01").Traits.HealthRegenDelaySeconds == 8 && V("R01").Traits.HealthRegenMax == 900, "revision 7 nerfs Escape's and Hyper, gives Poisonous normal speed with a 200 shield, and gives Anger Issue its native shield plus health regen up to 900");
         check(V("M10").Health == 200 && V("M10").SpeedMultiplier == 1.2f && V("M10").Add.Contains(ItemType.Adrenaline) && V("M10").Hint.Contains("200 health"), "revision 7 buffs the Swordsman's health, speed and kit");
         var edited = new Config { RoleCatalogRevision = 6 };
         edited.Roles.Single(r => r.Id == "B02").HealthMultiplier = .8f;

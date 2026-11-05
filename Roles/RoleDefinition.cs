@@ -201,7 +201,7 @@ namespace Brainless.Roles
             r.Remove.AddRange(new[] { ItemType.GunFSP9, ItemType.GrenadeFlash });
             r.Add.AddRange(new[] { ItemType.GunCOM18, ItemType.GrenadeFlash, ItemType.GrenadeFlash });
             list.Add(r);
-            r = R("G03", "Trained Agent", RoleTypeId.FacilityGuard, "A faster guard with combat armor. Heavy armor removes the speed bonus.");
+            r = R("G03", "Trained Agent", RoleTypeId.FacilityGuard, "A faster guard with combat armor.");
             r.Remove.Add(ItemType.ArmorLight);
             r.Add.AddRange(new[] { ItemType.ArmorCombat, ItemType.Flashlight });
             r.SpeedMultiplier = 1.02f;
@@ -351,11 +351,12 @@ namespace Brainless.Roles
             r.Traits.PoisonDurationSeconds = 4;
             r.Traits.PoisonInCloud = true;
             list.Add(r);
-            r = R("R01", "Anger Issue", RoleTypeId.Scp096, "Enrages immediately, with 1,400 health. Heals after a few seconds out of combat.");
+            r = R("R01", "Anger Issue", RoleTypeId.Scp096, "Enrages immediately, with 1,400 health. Heals back up to 900 after a few seconds out of combat.");
             r.Health = 1400;
             r.Traits.RageWindupSeconds = 0;
             r.Traits.HealthRegenPerSecond = 20;
             r.Traits.HealthRegenDelaySeconds = 8;
+            r.Traits.HealthRegenMax = 900;
             list.Add(r);
             r = R("R02", "Ill Temperature", RoleTypeId.Scp096, "Moves faster while calm.");
             r.Traits.CalmSpeedMultiplier = 1.25f;

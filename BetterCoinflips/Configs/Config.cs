@@ -15,8 +15,11 @@ namespace BetterCoinflips.Configs
         public bool Debug { get; set; } = false;
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
-        [Description("Balance migration marker. Revision 1 makes tails less punishing (rarer SCP-fy, kicks off, rarer warhead/spectator swap/instant explosion) and drops lethal effects (Decontaminating, CardiacArrest, PocketCorroding) from bad_effects. Only untouched stock values change; set 1 to keep old values.")]
+        [Description("Balance migration marker. Revision 2: coins lean toward goodies and harmless pranks with a little gambling; nothing sends players to spectator by default (kicks, spectator swap, instant explosion and Tesla teleport off, damage effects leave 1 HP), and lethal effects are dropped from bad_effects. Only untouched stock values change; set 2 to keep your values.")]
         public int BalanceRevision { get; set; }
+
+        [Description("Percent of tails flips that turn lucky and give a heads (good) outcome instead. Keeps coins mostly fun while tails is still a gamble. 0 = plain 50/50.")]
+        public int LuckyTailsPercent { get; set; } = 30;
 
         [Description("The amount of base game spawned coins that should be removed. Default: 4")]
         public int DefaultCoinsAmount { get; set; } = 4;
@@ -216,7 +219,7 @@ namespace BetterCoinflips.Configs
         };
 
         [Description("Brainless integration. Heads can give a Brainless custom item (needs the Items/Weapons DLLs). Proportional chance like the effects below; skipped automatically when none of the listed items is installed.")]
-        public int CustomItemChance { get; set; } = 30;
+        public int CustomItemChance { get; set; } = 40;
 
         [Description("Brainless item/weapon IDs that heads can give (see docs/CATALOG.md). Empty = any installed Brainless item or weapon.")]
         public List<uint> CustomItems { get; set; } = new()
@@ -245,7 +248,7 @@ namespace BetterCoinflips.Configs
         public bool CustomItemsIgnoreSupply { get; set; } = false;
 
         [Description("Heads can turn you into a random Brainless custom role that fits your current class, without moving you (needs the Roles DLL). Proportional chance; falls back to a random item if no role fits.")]
-        public int CustomRoleChance { get; set; } = 20;
+        public int CustomRoleChance { get; set; } = 25;
 
         [Description("Role IDs or names heads can grant, e.g. [C05, S04]. Empty = any enabled profile that fits the player's class.")]
         public List<string> CustomRoles { get; set; } = new();
@@ -276,7 +279,7 @@ namespace BetterCoinflips.Configs
         public int RandomBadEffectChance { get; set; } = 15;
         public int WarheadChance { get; set; } = 3;
         public int LightsOutChance { get; set; } = 20;
-        public int LiveHeChance { get; set; } = 15;
+        public int LiveHeChance { get; set; } = 8;
         public int TrollFlashChance { get; set; } = 50;
         public int ScpTpChance { get; set; } = 12;
         public int OneHpLeftChance { get; set; } = 8;
@@ -286,11 +289,11 @@ namespace BetterCoinflips.Configs
         public int TurnIntoScpChance { get; set; } = 8;
         public int InventoryResetChance { get; set; } = 6;
         public int ClassSwapChance { get; set; } = 6;
-        public int InstantExplosionChance { get; set; } = 4;
+        public int InstantExplosionChance { get; set; } = 0;
         public int PlayerSwapChance { get; set; } = 20;
         public int KickChance { get; set; } = 0;
-        public int SpectSwapChance { get; set; } = 3;
-        public int TeslaTpChance { get; set; } = 6;
+        public int SpectSwapChance { get; set; } = 0;
+        public int TeslaTpChance { get; set; } = 0;
         public int InventorySwapChance { get; set; } = 12;
         public int HandcuffChance { get; set; } = 6;
         public int RandomTeleportChance { get; set; } = 15;
@@ -298,24 +301,25 @@ namespace BetterCoinflips.Configs
         private static readonly EffectType[] LethalEffects = { EffectType.Decontaminating, EffectType.CardiacArrest, EffectType.PocketCorroding };
         private static readonly EffectType[] OldBadEffects = { EffectType.Asphyxiated, EffectType.Bleeding, EffectType.Blinded, EffectType.Burned, EffectType.Concussed, EffectType.Corroding, EffectType.CardiacArrest, EffectType.Deafened, EffectType.Decontaminating, EffectType.Disabled, EffectType.Ensnared, EffectType.Exhausted, EffectType.Flashed, EffectType.Hemorrhage, EffectType.Hypothermia, EffectType.InsufficientLighting, EffectType.Poisoned, EffectType.PocketCorroding, EffectType.SeveredHands, EffectType.SinkHole, EffectType.Stained, EffectType.Traumatized };
 
-        // Returns true when values changed and should be saved.
+        // Returns true when values changed and should be saved. Values still at an earlier
+        // stock default move to the current default; owner-edited values are kept.
         internal bool UpgradeBalance()
         {
-            if (BalanceRevision >= 1)
+            if (BalanceRevision >= 2)
                 return false;
             var stock = new Config();
             var properties = typeof(Config).GetProperties();
-            var old = new Dictionary<string, int> { { "HpReductionChance", 20 }, { "WarheadChance", 10 }, { "ScpTpChance", 20 }, { "OneHpLeftChance", 15 }, { "TurnIntoScpChance", 30 }, { "InventoryResetChance", 20 }, { "ClassSwapChance", 10 }, { "InstantExplosionChance", 10 }, { "KickChance", 5 }, { "SpectSwapChance", 10 }, { "TeslaTpChance", 15 }, { "InventorySwapChance", 20 }, { "HandcuffChance", 10 }, { "LiveHeChance", 30 }, { "RandomBadEffectChance", 20 } };
-            foreach (var pair in old)
+            var history = new Dictionary<string, int[]> { { "HpReductionChance", new[] { 20, 15 } }, { "WarheadChance", new[] { 10, 3 } }, { "ScpTpChance", new[] { 20, 12 } }, { "OneHpLeftChance", new[] { 15, 8 } }, { "TurnIntoScpChance", new[] { 30, 8 } }, { "InventoryResetChance", new[] { 20, 6 } }, { "ClassSwapChance", new[] { 10, 6 } }, { "InstantExplosionChance", new[] { 10, 4 } }, { "KickChance", new[] { 5, 0 } }, { "SpectSwapChance", new[] { 10, 3 } }, { "TeslaTpChance", new[] { 15, 6 } }, { "InventorySwapChance", new[] { 20, 12 } }, { "HandcuffChance", new[] { 10, 6 } }, { "LiveHeChance", new[] { 30, 15 } }, { "RandomBadEffectChance", new[] { 20, 15 } }, { "CustomItemChance", new[] { 30 } }, { "CustomRoleChance", new[] { 20 } } };
+            foreach (var pair in history)
             {
                 var property = System.Array.Find(properties, p => p.Name == pair.Key);
-                if ((int)property.GetValue(this) == pair.Value)
+                if (System.Array.IndexOf(pair.Value, (int)property.GetValue(this)) >= 0)
                     property.SetValue(this, property.GetValue(stock));
             }
 
             if (BadEffects != null && BadEffects.SetEquals(OldBadEffects))
                 BadEffects.ExceptWith(LethalEffects);
-            BalanceRevision = 1;
+            BalanceRevision = 2;
             return true;
         }
     }

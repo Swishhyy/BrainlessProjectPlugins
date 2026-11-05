@@ -52,6 +52,10 @@ namespace Brainless.Roles
 
         [Tune(0, 120)]
         public float HealthRegenDelaySeconds { get; set; } = 10;
+
+        [Description("Regen stops at this much health. 0 means it can heal to full.")]
+        [Tune(0, 100000)]
+        public float HealthRegenMax { get; set; }
     }
 
     internal static class ScpTraitRules

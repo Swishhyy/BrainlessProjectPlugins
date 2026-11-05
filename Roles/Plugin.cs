@@ -721,12 +721,10 @@ namespace Brainless.Roles
                 multiplier *= state.Definition.Traits.CalmSpeedMultiplier;
             if (state.Definition.Id == "Z02" && Config.ExtremeMuncherEventPreset)
                 multiplier = 2;
-            // Heavy armor cancels a human role's speed bonus, never its slowdown. SCP-207 and
-            // other speed effects stack on top instead of replacing the bonus (they used to
-            // cancel it, so cola slowed fast roles and SCP-207 never wore off). A stronger
-            // external Movement Boost still takes precedence inside the movement layer.
-            if (player.IsHuman && multiplier > 1 && player.CurrentArmor?.Type == ItemType.ArmorHeavy)
-                multiplier = 1;
+            // Role speed always applies. SCP-207 and other speed effects stack on top instead
+            // of replacing it (they used to cancel it, so cola slowed fast roles and SCP-207
+            // never wore off). A stronger external Movement Boost still takes precedence
+            // inside the movement layer. Armor keeps only its native movement penalty.
             TryResilient(player, state);
             if (state.ResilientActive)
                 multiplier = Math.Max(multiplier, 1) * Config.Resilient.SpeedMultiplier;
@@ -751,9 +749,10 @@ namespace Brainless.Roles
         private static void RegenerateHealth(Player player, ActiveRole state)
         {
             var traits = state.Definition.Traits;
-            if (traits.HealthRegenPerSecond <= 0 || player.Health >= player.MaxHealth || Time.time - state.LastHurt < traits.HealthRegenDelaySeconds)
+            float cap = traits.HealthRegenMax > 0 ? Math.Min(traits.HealthRegenMax, player.MaxHealth) : player.MaxHealth;
+            if (traits.HealthRegenPerSecond <= 0 || player.Health >= cap || Time.time - state.LastHurt < traits.HealthRegenDelaySeconds)
                 return;
-            player.Health = Math.Min(player.MaxHealth, player.Health + traits.HealthRegenPerSecond * .2f);
+            player.Health = Math.Min(cap, player.Health + traits.HealthRegenPerSecond * .2f);
         }
 
         private static bool NoShield(RoleDefinition definition) => definition.Id == "Z05" || definition.ShieldMultiplier <= 0;

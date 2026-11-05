@@ -397,6 +397,9 @@ namespace Brainless.Roles
             {
                 switch (role.Id.ToUpperInvariant())
                 {
+                    case "G03":
+                        Hint(role, "A faster guard with combat armor. Heavy armor removes the speed bonus.");
+                        break;
                     case "B02":
                         if (Near(role.HealthMultiplier, .71f))
                             role.HealthMultiplier = Catalog.EscapeHealth;
@@ -421,6 +424,7 @@ namespace Brainless.Roles
                         {
                             role.Traits.HealthRegenPerSecond = 20;
                             role.Traits.HealthRegenDelaySeconds = 8;
+                            role.Traits.HealthRegenMax = 900;
                         }
 
                         Hint(role, "Enrages immediately, with 1,400 health and a 120 hume shield.");
