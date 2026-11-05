@@ -22,7 +22,7 @@ internal static class ScpTraitTests
         check(config.RoleHudEdgePaddingPercent == 1.25f, "a deliberate custom HUD inset survives migration");
         var legacy = new Config(); legacy.Roles.RemoveAll(r => r.BaseRole == PlayerRoles.RoleTypeId.Scp106 || r.BaseRole == PlayerRoles.RoleTypeId.Scp173 || r.BaseRole == PlayerRoles.RoleTypeId.Scp939 || r.BaseRole == PlayerRoles.RoleTypeId.Scp096);
         legacy.Prepare();
-        check(legacy.Roles.Count == 66 && legacy.RoleCatalogRevision == 7, "an existing YAML role list gains missing SCP profiles in one migration");
+        check(legacy.Roles.Count == 66 && legacy.RoleCatalogRevision == 8, "an existing YAML role list gains missing SCP profiles in one migration");
         legacy.Roles.RemoveAll(r => r.Id == "L01"); legacy.Prepare();
         check(!legacy.Roles.Exists(r => r.Id == "L01"), "deliberate profile deletion after migration is retained");
         var custom = new Config(); custom.Roles.RemoveAll(r => r.BaseRole == PlayerRoles.RoleTypeId.Scp106);

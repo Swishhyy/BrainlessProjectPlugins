@@ -301,7 +301,7 @@ namespace Brainless.Roles
             list.Add(r);
             r = R("L03", "Hyper", RoleTypeId.Scp106, "Moves a little faster, but gains vigor more slowly.");
             r.SpeedMultiplier = 1.08f;
-            r.Traits.VigorGainMultiplier = .35f;
+            r.Traits.VigorGainMultiplier = .45f;
             list.Add(r);
             r = R("L04", "Poisonous", RoleTypeId.Scp106, "Touches poison humans, but has a weaker 200 hume shield and gains vigor more slowly. Medical supplies cure the poison.");
             r.HealthMultiplier = .9f;
