@@ -45,6 +45,8 @@ namespace BetterCoinflips
             Map.SpawningItem += _eventHandler.OnSpawningItem;
             Map.FillingLocker += _eventHandler.OnFillingLocker;
             Player.Left += _eventHandler.OnLeft;
+            Player.Hurting += Types.Modifiers.Hurting;
+            Player.ChangingRole += Types.Modifiers.ChangingRole;
             Exiled.Events.Handlers.Server.WaitingForPlayers += ResetRound;
             Exiled.Events.Handlers.Server.RestartingRound += ResetRound;
         }
@@ -55,6 +57,9 @@ namespace BetterCoinflips
             Map.SpawningItem -= _eventHandler.OnSpawningItem;
             Map.FillingLocker -= _eventHandler.OnFillingLocker;
             Player.Left -= _eventHandler.OnLeft;
+            Player.Hurting -= Types.Modifiers.Hurting;
+            Player.ChangingRole -= Types.Modifiers.ChangingRole;
+            Types.Modifiers.Clear();
             Exiled.Events.Handlers.Server.WaitingForPlayers -= ResetRound;
             Exiled.Events.Handlers.Server.RestartingRound -= ResetRound;
             _eventHandler = null;
@@ -63,6 +68,7 @@ namespace BetterCoinflips
         private void ResetRound()
         {
             _lifetime.Clear();
+            Types.Modifiers.Clear();
             _eventHandler?.Reset();
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 internal static class CoinBalanceTests
 {
@@ -9,7 +10,7 @@ internal static class CoinBalanceTests
         var old = new BetterCoinflips.Configs.Config { TurnIntoScpChance = 30, KickChance = 5, WarheadChance = 10, SpectSwapChance = 10, LiveHeChance = 30, InstantExplosionChance = 10, TeslaTpChance = 15 };
         old.BadEffects.UnionWith(new[] { Exiled.API.Enums.EffectType.Decontaminating, Exiled.API.Enums.EffectType.CardiacArrest, Exiled.API.Enums.EffectType.PocketCorroding });
         check(old.UpgradeBalance() && old.BalanceRevision == 2, "coin balance migration runs once on old configs");
-        check(old.TurnIntoScpChance == 8 && old.WarheadChance == 3 && old.LiveHeChance == 8, "untouched gamble outcomes move to the rarer defaults");
+        check(old.TurnIntoScpChance == 0 && old.WarheadChance == 0 && old.InventorySwapChance == 0 && old.InventoryResetChance == 0 && old.LiveHeChance == 8, "Turn into SCP, warhead, inventory swap and the old inventory reset are off; the live grenade is rarer");
         check(old.KickChance == 0 && old.SpectSwapChance == 0 && old.InstantExplosionChance == 0 && old.TeslaTpChance == 0, "outcomes that send players to spectator are off by default");
         check(!old.BadEffects.Contains(Exiled.API.Enums.EffectType.Decontaminating) && !old.BadEffects.Contains(Exiled.API.Enums.EffectType.CardiacArrest) && !old.BadEffects.Contains(Exiled.API.Enums.EffectType.PocketCorroding) && old.BadEffects.Contains(Exiled.API.Enums.EffectType.Bleeding), "the stock bad-effect list loses only its lethal effects");
         check(!old.UpgradeBalance(), "coin balance migration does not repeat");
@@ -21,10 +22,13 @@ internal static class CoinBalanceTests
         edited.UpgradeBalance();
         check(edited.TurnIntoScpChance == 50 && edited.KickChance == 0 && edited.BadEffects.Contains(Exiled.API.Enums.EffectType.Decontaminating), "owner-edited coin weights and custom effect lists are kept");
         var fresh = new BetterCoinflips.Configs.Config();
-        int tails = fresh.HpReductionChance + fresh.TpToClassDCellsChance + fresh.RandomBadEffectChance + fresh.WarheadChance + fresh.LightsOutChance + fresh.LiveHeChance + fresh.TrollFlashChance + fresh.ScpTpChance + fresh.OneHpLeftChance + fresh.PrimedVaseChance + fresh.ShitPantsChance + fresh.FakeCassieChance + fresh.TurnIntoScpChance + fresh.InventoryResetChance + fresh.ClassSwapChance + fresh.InstantExplosionChance + fresh.PlayerSwapChance + fresh.KickChance + fresh.SpectSwapChance + fresh.TeslaTpChance + fresh.InventorySwapChance + fresh.RandomTeleportChance + fresh.HandcuffChance + fresh.CursedCustomItemChance;
-        int pranks = fresh.TrollFlashChance + fresh.FakeCassieChance + fresh.ShitPantsChance + fresh.LightsOutChance + fresh.PrimedVaseChance + fresh.RandomTeleportChance + fresh.PlayerSwapChance;
-        check(pranks * 2 > tails, "most unlucky flips are harmless pranks by default");
-        check(fresh.LuckyTailsPercent == 30, "about a third of tails flips turn lucky, so roughly two in three flips give a goodie");
+        var props = typeof(BetterCoinflips.Configs.Config).GetProperties();
+        int Weight(string name) => (int)System.Array.Find(props, p => p.Name == name).GetValue(fresh);
+        string[] newTails = { "FrozenChance", "SlowedChance", "ExhaustedChance", "SinkholeChance", "ButterfingersChance", "DropHeldItemChance", "LoseAmmoChance", "EmptyMagazineChance", "BlindedChance", "DeafenedChance", "ConcussedChance", "FlashedChance", "LocationLeakChance", "CassieCalloutChance", "LockedInChance", "RoomBlackoutChance", "DropKeycardsChance", "DropArmorChance", "CursedMaxHpChance", "BleedingChance", "HypothermiaChance", "StaminaDrainedChance", "PoisonedChance", "HuntedChance", "BackToSpawnChance", "JunkSwapChance", "TripChance", "WeakArmsChance", "GlassJawChance", "UnluckyCoinChance" };
+        string[] newHeads = { "SpeedBoostChance", "ShieldUpChance", "ToughSkinChance", "SecondWindChance", "AmmoRefillChance", "KeycardUpgradeChance", "RandomScpItemChance", "LuckyCoinChance", "SecondChanceChance", "FullHealChance" };
+        check(newTails.All(n => Weight(n) > 0) && newTails.Length >= 30, "all thirty extra tails outcomes are on by default");
+        check(newHeads.All(n => Weight(n) > 0), "all ten extra heads outcomes are on by default");
+        check(fresh.ItemWipeChancePercent == 0.1 && System.Array.Find(props, p => p.Name == "LuckyTailsPercent") == null, "the item wipe is a separate 0.1% roll and lucky tails is gone, so coins are a straight 50/50");
 #endif
     }
 }

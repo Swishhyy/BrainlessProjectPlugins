@@ -18,8 +18,6 @@ namespace BetterCoinflips.Configs
         [Description("Balance migration marker. Revision 2: coins lean toward goodies and harmless pranks with a little gambling; nothing sends players to spectator by default (kicks, spectator swap, instant explosion and Tesla teleport off, damage effects leave 1 HP), and lethal effects are dropped from bad_effects. Only untouched stock values change; set 2 to keep your values.")]
         public int BalanceRevision { get; set; }
 
-        [Description("Percent of tails flips that turn lucky and give a heads (good) outcome instead. Keeps coins mostly fun while tails is still a gamble. 0 = plain 50/50.")]
-        public int LuckyTailsPercent { get; set; } = 30;
 
         [Description("The amount of base game spawned coins that should be removed. Default: 4")]
         public int DefaultCoinsAmount { get; set; } = 4;
@@ -277,7 +275,7 @@ namespace BetterCoinflips.Configs
         public int HpReductionChance { get; set; } = 15;
         public int TpToClassDCellsChance { get; set; } = 5;
         public int RandomBadEffectChance { get; set; } = 15;
-        public int WarheadChance { get; set; } = 3;
+        public int WarheadChance { get; set; } = 0;
         public int LightsOutChance { get; set; } = 20;
         public int LiveHeChance { get; set; } = 8;
         public int TrollFlashChance { get; set; } = 50;
@@ -286,17 +284,67 @@ namespace BetterCoinflips.Configs
         public int PrimedVaseChance { get; set; } = 20;
         public int ShitPantsChance { get; set; } = 40;
         public int FakeCassieChance { get; set; } = 50;
-        public int TurnIntoScpChance { get; set; } = 8;
-        public int InventoryResetChance { get; set; } = 6;
+        public int TurnIntoScpChance { get; set; } = 0;
+        public int InventoryResetChance { get; set; } = 0;
         public int ClassSwapChance { get; set; } = 6;
         public int InstantExplosionChance { get; set; } = 0;
         public int PlayerSwapChance { get; set; } = 20;
         public int KickChance { get; set; } = 0;
         public int SpectSwapChance { get; set; } = 0;
         public int TeslaTpChance { get; set; } = 0;
-        public int InventorySwapChance { get; set; } = 12;
+        public int InventorySwapChance { get; set; } = 0;
         public int HandcuffChance { get; set; } = 6;
         public int RandomTeleportChance { get; set; } = 15;
+
+        [Description("Extra good outcomes. Proportional chances like the ones above.")]
+        public int SpeedBoostChance { get; set; } = 20;
+        public int ShieldUpChance { get; set; } = 20;
+        public int ToughSkinChance { get; set; } = 15;
+        public int SecondWindChance { get; set; } = 20;
+        public int AmmoRefillChance { get; set; } = 20;
+        public int KeycardUpgradeChance { get; set; } = 10;
+        public int RandomScpItemChance { get; set; } = 15;
+        public int LuckyCoinChance { get; set; } = 10;
+        public int SecondChanceChance { get; set; } = 8;
+        public int FullHealChance { get; set; } = 15;
+
+        [Description("Extra bad outcomes. Proportional chances like the ones above. None of them can kill.")]
+        public int FrozenChance { get; set; } = 15;
+        public int SlowedChance { get; set; } = 15;
+        public int ExhaustedChance { get; set; } = 15;
+        public int SinkholeChance { get; set; } = 10;
+        public int ButterfingersChance { get; set; } = 10;
+        public int DropHeldItemChance { get; set; } = 15;
+        public int LoseAmmoChance { get; set; } = 8;
+        public int EmptyMagazineChance { get; set; } = 12;
+        public int BlindedChance { get; set; } = 12;
+        public int DeafenedChance { get; set; } = 12;
+        public int ConcussedChance { get; set; } = 12;
+        public int FlashedChance { get; set; } = 12;
+        public int LocationLeakChance { get; set; } = 10;
+        public int CassieCalloutChance { get; set; } = 8;
+        public int LockedInChance { get; set; } = 10;
+        public int RoomBlackoutChance { get; set; } = 12;
+        public int DropKeycardsChance { get; set; } = 8;
+        public int DropArmorChance { get; set; } = 8;
+        public int CursedMaxHpChance { get; set; } = 8;
+        public int BleedingChance { get; set; } = 10;
+        public int HypothermiaChance { get; set; } = 10;
+        public int StaminaDrainedChance { get; set; } = 15;
+        public int PoisonedChance { get; set; } = 10;
+        public int HuntedChance { get; set; } = 8;
+        public int BackToSpawnChance { get; set; } = 8;
+        public int JunkSwapChance { get; set; } = 8;
+        public int TripChance { get; set; } = 12;
+        public int WeakArmsChance { get; set; } = 10;
+        public int GlassJawChance { get; set; } = 10;
+        public int UnluckyCoinChance { get; set; } = 6;
+
+        [Description("Percent chance (checked before any other tails outcome) that tails deletes ALL of the player's items. Default 0.1.")]
+        public double ItemWipeChancePercent { get; set; } = 0.1;
+
+        [Description("Durations and strengths for the extra outcomes.")]
+        public CoinTimings Timings { get; set; } = new CoinTimings();
 
         private static readonly EffectType[] LethalEffects = { EffectType.Decontaminating, EffectType.CardiacArrest, EffectType.PocketCorroding };
         private static readonly EffectType[] OldBadEffects = { EffectType.Asphyxiated, EffectType.Bleeding, EffectType.Blinded, EffectType.Burned, EffectType.Concussed, EffectType.Corroding, EffectType.CardiacArrest, EffectType.Deafened, EffectType.Decontaminating, EffectType.Disabled, EffectType.Ensnared, EffectType.Exhausted, EffectType.Flashed, EffectType.Hemorrhage, EffectType.Hypothermia, EffectType.InsufficientLighting, EffectType.Poisoned, EffectType.PocketCorroding, EffectType.SeveredHands, EffectType.SinkHole, EffectType.Stained, EffectType.Traumatized };
@@ -322,5 +370,36 @@ namespace BetterCoinflips.Configs
             BalanceRevision = 2;
             return true;
         }
+    }
+
+    public sealed class CoinTimings
+    {
+        public float FrozenSeconds { get; set; } = 5;
+        public float SlowedSeconds { get; set; } = 20;
+        public byte SlowedPercent { get; set; } = 30;
+        public float ExhaustedSeconds { get; set; } = 20;
+        public float SinkholeSeconds { get; set; } = 5;
+        public float BlindedSeconds { get; set; } = 5;
+        public float DeafenedSeconds { get; set; } = 15;
+        public float ConcussedSeconds { get; set; } = 10;
+        public float FlashedSeconds { get; set; } = 3;
+        public float LockedInSeconds { get; set; } = 10;
+        public float RoomBlackoutSeconds { get; set; } = 20;
+        public float CursedMaxHp { get; set; } = 10;
+        public float BleedingSeconds { get; set; } = 5;
+        public float HypothermiaSeconds { get; set; } = 10;
+        public float PoisonedSeconds { get; set; } = 5;
+        public float TripSeconds { get; set; } = 2;
+        public float WeakArmsSeconds { get; set; } = 30;
+        public float WeakArmsPercent { get; set; } = 30;
+        public float GlassJawSeconds { get; set; } = 20;
+        public float GlassJawPercent { get; set; } = 25;
+        public float SpeedBoostSeconds { get; set; } = 30;
+        public byte SpeedBoostPercent { get; set; } = 20;
+        public float ShieldUpAhp { get; set; } = 50;
+        public float ToughSkinSeconds { get; set; } = 30;
+        public float ToughSkinPercent { get; set; } = 20;
+        public float SecondWindSeconds { get; set; } = 30;
+        public int LuckyCoinFlips { get; set; } = 2;
     }
 }

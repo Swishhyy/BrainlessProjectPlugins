@@ -40,6 +40,7 @@ namespace BetterCoinflips
         {
             if (ev.Player.UserId != null)
                 cooldowns.Remove(ev.Player.UserId);
+            Types.Modifiers.Forget(ev.Player);
         }
 
         public static void SendBroadcast(Player player, string message, bool showHint = false, bool isTails = false)
@@ -68,9 +69,8 @@ namespace BetterCoinflips
                 return;
             }
 
-            // Some tails flips turn lucky and use the good outcomes instead.
-            bool lucky = ev.IsTails && random.Next(100) < Math.Max(0, Math.Min(100, Config.LuckyTailsPercent));
-            bool bad = ev.IsTails && !lucky;
+            // Strict 50/50: heads gives a good outcome, tails a bad one.
+            bool bad = ev.IsTails;
             int[] weights = bad ? new[]
             {
                 Config.HpReductionChance,
@@ -119,7 +119,11 @@ namespace BetterCoinflips
                 BrainlessContent.HasItems(Config.CustomItems) ? Config.CustomItemChance : 0,
                 BrainlessContent.HasRoles ? Config.CustomRoleChance : 0
             };
-            int effectIndex = Rules.WeightedIndex(weights, random);
+            var extras = bad ? CoinExtras.Bad : CoinExtras.Good;
+            weights = weights.Concat(extras.Select(e => Math.Max(0, e.Weight()))).ToArray();
+            // The very rare item wipe is rolled before any other tails outcome.
+            bool wipe = bad && random.NextDouble() * 100 < Config.ItemWipeChancePercent;
+            int effectIndex = wipe ? 0 : Rules.WeightedIndex(weights, random);
             if (effectIndex < 0)
                 return;
             ushort serial = ev.Item.Serial;
@@ -140,7 +144,8 @@ namespace BetterCoinflips
 
             cooldowns[user] = DateTime.UtcNow;
             CoinUses[serial] = uses - 1;
-            var effect = (bad ? CoinFlipEffect.BadEffects : CoinFlipEffect.GoodEffects)[effectIndex];
+            var builtIn = bad ? CoinFlipEffect.BadEffects : CoinFlipEffect.GoodEffects;
+            var effect = wipe ? CoinExtras.ItemWipe() : effectIndex < builtIn.Count ? builtIn[effectIndex] : extras[effectIndex - builtIn.Count].Create();
             try
             {
                 effect.Execute(ev.Player);
@@ -151,8 +156,9 @@ namespace BetterCoinflips
                 SendBroadcast(ev.Player, "The coin could not find a valid target for this effect.");
             }
 
-            string message = (lucky ? Translations.LuckyTailsMessage : "") + effect.Message;
-            if (uses == 1)
+            string message = effect.Message;
+            // Read the live count: Lucky coin adds flips and Unlucky coin breaks it.
+            if (!CoinUses.TryGetValue(serial, out int left) || left <= 0)
             {
                 RemoveCoin(serial);
                 message += Translations.CoinBreaksMessage;
