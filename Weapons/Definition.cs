@@ -153,11 +153,12 @@ namespace Brainless.Weapons
         {
             Id = 7207,
             Name = "Grenade Launcher",
-            Description = "Fires a grenade with each shot. Holds up to 16; cannot reload.",
+            Description = "Staff only. Fires a grenade with each shot. Holds up to 16; cannot reload.",
             BaseType = ItemType.GunLogicer,
             Magazine = 16,
             Reserve = 0,
-            RoundCap = 1
+            RoundCap = 1,
+            AdminOnly = true
         };
         // EXILED preserves existing YAML lists rather than appending new defaults.
         // Add this newly introduced weapon once; later deletions/edits are respected.
@@ -190,18 +191,23 @@ namespace Brainless.Weapons
                 Weapons.Add(CreateCursedPistol());
             if (CatalogRevision < 7 && !Weapons.Any(w => w.Id == CursedShotgunId))
                 Weapons.Add(CreateCursedShotgun());
-            // Revision 8: the Stun Gun becomes admin-only and leaves natural loot/starting gear.
+            // Revision 8: the Stun Gun, revision 9: the Grenade Launcher become admin-only
+            // and leave natural loot/starting gear.
             if (CatalogRevision < 8)
-            {
-                foreach (var stun in Weapons.Where(w => w.Id == 7209))
-                    stun.AdminOnly = true;
-                foreach (var rule in Distribution?.MapRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<MapLootRule>())
-                    rule.ChancePercent = 0;
-                foreach (var rule in Distribution?.PlayerRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<PlayerLootRule>())
-                    rule.ChancePercent = 0;
-            }
+                MakeAdminOnly(7209);
+            if (CatalogRevision < 9)
+                MakeAdminOnly(7207);
+            CatalogRevision = Math.Max(9, CatalogRevision);
+        }
 
-            CatalogRevision = Math.Max(8, CatalogRevision);
+        private void MakeAdminOnly(uint id)
+        {
+            foreach (var weapon in Weapons.Where(w => w.Id == id))
+                weapon.AdminOnly = true;
+            foreach (var rule in Distribution?.MapRules?.Where(r => r.CustomId == id) ?? Enumerable.Empty<MapLootRule>())
+                rule.ChancePercent = 0;
+            foreach (var rule in Distribution?.PlayerRules?.Where(r => r.CustomId == id) ?? Enumerable.Empty<PlayerLootRule>())
+                rule.ChancePercent = 0;
         }
 
         internal void Prepare()
