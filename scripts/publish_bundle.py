@@ -49,7 +49,7 @@ def prepare_bundle(assets, output, repository):
                '3. Keep existing configuration and start the server. New settings are generated.\n\n'
                'Each plugin is optional and keeps its own version/configuration. The manifests on the release '
                'page are for automatic updates; they do not go in the Plugins directory.\n'
-               'Staff: open docs/README.md to start, docs/CATALOG.md for all content/controls, or docs/STAFF_GUIDE.md for commands.\n'
+               'Staff: open docs/CATALOG.md for all content/controls, or docs/COMMANDS.md for commands and permissions.\n'
                'Affected old updaters require this manual replacement once, including Core if installed. '
                'Future updates load after a full server restart.\n\n'
                f'Instructions: https://github.com/{repository}/blob/main/README.md\n')
@@ -77,12 +77,9 @@ def prepare_bundle(assets, output, repository):
              'Stop the server, replace your selected DLLs, keep existing configs, then start it. '
              'If the old updater fails, replace every installed component once, including Core if installed.\n\n'
              '**Target:** EXILED 9.15.3 / SCP:SL 14.2.9. Automatic updates still replace only each installed component.\n\n'
-             f'[Staff documentation](https://github.com/{repository}/blob/main/docs/README.md) · [All content and controls](https://github.com/{repository}/blob/main/docs/CATALOG.md). Also included under docs/ in the ZIP.\n\n'
+             f'[All content and controls](https://github.com/{repository}/blob/main/docs/CATALOG.md) · [Commands](https://github.com/{repository}/blob/main/docs/COMMANDS.md). Also included under docs/ in the ZIP.\n\n'
              '| Plugin | Version | DLL |\n| --- | --- | --- |\n')
     notes += ''.join(f'| {c["plugin"]} | {c["version"]} | `{c["dll"].name}` |\n' for c in components)
-    for component in components:
-        detail = ROOT/component['plugin']/'RELEASE_NOTES.md'
-        if detail.is_file(): notes += '\n'+detail.read_text()+'\n'
     return files, notes
 
 if __name__ == '__main__':

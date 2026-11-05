@@ -47,7 +47,6 @@ for name, (project, assembly) in PROJECTS.items():
     if folder.exists(): shutil.rmtree(folder)
     folder.mkdir(exist_ok=True)
     shutil.copy2(source, folder/assembly)
-    (folder/'README.md').write_text((ROOT/name/'README.md').read_text().replace('../docs/', 'docs/'))
     for page in (ROOT/'docs').rglob('*.md'):
         destination = folder/'docs'/page.relative_to(ROOT/'docs')
         destination.parent.mkdir(parents=True, exist_ok=True)

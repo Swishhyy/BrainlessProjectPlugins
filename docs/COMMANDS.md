@@ -1,6 +1,6 @@
 # Project Brainless — Command Table
 
-[Staff quick guide](STAFF_GUIDE.md) · [Content IDs and usage](CATALOG.md) · [Owner settings](CONFIGURATION.md)
+[Content IDs and usage](CATALOG.md) · [Project overview and settings](../README.md)
 
 **Remote Admin:** no leading slash/dot. `<value>` is required; `[value]` is optional. Omit `[playerID]` to target yourself in-game.
 
@@ -63,7 +63,7 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.pbprivacy optout` | Stops tracking and deletes your saved stats and Discord link |
 | `.pbprivacy optin` | Starts fresh; requires native DNT off |
 
-**Discord, when the stats API and bot are set up ([guide](STATS_API.md)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
+**Discord, when the stats API and bot are set up ([setup](../README.md#stats-api-and-discord-bot)):** prefix `pb` is the default. No staff permission is needed. Other-player queries work for linked, tracked accounts.
 
 | Command | What it does |
 | --- | --- |
@@ -74,3 +74,15 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `/pb-optout` | Deletes your linked stats and stops tracking; affects only you |
 
 An unlinked player can opt out in-game. Turning DNT off does not cancel a separate manual opt-out. Use `.pbprivacy optin` to rejoin tracking; old progress and links are not restored.
+
+## Examples and common fixes
+
+`ci give 7102 4` gives player 4 a Cluster Grenade. `bprole set Z04` makes you Explosive Zombie. `bprole set S04 4` makes player 4 Candy Man.
+
+1. **Equipment won’t give:** check ID, enabled state, free inventory space and that the target is alive/unrestrained. Admin grants need no `--force`.
+2. **Role won’t roll:** read `bproles`. Disabled/experimental profiles and missing equipment still block admin tests. Setting a role replaces the current kit.
+3. **Events:** need four living players. Starting one replaces combat roles/kits. After `bpevent stop`, restart the round for normal roles.
+4. **Voice:** players use F1 `.scpchat` or tap N, then hold their normal voice key. Staff can adjust `bpscpchat volume <0-20>` live.
+5. **Capture:** cuff enemy military and escort them to the normal surface escape zone. The captor must be alive and the prisoner alive for at least ten seconds.
+6. **Locksmith:** interact with a denied keycard door and stay nearby. Level 1/2/3 takes 15/30/45 seconds, then a 120/180/240-second cooldown. Facility lockdowns still apply.
+7. **Config edits:** save the YAML, then run the matching `reload` command above. A newly installed or updated DLL needs a full server restart.

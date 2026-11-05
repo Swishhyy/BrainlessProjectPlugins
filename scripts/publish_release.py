@@ -62,8 +62,6 @@ def publish(plugin, version, dll, manifest, tag, existing_release=False, prerele
     notes = (f'{plugin} {version} for EXILED 9.15.3 / SCP: SL 14.2.9.\n\n'
              'Download the DLL for manual installation. Existing installations with the updater '
              'will verify and download this plugin independently; the new version loads on the next full server restart.\n')
-    detail = pathlib.Path(__file__).resolve().parents[1]/plugin/'RELEASE_NOTES.md'
-    if detail.is_file(): notes += '\n'+detail.read_text()
     publish_assets([dll, manifest], tag, f'{plugin} {version}', notes, existing_release, prerelease)
 
 if __name__ == '__main__':

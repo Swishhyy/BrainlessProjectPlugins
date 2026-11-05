@@ -31,7 +31,7 @@ jobs:
       - name: Validate staff content coverage
         run: |
           python3 scripts/generate_catalog.py
-          git diff --exit-code -- docs/CATALOG.md docs/ROLE_STATUS.md
+          git diff --exit-code -- docs/CATALOG.md
       - id: select
         env:
           REQUESTED_PLUGIN: ${{ inputs.plugin || 'All' }}

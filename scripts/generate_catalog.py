@@ -33,8 +33,25 @@ def percentage(role_id, base):
 
 usage = json.loads((root/'docs/content_usage.json').read_text())
 assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
+
+# Per-role availability (chance, gate, required equipment, population) for the role table.
+audit_blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
+assert len(audit_blocks) == 68
+known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
+availability = {}
+for block in audit_blocks:
+    role_id = re.search(r'R\("([A-Z]\d\d)"', block).group(1)
+    equipment = re.findall(r'\b(7[12]\d\d)\b', block)
+    assert set(equipment) <= known_ids, f'{role_id} references unknown equipment'
+    gate = 'Enabled'
+    if 'r.Experimental = true' in block: gate = 'Opt-in (allow_experimental_roles)'
+    if role_id == 'Z05': gate = 'Event: 25% per round'
+    minimum = re.search(r'r.MinPlayers = (\d+)', block)
+    base = re.search(r'RoleTypeId\.(\w+)', block).group(1)
+    availability[role_id] = (percentage(role_id, base), gate, ', '.join(equipment) or '—', minimum.group(1) if minimum else '0')
+
 lines = ['# Project Brainless — What We Have', '',
-         '[Staff commands](STAFF_GUIDE.md) · [Full command table](COMMANDS.md) · [Owner settings](CONFIGURATION.md)', '',
+         '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
          'Current shipped content: **12 items, 3 weapons, 68 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
@@ -56,12 +73,20 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
         lines.append(f'| {item_id} | {name} | {description} | {controls[item_id]} |')
 lines += ['', 'Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.', '',
           '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
-          '| ID | Role | What it does | How to use | Default status |', '| --- | --- | --- | --- | --- |']
+          '| ID | Role | What it does | How to use | Chance % | Status | Custom kit | Min players |', '| --- | --- | --- | --- | --- | --- | --- | --- |']
 for role_id, name, base, hint in roles:
     if role_id == 'Z02': hint = 'Faster zombie with less health and weaker attacks.'
-    status = 'Event: 25% per round' if role_id == 'Z05' else 'Enabled'
-    lines.append(f'| {role_id} | {name} | {hint} | {usage["roles"][role_id]} | {status} |')
-lines += ['', 'About 80% of each spawn group rolls a custom role by default; the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits; see [role settings](CONFIGURATION.md).', '',
+    chance, status, kit, minimum = availability[role_id]
+    lines.append(f'| {role_id} | {name} | {hint} | {usage["roles"][role_id]} | {chance} | {status} | {kit} | {minimum} |')
+lines += ['', 'About 80% of each spawn group rolls a custom role by default; the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.', '',
+          '### Why a role can be absent', '',
+          '- Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults share an 80% total per group (two decimals, rounded down).',
+          '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. A blocked profile\'s percentage is not redistributed to another role.',
+          '- Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.',
+          '- Rogue Guard/Scientist can damage, and be damaged by, everyone including their own side. They spawn separately in Entrance and queue an early CASSIE warning. Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.',
+          '- Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks still apply.',
+          '- Native force-class changes and escapes do not reroll profiles. `bprole set <ID> [playerID]` ignores natural chance/population/supply limits but honors disabled content and missing providers.',
+          '- SCP variants use normal SCP controls. Stalker and Ambusher reduce footsteps. Poison refreshes one effect, does not stack, and medical supplies cure it. Brute, Giant, Muncher, Raisian and Alpha apply model sizes only when allow_model_scaling is true. Boom Boom uses its separate explosive_scp173 settings.', '',
           '## Round events', '', '| Event | What happens | Staff controls |', '| --- | --- | --- |',
           f'| Infection | Everyone is spread across Heavy Containment and Entrance, survivors in separate rooms away from the skeletons. Low-health SCP-3114 hunt humans; their direct kills convert victims at the death point. Other deaths stay dead. | {usage["events"]["infection"]} |',
           f'| Deathmatch | Chaos has taken the facility (spawns in Heavy Containment and Entrance); MTF raids from the surface. No SCPs; Light Containment is locked off. Both sides respawn in waves every 15s; first to 40 kills, or the leader after 15 minutes, wins. | {usage["events"]["deathmatch"]} |',
@@ -94,44 +119,4 @@ for body, setting, ident, name in recipes:
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
 assert len(roles) == 68
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 12 items, 3 weapons, 68 roles, 3 events and 10 recipes; all have usage instructions.')
-
-# A separate operator-facing audit records why a correctly installed profile may
-# not appear. Runtime bproles remains the authority for edited server configs.
-source = (root/'Roles/RoleDefinition.cs').read_text()
-blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
-status = ['# Role availability audit', '',
-          'All 68 profiles have an implementation and compile against the pinned EXILED/game assemblies. This is a code/default-configuration audit, not a live Unity playtest. Use `bprole` to inspect an actual assignment and `bproles [playerID]` for current runtime requirements.', '',
-          '## Shipped defaults', '',
-          '| ID | Role | Chance % | Default status | Required custom equipment | Minimum players |',
-          '| --- | --- | --- | --- | --- | --- |']
-assert len(blocks) == 68
-known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
-for block in blocks:
-    match = re.search(r'R\("([A-Z]\d\d)",\s*"([^"]+)"', block)
-    role_id, name = match.groups()
-    equipment = re.findall(r'\b(7[12]\d\d)\b', block)
-    assert set(equipment) <= known_ids, f'{role_id} references unknown equipment'
-    gate = 'Enabled; normal spawn roll'
-    if 'r.Experimental = true' in block:
-        gate = 'Opt-in: allow_experimental_roles'
-    if role_id == 'Z05':
-        gate = 'Event only: one zombie per round can become the Doctor'
-    minimum = re.search(r'r.MinPlayers = (\d+)', block)
-    base = re.search(r'RoleTypeId\.(\w+)', block).group(1)
-    status.append(f'| {role_id} | {name} | {percentage(role_id, base)} | {gate} | {", ".join(equipment) or "None"} | {minimum.group(1) if minimum else "0"} |')
-status += ['', '## Why a role can be absent', '',
-           '- Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults share an 80% total per group (two decimals, rounded down); catalog revision 3 raised existing configs to the same 80% once, keeping relative shares.',
-           '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. These restrictions do not redistribute a blocked profile\'s percentage to another role.',
-           '- Head Scientist and Demolitionist require 12 players. MTF/Chaos profiles preserve their matching native rank/subtype.',
-           '- Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.',
-           '- Candy roles use real SCP-330 candy; approved_candy can select colors and candy_man_candy_count controls the Candy Man count. Janitor/Athletic/Pharmacist kits use their documented balanced supplies rather than the original Discord brainstorm.',
-           '- Rogue Guard/Scientist stay real Guard/Scientist roles but can damage, and be damaged by, everyone including their own side. They spawn separately in Entrance and queue an early CASSIE warning. Containment Engineer starts just outside the HCZ Micro H.I.D. room; map geometry must provide a safe point. Head Scientist reuses S03 with its research-coordinator keycard.',
-           '- Rank roles only roll from their listed ranks (for example Scout from MTF Private or Chaos Rifleman). Captured Insurgent rolls from a Class-D spawn and becomes an empty-handed Chaos Conscript in the cells. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.',
-           '- Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks and non-interactable doors keep their native restrictions.',
-           '- Native admin force-class changes and escapes do not randomly reroll profiles. Use bprole set <ID> [playerID] for a deliberate admin test. It schedules a fresh native kit and ignores natural chance/population/supply limits, while honoring disabled content and missing providers.', '',
-           'All role commands require brainless.roles and are registered only in Remote Admin. READY in bproles means eligible to roll now, not guaranteed or live-test certified. See PLAYTEST.md for traits, resurrection, client prediction and cleanup checks.', '']
-audit = root/'docs/ROLE_STATUS.md'
-status += ['## SCP variants', '', 'The SCP-106, SCP-173, SCP-939 and SCP-096 profiles use normal SCP controls. Stalker and Ambusher reduce footsteps; they keep native ambient sounds. Mimic has a short sound cooldown; intercom access was removed because it disconnected players. Escape\'s kills restart breakneck and clear the cooldown that follows. Poison refreshes one effect, does not stack, and medical supplies cure it. Boom Boom uses its separate explosive_scp173 settings.', '', 'Brute, Giant, Muncher, Raisian and Alpha apply their configured model sizes when allow_model_scaling is true. Child, Tickler and Muncher are no longer experimental. Profiles keep the native hume shield unless their shield multiplier changes it; the Doctor never has one.', '']
-audit.write_text('\n'.join(status))
-print('Role availability audit written with all 68 profiles and validated equipment IDs.')
+print('Content page written: 12 items, 3 weapons, 68 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
