@@ -9,7 +9,7 @@ internal static class CoinBalanceTests
         // A 5.1.x config: every stock value from before the rebalance.
         var old = new BetterCoinflips.Configs.Config { TurnIntoScpChance = 30, KickChance = 5, WarheadChance = 10, SpectSwapChance = 10, LiveHeChance = 30, InstantExplosionChance = 10, TeslaTpChance = 15 };
         old.BadEffects.UnionWith(new[] { Exiled.API.Enums.EffectType.Decontaminating, Exiled.API.Enums.EffectType.CardiacArrest, Exiled.API.Enums.EffectType.PocketCorroding });
-        check(old.UpgradeBalance() && old.BalanceRevision == 2, "coin balance migration runs once on old configs");
+        check(old.UpgradeBalance() && old.BalanceRevision == 3, "coin balance migration runs once on old configs");
         check(old.TurnIntoScpChance == 0 && old.WarheadChance == 0 && old.InventorySwapChance == 0 && old.InventoryResetChance == 0 && old.LiveHeChance == 8, "Turn into SCP, warhead, inventory swap and the old inventory reset are off; the live grenade is rarer");
         check(old.KickChance == 0 && old.SpectSwapChance == 0 && old.InstantExplosionChance == 0 && old.TeslaTpChance == 0, "outcomes that send players to spectator are off by default");
         check(!old.BadEffects.Contains(Exiled.API.Enums.EffectType.Decontaminating) && !old.BadEffects.Contains(Exiled.API.Enums.EffectType.CardiacArrest) && !old.BadEffects.Contains(Exiled.API.Enums.EffectType.PocketCorroding) && old.BadEffects.Contains(Exiled.API.Enums.EffectType.Bleeding), "the stock bad-effect list loses only its lethal effects");
@@ -39,6 +39,9 @@ internal static class CoinBalanceTests
         var oldCursed = new BetterCoinflips.Configs.Config { CursedCustomItems = new System.Collections.Generic.List<uint> { 7116, 7122 } };
         oldCursed.UpgradeBalance();
         check(oldCursed.CursedCustomItems.Contains(7210) && !oldCursed.CursedCustomItems.Contains(7116), "the old pill-only cursed list migrates to the new cursed items");
+        var released = new BetterCoinflips.Configs.Config { BalanceRevision = 2 };
+        released.CustomItems.Add(7209);
+        check(released.UpgradeBalance() && !released.CustomItems.Contains(7209) && released.BalanceRevision == 3 && !fresh.CustomItems.Contains(7209), "coins never hand out the admin-only Stun Gun");
 #endif
     }
 }

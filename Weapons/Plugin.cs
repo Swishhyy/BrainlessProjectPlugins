@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 10, 0);
+        public override Version Version => new Version(0, 10, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -175,6 +175,8 @@ namespace Brainless.Weapons
                 return "The requested quantity must be positive.";
             if (ignoreLimits)
                 return null;
+            if (spec.AdminOnly)
+                return $"{spec.Name} is admin-only (ci give).";
             EnsureCapacity();
             if (budget.Count(spec.Id.ToString()) + count > spec.RoundCap)
                 return $"{spec.Name} round limit reached ({budget.Count(spec.Id.ToString())}/{spec.RoundCap}).";

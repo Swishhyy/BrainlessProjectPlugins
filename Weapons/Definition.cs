@@ -26,6 +26,9 @@ namespace Brainless.Weapons
         public float ScpDamage { get; set; } = 1;
         public int RoundCap { get; set; } = 2;
         public float Weight { get; set; } = 2;
+
+        [System.ComponentModel.Description("Only staff can hand this out (ci give / ci spawn). Natural loot, starting gear, role kits and other plugins (coins) cannot issue it.")]
+        public bool AdminOnly { get; set; }
     }
 
     public sealed class Config : Exiled.API.Interfaces.IConfig
@@ -136,13 +139,14 @@ namespace Brainless.Weapons
         {
             Id = 7209,
             Name = "Stun Gun",
-            Description = "Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
+            Description = "Staff only. Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
             BaseType = ItemType.GunCOM18,
             Magazine = 6,
             Reserve = 12,
             HumanDamage = 0,
             ScpDamage = 0,
-            RoundCap = 1
+            RoundCap = 1,
+            AdminOnly = true
         };
 
         private static WeaponSpec CreateLauncher() => new WeaponSpec
@@ -186,7 +190,18 @@ namespace Brainless.Weapons
                 Weapons.Add(CreateCursedPistol());
             if (CatalogRevision < 7 && !Weapons.Any(w => w.Id == CursedShotgunId))
                 Weapons.Add(CreateCursedShotgun());
-            CatalogRevision = Math.Max(7, CatalogRevision);
+            // Revision 8: the Stun Gun becomes admin-only and leaves natural loot/starting gear.
+            if (CatalogRevision < 8)
+            {
+                foreach (var stun in Weapons.Where(w => w.Id == 7209))
+                    stun.AdminOnly = true;
+                foreach (var rule in Distribution?.MapRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<MapLootRule>())
+                    rule.ChancePercent = 0;
+                foreach (var rule in Distribution?.PlayerRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<PlayerLootRule>())
+                    rule.ChancePercent = 0;
+            }
+
+            CatalogRevision = Math.Max(8, CatalogRevision);
         }
 
         internal void Prepare()

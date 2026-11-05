@@ -70,6 +70,7 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
         lines += ['', '## Weapons', '', '| ID | Weapon | What it does | How to use |', '| --- | --- | --- | --- |']
     for item_id, name, description in entries:
         if item_id == '7206': name += ' **(opt-in)**'
+        if item_id == '7209': name += ' **(staff only)**'
         lines.append(f'| {item_id} | {name} | {description} | {controls[item_id]} |')
 lines += ['', 'Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.', '',
           '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
