@@ -54,7 +54,7 @@ assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usa
 
 # Per-role availability (chance, gate, required equipment, population) for the role table.
 audit_blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )[RN]\("[A-Z]\d\d")', source)[1:]
-assert len(audit_blocks) == 114
+assert len(audit_blocks) == 121
 known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Items/SupCatalog.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
 availability = {}
 for block in audit_blocks:
@@ -70,7 +70,7 @@ for block in audit_blocks:
 
 lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
-         'Current shipped content: **22 items, 5 weapons, 114 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **22 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Rarity', '', 'Every item, weapon and role has a rarity tier. Each loot pickup or spawn rolls a tier first, then something of that tier. Defaults (items and roles have separate per-round counts; Items and Weapons share theirs):', '',
          '| Tier | Chance per roll | Max per round |', '| --- | --- | --- |',
@@ -98,7 +98,7 @@ lines += ['', 'Ricochet requires experimental weapons to be enabled. Give equipm
           '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
           '| ID | Role | Rarity | What it does | How to use | Status | Custom kit | Min players |', '| --- | --- | --- | --- | --- | --- | --- | --- |']
 tier_order = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythical']
-class_order = ['ClassD', 'Scientist', 'FacilityGuard', 'NtfPrivate', 'NtfSergeant', 'NtfSpecialist', 'NtfCaptain', 'ChaosConscript', 'ChaosRifleman', 'ChaosMarauder', 'ChaosRepressor', 'Scp049', 'Scp0492', 'Scp096', 'Scp106', 'Scp173', 'Scp939']
+class_order = ['ClassD', 'Scientist', 'FacilityGuard', 'NtfPrivate', 'NtfSergeant', 'NtfSpecialist', 'NtfCaptain', 'ChaosConscript', 'ChaosRifleman', 'ChaosMarauder', 'ChaosRepressor', 'Scp049', 'Scp0492', 'Scp096', 'Scp106', 'Scp173', 'Scp939', 'Scp079']
 shared_faction = set(re.findall(r'"([A-Z]\d\d)"', re.search(r'SharedFactionRoles = new HashSet<string>\([^)]*\) \{([^}]*)\}', source).group(1)))
 def class_key(role):
     role_id, _, base, _ = role
@@ -156,6 +156,6 @@ for body, setting, ident, name in recipes:
     setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
     lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
-assert len(roles) == 114
+assert len(roles) == 121
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 22 items, 5 weapons, 114 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 22 items, 5 weapons, 121 roles (with availability), 3 events and 10 recipes; all have usage instructions.')

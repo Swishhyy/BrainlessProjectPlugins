@@ -63,7 +63,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 13 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 14 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -94,6 +94,7 @@ namespace Brainless.Roles
             P.Hurting += Hurting;
             SubscribeVariants();
             SubscribeAbilities();
+            Subscribe079();
             P.InteractingDoor += LockpickDoor;
             P.Left += Left;
             S.WaitingForPlayers += Reset;
@@ -120,6 +121,7 @@ namespace Brainless.Roles
             P.Hurting -= Hurting;
             UnsubscribeVariants();
             UnsubscribeAbilities();
+            Unsubscribe079();
             P.InteractingDoor -= LockpickDoor;
             P.Left -= Left;
             S.WaitingForPlayers -= Reset;
@@ -655,9 +657,15 @@ namespace Brainless.Roles
                     }
                 }
 
-                player.MaxHealth = definition.Health > 0 ? definition.Health : state.MaxHealth * definition.HealthMultiplier;
-                player.Health = player.MaxHealth;
-                ApplyShield(player, state, true);
+                // SCP-079 has no body: its roles change power, costs and tier instead.
+                if (player.Role.Type == RoleTypeId.Scp079)
+                    StartTier079(player, definition);
+                else
+                {
+                    player.MaxHealth = definition.Health > 0 ? definition.Health : state.MaxHealth * definition.HealthMultiplier;
+                    player.Health = player.MaxHealth;
+                    ApplyShield(player, state, true);
+                }
 
                 if ((definition.Scale != 1 || definition.WidthScale != 1) && Config.AllowModelScaling)
                     player.Scale = Vector3.Scale(state.Scale, new Vector3(definition.Scale * definition.WidthScale, definition.Scale, definition.Scale * definition.WidthScale));
@@ -826,8 +834,12 @@ namespace Brainless.Roles
                     hs.RegenerationRate = state.RegenRate.Value;
             }
 
-            player.MaxHealth = state.MaxHealth;
-            player.Health = Math.Min(player.Health, player.MaxHealth);
+            if (player.Role.Type != RoleTypeId.Scp079)
+            {
+                player.MaxHealth = state.MaxHealth;
+                player.Health = Math.Min(player.Health, player.MaxHealth);
+            }
+
             // A negative maximum clears the stat override so the native shield returns.
             if (state.ShieldOverridden)
                 player.MaxHumeShield = -1;
@@ -860,6 +872,7 @@ namespace Brainless.Roles
                 return;
             }
 
+            Update079(player, state);
             if (!(player.Role is FpcRole fpc))
                 return;
             float multiplier = state.Definition.SpeedMultiplier;

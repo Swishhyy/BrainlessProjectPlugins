@@ -2,7 +2,7 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **22 items, 5 weapons, 114 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **22 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -180,6 +180,13 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | H06 | Hunter | Rare | Hits 20% harder and moves a little faster, but has less health. | Strike hard; your hits deal more damage. | Enabled | — | 0 |
 | H07 | Matriarch | Legendary | Large and tough with poison clouds, but a little slower. Medical supplies cure the poison. | Use amnestic clouds to poison humans; you are big and tough. | Enabled | — | 0 |
 | H08 | Apex | Mythical | Mythical: 50% more health and shield, 10% faster, hits 25% harder, silent, with poison clouds. | Stalk silently and use amnestic clouds; you hit harder and take more punishment. | Enabled | — | 0 |
+| K01 | Old Hardware | Common | Power regenerates 20% slower, but gains experience 25% faster. | Play patiently; you level up faster but regenerate power slowly. | Enabled | — | 0 |
+| K02 | Watcher | Common | Switching cameras costs 50% less power, but doors cost 25% more. | Watch the facility through cameras; doors cost more. | Enabled | — | 0 |
+| K03 | Overclocked | Uncommon | Power regenerates 25% faster, but every action costs 10% more. | Spend power freely; it comes back faster. | Enabled | — | 0 |
+| K04 | Electrician | Rare | Blackouts and lockdowns recharge 40% faster. | Use blackouts and lockdowns often. | Enabled | — | 0 |
+| K05 | Gatekeeper | Epic | Opening and closing doors costs 50% less power. | Control doors cheaply to trap humans. | Enabled | — | 0 |
+| K06 | Head Start | Legendary | Starts at access tier 3. | Use your tier 3 abilities from the start. | Enabled | — | 0 |
+| K07 | Mainframe | Mythical | Mythical: starts at tier 2, power regenerates 50% faster and every action costs 25% less. | Use everything from tier 2 with cheap actions and fast power. | Enabled | — | 0 |
 
 About 87% of spawns roll a custom role by default (the tier chances added up); the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.
 

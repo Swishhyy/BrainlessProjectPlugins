@@ -144,7 +144,14 @@
     "X04": "Use your speed to get away.",
     "X05": "Break off from fights to heal up.",
     "X06": "Hit first; you deal more damage but break easily.",
-    "X07": "Fight on; your first killing blow leaves you at 1 HP and invulnerable for 3 seconds."
+    "X07": "Fight on; your first killing blow leaves you at 1 HP and invulnerable for 3 seconds.",
+    "K01": "Play patiently; you level up faster but regenerate power slowly.",
+    "K02": "Watch the facility through cameras; doors cost more.",
+    "K03": "Spend power freely; it comes back faster.",
+    "K04": "Use blackouts and lockdowns often.",
+    "K05": "Control doors cheaply to trap humans.",
+    "K06": "Use your tier 3 abilities from the start.",
+    "K07": "Use everything from tier 2 with cheap actions and fast power."
   },
   "events": {
     "infection": "`bpevent infection next` or `bpevent infection start`",

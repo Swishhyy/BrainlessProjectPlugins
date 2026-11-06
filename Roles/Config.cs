@@ -67,7 +67,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain; revision 9 resets any Poisonous 106 slowdown to normal speed; revision 10 gives Boom Boom a bigger, harder death blast; revision 11/12 assign rarity tiers by strength and add the revision 12 roles; revision 13 adds a Mythical per class and more any-human roles, and shares the MTF/Chaos every-rank roles.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain; revision 9 resets any Poisonous 106 slowdown to normal speed; revision 10 gives Boom Boom a bigger, harder death blast; revision 11/12 assign rarity tiers by strength and add the revision 12 roles; revision 13 adds a Mythical per class and more any-human roles, and shares the MTF/Chaos every-rank roles; revision 14 adds SCP-079 roles.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -178,6 +178,7 @@ namespace Brainless.Roles
             UpgradeBoomBoom();
             UpgradeRarity();
             UpgradeSharedFactions();
+            Upgrade079();
             if (RoleRarity == null || Reroll == null)
                 throw new InvalidOperationException("role_rarity and reroll cannot be null.");
             RoleRarity.Validate("role_rarity");
@@ -212,7 +213,7 @@ namespace Brainless.Roles
             // Without rarity, chance_percent is a real share: the revision 12 roles only take
             // whatever room their pools have left, so they never overfill an existing pool.
             if (!UseRarity)
-                foreach (var role in Roles.Where(r => Catalog.RevisionTwelveRoles.Contains(r.Id) || Catalog.RevisionThirteenRoles.Contains(r.Id)).ToArray())
+                foreach (var role in Roles.Where(r => Catalog.RevisionTwelveRoles.Contains(r.Id) || Catalog.RevisionThirteenRoles.Contains(r.Id) || Catalog.RevisionFourteenRoles.Contains(r.Id)).ToArray())
                 {
                     decimal used = Enum.GetValues(typeof(PlayerRoles.RoleTypeId)).Cast<PlayerRoles.RoleTypeId>().Where(t => Catalog.MatchesNative(role, t)).Select(t => Roles.Where(r => r != role && !r.Id.Equals("Z05", StringComparison.OrdinalIgnoreCase) && Catalog.MatchesNative(r, t)).Sum(r => (decimal)r.ChancePercent.Value)).DefaultIfEmpty(0).Max();
                     role.ChancePercent = (double)Math.Max(0, Math.Min((decimal)role.ChancePercent.Value, 100m - used));
@@ -591,6 +592,17 @@ namespace Brainless.Roles
                 if (!Roles.Any(existing => existing.Id.Equals(role.Id, StringComparison.OrdinalIgnoreCase)))
                     Roles.Add(role);
             RoleCatalogRevision = 13;
+        }
+
+        // Revision 14: SCP-079 roles.
+        private void Upgrade079()
+        {
+            if (RoleCatalogRevision >= 14)
+                return;
+            foreach (var role in Catalog.Create().Where(r => Catalog.RevisionFourteenRoles.Contains(r.Id)))
+                if (!Roles.Any(existing => existing.Id.Equals(role.Id, StringComparison.OrdinalIgnoreCase)))
+                    Roles.Add(role);
+            RoleCatalogRevision = 14;
         }
 
         private void UpgradeAnyHumanProfiles()

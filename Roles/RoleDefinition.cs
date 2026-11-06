@@ -157,12 +157,15 @@ namespace Brainless.Roles
             ["B01"] = Rarity.Common, ["B05"] = Rarity.Common, ["B02"] = Rarity.Uncommon, ["B03"] = Rarity.Uncommon, ["B06"] = Rarity.Rare, ["B07"] = Rarity.Rare, ["B04"] = Rarity.Epic, ["B08"] = Rarity.Mythical,
             // SCP-939
             ["H01"] = Rarity.Common, ["H03"] = Rarity.Common, ["H05"] = Rarity.Common, ["H02"] = Rarity.Uncommon, ["H04"] = Rarity.Rare, ["H06"] = Rarity.Rare, ["H07"] = Rarity.Legendary, ["H08"] = Rarity.Mythical,
+            // SCP-079
+            ["K01"] = Rarity.Common, ["K02"] = Rarity.Common, ["K03"] = Rarity.Uncommon, ["K04"] = Rarity.Rare, ["K05"] = Rarity.Epic, ["K06"] = Rarity.Legendary, ["K07"] = Rarity.Mythical,
         };
 
         // Every-rank roles shared by MTF and Chaos (revision 13).
         internal static readonly HashSet<string> SharedFactionRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "M01", "M03", "C02", "C04", "C05", "C09", "C11", "C12" };
         internal static readonly RoleTypeId[] FactionRanks = { RoleTypeId.NtfPrivate, RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist, RoleTypeId.NtfCaptain, RoleTypeId.ChaosConscript, RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder, RoleTypeId.ChaosRepressor };
         internal static readonly HashSet<string> RevisionThirteenRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "G09", "M25", "C15", "Z09", "H08", "X03", "X04", "X05", "X06", "X07" };
+        internal static readonly HashSet<string> RevisionFourteenRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "K01", "K02", "K03", "K04", "K05", "K06", "K07" };
         internal const string CapturedHint = "A captured Chaos Insurgency conscript held in the Class-D cells, with a smuggled COM-15 (one magazine) and painkillers.";
         internal const string OldCapturedHint = "A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment.";
         internal static readonly HashSet<string> RevisionTwelveRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "D09", "S09", "G08", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "C13", "C14", "P04", "P05", "P06", "P07", "Z06", "Z07", "Z08", "R03", "R04", "R05", "R06", "R07", "L05", "L06", "L07", "L08", "B05", "B06", "B07", "B08", "H05", "H06", "H07" };
@@ -790,6 +793,26 @@ namespace Brainless.Roles
             r = N("X07", "Second Wind", RoleTypeId.ClassD, "Any human. Once per life, a killing blow leaves you at 1 health with 3 seconds of invulnerability and a burst of speed.", HumanRoles);
             r.ChancePercent = 5;
             r.Traits.SecondWind = true;
+            // Revision 14: SCP-079 roles (power, costs, experience, cooldowns, start tier).
+            r = N("K01", "Old Hardware", RoleTypeId.Scp079, "Power regenerates 20% slower, but gains experience 25% faster.");
+            r.Traits.AuxRegenMultiplier = .8f;
+            r.Traits.ExperienceMultiplier = 1.25f;
+            r = N("K02", "Watcher", RoleTypeId.Scp079, "Switching cameras costs 50% less power, but doors cost 25% more.");
+            r.Traits.CameraCostMultiplier = .5f;
+            r.Traits.DoorCostMultiplier = 1.25f;
+            r = N("K03", "Overclocked", RoleTypeId.Scp079, "Power regenerates 25% faster, but every action costs 10% more.");
+            r.Traits.AuxRegenMultiplier = 1.25f;
+            r.Traits.AuxCostMultiplier = 1.1f;
+            r = N("K04", "Electrician", RoleTypeId.Scp079, "Blackouts and lockdowns recharge 40% faster.");
+            r.Traits.AbilityCooldownMultiplier = .6f;
+            r = N("K05", "Gatekeeper", RoleTypeId.Scp079, "Opening and closing doors costs 50% less power.");
+            r.Traits.DoorCostMultiplier = .5f;
+            r = N("K06", "Head Start", RoleTypeId.Scp079, "Starts at access tier 3.");
+            r.Traits.StartTier = 3;
+            r = N("K07", "Mainframe", RoleTypeId.Scp079, "Mythical: starts at tier 2, power regenerates 50% faster and every action costs 25% less.");
+            r.Traits.StartTier = 2;
+            r.Traits.AuxRegenMultiplier = 1.5f;
+            r.Traits.AuxCostMultiplier = .75f;
             foreach (var shared in list.Where(role => SharedFactionRoles.Contains(role.Id)))
             {
                 shared.MatchRoles.Clear();

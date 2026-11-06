@@ -11,7 +11,7 @@ This README is the single overview of the project: what each plugin does, where 
 
 | Folder | DLL | Version | Config section | Purpose |
 | --- | --- | --- | --- | --- |
-| `Roles` | `Brainless.Roles.dll` | 0.10.0 | `brainless_roles` | 114 role profiles (7+ per class, a Mythical in each) with rarity tiers, `.scpreroll`, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
+| `Roles` | `Brainless.Roles.dll` | 0.10.0 | `brainless_roles` | 121 role profiles (7+ per class including SCP-079, a Mythical in each) with rarity tiers, `.scpreroll`, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
 | `Items` | `Brainless.Items.dll` | 0.11.0 | `brainless_items` | 22 custom grenades, tools, consumables and cursed items (IDs 71xx) |
 | `Weapons` | `Brainless.Weapons.dll` | 0.11.0 | `brainless_weapons` | Grenade Launcher (staff only), Stun Gun (rare, 5 shots), Cursed Pistol, Cursed Shotgun, opt-in Ricochet Pistol (IDs 72xx) |
 | `BetterCoinflips` | `BetterCoinflips.dll` | 5.2.1 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
@@ -30,7 +30,7 @@ Each DLL has its own project, version, config and updater. None has a hard refer
 | --- | --- |
 | `<Plugin>/` | One `.csproj` per plugin: `Plugin.cs` (entry, version), `Config.cs`, `Commands.cs`, feature files |
 | `Roles/RolesApi.cs` | Public API other plugins call by reflection (profile ID/name, assign, roll, grant) and the forceclass hook |
-| `Roles/RoleDefinition.cs` | All 114 role profiles (`R(...)`/`N(...)`), default rarity tiers, kits, gates; `Roles/RoleAbilities.cs` holds the revision 12-13 abilities |
+| `Roles/RoleDefinition.cs` | All 121 role profiles (`R(...)`/`N(...)`), default rarity tiers, kits, gates; `Roles/RoleAbilities.cs` holds the revision 12-13 abilities and `Roles/Scp079Roles.cs` the SCP-079 traits |
 | `Items/Definition.cs`, `Items/SupCatalog.cs`, `Weapons/Definition.cs` | Item/weapon specs (ID, name, description) |
 | `SlFixes/Config.cs` | SCP-914 crafting recipes |
 | `Shared/` | Source compiled into each plugin that needs it (not a shared DLL): config migration/reload, distribution rules, explosions, audio, `Updates/` updater |

@@ -112,6 +112,34 @@ namespace Brainless.Roles
         [Description("Once per life, a killing blow leaves the player at 1 health with 3 seconds of invulnerability and a speed burst.")]
         public bool SecondWind { get; set; }
 
+        [Description("SCP-079: auxiliary power regeneration multiplier.")]
+        [Tune(.1, 5)]
+        public float AuxRegenMultiplier { get; set; } = 1;
+
+        [Description("SCP-079: power cost multiplier for every action.")]
+        [Tune(0, 5)]
+        public float AuxCostMultiplier { get; set; } = 1;
+
+        [Description("SCP-079: extra power cost multiplier for switching cameras.")]
+        [Tune(0, 5)]
+        public float CameraCostMultiplier { get; set; } = 1;
+
+        [Description("SCP-079: extra power cost multiplier for opening and closing doors.")]
+        [Tune(0, 5)]
+        public float DoorCostMultiplier { get; set; } = 1;
+
+        [Description("SCP-079: experience gain multiplier.")]
+        [Tune(0, 10)]
+        public float ExperienceMultiplier { get; set; } = 1;
+
+        [Description("SCP-079: blackout and lockdown cooldown multiplier.")]
+        [Tune(.05, 5)]
+        public float AbilityCooldownMultiplier { get; set; } = 1;
+
+        [Description("SCP-079: starts at this access tier (1-5; 0 keeps the native start).")]
+        [Tune(0, 5)]
+        public int StartTier { get; set; }
+
         [Description("Extra random SCP items in the starting kit.")]
         [Tune(0, 4)]
         public int RandomScpItems { get; set; }
