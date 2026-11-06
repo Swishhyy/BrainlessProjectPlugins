@@ -100,13 +100,17 @@ namespace Brainless.Items
                 return;
             cursedFlashes.Remove(ev.Projectile.Serial);
             var cfg = Config.Cursed;
-            foreach (var target in Player.List.Where(p => p.IsAlive && p != thrower && (p.Position - ev.Position).sqrMagnitude <= cfg.FlashbangRadius * cfg.FlashbangRadius && World.ClearLine(ev.Position + Vector3.up * .2f, p.CameraTransform.position)))
-                target.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangBlindSeconds);
-            if (thrower.IsConnected && thrower.IsAlive)
+            Vector3 position = ev.Position;
+            // Applied one tick after the native flashbang has finished its own processing,
+            // never from inside the explosion callback, and only to living humans (like a
+            // normal flashbang). The thrower gets a plain blind, not a second native flash.
+            lifetime.Later(0, () =>
             {
-                thrower.EnableEffect(EffectType.Flashed, 1, 2);
-                thrower.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangSelfBlindSeconds);
-            }
+                foreach (var target in Player.List.Where(p => p != thrower && p.IsConnected && p.IsAlive && p.IsHuman && (p.Position - position).sqrMagnitude <= cfg.FlashbangRadius * cfg.FlashbangRadius && World.ClearLine(position + Vector3.up * .2f, p.CameraTransform.position)).ToArray())
+                    target.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangBlindSeconds);
+                if (thrower.IsConnected && thrower.IsAlive && thrower.IsHuman)
+                    thrower.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangSelfBlindSeconds);
+            });
         }
 
         // Start of use: block early (cooldown, no 096 target...) so the pill isn't wasted.

@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 9, 1);
+        public override Version Version => new Version(0, 9, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -588,7 +588,9 @@ namespace Brainless.Items
                         Log.Info($"[Smoke 7101] Serial {payload.Projectile.Serial}: {payload.Gas.SmokeEmitters} full-size native emitters for {payload.Gas.DurationSeconds}s.");
                     break;
                 case 7103:
-                    SpreadTantrum(position, payload.Foam);
+                    // Spawn the puddles one tick later, outside the native grenade callback.
+                    var foam = payload.Foam;
+                    lifetime.Later(0, () => SpreadTantrum(position, foam));
                     break;
             }
         }
@@ -596,9 +598,15 @@ namespace Brainless.Items
         // Containment foam leaves SCP-173's native tantrum mess across a wide area:
         // by default one puddle scaled to the radius; with single_puddle off, a grid
         // of normal puddles on solid floor with a clear line back to the blast.
+        // A tantrum hazard that spawns on top of a player crashed the server, so puddles
+        // never spawn where anyone (alive) is standing. They can still walk into one later,
+        // exactly like SCP-173's own tantrum.
+        private static bool PlayerInside(Vector3 floor, float radius) => Player.List.Any(p => p.IsAlive && Math.Abs(p.Position.y - floor.y) < 2.5f && new Vector2(p.Position.x - floor.x, p.Position.z - floor.z).sqrMagnitude <= radius * radius);
+
         private void SpreadTantrum(Vector3 position, FoamTuning tuning)
         {
-            if (tuning.SinglePuddle)
+            float clearance = Math.Max(1.5f, TantrumHazard.TantrumPrefab.MaxDistance + .75f);
+            if (tuning.SinglePuddle && !PlayerInside(Ground(position), tuning.Radius + .75f))
             {
                 PlaceScaledTantrum(Ground(position), tuning);
                 return;
@@ -625,7 +633,7 @@ namespace Brainless.Items
                 if (!World.ClearLine(center + Vector3.up * .5f, probe))
                     continue;
                 Vector3 floor = Ground(probe);
-                if (Math.Abs(floor.y - center.y) > 1.5f)
+                if (Math.Abs(floor.y - center.y) > 1.5f || PlayerInside(floor, clearance))
                     continue;
                 SpawnTantrum(floor, tuning.DurationSeconds, 1, null);
                 placed++;
