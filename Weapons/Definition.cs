@@ -25,6 +25,9 @@ namespace Brainless.Weapons
         public float HumanDamage { get; set; } = 1;
         public float ScpDamage { get; set; } = 1;
         public int RoundCap { get; set; } = 2;
+
+        [System.ComponentModel.Description("Rarity tier (Common, Uncommon, Rare, Epic, Legendary, Mythical): sets the loot chance and the per-round limit in distribution.rarity.")]
+        public Rarity Rarity { get; set; }
         public float Weight { get; set; } = 2;
 
         [System.ComponentModel.Description("Only staff can hand this out (ci give / ci spawn). Natural loot, starting gear, role kits and other plugins (coins) cannot issue it.")]
@@ -196,7 +199,23 @@ namespace Brainless.Weapons
                 MakeRareStunGun();
             if (CatalogRevision < 9)
                 MakeAdminOnly(7207);
-            CatalogRevision = Math.Max(9, CatalogRevision);
+            // Revision 10: rarity tiers.
+            if (CatalogRevision < 10)
+                foreach (var weapon in Weapons)
+                    weapon.Rarity = DefaultRarity(weapon.Id);
+            CatalogRevision = Math.Max(10, CatalogRevision);
+        }
+
+        internal static Rarity DefaultRarity(uint id)
+        {
+            switch (id)
+            {
+                case 7206: return Rarity.Rare;
+                case CursedPistolId: case CursedShotgunId: return Rarity.Epic;
+                case 7209: return Rarity.Legendary;
+                case 7207: return Rarity.Mythical;
+                default: return Rarity.Common;
+            }
         }
 
         private void MakeRareStunGun()

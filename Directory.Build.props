@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/FragProjectiles.cs" Link="Internal/FragProjectiles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Rarity.cs" Link="Internal/Rarity.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.RoundEvents'">

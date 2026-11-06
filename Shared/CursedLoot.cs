@@ -18,11 +18,14 @@ namespace Brainless.Internal
         {
             internal uint Id;
             internal ItemType[] Sources;
+            internal Rarity Rarity = Rarity.Epic;
             // Spawns the custom item at a position and returns the pickup, or null.
             internal Func<Vector3, Pickup> Spawn;
         }
 
-        internal static int Run(IEnumerable<Entry> entries, double chancePercent, int maxPerItem, System.Random random)
+        // Cursed items keep their own roll, but still count toward (and stop at) the
+        // shared per-round rarity limits.
+        internal static int Run(IEnumerable<Entry> entries, double chancePercent, int maxPerItem, System.Random random, RarityTable rarity = null)
         {
             if (chancePercent <= 0 || maxPerItem <= 0)
                 return 0;
@@ -33,7 +36,7 @@ namespace Brainless.Internal
                 int made = 0;
                 foreach (var original in pickups.Where(p => p.Base != null && entry.Sources.Contains(p.Type)).ToArray())
                 {
-                    if (made >= maxPerItem)
+                    if (made >= maxPerItem || (rarity != null && !RarityLedger.Open(NaturalDistribution.Scope, NaturalDistribution.RoundKey, entry.Rarity, rarity.Get(entry.Rarity), random)))
                         break;
                     if (random.NextDouble() * 100 >= chancePercent)
                         continue;
@@ -49,6 +52,8 @@ namespace Brainless.Internal
                     pickups.Remove(original);
                     original.Destroy();
                     made++;
+                    if (rarity != null)
+                        RarityLedger.Take(NaturalDistribution.Scope, NaturalDistribution.RoundKey, entry.Rarity);
                 }
 
                 total += made;

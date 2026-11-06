@@ -22,6 +22,16 @@ namespace Brainless.Internal
         public bool Enabled { get; set; } = true;
         public bool MapReplacements { get; set; } = true;
 
+        [Description("Rarity mode: each item's rarity tier sets its loot chance and how many of that tier can appear per round (see rarity). A rule's chance_percent of 0 still turns it off; weight splits a tier between items that share a source. False uses the per-rule chance_percent values.")]
+        public bool UseRarity { get; set; } = true;
+
+        [Description("Loot chance and per-round limit for each rarity tier. Items and Weapons share the per-round counts.")]
+        public RarityTable Rarity { get; set; } = new RarityTable();
+
+        [Description("Starting gear rolls at this fraction of the tier chances (map loot uses them in full).")]
+        [Tune(0, 1)]
+        public double StartingGearRarityScale { get; set; } = .3;
+
         [Description("Legacy migration budget for map rules with missing/null chance_percent. Explicit rule percentages are not multiplied by this.")]
         [Tune(0, 100)]
         public float MapChancePercent { get; set; } = 25;
@@ -63,6 +73,9 @@ namespace Brainless.Internal
         internal void Validate(Func<uint, bool> supported)
         {
             Tuning.Validate(this, "distribution");
+            if (Rarity == null)
+                throw new InvalidOperationException("distribution.rarity cannot be null.");
+            Rarity.Validate("distribution.rarity");
             if (AllowedSpawnReasons == null || AllowedSpawnReasons.Any(r => !Enum.IsDefined(typeof(SpawnReason), r)) || MapRules == null || PlayerRules == null)
                 throw new InvalidOperationException("Distribution lists/reasons must be valid and non-null.");
             foreach (var rule in MapRules)
@@ -124,6 +137,26 @@ namespace Brainless.Internal
                 if (PlayerRules?.Count > 0 && !PlayerRules.Any(r => r != null && r.CustomId == entry.Key))
                     PlayerRules.Add(new PlayerLootRule { CustomId = entry.Key, ChancePercent = 0, Weight = 0, ReplaceTypes = new List<ItemType> { entry.Value } });
             }
+        }
+
+        // Rarity mode: per source, each tier's chance is split by weight between the
+        // enabled rules of that tier.
+        internal string DescribeChances(Func<uint, Rarity> rarityOf, string roundStatus)
+        {
+            if (!UseRarity)
+                return DescribeChances();
+            string Map(MapLootRule r)
+            {
+                if (r.ChancePercent == 0 || r.Weight <= 0)
+                    return r.CustomId + ": off; " + string.Join(", ", r.SourceTypes);
+                var tier = rarityOf(r.CustomId);
+                double tierWeight = MapRules.Where(o => o.ChancePercent != 0 && o.Weight > 0 && rarityOf(o.CustomId) == tier && o.SourceTypes.Intersect(r.SourceTypes).Any()).Sum(o => (double)o.Weight);
+                return r.CustomId + ": " + tier + " ~" + RarityRules.Share(Rarity, tier, r.Weight, tierWeight).ToString("0.##") + "%; " + string.Join(", ", r.SourceTypes);
+            }
+
+            string Player(PlayerLootRule r) => r.CustomId + ": " + (r.ChancePercent == 0 || r.Weight <= 0 ? "off" : rarityOf(r.CustomId).ToString()) + "; " + (r.Roles.Count == 0 ? "any human" : string.Join(", ", r.Roles)) + "; " + (r.ReplaceTypes.Count == 0 ? "extra item" : "replaces " + string.Join(", ", r.ReplaceTypes));
+            string limits = string.Join(", ", RarityRules.All.Select(t => t + " " + Rarity.Get(t).ChancePercent.ToString("0.##") + "% (max " + (Rarity.Get(t).RoundLimit == 0 ? "none" : Rarity.Get(t).RoundLimit + (Rarity.Get(t).RoundLimitMax > Rarity.Get(t).RoundLimit ? "-" + Rarity.Get(t).RoundLimitMax : "")) + ")"));
+            return "Rarity tiers: " + limits + "\nThis round: " + roundStatus + "\nMap loot (chance per matching pickup):\n" + string.Join("\n", MapRules.Select(Map)) + "\nStarting gear (tier chances x" + StartingGearRarityScale.ToString("0.##") + "):\n" + string.Join("\n", PlayerRules.Select(Player));
         }
 
         internal string DescribeChances() => "Map loot (per matching source/zone):\n" + string.Join("\n", MapRules.Select(r => r.CustomId + ": " + r.ChancePercent.Value.ToString("0.######") + "%; " + string.Join(", ", r.SourceTypes))) + "\nStarting gear (per matching human spawn):\n" + string.Join("\n", PlayerRules.Select(r => r.CustomId + ": " + r.ChancePercent.Value.ToString("0.######") + "%; " + (r.Roles.Count == 0 ? "any human" : string.Join(", ", r.Roles)) + "; " + (r.ReplaceTypes.Count == 0 ? "extra item" : "replaces " + string.Join(", ", r.ReplaceTypes))));

@@ -19,6 +19,7 @@
     <Compile Include="../../Shared/CoreBridge.cs" Link="CoreBridge.cs" />
     <Compile Include="../../Shared/EffectAudioTuning.cs" Link="EffectAudioTuning.cs" />
     <Compile Include="../../Shared/Tuning.cs" Link="Tuning.cs" />
+    <Compile Include="../../Shared/Rarity.cs" Link="Rarity.cs" />
     <Compile Include="../../Shared/DistributionRules.cs" Link="DistributionRules.cs" />
     <Compile Include="../../Items/Tuning.cs" Link="ItemTuning.cs" />
     <Compile Include="../../Items/ImpactTrigger.cs" Link="ImpactTrigger.cs" />

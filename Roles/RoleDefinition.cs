@@ -28,7 +28,10 @@ namespace Brainless.Roles
         public bool FillAmmoToLimit { get; set; }
         public RoleSpawnArea SpawnArea { get; set; }
 
-        [Description("Chance out of 100 on a matching new spawn. Group totals must be at most 100; unused or blocked shares keep the normal role. Null uses legacy settings for migration. Doctor uses its separate event roll.")]
+        [Description("Rarity tier (Common, Uncommon, Rare, Epic, Legendary, Mythical). With use_rarity the tier sets how often this role rolls and the per-round limit (role_rarity).")]
+        public Rarity Rarity { get; set; }
+
+        [Description("With use_rarity: weight against other roles of the same tier and class (0 turns the role off). Without it: chance out of 100 on a matching new spawn, group totals at most 100. Null uses legacy settings for migration. Doctor uses its separate event roll.")]
         [Tune(0, 100)]
         public double? ChancePercent { get; set; }
 
@@ -112,6 +115,27 @@ namespace Brainless.Roles
                 if (!doctor.ChancePercent.HasValue)
                     doctor.ChancePercent = 1;
         }
+
+        // Revision 11 rarity tiers for the shipped roles.
+        internal static readonly Dictionary<string, Rarity> DefaultRarities = new Dictionary<string, Rarity>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["D01"] = Rarity.Common, ["D02"] = Rarity.Common, ["D03"] = Rarity.Uncommon, ["D05"] = Rarity.Uncommon, ["D04"] = Rarity.Rare, ["D06"] = Rarity.Rare, ["D08"] = Rarity.Epic,
+            ["X01"] = Rarity.Uncommon, ["X02"] = Rarity.Rare,
+            ["S02"] = Rarity.Common, ["S05"] = Rarity.Common, ["S04"] = Rarity.Uncommon, ["S06"] = Rarity.Uncommon, ["S01"] = Rarity.Rare, ["S07"] = Rarity.Rare, ["S03"] = Rarity.Epic,
+            ["G02"] = Rarity.Common, ["G04"] = Rarity.Common, ["G03"] = Rarity.Uncommon, ["G05"] = Rarity.Uncommon, ["G06"] = Rarity.Rare, ["G01"] = Rarity.Epic,
+            ["M01"] = Rarity.Common, ["M03"] = Rarity.Uncommon, ["M05"] = Rarity.Common, ["M06"] = Rarity.Uncommon, ["M07"] = Rarity.Rare,
+            ["M08"] = Rarity.Uncommon, ["M09"] = Rarity.Rare, ["M10"] = Rarity.Epic, ["M12"] = Rarity.Uncommon, ["M11"] = Rarity.Rare, ["M13"] = Rarity.Epic, ["M14"] = Rarity.Legendary,
+            ["C02"] = Rarity.Common, ["C09"] = Rarity.Common, ["C12"] = Rarity.Common, ["C04"] = Rarity.Uncommon, ["C05"] = Rarity.Uncommon, ["C08"] = Rarity.Uncommon, ["C10"] = Rarity.Rare, ["C11"] = Rarity.Rare,
+            ["C06"] = Rarity.Epic, ["C07"] = Rarity.Legendary,
+            ["P03"] = Rarity.Common, ["P01"] = Rarity.Uncommon, ["P02"] = Rarity.Rare,
+            ["Z02"] = Rarity.Common, ["Z01"] = Rarity.Uncommon, ["Z03"] = Rarity.Uncommon, ["Z04"] = Rarity.Rare, ["Z05"] = Rarity.Legendary,
+            ["R02"] = Rarity.Uncommon, ["R01"] = Rarity.Epic,
+            ["L01"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L03"] = Rarity.Uncommon, ["L04"] = Rarity.Rare,
+            ["B03"] = Rarity.Common, ["B01"] = Rarity.Uncommon, ["B02"] = Rarity.Rare, ["B04"] = Rarity.Epic,
+            ["H01"] = Rarity.Common, ["H02"] = Rarity.Uncommon, ["H03"] = Rarity.Uncommon, ["H04"] = Rarity.Rare,
+        };
+
+        internal static Rarity DefaultRarity(string id) => id != null && DefaultRarities.TryGetValue(id, out var rarity) ? rarity : Rarity.Common;
 
         // Every chance group shares this total; the remainder keeps the plain native role.
         internal const double GroupChancePercent = 80;
@@ -503,6 +527,8 @@ namespace Brainless.Roles
             r.WidthScale = 1.15f;
             list.Add(r);
             FillMissingChances(list, DefaultFamilyChance);
+            foreach (var role in list)
+                role.Rarity = DefaultRarity(role.Id);
             return list;
         }
     }

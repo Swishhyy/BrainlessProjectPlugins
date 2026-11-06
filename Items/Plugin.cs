@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 10, 0);
+        public override Version Version => new Version(0, 11, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -252,7 +252,7 @@ namespace Brainless.Items
         private RegisteredItem Find(int serial) => registered.Values.FirstOrDefault(i => i.TrackedSerials.Contains(serial));
         private IEnumerable<NaturalContent> NaturalContent()
         {
-            return registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, RequiredSlots = 1, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
+            return registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, Rarity = item.Spec.Rarity, RequiredSlots = 1, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
         }
 
         private void KeyChanged(Player player, SettingBase setting) => Safe.Run(() =>

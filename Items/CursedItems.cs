@@ -268,7 +268,7 @@ namespace Brainless.Items
                 void Add(uint id, params ItemType[] sources)
                 {
                     if (registered.TryGetValue(id, out var item))
-                        entries.Add(new CursedLoot.Entry { Id = id, Sources = sources, Spawn = position => item.TrySpawn(position, true, out var pickup) == null ? pickup : null });
+                        entries.Add(new CursedLoot.Entry { Id = id, Sources = sources, Rarity = item.Spec.Rarity, Spawn = position => item.TrySpawn(position, true, out var pickup) == null ? pickup : null });
                 }
 
                 Add(SupCatalog.CursedKeycard, KeycardSources);
@@ -281,7 +281,7 @@ namespace Brainless.Items
                 Add(SupCatalog.CursedHat, ItemType.SCP268);
                 Add(SupCatalog.CursedCola, ItemType.SCP207);
                 Add(SupCatalog.CursedLantern, ItemType.SCP2176);
-                int placed = CursedLoot.Run(entries, Config.Cursed.LootChancePercent, Config.Cursed.LootMaxPerItem, cursedRandom);
+                int placed = CursedLoot.Run(entries, Config.Cursed.LootChancePercent, Config.Cursed.LootMaxPerItem, cursedRandom, Config.Distribution.UseRarity ? Config.Distribution.Rarity : null);
                 if (Config.Debug)
                     Log.Debug("Cursed loot placed: " + placed);
             });

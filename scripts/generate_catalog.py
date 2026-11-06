@@ -31,6 +31,24 @@ def percentage(role_id, base):
     value = math.floor(budget * weights[role_id] / totals[groups[role_id]] * 100) / 100
     return f'{value:g}'
 
+role_rarity = dict(re.findall(r'\["([A-Z]\d\d)"\] = Rarity\.(\w+)', source))
+assert set(role_rarity) == {r[0] for r in roles}, 'Every role needs a default rarity.'
+
+def item_rarities(text, constants):
+    body = text[text.index('static Rarity DefaultRarity(uint id)'):]
+    body = body[:body.index('\n        }\n')]
+    found = {}
+    for ids, tier in re.findall(r'((?:case [\w]+:\s*)+)return Rarity\.(\w+);', body):
+        for key in re.findall(r'case (\w+):', ids):
+            found[constants.get(key, key)] = tier
+    return found
+
+rarity_of = item_rarities((root/'Items/Definition.cs').read_text(), {})
+rarity_of.update(item_rarities((root/'Weapons/Definition.cs').read_text(), {'CursedPistolId': '7210', 'CursedShotgunId': '7211'}))
+def item_rarity(item_id):
+    if item_id in rarity_of: return rarity_of[item_id]
+    return 'Epic' if 7123 <= int(item_id) <= 7132 else 'Common'
+
 usage = json.loads((root/'docs/content_usage.json').read_text())
 assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
 
@@ -54,7 +72,11 @@ lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
          'Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
-         '## Items', '', '| ID | Item | What it does | How to use |', '| --- | --- | --- | --- |']
+         '## Rarity', '', 'Every item, weapon and role has a rarity tier. Each loot pickup or spawn rolls a tier first, then something of that tier. Defaults (items and roles have separate per-round counts; Items and Weapons share theirs):', '',
+         '| Tier | Chance per roll | Max per round |', '| --- | --- | --- |',
+         '| Common | 40% | no limit |', '| Uncommon | 25% | 12 |', '| Rare | 12% | 6 |', '| Epic | 6% | 4 |', '| Legendary | 3% | 2 |', '| Mythical | 1% | 1-2 (rolled each round) |', '',
+         'Map loot uses the full chance (a tier with nothing for that pickup gives nothing). Starting gear rolls at 30% of it. Cursed items keep their own 5% roll but still count toward the tier limits. For roles, a tier with nothing available for that class falls to the next tier down. Players offered a reroll at spawn (35%) can use F1 `.scpreroll` once per round within 30 seconds; it always gives a different custom role, Rare or lower.', '',
+         '## Items', '', '| ID | Item | Rarity | What it does | How to use |', '| --- | --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     content_source = (root/folder/'Definition.cs').read_text()
     if folder == 'Items': content_source += (root/folder/'SupCatalog.cs').read_text()
@@ -67,22 +89,22 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     controls = usage[folder.lower()]
     assert set(controls) == {e[0] for e in entries}, f'Usage coverage missing for {folder}'
     if folder == 'Weapons':
-        lines += ['', '## Weapons', '', '| ID | Weapon | What it does | How to use |', '| --- | --- | --- | --- |']
+        lines += ['', '## Weapons', '', '| ID | Weapon | Rarity | What it does | How to use |', '| --- | --- | --- | --- | --- |']
     for item_id, name, description in entries:
         if item_id == '7206': name += ' **(opt-in)**'
         if item_id == '7207': name += ' **(staff only)**'
-        lines.append(f'| {item_id} | {name} | {description} | {controls[item_id]} |')
+        lines.append(f'| {item_id} | {name} | {item_rarity(item_id)} | {description} | {controls[item_id]} |')
 lines += ['', 'Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.', '',
           '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
-          '| ID | Role | What it does | How to use | Chance % | Status | Custom kit | Min players |', '| --- | --- | --- | --- | --- | --- | --- | --- |']
+          '| ID | Role | Rarity | What it does | How to use | Status | Custom kit | Min players |', '| --- | --- | --- | --- | --- | --- | --- | --- |']
 for role_id, name, base, hint in roles:
     if role_id == 'Z02': hint = 'Faster zombie with less health and weaker attacks.'
     chance, status, kit, minimum = availability[role_id]
-    lines.append(f'| {role_id} | {name} | {hint} | {usage["roles"][role_id]} | {chance} | {status} | {kit} | {minimum} |')
-lines += ['', 'About 80% of each spawn group rolls a custom role by default; the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.', '',
+    lines.append(f'| {role_id} | {name} | {role_rarity[role_id]} | {hint} | {usage["roles"][role_id]} | {status} | {kit} | {minimum} |')
+lines += ['', 'About 87% of spawns roll a custom role by default (the tier chances added up); the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.', '',
           '### Why a role can be absent', '',
-          '- Each profile has a direct chance_percent. Groups total at most 100 including disabled/experimental entries; unused and blocked shares keep the native role. Defaults share an 80% total per group (two decimals, rounded down).',
-          '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. A blocked profile\'s percentage is not redistributed to another role.',
+          '- With use_rarity (default) each spawn rolls a tier from role_rarity, then a role of that tier for the class; chance_percent only weights roles inside a tier (0 turns a role off). With use_rarity off, each profile has a direct chance_percent and groups total at most 100.',
+          '- Missing/disabled Items or Weapons, spent kit supply, population thresholds, per-round profile caps, living-human specialist limits and reinforcement wave limits can exclude a profile. In rarity mode another role of the same tier (or the next tier down) is tried instead.',
           '- Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.',
           '- Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.',
           '- Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks still apply.',

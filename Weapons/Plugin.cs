@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 10, 1);
+        public override Version Version => new Version(0, 11, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -160,14 +160,14 @@ namespace Brainless.Weapons
             {
                 if (!registered.TryGetValue(Weapons.Config.CursedPistolId, out var pistol))
                     return;
-                var entries = new List<CursedLoot.Entry> { new CursedLoot.Entry { Id = Weapons.Config.CursedPistolId, Sources = new[] { ItemType.GunCOM15, ItemType.GunCOM18 }, Spawn = position => pistol.TrySpawn(position, true, out var pickup) == null ? pickup : null } };
+                var entries = new List<CursedLoot.Entry> { new CursedLoot.Entry { Id = Weapons.Config.CursedPistolId, Sources = new[] { ItemType.GunCOM15, ItemType.GunCOM18 }, Rarity = pistol.Spec.Rarity, Spawn = position => pistol.TrySpawn(position, true, out var pickup) == null ? pickup : null } };
                 if (registered.TryGetValue(Weapons.Config.CursedShotgunId, out var shotgun))
-                    entries.Add(new CursedLoot.Entry { Id = Weapons.Config.CursedShotgunId, Sources = new[] { ItemType.GunShotgun }, Spawn = position => shotgun.TrySpawn(position, true, out var pickup) == null ? pickup : null });
-                CursedLoot.Run(entries, Config.CursedLootChancePercent, Config.CursedLootMaxPerRound, cursedRandom);
+                    entries.Add(new CursedLoot.Entry { Id = Weapons.Config.CursedShotgunId, Sources = new[] { ItemType.GunShotgun }, Rarity = shotgun.Spec.Rarity, Spawn = position => shotgun.TrySpawn(position, true, out var pickup) == null ? pickup : null });
+                CursedLoot.Run(entries, Config.CursedLootChancePercent, Config.CursedLootMaxPerRound, cursedRandom, Config.Distribution.UseRarity ? Config.Distribution.Rarity : null);
             });
         }
 
-        private IEnumerable<NaturalContent> NaturalContent() => registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
+        private IEnumerable<NaturalContent> NaturalContent() => registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, Rarity = item.Spec.Rarity, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
         internal bool CanIssue(WeaponSpec spec, int count) => IssueFailure(spec, count, false) == null;
         internal string IssueFailure(WeaponSpec spec, int count, bool ignoreLimits)
         {

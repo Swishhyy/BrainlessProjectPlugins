@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 9, 3);
+        public override Version Version => new Version(0, 10, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -50,6 +50,10 @@ namespace Brainless.Roles
         private readonly DeathCapture<Player, PendingBurst> pendingBursts = new DeathCapture<Player, PendingBurst>();
         private readonly FragProjectiles bursts = new FragProjectiles();
         private readonly Dictionary<int, int> badges = new Dictionary<int, int>();
+        private readonly Dictionary<Player, RerollOffer> rerollOffers = new Dictionary<Player, RerollOffer>();
+        private readonly HashSet<string> rerollUsed = new HashSet<string>();
+        private const string RarityScope = "roles";
+        private static int RoundKey => Round.UptimeRounds;
         private bool doctorRolled;
         private float waveStart;
         private int waveCount;
@@ -158,6 +162,8 @@ namespace Brainless.Roles
             assignmentNotes.Clear();
             burstSpent.Clear();
             badges.Clear();
+            rerollOffers.Clear();
+            rerollUsed.Clear();
             doctorRolled = false;
             rogueAlertQueued = false;
             waveCount = 0;
@@ -174,6 +180,7 @@ namespace Brainless.Roles
             reasons.Remove(ev.Player);
             adminForced.Remove(ev.Player);
             assignmentNotes.Remove(ev.Player);
+            rerollOffers.Remove(ev.Player);
             pendingBursts.Forget(ev.Player);
         }
 
@@ -238,6 +245,12 @@ namespace Brainless.Roles
                 }
             }
 
+            if (Config.UseRarity)
+            {
+                AssignByRarity(player);
+                return;
+            }
+
             var selected = RoleChances.Choose(Config.Roles.Where(r => r.Id != "Z05" && Matches(r, player)), r => r.ChancePercent.Value, random.NextDouble() * 100);
             if (selected == null)
             {
@@ -253,6 +266,110 @@ namespace Brainless.Roles
             }
 
             Apply(player, selected, false);
+        }
+
+        // Roll a tier, then a role of that tier for this class; fall to lower tiers when
+        // the class has nothing usable there or the tier hit its round limit.
+        private void AssignByRarity(Player player)
+        {
+            var tier = RarityRules.RollTier(Config.RoleRarity, random.NextDouble() * 100);
+            if (!tier.HasValue)
+            {
+                assignmentNotes[player] = "Normal role: the rarity roll landed in the unused percentage. Run bproles " + player.Id + " for tiers.";
+                return;
+            }
+
+            string lastBlock = null;
+            var selected = RarityRules.Pick(Config.Roles.Where(r => r.Id != "Z05" && Matches(r, player)), r => r.Rarity, r => r.ChancePercent ?? 0, tier.Value, TierOpen, r => (lastBlock = Availability(r, player)) == null, random.NextDouble, true);
+            if (selected == null)
+            {
+                assignmentNotes[player] = "Normal role: rolled " + tier.Value + ", but nothing at or below it was available" + (lastBlock == null ? "." : " (last: " + lastBlock + ").");
+                return;
+            }
+
+            Apply(player, selected, false);
+            RarityLedger.Take(RarityScope, RoundKey, selected.Rarity);
+            assignmentNotes[player] = "Assigned by rarity roll (" + tier.Value + (selected.Rarity != tier.Value ? ", fell to " + selected.Rarity : "") + ").";
+            OfferReroll(player, selected);
+        }
+
+        private bool TierOpen(Rarity tier) => RarityLedger.Open(RarityScope, RoundKey, tier, Config.RoleRarity.Get(tier), random);
+        internal string RarityStatus() => "Role tiers this round: " + RarityLedger.Describe(RarityScope, RoundKey, Config.RoleRarity, random);
+
+        private void OfferReroll(Player player, RoleDefinition definition)
+        {
+            var settings = Config.Reroll;
+            if (!settings.Enabled || rerollUsed.Contains(player.UserId) || random.NextDouble() * 100 >= settings.OfferChancePercent)
+                return;
+            rerollOffers[player] = new RerollOffer { Expires = Time.time + settings.WindowSeconds, Generation = Generation(player) };
+            player.ShowHint($"<b>{definition.Name}</b> ({RarityRules.Tag(definition.Rarity)})\n{definition.Hint}\n<size=22>Want a different role? Type <b>.scpreroll</b> in the console (~) within {settings.WindowSeconds:0}s. One reroll, up to {RarityRules.Tag(settings.MaxRarity)}.</size>", 12);
+        }
+
+        // .scpreroll: once per round, while the offer lasts. Always gives a different
+        // custom role for the same class, at most Reroll.MaxRarity.
+        internal bool Reroll(Player player, out string response)
+        {
+            var settings = Config.Reroll;
+            if (!settings.Enabled)
+            {
+                response = "Rerolls are turned off on this server.";
+                return false;
+            }
+
+            if (rerollUsed.Contains(player.UserId))
+            {
+                response = "You already used your reroll this round.";
+                return false;
+            }
+
+            if (!rerollOffers.TryGetValue(player, out var offer) || offer.Generation != Generation(player) || !active.TryGetValue(player, out var state) || !player.IsAlive)
+            {
+                response = "You don't have a reroll right now. Some players get one when they spawn with a custom role.";
+                return false;
+            }
+
+            if (Time.time > offer.Expires)
+            {
+                rerollOffers.Remove(player);
+                response = "Your reroll offer ran out.";
+                return false;
+            }
+
+            var current = state.Definition;
+            var tier = RarityRules.RollTier(Config.RoleRarity, random.NextDouble() * 100, settings.MaxRarity, normalize: true) ?? Rarity.Common;
+            var selected = RarityRules.Pick(Config.Roles.Where(r => r.Id != "Z05" && r.Id != current.Id && r.Rarity <= settings.MaxRarity && Matches(r, player)), r => r.Rarity, r => r.ChancePercent ?? 0, tier, TierOpen, r => Availability(r, player, false, true) == null, random.NextDouble, true, true, settings.MaxRarity);
+            if (selected == null)
+            {
+                response = "No other role is available for you right now; your reroll is kept.";
+                return false;
+            }
+
+            rerollUsed.Add(player.UserId);
+            rerollOffers.Remove(player);
+            issued[current.Id] = Math.Max(0, Count(current.Id) - 1);
+            RarityLedger.Release(RarityScope, RoundKey, current.Rarity);
+            RoleTypeId role = player.Role.Type;
+            // Same class, same spot, fresh native kit; the new profile is applied after.
+            player.Role.Set(role, SpawnReason.ForceClass, RoleSpawnFlags.AssignInventory);
+            int generation = Generation(player);
+            lifetime.Later(.3f, () =>
+            {
+                if (!player.IsConnected || !player.IsAlive || Generation(player) != generation || player.Role.Type != role)
+                    return;
+                if (role == RoleTypeId.ClassD && Config.GiveClassDCoins && !player.Items.Any(i => i.Type == ItemType.Coin))
+                    player.AddItem(ItemType.Coin);
+                Apply(player, selected, false);
+                RarityLedger.Take(RarityScope, RoundKey, selected.Rarity);
+                assignmentNotes[player] = "Rerolled from " + current.Id + " to " + selected.Id + ".";
+            });
+            response = "Rerolling... you'll be " + selected.Name + " (" + selected.Rarity + ").";
+            return true;
+        }
+
+        private sealed class RerollOffer
+        {
+            internal float Expires;
+            internal int Generation;
         }
 
         internal string Availability(RoleDefinition definition, Player player = null, bool admin = false, bool inPlace = false)
@@ -541,7 +658,7 @@ namespace Brainless.Roles
                 if (customSpawn.HasValue)
                     player.Position = customSpawn.Value;
                 assignmentNotes[player] = admin ? "Assigned by admin test command." : revived ? "Restored after resurrection." : "Assigned by normal spawn roll.";
-                player.ShowHint($"<b>{definition.Name}</b>\n{definition.Hint}", 10);
+                player.ShowHint($"<b>{definition.Name}</b> ({RarityRules.Tag(definition.Rarity)})\n{definition.Hint}", 10);
             }
             catch
             {

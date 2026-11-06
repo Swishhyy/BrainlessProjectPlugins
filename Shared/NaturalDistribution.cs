@@ -18,6 +18,7 @@ namespace Brainless.Internal
         internal uint Id;
         internal string Name;
         internal ItemType Body;
+        internal Rarity Rarity;
         internal int RequiredSlots = 1;
         internal Func<bool> CanIssue;
         internal Func<Player, string> Give;
@@ -77,8 +78,18 @@ namespace Brainless.Internal
             if (disposed || !Round.IsStarted || !settings.Enabled || !settings.PlayerLoadouts || !player.IsConnected || !player.IsAlive || !player.IsHuman || player.IsCuffed || player.Role.Base != life || !ledger.CanGive(player.UserId, settings.MaxPlayerGrants, settings.MaxGrantsPerPlayer) || (settings.SkipPlayersWithCustomItems && player.Items.Any(i => IsCustom(i.Serial))))
                 return;
             var providers = content().ToDictionary(c => c.Id);
-            var rule = DistributionRules.ChoosePercent(settings.PlayerRules.Where(r => r.Roles.Count == 0 || r.Roles.Contains(player.Role.Type)), r => r.ChancePercent.Value, random.NextDouble() * 100);
-            if (rule == null || !providers.TryGetValue(rule.CustomId, out var selected) || !selected.CanIssue())
+            var eligible = settings.PlayerRules.Where(r => r.Roles.Count == 0 || r.Roles.Contains(player.Role.Type));
+            PlayerLootRule rule;
+            NaturalContent selected;
+            if (settings.UseRarity)
+                selected = RollRarity(settings, eligible, r => r.CustomId, r => r.ChancePercent, r => r.Weight, providers, (r, c) => r.ReplaceTypes.Count == 0 || player.Items.Any(i => i.Type == c.Body && r.ReplaceTypes.Contains(i.Type) && !IsCustom(i.Serial)), settings.StartingGearRarityScale, out rule);
+            else
+            {
+                rule = DistributionRules.ChoosePercent(eligible, r => r.ChancePercent.Value, random.NextDouble() * 100);
+                selected = rule != null && providers.TryGetValue(rule.CustomId, out var found) ? found : null;
+            }
+
+            if (rule == null || selected == null || !selected.CanIssue())
                 return;
             if (player.Items.Count + selected.RequiredSlots - (rule.ReplaceTypes.Count > 0 ? 1 : 0) > 8)
                 return;
@@ -91,8 +102,10 @@ namespace Brainless.Internal
                 failure = original == null ? selected.Give(player) : selected.AdoptItem(player, original);
                 return failure == null;
             });
+            if (granted)
+                RarityLedger.Take(Scope, RoundKey, selected.Rarity);
             if (granted && settings.ShowSpawnHint)
-                player.ShowHint("<b>Spawn gear: " + selected.Name + "</b>", 3);
+                player.ShowHint("<b>Spawn gear: " + selected.Name + "</b> (" + RarityRules.Tag(selected.Rarity) + ")", 3);
             if (debug())
                 Log.Info("[" + label + " distribution] Spawn gear " + selected.Id + (granted ? " issued." : " skipped: " + failure));
         }
@@ -111,15 +124,16 @@ namespace Brainless.Internal
                         break;
                     if (!slot.Available || !ledger.CanPlace(slot.Room, settings.MaxMapItemsPerRoom))
                         continue;
-                    var rule = DistributionRules.ChoosePercent(settings.MapRules.Where(r => Matches(r, slot)), r => r.ChancePercent.Value, random.NextDouble() * 100);
-                    if (rule == null || !providers.TryGetValue(rule.CustomId, out var selected) || selected.Body != slot.Pickup.Type || !selected.CanIssue())
+                    var selected = Choose(settings, settings.MapRules.Where(r => Matches(r, slot)), providers, c => c.Body == slot.Pickup.Type);
+                    if (selected == null || selected.Body != slot.Pickup.Type || !selected.CanIssue())
                         continue;
                     string failure = null;
-                    ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, settings.MaxMapReplacements, false, () =>
+                    if (ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, settings.MaxMapReplacements, false, () =>
                     {
                         failure = selected.AdoptPickup(slot.Pickup, slot.Chamber);
                         return failure == null;
-                    });
+                    }))
+                        RarityLedger.Take(Scope, RoundKey, selected.Rarity);
                     if (debug() && failure != null)
                         Log.Info("[" + label + " distribution] Map conversion skipped: " + failure);
                 }
@@ -134,14 +148,51 @@ namespace Brainless.Internal
                     break;
                 if (!slot.Available || slot.Chamber != null || !slot.Pickup.IsSpawned || slot.Pickup.IsLocked || !ledger.CanPlace(slot.Room, settings.MaxMapItemsPerRoom))
                     continue;
-                var rule = DistributionRules.ChoosePercent(settings.MapRules.Where(r => Matches(r, slot)), r => r.ChancePercent.Value, random.NextDouble() * 100);
-                if (rule == null || !providers.TryGetValue(rule.CustomId, out var selected) || !selected.CanIssue())
+                var selected = Choose(settings, settings.MapRules.Where(r => Matches(r, slot)), providers, c => true);
+                if (selected == null || !selected.CanIssue())
                     continue;
-                ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, extras, true, () => selected.Spawn(slot.Pickup.Position + Vector3.up * .12f) != null);
+                if (ledger.TryPlace(slot.Room, settings.MaxMapItemsPerRoom, extras, true, () => selected.Spawn(slot.Pickup.Position + Vector3.up * .12f) != null))
+                    RarityLedger.Take(Scope, RoundKey, selected.Rarity);
             }
 
             if (debug())
                 Log.Info($"[{label} distribution] {ledger.MapAwards} map replacements, {ledger.ExtraAwards} extra loot bundles; native supply caps remain active.");
+        }
+
+        // Items and Weapons share one set of per-round rarity counts.
+        internal const string Scope = "items";
+        internal static int RoundKey => Round.UptimeRounds;
+
+        private NaturalContent Choose(DistributionConfig settings, IEnumerable<MapLootRule> rules, Dictionary<uint, NaturalContent> providers, Func<NaturalContent, bool> fits)
+        {
+            if (settings.UseRarity)
+                return RollRarity(settings, rules, r => r.CustomId, r => r.ChancePercent, r => r.Weight, providers, (r, c) => fits(c), 1, out MapLootRule _);
+            var rule = DistributionRules.ChoosePercent(rules, r => r.ChancePercent.Value, random.NextDouble() * 100);
+            return rule != null && providers.TryGetValue(rule.CustomId, out var found) ? found : null;
+        }
+
+        // Rarity mode: roll a tier, then pick among that tier's matching items by weight.
+        // No fall-through: a tier with nothing here (or at its round limit) gives nothing.
+        private NaturalContent RollRarity<TRule>(DistributionConfig settings, IEnumerable<TRule> rules, Func<TRule, uint> id, Func<TRule, double?> chance, Func<TRule, int> weight, Dictionary<uint, NaturalContent> providers, Func<TRule, NaturalContent, bool> fits, double scale, out TRule chosen)
+            where TRule : class
+        {
+            chosen = null;
+            var options = rules.Select(r => new Option<TRule> { Rule = r, Content = providers.TryGetValue(id(r), out var c) ? c : null, Weight = weight(r) }).Where(o => o.Content != null && chance(o.Rule) != 0 && o.Weight > 0 && fits(o.Rule, o.Content)).ToList();
+            if (options.Count == 0)
+                return null;
+            var tier = RarityRules.RollTier(settings.Rarity, random.NextDouble() * 100, scale: scale);
+            if (!tier.HasValue)
+                return null;
+            var picked = RarityRules.Pick(options, o => o.Content.Rarity, o => o.Weight, tier.Value, t => RarityLedger.Open(Scope, RoundKey, t, settings.Rarity.Get(t), random), o => o.Content.CanIssue(), random.NextDouble, false);
+            chosen = picked?.Rule;
+            return picked?.Content;
+        }
+
+        private sealed class Option<TRule>
+        {
+            internal TRule Rule;
+            internal NaturalContent Content;
+            internal int Weight;
         }
 
         private static bool Matches(MapLootRule rule, MapSlot slot) => rule.SourceTypes.Contains(slot.Pickup.Type) && (rule.Zones.Count == 0 || rule.Zones.Contains(slot.Room.Zone));

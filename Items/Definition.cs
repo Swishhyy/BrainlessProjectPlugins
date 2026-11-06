@@ -20,6 +20,9 @@ namespace Brainless.Items
         public string Description { get; set; }
         public ItemType BaseType { get; set; }
         public bool Enabled { get; set; } = true;
+
+        [System.ComponentModel.Description("Rarity tier (Common, Uncommon, Rare, Epic, Legendary, Mythical): sets the loot chance and the per-round limit in distribution.rarity.")]
+        public Rarity Rarity { get; set; }
         public int RoundCap { get; set; } = 2;
         public int Charges { get; set; } = 1;
         public float Weight { get; set; } = 1;
@@ -54,6 +57,26 @@ namespace Brainless.Items
         // The grenades and Door Jammer (revision 13 raised their per-round cap from 2).
         internal static readonly HashSet<uint> UniqueLoot = new HashSet<uint> { 7101, 7102, 7103, 7105, 7113 };
         internal const int UniqueRoundCap = 4;
+
+        // Revision 14 rarity tiers.
+        internal static Rarity DefaultRarity(uint id)
+        {
+            switch (id)
+            {
+                case 7101: case 7105: case 7113: case 7116:
+                    return Rarity.Common;
+                case 7102: case 7103: case 7114: case 7115:
+                    return Rarity.Uncommon;
+                case 7117: case 7119: case 7122:
+                    return Rarity.Rare;
+                case 7120: case 7130:
+                    return Rarity.Legendary;
+                case 7126:
+                    return Rarity.Mythical;
+                default:
+                    return id >= 7123 && id <= 7132 ? Rarity.Epic : Rarity.Common;
+            }
+        }
         internal const string FoamDescription = "Covers the floor around it in SCP-173's sticky tantrum mess.";
         public int GrenadeBalanceRevision { get; set; }
         public int AudioBalanceRevision { get; set; }
@@ -171,7 +194,11 @@ namespace Brainless.Items
                     item.RoundCap = UniqueRoundCap;
             }
 
-            CatalogRevision = Math.Max(13, CatalogRevision);
+            // Revision 14: rarity tiers.
+            if (CatalogRevision < 14)
+                foreach (var item in Items)
+                    item.Rarity = DefaultRarity(item.Id);
+            CatalogRevision = Math.Max(14, CatalogRevision);
             // The Cursed Keycard now also counts lockers and generators.
             foreach (var card in Items.Where(i => i.Id == SupCatalog.CursedKeycard && i.Description == "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors."))
                 card.Description = SupCatalog.CursedDefaults().First(i => i.Id == SupCatalog.CursedKeycard).Description;

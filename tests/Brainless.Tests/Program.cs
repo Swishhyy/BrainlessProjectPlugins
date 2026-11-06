@@ -58,6 +58,7 @@ JsonAndTextTests.Run(Check);
 Check(Brainless.Roles.RoleLookup.Matches("Z04", "Explosive", "explosive_zombie") && Brainless.Roles.RoleLookup.Matches("Z04", "Explosive", "z04"), "admin role tests accept both explosive-zombie names and stable role IDs");
 Check(Brainless.Roles.RoleLookup.Matches("G01", "Guard Captain", "guard_captain") && !Brainless.Roles.RoleLookup.Matches("Z03", "Armored", "explosive_zombie"), "readable admin role names remain tied to the correct configured profile");
 TuningTests.Run(Check);
+RarityTests.Run(Check);
 DistributionTests.Run(Check);
 Check(Rules.WeightedIndex(new[] { 0, 0, 0 }, random) == -1, "zero weights leave a plain coin flip");
 Check(Rules.WeightedIndex(new[] { -20, 0 }, random) == -1, "negative weights cannot cause an exception");

@@ -16,7 +16,7 @@ namespace Brainless.ScpSwap
         public override string Name => "BrainlessScpSwap";
         public override string Prefix => "brainless_scp_swap";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 1, 0);
+        public override Version Version => new Version(0, 1, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 
@@ -77,7 +77,8 @@ namespace Brainless.ScpSwap
             bool spawn = ev.Reason == SpawnReason.RoundStart || ev.Reason == SpawnReason.LateJoin;
             if (spawn && ev.NewRole.GetTeam() == Team.SCPs)
                 eligible.Add(ev.Player);
-            else
+            // A same-role reset (Roles' .scpreroll) keeps the player's swap eligibility.
+            else if (!(ev.Reason == SpawnReason.ForceClass && ev.NewRole == ev.Player.Role.Type))
                 eligible.Remove(ev.Player);
         });
 

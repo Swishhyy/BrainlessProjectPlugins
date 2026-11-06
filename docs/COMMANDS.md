@@ -14,7 +14,7 @@
 | `ci list insideinventories` | Shows tracked equipment and holders | `customitems.list.insideinventories` |
 | `bprole [playerID]` | Inspects role/stats; alias `myrole` | `brainless.roles` |
 | `bprole all` | Inspects everyone’s roles | `brainless.roles` |
-| `bproles [playerID]` | Lists roles, active percentages and blocked reasons | `brainless.roles` |
+| `bproles [playerID]` | Lists roles with their rarity, blocked reasons and this round's tier counts | `brainless.roles` |
 | `bprole set <roleID> [playerID]` | Assigns a custom profile for testing | `brainless.roles` |
 | `bprole hud [playerID]` | Explains what the role panel shows for a player (or who they are spectating) and why | `brainless.roles` |
 | `bprole reload` | Applies role config edits | `brainless.roles` |
@@ -70,6 +70,7 @@ Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `custo
 | `.scpswap yes` / `.scpswap no` | Accepts or declines a swap request |
 | `.scpswap cancel` | Cancels your outgoing request |
 | `.optin` | Takes the place of a player who opted out of being a zombie (spectators) |
+| `.scpreroll` | Rerolls your custom role once per round, if you were offered it at spawn (30 s; Rare or lower) |
 | `.vote` / `.vote <number>` | Shows / casts your lobby event vote (`.vote 0` = no event) |
 | `.vote optout` / `.vote optin` | Sit an event round out as a spectator / play it after all |
 | `.fill` | Volunteers to replace an SCP who left early in the round |
