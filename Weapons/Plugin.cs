@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Swishhyy";
-        public override Version Version => new Version(0, 11, 3);
+        public override Version Version => new Version(0, 11, 4);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -45,7 +45,7 @@ namespace Brainless.Weapons
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 12;
+            bool migrateConfig = Config.CatalogRevision < 13;
             Config.Prepare();
             LoadIndividualWeapons(Config);
             Config.Prepare();
@@ -365,9 +365,10 @@ namespace Brainless.Weapons
                 });
             }
         });
-        // Pushes the shooter back in a few quick steps (each only if there is room behind
-        // them) and drains stamina. The wall check ignores players: it used to hit the
-        // shooter's own hitboxes, so the push never happened.
+        // Flings the shooter back in small quick steps (about 0.75 m each, 25 ms apart) so
+        // it reads as a fling, and drains stamina. Every step checks for a wall at foot
+        // and head height and the fling stops at the first one. The wall check ignores
+        // players: it used to hit the shooter's own hitboxes, so the push never happened.
         private void ShotgunRecoil(Player player)
         {
             Vector3 back = -player.CameraTransform.forward;
@@ -376,20 +377,32 @@ namespace Brainless.Weapons
             if (back.sqrMagnitude > .01f && distance > 0)
             {
                 back.Normalize();
-                const int steps = 4;
+                int steps = Math.Max(1, (int)Math.Ceiling(distance / .75f));
+                float step = distance / steps;
                 var life = player.Role.Base;
+                var fling = new Fling();
                 for (int i = 0; i < steps; i++)
-                    lifetime.Later(i * .03f, () =>
+                    lifetime.Later(i * .025f, () =>
                     {
-                        if (!player.IsConnected || !player.IsAlive || player.Role.Base != life)
+                        if (fling.Stopped || !player.IsConnected || !player.IsAlive || player.Role.Base != life)
                             return;
-                        float step = distance / steps;
-                        if (!WallBehind(player.Position + Vector3.up * .3f, back, step + .45f))
-                            player.Position += back * step;
+                        Vector3 from = player.Position;
+                        if (WallBehind(from + Vector3.up * .3f, back, step + .45f) || WallBehind(from + Vector3.up * 1.4f, back, step + .45f))
+                        {
+                            fling.Stopped = true;
+                            return;
+                        }
+
+                        player.Position = from + back * step;
                     });
             }
 
             player.Stamina = Mathf.Max(0, player.Stamina - Config.CursedShotgunStaminaCost);
+        }
+
+        private sealed class Fling
+        {
+            internal bool Stopped;
         }
 
         private static bool WallBehind(Vector3 origin, Vector3 direction, float distance) => Physics.RaycastAll(origin, direction, distance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).Any(hit => hit.collider.GetComponentInParent<ReferenceHub>() == null);

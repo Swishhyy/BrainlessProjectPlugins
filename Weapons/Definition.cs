@@ -112,7 +112,7 @@ namespace Brainless.Weapons
         };
 
         [System.ComponentModel.Description("Cursed Shotgun recoil: metres pushed back and stamina (0-1) lost per shot.")]
-        public float CursedShotgunKnockback { get; set; } = 1.6f;
+        public float CursedShotgunKnockback { get; set; } = 12;
         public float CursedShotgunStaminaCost { get; set; } = .35f;
 
         // Cursed Pistol: double damage, but about one trigger pull in three jams.
@@ -209,7 +209,10 @@ namespace Brainless.Weapons
             // Revision 12: the Cursed Shotgun push actually works now, and is stronger.
             if (CatalogRevision < 12 && Math.Abs(CursedShotgunKnockback - .8f) < .001f)
                 CursedShotgunKnockback = 1.6f;
-            CatalogRevision = Math.Max(12, CatalogRevision);
+            // Revision 13: the push becomes a real fling (12 m).
+            if (CatalogRevision < 13 && (Math.Abs(CursedShotgunKnockback - 1.6f) < .001f || Math.Abs(CursedShotgunKnockback - .8f) < .001f))
+                CursedShotgunKnockback = 12;
+            CatalogRevision = Math.Max(13, CatalogRevision);
         }
 
         internal static Rarity DefaultRarity(uint id)
