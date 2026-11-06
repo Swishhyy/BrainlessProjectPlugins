@@ -57,6 +57,7 @@
     <Compile Include="../../Shared/ItemFiles.cs" Link="ItemFiles.cs" />
     <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />
     <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />
+    <Compile Include="../../Items/GlowTuning.cs" Link="GlowTuning.cs" />
     <Compile Include="../../BrainlessScpProxChat/Config.cs" Link="ScpChatConfig.cs" />
     <Compile Include="../../SlFixes/Config.cs" Link="FixesConfig.cs" />
     <Compile Include="../../ScpSwap/SwapRules.cs" Link="SwapRules.cs" />
