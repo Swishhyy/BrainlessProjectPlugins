@@ -9,7 +9,7 @@ namespace BetterCoinflips
     public class Plugin : Plugin<Config, Configs.Translations>
     {
         public override Version RequiredExiledVersion => new(9, 15, 3);
-        public override Version Version => new(5, 2, 1);
+        public override Version Version => new(5, 3, 0);
         public override string Author => "Miki_hero";
         public override string Name => "BetterCoinflips";
 
@@ -45,6 +45,8 @@ namespace BetterCoinflips
             Player.FlippingCoin += _eventHandler.OnCoinFlip;
             Map.SpawningItem += _eventHandler.OnSpawningItem;
             Map.FillingLocker += _eventHandler.OnFillingLocker;
+            Exiled.Events.Handlers.Scp914.UpgradingPickup += _eventHandler.OnUpgradingPickup;
+            Exiled.Events.Handlers.Scp914.UpgradingInventoryItem += _eventHandler.OnUpgradingInventoryItem;
             Player.Left += _eventHandler.OnLeft;
             Player.Hurting += Types.Modifiers.Hurting;
             Player.ChangingRole += Types.Modifiers.ChangingRole;
@@ -57,6 +59,8 @@ namespace BetterCoinflips
             Player.FlippingCoin -= _eventHandler.OnCoinFlip;
             Map.SpawningItem -= _eventHandler.OnSpawningItem;
             Map.FillingLocker -= _eventHandler.OnFillingLocker;
+            Exiled.Events.Handlers.Scp914.UpgradingPickup -= _eventHandler.OnUpgradingPickup;
+            Exiled.Events.Handlers.Scp914.UpgradingInventoryItem -= _eventHandler.OnUpgradingInventoryItem;
             Player.Left -= _eventHandler.OnLeft;
             Player.Hurting -= Types.Modifiers.Hurting;
             Player.ChangingRole -= Types.Modifiers.ChangingRole;

@@ -37,12 +37,41 @@ namespace Brainless.Internal
     [TuningSection]
     public sealed class RarityTable
     {
+        // Common and Uncommon are unlimited; Rare and up have a per-round limit, and only
+        // one Mythical can exist per round.
         public RarityTier Common { get; set; } = new RarityTier { ChancePercent = 40 };
-        public RarityTier Uncommon { get; set; } = new RarityTier { ChancePercent = 25, RoundLimit = 12 };
+        public RarityTier Uncommon { get; set; } = new RarityTier { ChancePercent = 25 };
         public RarityTier Rare { get; set; } = new RarityTier { ChancePercent = 12, RoundLimit = 6 };
         public RarityTier Epic { get; set; } = new RarityTier { ChancePercent = 6, RoundLimit = 4 };
         public RarityTier Legendary { get; set; } = new RarityTier { ChancePercent = 3, RoundLimit = 2 };
-        public RarityTier Mythical { get; set; } = new RarityTier { ChancePercent = 1, RoundLimit = 1, RoundLimitMax = 2 };
+        public RarityTier Mythical { get; set; } = new RarityTier { ChancePercent = 1, RoundLimit = 1 };
+
+        // Human roles, sized for a ~30-player server.
+        internal static RarityTable HumanRoles()
+        {
+            var table = new RarityTable();
+            table.Rare.RoundLimit = 8;
+            return table;
+        }
+
+        // SCP roles: far fewer SCPs per round, so smaller limits.
+        internal static RarityTable ScpRoles()
+        {
+            var table = new RarityTable();
+            table.Rare.RoundLimit = 2;
+            table.Epic.RoundLimit = 1;
+            table.Legendary.RoundLimit = 1;
+            return table;
+        }
+
+        // Earlier defaults (Uncommon 12, Mythical 1-2) move to the new ones if untouched.
+        internal void UpgradeLimits()
+        {
+            if (Uncommon != null && Uncommon.RoundLimit == 12 && Uncommon.RoundLimitMax == 0)
+                Uncommon.RoundLimit = 0;
+            if (Mythical != null && Mythical.RoundLimit == 1 && Mythical.RoundLimitMax == 2)
+                Mythical.RoundLimitMax = 0;
+        }
 
         internal RarityTier Get(Rarity rarity)
         {

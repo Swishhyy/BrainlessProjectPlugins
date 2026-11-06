@@ -44,6 +44,24 @@ namespace Brainless.Internal
 
         [Tune(.5, 30)]
         public float MapDelaySeconds { get; set; } = 1.5f;
+
+        [Description("Extra custom items scattered on open floor in random rooms (Light, Heavy and Entrance zones) each round, by player count. Each one rolls a rarity tier; a room never gets more than max_map_items_per_room.")]
+        [Tune(0, 100)]
+        public int FloorLootSmall { get; set; } = 6;
+
+        [Tune(0, 100)]
+        public int FloorLootMedium { get; set; } = 10;
+
+        [Tune(0, 100)]
+        public int FloorLootLarge { get; set; } = 14;
+
+        [Tune(0, 1000)]
+        public int FloorLootMediumPlayers { get; set; } = 12;
+
+        [Tune(1, 1000)]
+        public int FloorLootLargePlayers { get; set; } = 24;
+
+        internal int FloorLoot(int players) => players < FloorLootMediumPlayers ? FloorLootSmall : players < FloorLootLargePlayers ? FloorLootMedium : FloorLootLarge;
         public bool PlayerLoadouts { get; set; } = true;
 
         [Description("Legacy migration budget for player rules with missing/null chance_percent. Explicit rule percentages are not multiplied by this.")]
@@ -171,6 +189,12 @@ namespace Brainless.Internal
                 Map(7101, 3, ItemType.GrenadeFlash, 30),
                 Map(7113, 2, ItemType.GrenadeHE, 40),
                 Map(7102, 1, ItemType.GrenadeHE, 25),
+                Map(7133, 2, ItemType.Adrenaline, 10),
+                Map(7134, 1, ItemType.GrenadeFlash, 8),
+                Map(7136, 1, ItemType.GrenadeFlash, 5),
+                Map(7135, 1, ItemType.Coin, 10),
+                Map(7138, 1, ItemType.Coin, 10),
+                Map(7137, 1, ItemType.Radio, 8),
             },
             PlayerRules = new List<PlayerLootRule>
             {
@@ -179,6 +203,8 @@ namespace Brainless.Internal
                 Replace(7101, 3, ItemType.GrenadeFlash, 12),
                 Replace(7113, 2, ItemType.GrenadeHE, 15),
                 Replace(7102, 1, ItemType.GrenadeHE, 10),
+                Replace(7133, 1, ItemType.Adrenaline, 5),
+                Replace(7137, 1, ItemType.Radio, 5),
             }
         };
 
@@ -224,6 +250,9 @@ namespace Brainless.Internal
         }
         public static DistributionConfig Weapons() => new DistributionConfig
         {
+            FloorLootSmall = 0,
+            FloorLootMedium = 1,
+            FloorLootLarge = 2,
             MapChancePercent = 20,
             MaxMapReplacements = 1,
             PlayerChancePercent = 15,
@@ -303,6 +332,26 @@ namespace Brainless.Internal
                 MapRules.Add(new MapLootRule { CustomId = id, Weight = weight, SourceTypes = new List<ItemType> { body } });
             if (PlayerRules != null && PlayerRules.Count > 0 && id >= 7118 && !PlayerRules.Any(r => r.CustomId == id))
                 PlayerRules.Add(new PlayerLootRule { CustomId = id, Weight = weight, ReplaceTypes = new List<ItemType> { body } });
+        }
+
+        // Items revision 15: loot rules for the general items (only where the pools are in use).
+        internal void UpgradeGeneral()
+        {
+            var stock = Items();
+            foreach (var rule in stock.MapRules.Where(r => r.CustomId >= 7133 && r.CustomId <= 7138))
+                if (MapRules != null && MapRules.Count > 0 && !MapRules.Any(r => r.CustomId == rule.CustomId))
+                    MapRules.Add(rule);
+                else if (MapRules != null)
+                    foreach (var existing in MapRules.Where(r => r.CustomId == rule.CustomId && r.ChancePercent == 0 && r.Weight == 0))
+                    {
+                        existing.ChancePercent = rule.ChancePercent;
+                        existing.Weight = rule.Weight;
+                        existing.SourceTypes = rule.SourceTypes;
+                    }
+
+            foreach (var rule in stock.PlayerRules.Where(r => r.CustomId >= 7133 && r.CustomId <= 7138))
+                if (PlayerRules != null && PlayerRules.Count > 0 && !PlayerRules.Any(r => r.CustomId == rule.CustomId))
+                    PlayerRules.Add(rule);
         }
 
         internal void UpgradeSmokeBody()

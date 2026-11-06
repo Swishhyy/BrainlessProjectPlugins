@@ -203,7 +203,10 @@ namespace Brainless.Weapons
             if (CatalogRevision < 10)
                 foreach (var weapon in Weapons)
                     weapon.Rarity = DefaultRarity(weapon.Id);
-            CatalogRevision = Math.Max(10, CatalogRevision);
+            // Revision 11: Common/Uncommon unlimited and one Mythical per round.
+            if (CatalogRevision < 11)
+                Distribution?.Rarity?.UpgradeLimits();
+            CatalogRevision = Math.Max(11, CatalogRevision);
         }
 
         internal static Rarity DefaultRarity(uint id)

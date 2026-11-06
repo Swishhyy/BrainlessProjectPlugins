@@ -74,8 +74,18 @@ namespace Brainless.Roles
         [Description("Rarity mode: a spawn first rolls a rarity tier (role_rarity), then a role of that tier for the class. If the class has nothing available in that tier (or the tier hit its round limit), the next tier down is tried. chance_percent then only weights roles inside a tier. False uses the old per-role chance_percent roll.")]
         public bool UseRarity { get; set; } = true;
 
-        [Description("Chance per spawn for each tier, and how many roles of each tier can appear per round (Mythical: 1-2).")]
-        public RarityTable RoleRarity { get; set; } = new RarityTable();
+        [Description("Every spawn gets a custom role (round start, late join, respawns, revives, escapes and staff forceclass). The tier roll always lands on a tier; a tier with nothing available falls to lower tiers, then higher ones. Also lifts custom_human_share_percent, the small-lobby Guard cap and reinforcement_specialists_per_wave.")]
+        public bool GuaranteeRoles { get; set; } = true;
+
+        [Description("Human role tiers: chance per spawn and per-round limit (Common/Uncommon unlimited, one Mythical). Counted separately from SCPs.")]
+        public RarityTable HumanRarity { get; set; } = RarityTable.HumanRoles();
+
+        [Description("SCP role tiers (zombies included): chance per spawn and per-round limit, counted separately from humans.")]
+        public RarityTable ScpRarity { get; set; } = RarityTable.ScpRoles();
+
+        [Description("When an SCP rolls a Mythical role at round start, each other SCP has this chance to become a human with a custom role instead. At least two SCPs always remain.")]
+        [Tune(0, 100)]
+        public double MythicalScpRemovalChancePercent { get; set; } = 40;
 
         [Description(".scpreroll: some players who roll a custom role are offered one reroll per round, capped at max_rarity.")]
         public RerollTuning Reroll { get; set; } = new RerollTuning();
@@ -179,9 +189,10 @@ namespace Brainless.Roles
             UpgradeRarity();
             UpgradeSharedFactions();
             Upgrade079();
-            if (RoleRarity == null || Reroll == null)
-                throw new InvalidOperationException("role_rarity and reroll cannot be null.");
-            RoleRarity.Validate("role_rarity");
+            if (HumanRarity == null || ScpRarity == null || Reroll == null)
+                throw new InvalidOperationException("human_rarity, scp_rarity and reroll cannot be null.");
+            HumanRarity.Validate("human_rarity");
+            ScpRarity.Validate("scp_rarity");
             if (!Enum.IsDefined(typeof(Rarity), Reroll.MaxRarity) || Roles.Any(r => !Enum.IsDefined(typeof(Rarity), r.Rarity)))
                 throw new InvalidOperationException("Unknown rarity tier. Use Common, Uncommon, Rare, Epic, Legendary or Mythical.");
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);

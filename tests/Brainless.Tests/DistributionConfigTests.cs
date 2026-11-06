@@ -52,7 +52,7 @@ internal static class DistributionConfigTests
         check(oldUpdater.Token == "" && oldUpdater.ResolveToken(_ => "old-environment-test-token") == "old-environment-test-token" && oldUpdater.ReleasesToScan == 10, "old updater YAML retains its environment token and configured scan count");
         bool Valid(DistributionConfig value, bool weapon = false)
         {
-            try { value.Validate(id => weapon ? id >= 7201 && id <= 7209 : id >= 7101 && id <= 7122 && id != 7110); return true; }
+            try { value.Validate(id => weapon ? id >= 7201 && id <= 7209 : id >= 7101 && id <= 7140 && id != 7110); return true; }
             catch (InvalidOperationException) { return false; }
         }
         var items = reader.Deserialize<ItemDistributionConfig>("map_chance_percent: 60\n");

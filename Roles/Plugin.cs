@@ -52,7 +52,11 @@ namespace Brainless.Roles
         private readonly Dictionary<int, int> badges = new Dictionary<int, int>();
         private readonly Dictionary<Player, RerollOffer> rerollOffers = new Dictionary<Player, RerollOffer>();
         private readonly HashSet<string> rerollUsed = new HashSet<string>();
-        private const string RarityScope = "roles";
+        // Humans and SCPs (zombies included) have separate per-round tier counts.
+        private static string RarityScope(Player player) => player.IsScp ? "roles-scp" : "roles-human";
+        private static string RarityScope(RoleDefinition role) => IsScpRole(role) ? "roles-scp" : "roles-human";
+        private static bool IsScpRole(RoleDefinition role) => PlayerRoles.PlayerRolesUtils.GetTeam(role.BaseRole) == Team.SCPs;
+        private RarityTable Table(Player player) => player.IsScp ? Config.ScpRarity : Config.HumanRarity;
         private static int RoundKey => Round.UptimeRounds;
         private bool doctorRolled;
         private float waveStart;
@@ -227,7 +231,7 @@ namespace Brainless.Roles
         {
             if (active.ContainsKey(player) || !Round.IsStarted)
                 return;
-            if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived || (reason == SpawnReason.ForceClass && Config.ForceClassCustomRoles && adminForced.Contains(player))))
+            if (!reasons.TryGetValue(player, out var reason) || !(reason == SpawnReason.RoundStart || reason == SpawnReason.LateJoin || reason == SpawnReason.Respawn || reason == SpawnReason.RespawnMiniwave || reason == SpawnReason.Revived || (reason == SpawnReason.Escaped && Config.GuaranteeRoles) || (reason == SpawnReason.ForceClass && (Config.ForceClassCustomRoles || Config.GuaranteeRoles) && adminForced.Contains(player))))
             {
                 assignmentNotes[player] = "Native role kept for spawn reason " + reason + "; use bprole set for an explicit admin test.";
                 return;
@@ -284,7 +288,9 @@ namespace Brainless.Roles
         // the class has nothing usable there or the tier hit its round limit.
         private void AssignByRarity(Player player)
         {
-            var tier = RarityRules.RollTier(Config.RoleRarity, random.NextDouble() * 100);
+            var table = Table(player);
+            bool guarantee = Config.GuaranteeRoles;
+            var tier = RarityRules.RollTier(table, random.NextDouble() * 100, normalize: guarantee);
             if (!tier.HasValue)
             {
                 assignmentNotes[player] = "Normal role: the rarity roll landed in the unused percentage. Run bproles " + player.Id + " for tiers.";
@@ -292,21 +298,55 @@ namespace Brainless.Roles
             }
 
             string lastBlock = null;
-            var selected = RarityRules.Pick(Config.Roles.Where(r => r.Id != "Z05" && Matches(r, player)), r => r.Rarity, r => r.ChancePercent ?? 0, tier.Value, TierOpen, r => (lastBlock = Availability(r, player)) == null, random.NextDouble, true);
+            var selected = RarityRules.Pick(Config.Roles.Where(r => r.Id != "Z05" && Matches(r, player)), r => r.Rarity, r => r.ChancePercent ?? 0, tier.Value, t => TierOpen(player, t), r => (lastBlock = Availability(r, player)) == null, random.NextDouble, true, guarantee);
             if (selected == null)
             {
-                assignmentNotes[player] = "Normal role: rolled " + tier.Value + ", but nothing at or below it was available" + (lastBlock == null ? "." : " (last: " + lastBlock + ").");
+                assignmentNotes[player] = "Normal role: rolled " + tier.Value + ", but no role was available" + (lastBlock == null ? "." : " (last: " + lastBlock + ").");
                 return;
             }
 
+            bool roundStart = reasons.TryGetValue(player, out var reason) && reason == SpawnReason.RoundStart;
             Apply(player, selected, false);
-            RarityLedger.Take(RarityScope, RoundKey, selected.Rarity);
-            assignmentNotes[player] = "Assigned by rarity roll (" + tier.Value + (selected.Rarity != tier.Value ? ", fell to " + selected.Rarity : "") + ").";
+            RarityLedger.Take(RarityScope(player), RoundKey, selected.Rarity);
+            assignmentNotes[player] = "Assigned by rarity roll (" + tier.Value + (selected.Rarity != tier.Value ? ", moved to " + selected.Rarity : "") + ").";
             OfferReroll(player, selected);
+            if (roundStart && player.IsScp && selected.Rarity == Rarity.Mythical)
+                ThinScps(player);
         }
 
-        private bool TierOpen(Rarity tier) => RarityLedger.Open(RarityScope, RoundKey, tier, Config.RoleRarity.Get(tier), random);
-        internal string RarityStatus() => "Role tiers this round: " + RarityLedger.Describe(RarityScope, RoundKey, Config.RoleRarity, random);
+        // A Mythical SCP is stronger and more dangerous: each other SCP may become a
+        // human instead, keeping at least two SCPs.
+        private void ThinScps(Player mythical)
+        {
+            double chance = Config.MythicalScpRemovalChancePercent;
+            if (chance <= 0)
+                return;
+            lifetime.Later(1, () =>
+            {
+                var others = Player.List.Where(p => p != mythical && p.IsConnected && p.IsAlive && p.Role.Team == Team.SCPs && p.Role.Type != RoleTypeId.Scp0492).OrderBy(_ => random.Next()).ToList();
+                int scps = others.Count + 1;
+                foreach (var scp in others)
+                {
+                    if (scps <= 2)
+                        break;
+                    if (random.NextDouble() * 100 >= chance)
+                        continue;
+                    if (active.TryGetValue(scp, out var state))
+                    {
+                        issued[state.Definition.Id] = Math.Max(0, Count(state.Definition.Id) - 1);
+                        RarityLedger.Release(RarityScope(scp), RoundKey, state.Definition.Rarity);
+                    }
+
+                    var human = new[] { RoleTypeId.ClassD, RoleTypeId.Scientist, RoleTypeId.FacilityGuard }[random.Next(3)];
+                    scp.Role.Set(human, SpawnReason.RoundStart, RoleSpawnFlags.All);
+                    scp.ShowHint("<b>A Mythical SCP has breached.</b>\nThe facility needed you as a human instead.", 6);
+                    scps--;
+                }
+            });
+        }
+
+        private bool TierOpen(Player player, Rarity tier) => RarityLedger.Open(RarityScope(player), RoundKey, tier, Table(player).Get(tier), random);
+        internal string RarityStatus() => "Human role tiers this round: " + RarityLedger.Describe("roles-human", RoundKey, Config.HumanRarity, random) + "\nSCP role tiers this round: " + RarityLedger.Describe("roles-scp", RoundKey, Config.ScpRarity, random);
 
         private void OfferReroll(Player player, RoleDefinition definition)
         {
@@ -348,8 +388,8 @@ namespace Brainless.Roles
             }
 
             var current = state.Definition;
-            var tier = RarityRules.RollTier(Config.RoleRarity, random.NextDouble() * 100, settings.MaxRarity, normalize: true) ?? Rarity.Common;
-            var selected = RarityRules.Pick(Config.Roles.Where(r => r.Id != "Z05" && r.Id != current.Id && r.Rarity <= settings.MaxRarity && Matches(r, player)), r => r.Rarity, r => r.ChancePercent ?? 0, tier, TierOpen, r => Availability(r, player, false, true) == null, random.NextDouble, true, true, settings.MaxRarity);
+            var tier = RarityRules.RollTier(Table(player), random.NextDouble() * 100, settings.MaxRarity, normalize: true) ?? Rarity.Common;
+            var selected = RarityRules.Pick(Config.Roles.Where(r => r.Id != "Z05" && r.Id != current.Id && r.Rarity <= settings.MaxRarity && Matches(r, player)), r => r.Rarity, r => r.ChancePercent ?? 0, tier, t => TierOpen(player, t), r => Availability(r, player, false, true) == null, random.NextDouble, true, true, settings.MaxRarity);
             if (selected == null)
             {
                 response = "No other role is available for you right now; your reroll is kept.";
@@ -359,7 +399,7 @@ namespace Brainless.Roles
             rerollUsed.Add(player.UserId);
             rerollOffers.Remove(player);
             issued[current.Id] = Math.Max(0, Count(current.Id) - 1);
-            RarityLedger.Release(RarityScope, RoundKey, current.Rarity);
+            RarityLedger.Release(RarityScope(player), RoundKey, current.Rarity);
             RoleTypeId role = player.Role.Type;
             // Same class, same spot, fresh native kit; the new profile is applied after.
             player.Role.Set(role, SpawnReason.ForceClass, RoleSpawnFlags.AssignInventory);
@@ -371,7 +411,7 @@ namespace Brainless.Roles
                 if (role == RoleTypeId.ClassD && Config.GiveClassDCoins && !player.Items.Any(i => i.Type == ItemType.Coin))
                     player.AddItem(ItemType.Coin);
                 Apply(player, selected, false);
-                RarityLedger.Take(RarityScope, RoundKey, selected.Rarity);
+                RarityLedger.Take(RarityScope(player), RoundKey, selected.Rarity);
                 assignmentNotes[player] = "Rerolled from " + current.Id + " to " + selected.Id + ".";
             });
             response = "Rerolling... you'll be " + selected.Name + " (" + selected.Rarity + ").";
@@ -407,7 +447,7 @@ namespace Brainless.Roles
                 return "requires " + definition.BaseRole + " or matching faction";
             if (player != null && definition.SpawnArea != RoleSpawnArea.Normal && !TryProfileSpawn(player, definition.SpawnArea, out _))
                 return "no safe " + definition.SpawnArea + " spawn is available";
-            if (!admin && player != null && player.IsHuman)
+            if (!admin && player != null && player.IsHuman && !Config.GuaranteeRoles)
             {
                 int living = Player.List.Count(p => p.IsHuman && p.IsAlive);
                 int cap = Math.Max(1, (int)Math.Ceiling(living * Config.CustomHumanSharePercent / 100));

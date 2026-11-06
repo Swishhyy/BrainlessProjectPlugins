@@ -155,8 +155,10 @@ namespace Brainless.Internal
                     RarityLedger.Take(Scope, RoundKey, selected.Rarity);
             }
 
+            int floors = settings.FloorLoot(Player.List.Count(p => p.IsConnected && !p.IsHost));
+            int floorPlaced = floors > 0 ? PlaceFloorLoot(settings, providers, floors) : 0;
             if (debug())
-                Log.Info($"[{label} distribution] {ledger.MapAwards} map replacements, {ledger.ExtraAwards} extra loot bundles; native supply caps remain active.");
+                Log.Info($"[{label} distribution] {ledger.MapAwards} map replacements, {ledger.ExtraAwards - floorPlaced} extra loot bundles, {floorPlaced} floor items; native supply caps remain active.");
         }
 
         // Items and Weapons share one set of per-round rarity counts.
@@ -193,6 +195,78 @@ namespace Brainless.Internal
             internal TRule Rule;
             internal NaturalContent Content;
             internal int Weight;
+        }
+
+        // Floor loot: custom items lying on open floor in random rooms. Any item with an
+        // active map rule can appear; with rarity, each spot rolls a tier (always some
+        // tier, falling to lower ones when a tier is full or empty).
+        private int PlaceFloorLoot(DistributionConfig settings, Dictionary<uint, NaturalContent> providers, int floors)
+        {
+            var weights = settings.MapRules.Where(r => r.ChancePercent != 0 && r.Weight > 0).GroupBy(r => r.CustomId).ToDictionary(g => g.Key, g => g.Max(r => r.Weight));
+            var pool = providers.Values.Where(c => weights.ContainsKey(c.Id)).ToList();
+            if (pool.Count == 0)
+                return 0;
+            int cap = ledger.ExtraAwards + floors, placed = 0;
+            foreach (var room in Room.List.Where(FloorRoom).OrderBy(_ => random.Next()).ToArray())
+            {
+                if (placed >= floors)
+                    break;
+                if (!ledger.CanPlace(room, settings.MaxMapItemsPerRoom))
+                    continue;
+                var point = FloorPoint(room);
+                if (!point.HasValue)
+                    continue;
+                NaturalContent selected;
+                if (settings.UseRarity)
+                {
+                    var tier = RarityRules.RollTier(settings.Rarity, random.NextDouble() * 100, normalize: true);
+                    selected = tier.HasValue ? RarityRules.Pick(pool, c => c.Rarity, c => weights[c.Id], tier.Value, t => RarityLedger.Open(Scope, RoundKey, t, settings.Rarity.Get(t), random), c => c.CanIssue(), random.NextDouble, true) : null;
+                }
+                else
+                {
+                    var usable = pool.Where(c => c.CanIssue()).ToList();
+                    selected = usable.Count == 0 ? null : usable[Math.Max(0, SupRules.WeightedIndex(usable.Select(c => (double)weights[c.Id]).ToArray(), random.NextDouble()))];
+                }
+
+                if (selected == null)
+                    continue;
+                if (ledger.TryPlace(room, settings.MaxMapItemsPerRoom, cap, true, () => selected.Spawn(point.Value) != null))
+                {
+                    placed++;
+                    if (settings.UseRarity)
+                        RarityLedger.Take(Scope, RoundKey, selected.Rarity);
+                }
+            }
+
+            return placed;
+        }
+
+        private static readonly string[] NoFloorLoot = { "Pocket", "Elevator", "173", "049", "079", "096", "106", "939", "330", "127", "Nuke", "Test", "Unknown" };
+        private static bool FloorRoom(Room room) => room != null && (room.Zone == ZoneType.LightContainment || room.Zone == ZoneType.HeavyContainment || room.Zone == ZoneType.Entrance) && !NoFloorLoot.Any(part => room.Type.ToString().IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0);
+
+        // An open floor spot: a clear line from the room's centre (no wall in between)
+        // and solid ground under it at the room's floor height.
+        private Vector3? FloorPoint(Room room)
+        {
+            Vector3 origin = room.Position + Vector3.up * 1.2f;
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                float angle = (float)(random.NextDouble() * Math.PI * 2);
+                float radius = .5f + (float)random.NextDouble() * 4;
+                Vector3 target = origin + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * radius;
+                if (Physics.Linecast(origin, target, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+                    continue;
+                foreach (var hit in Physics.RaycastAll(target, Vector3.down, 3, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance))
+                {
+                    if (hit.collider.GetComponentInParent<ReferenceHub>() != null || hit.collider.GetComponentInParent<InventorySystem.Items.Pickups.ItemPickupBase>() != null || hit.collider.GetComponentInParent<AdminToys.AdminToyBase>() != null)
+                        continue;
+                    if (Math.Abs(hit.point.y - room.Position.y) <= 1.5f)
+                        return hit.point + Vector3.up * .15f;
+                    break;
+                }
+            }
+
+            return null;
         }
 
         private static bool Matches(MapLootRule rule, MapSlot slot) => rule.SourceTypes.Contains(slot.Pickup.Type) && (rule.Zones.Count == 0 || rule.Zones.Contains(slot.Room.Zone));

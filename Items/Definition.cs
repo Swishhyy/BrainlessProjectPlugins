@@ -63,13 +63,13 @@ namespace Brainless.Items
         {
             switch (id)
             {
-                case 7101: case 7105: case 7113: case 7116:
+                case 7101: case 7105: case 7113: case 7116: case 7133: case 7138:
                     return Rarity.Common;
-                case 7102: case 7103: case 7114: case 7115:
+                case 7102: case 7103: case 7114: case 7115: case 7134: case 7135:
                     return Rarity.Uncommon;
-                case 7117: case 7119: case 7122:
+                case 7117: case 7119: case 7122: case 7137:
                     return Rarity.Rare;
-                case 7120: case 7130:
+                case 7120: case 7130: case 7136:
                     return Rarity.Legendary;
                 case 7126:
                     return Rarity.Mythical;
@@ -115,7 +115,19 @@ namespace Brainless.Items
                 BaseType = ItemType.KeycardJanitor
             },
             CreateImpact(),
-        }.Concat(SupCatalog.Defaults()).Concat(SupCatalog.CursedDefaults()).ToList();
+        }.Concat(SupCatalog.Defaults()).Concat(SupCatalog.CursedDefaults()).Concat(GeneralDefaults()).ToList();
+
+        // Revision 15: general-purpose items.
+        internal const uint EnergyDrink = 7133, HealingGrenade = 7134, DecoyCorpse = 7135, TeleportGrenade = 7136, MotionTracker = 7137, AmmoBox = 7138;
+        internal static IEnumerable<ItemSpec> GeneralDefaults() => new[]
+        {
+            new ItemSpec { Id = 7133, Name = "Energy Drink", BaseType = ItemType.Adrenaline, RoundCap = 6, Description = "20 seconds of 10% extra speed and endless stamina. No healing." },
+            new ItemSpec { Id = 7134, Name = "Healing Grenade", BaseType = ItemType.GrenadeFlash, RoundCap = 4, Description = "Heals every human within 6 m by 40 health. No flash." },
+            new ItemSpec { Id = 7135, Name = "Decoy Corpse", BaseType = ItemType.Coin, RoundCap = 4, Description = "Flip it to drop a fake corpse of yourself with your name." },
+            new ItemSpec { Id = 7136, Name = "Teleport Grenade", BaseType = ItemType.GrenadeFlash, RoundCap = 2, Description = "Teleports you to where it pops, if that spot is safe. No flash." },
+            new ItemSpec { Id = 7137, Name = "Motion Tracker", BaseType = ItemType.Radio, RoundCap = 2, Charges = 3, Description = "Turn it on to track the nearest SCP for 30 seconds. 3 charges." },
+            new ItemSpec { Id = 7138, Name = "Ammo Box", BaseType = ItemType.Coin, RoundCap = 6, Description = "Flip it to refill the reserve ammo for every gun you carry. Single use." },
+        };
 
         private static ItemSpec CreateImpact() => new ItemSpec
         {
@@ -198,7 +210,21 @@ namespace Brainless.Items
             if (CatalogRevision < 14)
                 foreach (var item in Items)
                     item.Rarity = DefaultRarity(item.Id);
-            CatalogRevision = Math.Max(14, CatalogRevision);
+            // Revision 15: general items, and Common/Uncommon unlimited with one Mythical.
+            if (CatalogRevision < 15)
+            {
+                foreach (var spec in GeneralDefaults())
+                    if (!Items.Any(i => i.Id == spec.Id))
+                    {
+                        spec.Rarity = DefaultRarity(spec.Id);
+                        Items.Add(spec);
+                    }
+
+                Distribution?.UpgradeGeneral();
+                Distribution?.Rarity?.UpgradeLimits();
+            }
+
+            CatalogRevision = Math.Max(15, CatalogRevision);
             // The Cursed Keycard now also counts lockers and generators.
             foreach (var card in Items.Where(i => i.Id == SupCatalog.CursedKeycard && i.Description == "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors."))
                 card.Description = SupCatalog.CursedDefaults().First(i => i.Id == SupCatalog.CursedKeycard).Description;
@@ -212,11 +238,11 @@ namespace Brainless.Items
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
-            Distribution.Validate(id => id >= 7101 && id <= 7132 && id != 7110 && !Retired.Contains(id));
+            Distribution.Validate(id => id >= 7101 && id <= 7140 && id != 7110 && !Retired.Contains(id));
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
-            if (Items.Any(i => i.Id < 7101 || i.Id > 7132 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
-                throw new InvalidOperationException("Item IDs must be 7101-7132 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
+            if (Items.Any(i => i.Id < 7101 || i.Id > 7140 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
+                throw new InvalidOperationException("Item IDs must be 7101-7140 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
             if (Items.Select(i => i.Id).Distinct().Count() != Items.Count || Items.Any(i => string.IsNullOrWhiteSpace(i.Name)) || Items.Select(i => i.Name).Distinct().Count() != Items.Count)
                 throw new InvalidOperationException("Item IDs/names must be nonempty and unique.");
             foreach (var expected in SupCatalog.Defaults().Concat(SupCatalog.CursedDefaults()))

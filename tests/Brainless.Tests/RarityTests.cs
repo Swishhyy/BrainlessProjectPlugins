@@ -17,7 +17,15 @@ internal static class RarityTests
     {
         var table = new RarityTable();
         check(table.Common.ChancePercent == 40 && table.Uncommon.ChancePercent == 25 && table.Rare.ChancePercent == 12 && table.Epic.ChancePercent == 6 && table.Legendary.ChancePercent == 3 && table.Mythical.ChancePercent == 1, "shipped tier chances are 40/25/12/6/3/1");
-        check(table.Common.RoundLimit == 0 && table.Uncommon.RoundLimit == 12 && table.Rare.RoundLimit == 6 && table.Epic.RoundLimit == 4 && table.Legendary.RoundLimit == 2 && table.Mythical.RoundLimit == 1 && table.Mythical.RoundLimitMax == 2, "shipped tier limits: Common unlimited, Mythical 1-2 per round");
+        check(table.Common.RoundLimit == 0 && table.Uncommon.RoundLimit == 0 && table.Rare.RoundLimit == 6 && table.Epic.RoundLimit == 4 && table.Legendary.RoundLimit == 2 && table.Mythical.RoundLimit == 1 && table.Mythical.RoundLimitMax == 0, "item tiers: Common and Uncommon unlimited, Rare 6, Epic 4, Legendary 2, one Mythical");
+        var humans = RarityTable.HumanRoles();
+        var scps = RarityTable.ScpRoles();
+        check(humans.Uncommon.RoundLimit == 0 && humans.Rare.RoundLimit == 8 && humans.Epic.RoundLimit == 4 && humans.Legendary.RoundLimit == 2 && humans.Mythical.RoundLimit == 1, "human role tiers: Rare 8, Epic 4, Legendary 2, one Mythical");
+        check(scps.Uncommon.RoundLimit == 0 && scps.Rare.RoundLimit == 2 && scps.Epic.RoundLimit == 1 && scps.Legendary.RoundLimit == 1 && scps.Mythical.RoundLimit == 1, "SCP role tiers: Rare 2, Epic 1, Legendary 1, one Mythical");
+        var earlier = new RarityTable();
+        earlier.Uncommon.RoundLimit = 12; earlier.Mythical.RoundLimitMax = 2;
+        earlier.UpgradeLimits();
+        check(earlier.Uncommon.RoundLimit == 0 && earlier.Mythical.RoundLimitMax == 0, "earlier stock limits (Uncommon 12, Mythical 1-2) move to the new ones");
         table.Validate("rarity");
         check(RarityRules.RollTier(table, 0) == Rarity.Common && RarityRules.RollTier(table, 39.99) == Rarity.Common && RarityRules.RollTier(table, 40) == Rarity.Uncommon && RarityRules.RollTier(table, 86.5) == Rarity.Mythical && RarityRules.RollTier(table, 87) == null, "a 0-100 roll lands on tiers in order, with the unused remainder giving nothing");
         check(RarityRules.RollTier(table, 15, scale: .3) == Rarity.Uncommon && RarityRules.RollTier(table, 27, scale: .3) == null, "a scaled roll (starting gear) shrinks every tier");
@@ -83,9 +91,10 @@ internal static class RarityTests
         edited.Roles.Single(r => r.Id == "B04").Rarity = Rarity.Mythical;
         edited.Prepare();
         check(edited.Roles.Single(r => r.Id == "B04").Rarity == Rarity.Mythical, "an owner's rarity edit survives later loads");
+        check(roles.GuaranteeRoles && roles.MythicalScpRemovalChancePercent == 40 && roles.HumanRarity.Rare.RoundLimit == 8 && roles.ScpRarity.Rare.RoundLimit == 2, "every spawn is guaranteed a role, with separate human and SCP tier limits");
         check(roles.UseRarity && roles.Reroll.Enabled && roles.Reroll.MaxRarity == Rarity.Rare && roles.Reroll.OfferChancePercent == 35 && roles.Reroll.WindowSeconds == 30, "rerolls are offered to 35% of custom spawns for 30 seconds, capped at Rare");
         var items = new Brainless.Internal.ItemDistributionConfig();
-        check(items.UseRarity && items.StartingGearRarityScale == .3 && items.Rarity.Mythical.RoundLimitMax == 2, "item loot uses rarity tiers by default, with starting gear at 30% of map odds");
+        check(items.UseRarity && items.StartingGearRarityScale == .3 && items.Rarity.Mythical.RoundLimitMax == 0 && items.FloorLootLarge == 14 && Brainless.Internal.DistributionConfig.Weapons().FloorLootLarge == 2, "item loot uses rarity tiers by default, with starting gear at 30% of map odds");
 #endif
     }
 

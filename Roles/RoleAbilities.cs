@@ -126,14 +126,14 @@ namespace Brainless.Roles
         {
             if (ReviverTraits(player)?.RandomZombieVariant != true)
                 return false;
-            var pool = Config.Roles.Where(r => r.Id != "Z05" && r.Rarity <= Rarity.Rare && (r.ChancePercent ?? 0) > 0 && Matches(r, player)).ToList();
+            var pool = Config.Roles.Where(r => r.Id != "Z05" && r.Rarity <= Rarity.Rare && (r.ChancePercent ?? 0) > 0 && Matches(r, player) && TierOpen(player, r.Rarity)).ToList();
             while (pool.Count > 0)
             {
                 var pick = pool[random.Next(pool.Count)];
                 if (Availability(pick, player) == null)
                 {
                     Apply(player, pick, false);
-                    RarityLedger.Take(RarityScope, RoundKey, pick.Rarity);
+                    RarityLedger.Take(RarityScope(player), RoundKey, pick.Rarity);
                     assignmentNotes[player] = "Mortician revive: random variant " + pick.Id + ".";
                     return true;
                 }

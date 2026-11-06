@@ -2,24 +2,26 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **22 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **28 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
 ## Rarity
 
-Every item, weapon and role has a rarity tier. Each loot pickup or spawn rolls a tier first, then something of that tier. Defaults (items and roles have separate per-round counts; Items and Weapons share theirs):
+Every item, weapon and role has a rarity tier, and a higher tier is always stronger. Each loot spot or spawn rolls a tier first, then something of that tier. Per-round limits (human roles, SCP roles and items are counted separately; Items and Weapons share one count):
 
-| Tier | Chance per roll | Max per round |
-| --- | --- | --- |
-| Common | 40% | no limit |
-| Uncommon | 25% | 12 |
-| Rare | 12% | 6 |
-| Epic | 6% | 4 |
-| Legendary | 3% | 2 |
-| Mythical | 1% | 1-2 (rolled each round) |
+| Tier | Chance per roll | Human roles | SCP roles | Items |
+| --- | --- | --- | --- | --- |
+| Common | 40% | no limit | no limit | no limit |
+| Uncommon | 25% | no limit | no limit | no limit |
+| Rare | 12% | 8 | 2 | 6 |
+| Epic | 6% | 4 | 1 | 4 |
+| Legendary | 3% | 2 | 1 | 2 |
+| Mythical | 1% | 1 | 1 | 1 |
 
-Map loot uses the full chance (a tier with nothing for that pickup gives nothing). Starting gear rolls at 30% of it. Cursed items keep their own 5% roll but still count toward the tier limits. For roles, a tier with nothing available for that class falls to the next tier down. Players offered a reroll at spawn (35%) can use F1 `.scpreroll` once per round within 30 seconds; it always gives a different custom role, Rare or lower.
+Every spawn gets a custom role (round start, late join, respawns, revives, escapes and staff forceclass): the tier roll always lands, and a full or empty tier moves to the next one down, then up. When an SCP rolls a Mythical role at round start, each other SCP has a 40% chance to become a human with a custom role instead (at least two SCPs remain). Players offered a reroll at spawn (35%) can use F1 `.scpreroll` once per round within 30 seconds; it always gives a different custom role, Rare or lower.
+
+Map loot uses the tier chance per matching pickup (a tier with nothing for that pickup gives nothing); starting gear rolls at 30% of it. Each round also scatters 6/10/14 custom items (by player count) on open floor in random Light, Heavy and Entrance rooms; each floor spot always rolls an item. Cursed items keep their own 5% roll but still count toward the tier limits.
 
 ## Items
 
@@ -47,6 +49,12 @@ Map loot uses the full chance (a tier with nothing for that pickup gives nothing
 | 7130 | Cursed Hat | Legendary | Invisible for 60 seconds instead of 15, but you're 30% slower while invisible. 2 uses. | Put it on like SCP-268: 60 s invisible, 30% slower. 2 uses. |
 | 7131 | Cursed Cola | Epic | Four colas' worth of speed at once, but your health drains much faster. | Drink it like SCP-207 for four colas' worth of speed; your health drains fast. |
 | 7132 | Cursed Lantern | Epic | Throw it to black out your whole zone for 30 seconds, but you're blinded too. | Throw it like SCP-2176: your whole zone blacks out for 30 s and you're blinded. |
+| 7133 | Energy Drink | Common | 20 seconds of 10% extra speed and endless stamina. No healing. | Use it like a normal adrenaline shot. |
+| 7134 | Healing Grenade | Uncommon | Heals every human within 6 m by 40 health. No flash. | Throw it at hurt teammates; heals everyone nearby. |
+| 7135 | Decoy Corpse | Uncommon | Flip it to drop a fake corpse of yourself with your name. | Flip it like a coin to drop a fake corpse of yourself. |
+| 7136 | Teleport Grenade | Legendary | Teleports you to where it pops, if that spot is safe. No flash. | Throw it; you teleport to where it pops if the spot is safe. |
+| 7137 | Motion Tracker | Rare | Turn it on to track the nearest SCP for 30 seconds. 3 charges. | Turn it on like a radio (or press the tool key) to track the nearest SCP for 30 s. |
+| 7138 | Ammo Box | Common | Flip it to refill the reserve ammo for every gun you carry. Single use. | Flip it like a coin to refill your reserve ammo. |
 
 ## Weapons
 
@@ -188,7 +196,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | K06 | Head Start | Legendary | Starts at access tier 3. | Use your tier 3 abilities from the start. | Enabled | — | 0 |
 | K07 | Mainframe | Mythical | Mythical: starts at tier 2, power regenerates 50% faster and every action costs 25% less. | Use everything from tier 2 with cheap actions and fast power. | Enabled | — | 0 |
 
-About 87% of spawns roll a custom role by default (the tier chances added up); the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.
+Every spawn rolls a custom role by default (guarantee_roles). Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.
 
 ### Why a role can be absent
 
@@ -197,7 +205,7 @@ About 87% of spawns roll a custom role by default (the tier chances added up); t
 - Doctor needs enable_doctor_event, its Z05 profile enabled, 12 players and a living SCP-049. Its separate event roll (default 25%, once per round) never enters ordinary zombie draws. It revives like SCP-049, with 35% health, no hume shield, slower movement, attacks and revives.
 - Rank roles only roll from their listed ranks. Custom humans are capped at custom_human_share_percent (80%) of living humans; reinforcement_specialists_per_wave (0 = no cap) limits MTF/Chaos roles per wave.
 - Locksmith can pick every keycard tier: 15/30/45-second attempts and 120/180/240-second cooldowns by default. Facility system locks still apply.
-- Remote Admin forceclass rolls a profile with the normal chances (force_class_custom_roles); escapes and plugin role changes do not reroll. `bprole set <ID> [playerID]` ignores natural chance/population/supply limits but honors disabled content and missing providers.
+- Remote Admin forceclass and escapes roll a profile like any spawn; other plugin role changes do not reroll. `bprole set <ID> [playerID]` ignores natural chance/population/supply limits but honors disabled content and missing providers.
 - SCP variants use normal SCP controls. Stalker and Ambusher reduce footsteps. Poison refreshes one effect, does not stack, and medical supplies cure it. Brute, Giant, Muncher, Raisian and Alpha apply model sizes only when allow_model_scaling is true. Boom Boom uses its separate explosive_scp173 settings.
 
 ## Round events
@@ -223,7 +231,7 @@ Staff commands need four players. Automatic selection is off by default; when en
 | Captive recruitment | Chaos can recruit cuffed MTF/Guards; MTF can recruit cuffed Chaos. | Escort the captive to the normal surface escape area. |
 | Guard escape | An uncuffed Facility Guard who reaches the surface escape area becomes an NTF Sergeant. | Walk to the normal surface escape area. |
 | End-of-round friendly fire | When the round ends, friendly fire turns on so everyone can attack everyone until the restart. It is not punished. | Automatic; owners set `end_of_round_friendly_fire` in the Fixes config. |
-| BetterCoinflips | Gives configured random outcomes from ordinary coin flips. Heads can give a Brainless item or weapon or turn you into a fitting custom role; tails can give a cursed item. Coin class changes roll a custom role for the new class. | Equip a normal coin and flip it. |
+| BetterCoinflips | Gives configured random outcomes from ordinary coin flips. Heads can give a Brainless item or weapon or turn you into a fitting custom role; tails can give a cursed item. Coin class changes roll a custom role for the new class. SCP-914 on Very Fine doubles ordinary coins (1 → 2, 2 → 4). | Equip a normal coin and flip it; put coins through SCP-914 on Very Fine to double them. |
 | SCP swap | SCPs can trade SCPs (or take an unplayed one) shortly after round start. Custom variants stay with their SCP, so you take over e.g. Boom Boom. | F1 `.scpswap list`, `.scpswap 173`, then the other SCP answers `.scpswap yes`. Staff: `bpscpswap`. |
 | Staff force-class roles | A Remote Admin forceclass rolls a custom role for the new class with the normal chances. | Use forceclass as usual; owners set `force_class_custom_roles`. |
 | SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |

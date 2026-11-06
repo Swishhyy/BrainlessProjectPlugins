@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 14;
+            bool migrateConfig = Config.CatalogRevision < 15;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -225,7 +225,7 @@ namespace Brainless.Items
         internal bool CanIssueBatch(uint[] ids)
         {
             EnsureCapacity();
-            var ours = ids.Where(id => id >= 7101 && id <= 7122).ToArray();
+            var ours = ids.Where(id => id >= 7101 && id <= 7140).ToArray();
             if (budget.Total + ours.Length > budget.Capacity)
                 return false;
             return ours.GroupBy(id => id).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));
@@ -597,6 +597,9 @@ namespace Brainless.Items
                     var foam = payload.Foam;
                     lifetime.Later(0, () => SpreadTantrum(position, foam));
                     break;
+                default:
+                    DetonateGeneral(payload, position);
+                    break;
             }
         }
 
@@ -737,6 +740,7 @@ namespace Brainless.Items
         {
             fragments.Prune();
             NativeSmoke.Prune();
+            UpdateTrackers();
             foreach (var pair in channels.ToArray())
             {
                 var p = pair.Key;

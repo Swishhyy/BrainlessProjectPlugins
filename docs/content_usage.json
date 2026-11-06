@@ -21,7 +21,13 @@
     "7129": "Throw normally; everyone in sight is blinded longer, and so are you.",
     "7130": "Put it on like SCP-268: 60 s invisible, 30% slower. 2 uses.",
     "7131": "Drink it like SCP-207 for four colas' worth of speed; your health drains fast.",
-    "7132": "Throw it like SCP-2176: your whole zone blacks out for 30 s and you're blinded."
+    "7132": "Throw it like SCP-2176: your whole zone blacks out for 30 s and you're blinded.",
+    "7133": "Use it like a normal adrenaline shot.",
+    "7134": "Throw it at hurt teammates; heals everyone nearby.",
+    "7135": "Flip it like a coin to drop a fake corpse of yourself.",
+    "7136": "Throw it; you teleport to where it pops if the spot is safe.",
+    "7137": "Turn it on like a radio (or press the tool key) to track the nearest SCP for 30 s.",
+    "7138": "Flip it like a coin to refill your reserve ammo."
   },
   "weapons": {
     "7206": "Shoot toward solid geometry for one reflected shot.",

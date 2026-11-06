@@ -45,7 +45,7 @@ namespace Brainless.Weapons
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 10;
+            bool migrateConfig = Config.CatalogRevision < 11;
             Config.Prepare();
             LoadIndividualWeapons(Config);
             Config.Prepare();
