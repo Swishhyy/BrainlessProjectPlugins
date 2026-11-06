@@ -26,7 +26,7 @@ namespace Brainless.SlFixes
     {
         public override string Name => "Project Brainless SCP SL Fixes";
         public override string Prefix => "project_brainless_sl_fixes";
-        public override string Author => "Project Brainless";
+        public override string Author => "Swishhyy";
         public override Version Version => new Version(0, 5, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Last;

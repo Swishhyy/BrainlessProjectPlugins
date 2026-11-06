@@ -36,17 +36,17 @@
     <Reference Include="System.Runtime.Serialization" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/GameplayText.cs" Link="Internal/GameplayText.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/SupRules.cs" Link="Internal/SupRules.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'" />
-    <Compile Include="$(MSBuildThisFileDirectory)Shared/Rules.cs" Link="Internal/Rules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
-    <Compile Include="$(MSBuildThisFileDirectory)Shared/ExplosionRules.cs" Link="Internal/ExplosionRules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
-    <Compile Include="$(MSBuildThisFileDirectory)Shared/Runtime.cs" Link="Internal/Runtime.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProximityChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Rules.cs" Link="Internal/Rules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProxChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ExplosionRules.cs" Link="Internal/ExplosionRules.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProxChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Runtime.cs" Link="Internal/Runtime.cs" Condition="'$(MSBuildProjectName)' != 'Brainless.ScpProxChat'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Tuning.cs" Link="Internal/Tuning.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.RoundEvents'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Updates/*.cs" Link="Internal/Updates/%(Filename)%(Extension)" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/AudioRules.cs" Link="Internal/AudioRules.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/RoleMarkers.cs" Link="Internal/RoleMarkers.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.SlFixes'" />
     <Compile Include="$(MSBuildThisFileDirectory)Shared/Native914.cs" Link="Internal/Native914.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'" />
-    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.ScpProximityChat'" />
-    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigDocument.cs" Link="Internal/ConfigDocument.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProximityChat' Or '$(MSBuildProjectName)' == 'BetterCoinflips'" />
-    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigMigration.cs" Link="Internal/ConfigMigration.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProximityChat' Or '$(MSBuildProjectName)' == 'BetterCoinflips'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.ScpProxChat'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigDocument.cs" Link="Internal/ConfigDocument.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProxChat' Or '$(MSBuildProjectName)' == 'Brainless.Coinflips'" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigMigration.cs" Link="Internal/ConfigMigration.cs" Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons' Or '$(MSBuildProjectName)' == 'Brainless.Roles' Or '$(MSBuildProjectName)' == 'Brainless.ScpProxChat' Or '$(MSBuildProjectName)' == 'Brainless.Coinflips'" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Items' Or '$(MSBuildProjectName)' == 'Brainless.Weapons'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ItemFiles.cs" Link="Internal/ItemFiles.cs" />
@@ -65,7 +65,7 @@
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.RoundEvents'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/ConfigReload.cs" Link="Internal/ConfigReload.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'BetterCoinflips' Or '$(MSBuildProjectName)' == 'Brainless.ScpSwap' Or '$(MSBuildProjectName)' == 'Brainless.ZombieOptOut'">
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.Coinflips' Or '$(MSBuildProjectName)' == 'Brainless.ScpSwap' Or '$(MSBuildProjectName)' == 'Brainless.ZombieOptOut'">
     <Compile Include="$(MSBuildThisFileDirectory)Shared/RolesBridge.cs" Link="Internal/RolesBridge.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(MSBuildProjectName)' == 'Brainless.ZombieOptOut'">

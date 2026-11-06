@@ -37,7 +37,7 @@ internal static class ConfigBackupTests
             Directory.Delete(root, true);
         }
 
-        var coins = new BetterCoinflips.Configs.Config();
+        var coins = new Brainless.Coinflips.Configs.Config();
         check(coins.Scp914DoublesCoins && coins.Scp914CoinMaxPerPlayer == 20 && coins.Scp914CoinMaxPerRound == 80 && coins.Scp914CoinWorldCap == 150, "SCP-914 coin doubling is capped per player (20), per round (80) and by the coins in the world (150)");
 #endif
     }

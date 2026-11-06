@@ -14,13 +14,13 @@ PROJECTS = {
     'Roles': ('Brainless.Roles', 'Roles/Brainless.Roles.csproj'),
     'Items': ('Brainless.Items', 'Items/Brainless.Items.csproj'),
     'Weapons': ('Brainless.Weapons', 'Weapons/Brainless.Weapons.csproj'),
-    'BetterCoinflips': ('BetterCoinflips', 'BetterCoinflips/BetterCoinflips.csproj'),
-    'ScpProximityChat': ('Brainless.ScpProximityChat', 'ScpProximityChat/Brainless.ScpProximityChat.csproj'),
+    'BrainlessCoinflips': ('Brainless.Coinflips', 'BrainlessCoinflips/Brainless.Coinflips.csproj'),
+    'BrainlessScpProxChat': ('Brainless.ScpProxChat', 'BrainlessScpProxChat/Brainless.ScpProxChat.csproj'),
     'Core': ('Brainless.Core', 'Core/Brainless.Core.csproj'),
     'RoundEvents': ('Brainless.RoundEvents', 'RoundEvents/Brainless.RoundEvents.csproj'),
     'SlFixes': ('Brainless.SlFixes', 'SlFixes/Brainless.SlFixes.csproj'),
     'ScpSwap': ('Brainless.ScpSwap', 'ScpSwap/Brainless.ScpSwap.csproj'),
-    'ZombieOptOut': ('Brainless.ZombieOptOut', 'ZombieOptOut/Brainless.ZombieOptOut.csproj'),
+    'BrainlessZombieOptOut': ('Brainless.ZombieOptOut', 'BrainlessZombieOptOut/Brainless.ZombieOptOut.csproj'),
 }
 
 def prepare(plugin, output):

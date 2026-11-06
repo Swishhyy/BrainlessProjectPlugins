@@ -1,5 +1,5 @@
 using System;
-using Brainless.ScpProximityChat;
+using Brainless.ScpProxChat;
 
 internal static class VoiceTests
 {

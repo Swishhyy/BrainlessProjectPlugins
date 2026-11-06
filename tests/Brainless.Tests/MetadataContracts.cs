@@ -75,7 +75,7 @@ internal static class MetadataContracts
             var candy = plugin.GetMethods().Select(roles.GetMethodDefinition).Single(m => roles.GetString(m.Name) == "Candy");
             var calls = VoiceNativeContracts.Calls(rolePe.GetMethodBody(candy.RelativeVirtualAddress).GetILBytes(), roles).ToArray();
             check(System.Linq.Enumerable.Contains(calls, "Resolve") && Array.IndexOf(calls, "Clear") < Array.IndexOf(calls, "AddCandy") && Array.IndexOf(calls, "Clear") >= 0, "the compiled role candy path selects registered candies and clears native seed candy before filling the bag");
-            // BetterCoinflips and ScpSwap reach these by name through RolesBridge.
+            // BrainlessCoinflips and ScpSwap reach these by name through RolesBridge.
             var rolesApi = roles.TypeDefinitions.Select(roles.GetTypeDefinition).Single(t => roles.GetString(t.Namespace) == "Brainless.Roles" && roles.GetString(t.Name) == "RolesApi");
             var exposed = rolesApi.GetMethods().Select(roles.GetMethodDefinition)
                 .Where(m => (m.Attributes & System.Reflection.MethodAttributes.Public) != 0 && (m.Attributes & System.Reflection.MethodAttributes.Static) != 0)
@@ -109,7 +109,7 @@ internal static class MetadataContracts
 
         // Only SCP voice may answer settings status reports (rate-limited); other plugins
         // resending the whole menu on join/status multiplied traffic and lagged players out.
-        foreach (var (dll, ns, forbidden) in new[] { ("Roles/bin/Release/Brainless.Roles.dll", "Brainless.Roles", new[] { "HudStatusReceived", "HudVerified", "SyncHud" }), ("ZombieOptOut/bin/Release/Brainless.ZombieOptOut.dll", "Brainless.ZombieOptOut", new[] { "StatusReceived", "Verified", "Sync" }) })
+        foreach (var (dll, ns, forbidden) in new[] { ("Roles/bin/Release/Brainless.Roles.dll", "Brainless.Roles", new[] { "HudStatusReceived", "HudVerified", "SyncHud" }), ("BrainlessZombieOptOut/bin/Release/Brainless.ZombieOptOut.dll", "Brainless.ZombieOptOut", new[] { "StatusReceived", "Verified", "Sync" }) })
         {
             string path = Path.Combine(root, dll);
             if (!File.Exists(path))
@@ -122,17 +122,17 @@ internal static class MetadataContracts
             check(!forbidden.Any(syncNames.Contains), ns + " does not resend the settings menu on join or status reports");
         }
 
-        string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
+        string voicePath = Path.Combine(root, "BrainlessScpProxChat/bin/Release/Brainless.ScpProxChat.dll");
         if (File.Exists(voicePath))
         {
             using var voiceStream = File.OpenRead(voicePath);
             using var voicePe = new PEReader(voiceStream);
             var voice = voicePe.GetMetadataReader();
-            var state = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceState");
+            var state = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProxChat" && voice.GetString(t.Name) == "VoiceState");
             var names = state.GetMethods().Select(voice.GetMethodDefinition).Select(m => voice.GetString(m.Name)).ToArray();
             check(System.Linq.Enumerable.Contains(names, "KeyPressed") && !System.Linq.Enumerable.Contains(names, "SetMode") && !System.Linq.Enumerable.Contains(names, "get_HoldMode"), "the compiled voice state has toggle input and no hold-mode transition");
             // Brainless Roles reads the HUD status line through VoiceBridge by name.
-            var voiceApi = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProximityChat" && voice.GetString(t.Name) == "VoiceApi");
+            var voiceApi = voice.TypeDefinitions.Select(voice.GetTypeDefinition).Single(t => voice.GetString(t.Namespace) == "Brainless.ScpProxChat" && voice.GetString(t.Name) == "VoiceApi");
             check(voiceApi.GetMethods().Select(voice.GetMethodDefinition).Any(m => voice.GetString(m.Name) == "HudStatus" && m.GetParameters().Count == 1 && (m.Attributes & System.Reflection.MethodAttributes.Static) != 0 && (m.Attributes & System.Reflection.MethodAttributes.Public) != 0), "the compiled voice plugin exposes the HUD status method the Roles HUD calls");
         }
     }

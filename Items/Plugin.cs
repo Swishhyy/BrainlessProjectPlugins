@@ -32,7 +32,7 @@ namespace Brainless.Items
     {
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
-        public override string Author => "Brainless Project";
+        public override string Author => "Swishhyy";
         public override Version Version => new Version(0, 11, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
@@ -274,7 +274,7 @@ namespace Brainless.Items
         });
         private void Coin(FlippingCoinEventArgs ev)
         {
-            // The Monkey's Paw is flipped like a normal coin; BetterCoinflips grants the wish.
+            // The Monkey's Paw is flipped like a normal coin; BrainlessCoinflips grants the wish.
             var coin = Find(ev.Item.Serial);
             if (coin == null || coin.Id == SupCatalog.MonkeysPaw)
                 return;

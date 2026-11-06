@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.ScpProxChat</AssemblyName>
+    <RootNamespace>Brainless.ScpProxChat</RootNamespace>
+    <Version>0.3.2</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Authors>Swishhyy</Authors>
+  </PropertyGroup>
+</Project>

@@ -17,8 +17,8 @@ namespace Brainless.Roles
             if (status == null && Time.time >= nextLookup)
             {
                 nextLookup = Time.time + 10;
-                var assembly = Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetName().Name == "Brainless.ScpProximityChat");
-                status = assembly?.GetType("Brainless.ScpProximityChat.VoiceApi")?.GetMethod("HudStatus", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Player) }, null);
+                var assembly = Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetName().Name == "Brainless.ScpProxChat");
+                status = assembly?.GetType("Brainless.ScpProxChat.VoiceApi")?.GetMethod("HudStatus", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Player) }, null);
             }
 
             try

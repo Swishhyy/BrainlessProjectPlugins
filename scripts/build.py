@@ -15,13 +15,13 @@ PROJECTS = {
     'Roles': ('Roles/Brainless.Roles.csproj', 'Brainless.Roles.dll'),
     'Items': ('Items/Brainless.Items.csproj', 'Brainless.Items.dll'),
     'Weapons': ('Weapons/Brainless.Weapons.csproj', 'Brainless.Weapons.dll'),
-    'BetterCoinflips': ('BetterCoinflips/BetterCoinflips.csproj', 'BetterCoinflips.dll'),
-    'ScpProximityChat': ('ScpProximityChat/Brainless.ScpProximityChat.csproj', 'Brainless.ScpProximityChat.dll'),
+    'BrainlessCoinflips': ('BrainlessCoinflips/Brainless.Coinflips.csproj', 'Brainless.Coinflips.dll'),
+    'BrainlessScpProxChat': ('BrainlessScpProxChat/Brainless.ScpProxChat.csproj', 'Brainless.ScpProxChat.dll'),
     'Core': ('Core/Brainless.Core.csproj', 'Brainless.Core.dll'),
     'RoundEvents': ('RoundEvents/Brainless.RoundEvents.csproj', 'Brainless.RoundEvents.dll'),
     'SlFixes': ('SlFixes/Brainless.SlFixes.csproj', 'Brainless.SlFixes.dll'),
     'ScpSwap': ('ScpSwap/Brainless.ScpSwap.csproj', 'Brainless.ScpSwap.dll'),
-    'ZombieOptOut': ('ZombieOptOut/Brainless.ZombieOptOut.csproj', 'Brainless.ZombieOptOut.dll'),
+    'BrainlessZombieOptOut': ('BrainlessZombieOptOut/Brainless.ZombieOptOut.csproj', 'Brainless.ZombieOptOut.dll'),
 }
 parser = argparse.ArgumentParser()
 parser.add_argument('--plugin', choices=list(PROJECTS))

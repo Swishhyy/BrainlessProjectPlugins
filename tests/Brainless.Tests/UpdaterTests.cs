@@ -331,8 +331,8 @@ internal static class UpdaterTests
                         {
                             "Brainless.Roles",
                             "Brainless.Weapons",
-                            "BetterCoinflips",
-                            "Brainless.ScpProximityChat",
+                            "BrainlessCoinflips",
+                            "Brainless.ScpProxChat",
                             "Brainless.Core",
                             "Brainless.SlFixes",
                             "Brainless.RoundEvents",
