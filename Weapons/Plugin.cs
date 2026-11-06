@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 11, 0);
+        public override Version Version => new Version(0, 11, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -83,6 +83,7 @@ namespace Brainless.Weapons
             AdminItems.Enable("brainless.weapons.commands");
             distribution = new NaturalDistribution("Weapons", lifetime, () => Config.Distribution, NaturalContent, () => Config.WorldLoot ? Config.Tuning.Supply.WorldLootCount : 0, () => Config.Debug);
             base.OnEnabled();
+            ConfigMigration.Tidy();
             if (migrateConfig)
                 ConfigMigration.Save(this);
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Weapons", Config.AutoUpdate);

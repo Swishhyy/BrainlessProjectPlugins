@@ -51,6 +51,41 @@ namespace Brainless.Internal
             return text.LastIndexOf('\n', Math.Min(offset - 1, text.Length - 1)) + 1;
         }
 
+        internal const string BackupSuffix = ".before-brainless-migration";
+
+        // Removes the numbered backup copies older versions left behind (one per migration)
+        // and staging files from interrupted saves. The single current backup stays.
+        internal static int CleanupBackups(string directory)
+        {
+            int removed = 0;
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+                return 0;
+            // Match by name: a ".*" search pattern also matches the bare backup we keep.
+            foreach (string file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
+            {
+                string name = Path.GetFileName(file);
+                bool numbered = name.IndexOf(BackupSuffix + ".", StringComparison.Ordinal) >= 0;
+                bool staging = !numbered && name.IndexOf(".migration-", StringComparison.Ordinal) >= 0 && name.IndexOf(BackupSuffix, StringComparison.Ordinal) < 0;
+                if (!numbered && !staging)
+                    continue;
+                try
+                {
+                    if (staging && DateTime.UtcNow - File.GetLastWriteTimeUtc(file) < TimeSpan.FromMinutes(10))
+                        continue;
+                    File.Delete(file);
+                    removed++;
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+
+            return removed;
+        }
+
         internal static bool Replace(string path, string expected, string next)
         {
             string staging = path + ".migration-" + Guid.NewGuid().ToString("N");
@@ -59,10 +94,16 @@ namespace Brainless.Internal
                 File.WriteAllText(staging, next);
                 if (File.ReadAllText(path) != expected)
                     return false;
-                string backup = path + ".before-brainless-migration";
-                if (File.Exists(backup))
-                    backup += "." + Guid.NewGuid().ToString("N");
-                File.Replace(staging, path, backup);
+                // One backup per config file. Several plugins can migrate the same shared
+                // config on one boot: the first backup of a boot (the oldest state) is kept,
+                // and a backup from an earlier boot is replaced instead of piling up copies.
+                string backup = path + BackupSuffix;
+                bool fresh = File.Exists(backup) && DateTime.UtcNow - File.GetLastWriteTimeUtc(backup) < TimeSpan.FromMinutes(10);
+                if (File.Exists(backup) && !fresh)
+                    File.Delete(backup);
+                File.Replace(staging, path, fresh ? null : backup);
+                if (!fresh && File.Exists(backup))
+                    File.SetLastWriteTimeUtc(backup, DateTime.UtcNow);
                 return true;
             }
             finally

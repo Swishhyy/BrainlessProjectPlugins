@@ -10,11 +10,12 @@ namespace Brainless.Internal.Updates
 {
     public sealed class AutoUpdateConfig
     {
+        [Description("With Brainless Core installed, Core's auto_update settings (token, interval, prereleases) apply to every plugin; set enabled: false here to skip just this plugin.")]
         public bool Enabled { get; set; } = true;
         public int CheckIntervalMinutes { get; set; } = 60;
         public bool IncludePrereleases { get; set; }
 
-        [Description("Paste a read-only GitHub token here for private releases. Takes precedence over token_environment_variable; leave empty to use the optional environment variable.")]
+        [Description("Paste a read-only GitHub token here for private releases. With Brainless Core installed, only Core's token is needed: Core updates every plugin with it, so leave this empty in the other plugins.")]
         public string Token { get; set; } = string.Empty;
 
         [Description("Optional fallback environment variable NAME, used only when token is empty. The token itself can be pasted into token above.")]

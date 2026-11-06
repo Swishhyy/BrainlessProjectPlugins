@@ -34,15 +34,20 @@ namespace Brainless.Core
                     return null;
                 if (registrations.TryGetValue(assembly, out var previous))
                     previous.Dispose();
+                // Core is in charge: its token, interval, prerelease and scan settings apply
+                // to every Brainless plugin. A plugin's own token is only a fallback when
+                // Core has none. With Core's updater off, no plugin updates itself either.
                 var global = Plugin.Instance.Config.AutoUpdate;
+                if (global == null || !global.Enabled)
+                    return new Lease(assembly, null);
                 var config = new AutoUpdateConfig
                 {
                     Enabled = true,
-                    CheckIntervalMinutes = interval,
-                    IncludePrereleases = prereleases,
-                    Token = string.IsNullOrWhiteSpace(token) ? global.Token : token,
-                    TokenEnvironmentVariable = string.IsNullOrWhiteSpace(environmentVariable) ? global.TokenEnvironmentVariable : environmentVariable,
-                    ReleasesToScan = scan
+                    CheckIntervalMinutes = global.CheckIntervalMinutes,
+                    IncludePrereleases = global.IncludePrereleases,
+                    Token = string.IsNullOrWhiteSpace(global.Token) ? token : global.Token,
+                    TokenEnvironmentVariable = string.IsNullOrWhiteSpace(global.TokenEnvironmentVariable) ? environmentVariable : global.TokenEnvironmentVariable,
+                    ReleasesToScan = global.ReleasesToScan
                 };
                 var updater = PluginUpdates.StartStandalone(assembly, id, config);
                 if (updater == null)
@@ -82,7 +87,7 @@ namespace Brainless.Core
             {
                 if (Interlocked.Exchange(ref disposed, 1) != 0)
                     return;
-                updater.Dispose();
+                updater?.Dispose();
                 lock (gate)
                     if (registrations.TryGetValue(assembly, out var current) && ReferenceEquals(current, this))
                         registrations.Remove(assembly);

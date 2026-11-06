@@ -11,12 +11,12 @@ This README is the single overview of the project: what each plugin does, where 
 
 | Folder | DLL | Version | Config section | Purpose |
 | --- | --- | --- | --- | --- |
-| `Roles` | `Brainless.Roles.dll` | 0.10.0 | `brainless_roles` | 121 role profiles (7+ per class including SCP-079, a Mythical in each) with rarity tiers, `.scpreroll`, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
-| `Items` | `Brainless.Items.dll` | 0.11.0 | `brainless_items` | 28 custom grenades, tools, consumables and cursed items (IDs 71xx), floor loot |
-| `Weapons` | `Brainless.Weapons.dll` | 0.11.0 | `brainless_weapons` | Grenade Launcher (staff only), Stun Gun (rare, 5 shots), Cursed Pistol, Cursed Shotgun, opt-in Ricochet Pistol (IDs 72xx) |
-| `BetterCoinflips` | `BetterCoinflips.dll` | 5.3.0 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
-| `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.3.1 | `brainless_scp_proximity_chat` | Nearby SCP voice (SCP-939 from its mimic point), receive controls, HUD status |
-| `Core` | `Brainless.Core.dll` | 0.3.2 | `project_brainless_core` | XP/playtime storage, privacy, stats API (leaderboard + Discord bot), shared update service |
+| `Roles` | `Brainless.Roles.dll` | 0.10.1 | `brainless_roles` | 121 role profiles (7+ per class including SCP-079, a Mythical in each) with rarity tiers, `.scpreroll`, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
+| `Items` | `Brainless.Items.dll` | 0.11.1 | `brainless_items` | 28 custom grenades, tools, consumables and cursed items (IDs 71xx), floor loot |
+| `Weapons` | `Brainless.Weapons.dll` | 0.11.1 | `brainless_weapons` | Grenade Launcher (staff only), Stun Gun (rare, 5 shots), Cursed Pistol, Cursed Shotgun, opt-in Ricochet Pistol (IDs 72xx) |
+| `BetterCoinflips` | `BetterCoinflips.dll` | 5.3.1 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
+| `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.3.2 | `brainless_scp_proximity_chat` | Nearby SCP voice (SCP-939 from its mimic point), receive controls, HUD status |
+| `Core` | `Brainless.Core.dll` | 0.3.3 | `project_brainless_core` | XP/playtime storage, privacy, stats API (leaderboard + Discord bot), shared update service |
 | `SlFixes` | `Brainless.SlFixes.dll` | 0.5.1 | `project_brainless_sl_fixes` | Captive recruitment, guard escape, SCP-914 rough teleport/crafting, XP action tracking, end-of-round FF |
 | `RoundEvents` | `Brainless.RoundEvents.dll` | 0.4.0 | `project_brainless_round_events` | Infection, Deathmatch and Juggernaut events, lobby event vote and sit-out |
 | `ScpSwap` | `Brainless.ScpSwap.dll` | 0.1.1 | `brainless_scp_swap` | Round-start SCP swaps that keep Brainless SCP variants |
@@ -48,7 +48,7 @@ Each DLL has its own project, version, config and updater. None has a hard refer
 
 ### Automatic updates
 
-Every plugin has an `auto_update` block in its config section:
+**With Brainless Core installed, put one token in Core's `auto_update` and you're done.** Core updates every installed Brainless plugin with its own token, interval and prerelease setting; the other plugins' `token` fields can stay empty, and their `auto_update.enabled: false` skips just that plugin. Without Core, each plugin updates itself with its own block:
 
 ```yaml
 auto_update:
@@ -60,7 +60,7 @@ auto_update:
   releases_to_scan: 30
 ```
 
-The repo is private, so set a token. The updater finds its own DLL + `.update.json` in recent releases, checks repository, game/EXILED version, SHA-256 and assembly identity, then atomically replaces only its own file (old copy kept as `.previous`). **New DLLs load on the next full server restart.** Rollback: stop, restore `X.dll.previous` over `X.dll`, set `auto_update.enabled: false`, start. If Core is installed, other plugins delegate update checks to it and can use its token.
+The repo is private, so set a token. The updater finds its own DLL + `.update.json` in recent releases, checks repository, game/EXILED version, SHA-256 and assembly identity, then atomically replaces only its own file (old copy kept as `.previous`). **New DLLs load on the next full server restart.** Rollback: stop, restore `X.dll.previous` over `X.dll`, set `auto_update.enabled: false`, start. Config migrations keep a single `.before-brainless-migration` backup per config file; the numbered copies older versions left behind are deleted on startup.
 
 ## Configuration
 
