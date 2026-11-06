@@ -38,8 +38,8 @@ Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round eve
 | ID | Weapon | What it does | How to use |
 | --- | --- | --- | --- |
 | 7206 | Ricochet Pistol **(opt-in)** | Shots can bounce once off solid surfaces. | Shoot toward solid geometry for one reflected shot. |
-| 7207 | Grenade Launcher | Fires a grenade with each shot. Holds up to 16; cannot reload. | Fire normally; each bullet launches a grenade. No reload. |
-| 7209 | Stun Gun | Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills. | Shoot a target to knock them down with a fake death for a few seconds; it never kills. |
+| 7207 | Grenade Launcher **(staff only)** | Staff only. Fires a grenade with each shot. Holds up to 16; cannot reload. | Staff only: ci give 7207. Fire normally; each bullet launches a grenade. No reload. |
+| 7209 | Stun Gun | Rare. 5 shots, no reload. Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills. | Rare loot. 5 shots, no reload: shoot a target to knock them down with a fake death for a few seconds; it never kills. |
 | 7210 | Cursed Pistol | Every hit does double damage, but about 1 in 3 trigger pulls jams and wastes the round. | Shoot normally; every hit does double damage, but about 1 in 3 pulls jams. |
 | 7211 | Cursed Shotgun | Huge damage, but every shot knocks you back and drains your stamina. | Shoot normally for huge damage; each shot knocks you back and drains stamina. |
 

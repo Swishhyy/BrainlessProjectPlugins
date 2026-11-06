@@ -11,16 +11,16 @@ This README is the single overview of the project: what each plugin does, where 
 
 | Folder | DLL | Version | Config section | Purpose |
 | --- | --- | --- | --- | --- |
-| `Roles` | `Brainless.Roles.dll` | 0.9.1 | `brainless_roles` | 66 role profiles, per-role percentages, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
+| `Roles` | `Brainless.Roles.dll` | 0.9.2 | `brainless_roles` | 66 role profiles, per-role percentages, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
 | `Items` | `Brainless.Items.dll` | 0.9.0 | `brainless_items` | 22 custom grenades, tools, consumables and cursed items (IDs 71xx) |
-| `Weapons` | `Brainless.Weapons.dll` | 0.10.0 | `brainless_weapons` | Grenade Launcher, Stun Gun, Cursed Pistol, Cursed Shotgun, opt-in Ricochet Pistol (IDs 72xx) |
-| `BetterCoinflips` | `BetterCoinflips.dll` | 5.2.0 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
-| `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.3.0 | `brainless_scp_proximity_chat` | Nearby SCP voice (SCP-939 from its mimic point), receive controls, HUD status |
+| `Weapons` | `Brainless.Weapons.dll` | 0.10.1 | `brainless_weapons` | Grenade Launcher (staff only), Stun Gun (rare, 5 shots), Cursed Pistol, Cursed Shotgun, opt-in Ricochet Pistol (IDs 72xx) |
+| `BetterCoinflips` | `BetterCoinflips.dll` | 5.2.1 | `better_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |
+| `ScpProximityChat` | `Brainless.ScpProximityChat.dll` | 0.3.1 | `brainless_scp_proximity_chat` | Nearby SCP voice (SCP-939 from its mimic point), receive controls, HUD status |
 | `Core` | `Brainless.Core.dll` | 0.3.2 | `project_brainless_core` | XP/playtime storage, privacy, stats API (leaderboard + Discord bot), shared update service |
 | `SlFixes` | `Brainless.SlFixes.dll` | 0.5.1 | `project_brainless_sl_fixes` | Captive recruitment, guard escape, SCP-914 rough teleport/crafting, XP action tracking, end-of-round FF |
 | `RoundEvents` | `Brainless.RoundEvents.dll` | 0.3.1 | `project_brainless_round_events` | Infection, Deathmatch and Juggernaut events |
 | `ScpSwap` | `Brainless.ScpSwap.dll` | 0.1.0 | `brainless_scp_swap` | Round-start SCP swaps that keep Brainless SCP variants |
-| `ZombieOptOut` | `Brainless.ZombieOptOut.dll` | 0.1.0 | `brainless_zombie_opt_out` | Zombie opt-out/auto-fill and early-round SCP replacement (`.fill`), keeping Brainless roles |
+| `ZombieOptOut` | `Brainless.ZombieOptOut.dll` | 0.1.1 | `brainless_zombie_opt_out` | Zombie opt-out/auto-fill and early-round SCP replacement (`.fill`), keeping Brainless roles |
 
 Each DLL has its own project, version, config and updater. None has a hard reference to another; optional integrations (Roles ↔ Items/Weapons equipment, BetterCoinflips/ScpSwap/ZombieOptOut → Roles via `Shared/RolesBridge.cs` → `Brainless.Roles.RolesApi`, Roles HUD → SCP voice via `Roles/VoiceBridge.cs` → `Brainless.ScpProximityChat.VoiceApi`, everything → Core) go through reflection or EXILED's CustomItems registry, so any subset can be installed. They share one game process, so a crash is not sandboxed.
 

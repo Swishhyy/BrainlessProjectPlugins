@@ -24,13 +24,58 @@ namespace Brainless.Weapons
         {
             P.ChangingRole += StunRoleChanging;
             P.Left += StunLeft;
+            Exiled.Events.Handlers.Scp173.BlinkingRequest += StunnedBlinkRequest;
+            Exiled.Events.Handlers.Scp173.Blinking += StunnedBlink;
+            Exiled.Events.Handlers.Scp173.PlacingTantrum += StunnedTantrum;
+            Exiled.Events.Handlers.Scp173.UsingBreakneckSpeeds += StunnedBreakneck;
         }
 
         private void UnsubscribeStun()
         {
             P.ChangingRole -= StunRoleChanging;
             P.Left -= StunLeft;
+            Exiled.Events.Handlers.Scp173.BlinkingRequest -= StunnedBlinkRequest;
+            Exiled.Events.Handlers.Scp173.Blinking -= StunnedBlink;
+            Exiled.Events.Handlers.Scp173.PlacingTantrum -= StunnedTantrum;
+            Exiled.Events.Handlers.Scp173.UsingBreakneckSpeeds -= StunnedBreakneck;
             ClearStuns();
+        }
+
+        // SCP-173 moves by blinking, which Ensnared cannot stop: a stunned 173 cannot
+        // blink, place tantrum or use breakneck speed.
+        private void StunnedBlinkRequest(Exiled.Events.EventArgs.Scp173.BlinkingRequestEventArgs ev)
+        {
+            if (IsStunned(ev.Player))
+                ev.IsAllowed = false;
+        }
+
+        private void StunnedBlink(Exiled.Events.EventArgs.Scp173.BlinkingEventArgs ev)
+        {
+            if (IsStunned(ev.Player))
+                ev.IsAllowed = false;
+        }
+
+        private void StunnedTantrum(Exiled.Events.EventArgs.Scp173.PlacingTantrumEventArgs ev)
+        {
+            if (IsStunned(ev.Player))
+                ev.IsAllowed = false;
+        }
+
+        private void StunnedBreakneck(Exiled.Events.EventArgs.Scp173.UsingBreakneckSpeedsEventArgs ev)
+        {
+            if (IsStunned(ev.Player))
+                ev.IsAllowed = false;
+        }
+
+        // Keeps a stunned player on their ragdoll whatever movement they try.
+        private IEnumerator<float> PinStunned(Player target, Stun stun)
+        {
+            while (stuns.TryGetValue(target, out var current) && ReferenceEquals(current, stun) && target.IsConnected && target.Role.Base == stun.Role)
+            {
+                if ((target.Position - stun.Position).sqrMagnitude > .09f)
+                    target.Position = stun.Position;
+                yield return MEC.Timing.WaitForSeconds(.1f);
+            }
         }
 
         private void ClearStuns()
@@ -68,7 +113,7 @@ namespace Brainless.Weapons
             if (stunImmunity.TryGetValue(target, out float until) && until > Time.time)
                 return;
             var ragdoll = Ragdoll.CreateAndSpawn(target.Role.Type, target.Nickname, "Stunned", target.Position, target.Rotation);
-            var stun = new Stun { Role = target.Role.Base, Ragdoll = ragdoll };
+            var stun = new Stun { Role = target.Role.Base, Ragdoll = ragdoll, Position = target.Position };
             stuns[target] = stun;
             // Hide the body standing over its own ragdoll two ways: EXILED's ghost mode
             // and the game's own SCP-268 invisibility, which also covers dummies.
@@ -78,6 +123,7 @@ namespace Brainless.Weapons
             if (cfg.BlindTarget)
                 target.EnableEffect(EffectType.Blinded, cfg.StunSeconds);
             target.ShowHint("<b>You were stunned!</b>", cfg.StunSeconds);
+            lifetime.Run(PinStunned(target, stun));
             lifetime.Later(cfg.StunSeconds, () => Recover(target, stun, true));
         }
 
@@ -124,6 +170,7 @@ namespace Brainless.Weapons
         {
             internal PlayerRoleBase Role;
             internal Ragdoll Ragdoll;
+            internal Vector3 Position;
         }
     }
 }

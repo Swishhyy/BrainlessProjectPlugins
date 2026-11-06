@@ -26,6 +26,9 @@ namespace Brainless.Weapons
         public float ScpDamage { get; set; } = 1;
         public int RoundCap { get; set; } = 2;
         public float Weight { get; set; } = 2;
+
+        [System.ComponentModel.Description("Only staff can hand this out (ci give / ci spawn). Natural loot, starting gear, role kits and other plugins (coins) cannot issue it.")]
+        public bool AdminOnly { get; set; }
     }
 
     public sealed class Config : Exiled.API.Interfaces.IConfig
@@ -136,10 +139,10 @@ namespace Brainless.Weapons
         {
             Id = 7209,
             Name = "Stun Gun",
-            Description = "Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
+            Description = "Rare. 5 shots, no reload. Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
             BaseType = ItemType.GunCOM18,
-            Magazine = 6,
-            Reserve = 12,
+            Magazine = 5,
+            Reserve = 0,
             HumanDamage = 0,
             ScpDamage = 0,
             RoundCap = 1
@@ -149,11 +152,12 @@ namespace Brainless.Weapons
         {
             Id = 7207,
             Name = "Grenade Launcher",
-            Description = "Fires a grenade with each shot. Holds up to 16; cannot reload.",
+            Description = "Staff only. Fires a grenade with each shot. Holds up to 16; cannot reload.",
             BaseType = ItemType.GunLogicer,
             Magazine = 16,
             Reserve = 0,
-            RoundCap = 1
+            RoundCap = 1,
+            AdminOnly = true
         };
         // EXILED preserves existing YAML lists rather than appending new defaults.
         // Add this newly introduced weapon once; later deletions/edits are respected.
@@ -186,7 +190,37 @@ namespace Brainless.Weapons
                 Weapons.Add(CreateCursedPistol());
             if (CatalogRevision < 7 && !Weapons.Any(w => w.Id == CursedShotgunId))
                 Weapons.Add(CreateCursedShotgun());
-            CatalogRevision = Math.Max(7, CatalogRevision);
+            // Revision 8: the Stun Gun becomes rare map loot with 5 shots and no reload;
+            // revision 9: the Grenade Launcher becomes admin-only.
+            if (CatalogRevision < 8)
+                MakeRareStunGun();
+            if (CatalogRevision < 9)
+                MakeAdminOnly(7207);
+            CatalogRevision = Math.Max(9, CatalogRevision);
+        }
+
+        private void MakeRareStunGun()
+        {
+            foreach (var stun in Weapons.Where(w => w.Id == 7209))
+            {
+                stun.Magazine = 5;
+                stun.Reserve = 0;
+            }
+
+            foreach (var rule in Distribution?.MapRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<MapLootRule>())
+                rule.ChancePercent = 1;
+            foreach (var rule in Distribution?.PlayerRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<PlayerLootRule>())
+                rule.ChancePercent = 0;
+        }
+
+        private void MakeAdminOnly(uint id)
+        {
+            foreach (var weapon in Weapons.Where(w => w.Id == id))
+                weapon.AdminOnly = true;
+            foreach (var rule in Distribution?.MapRules?.Where(r => r.CustomId == id) ?? Enumerable.Empty<MapLootRule>())
+                rule.ChancePercent = 0;
+            foreach (var rule in Distribution?.PlayerRules?.Where(r => r.CustomId == id) ?? Enumerable.Empty<PlayerLootRule>())
+                rule.ChancePercent = 0;
         }
 
         internal void Prepare()
@@ -344,7 +378,7 @@ namespace Brainless.Weapons
                 return "The server did not add the weapon to the inventory; check the server log.";
             }
 
-            if (Id != 7207)
+            if (!Plugin.HasFixedShots(Id))
                 player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);

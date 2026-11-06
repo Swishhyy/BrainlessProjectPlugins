@@ -20,7 +20,7 @@ namespace Brainless.ZombieOptOut
         public override string Name => "BrainlessZombieOptOut";
         public override string Prefix => "brainless_zombie_opt_out";
         public override string Author => "Kadava; Brainless Project";
-        public override Version Version => new Version(0, 1, 0);
+        public override Version Version => new Version(0, 1, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 
@@ -74,8 +74,6 @@ namespace Brainless.ZombieOptOut
             };
             ServerSpecificSettingsSync.DefinedSettings = existing.Concat(settings).ToArray();
             ServerSpecificSettingsSync.ServerOnSettingValueReceived += SettingReceived;
-            ServerSpecificSettingsSync.ServerOnStatusReceived += StatusReceived;
-            P.Verified += Verified;
             P.ChangingRole += ChangingRole;
             P.Destroying += Destroying;
             P.ReceivingEffect += ReceivingEffect;
@@ -94,8 +92,6 @@ namespace Brainless.ZombieOptOut
             updates?.Dispose();
             updates = null;
             ServerSpecificSettingsSync.ServerOnSettingValueReceived -= SettingReceived;
-            ServerSpecificSettingsSync.ServerOnStatusReceived -= StatusReceived;
-            P.Verified -= Verified;
             P.ChangingRole -= ChangingRole;
             P.Destroying -= Destroying;
             P.ReceivingEffect -= ReceivingEffect;
@@ -147,20 +143,6 @@ namespace Brainless.ZombieOptOut
                 Prefs(player).OptOut = buttons.SyncIsA;
             else if (setting.SettingId == Config.SettingsIdBase + 2)
                 Prefs(player).AutoFill = buttons.SyncIsA;
-        });
-
-        private void Verified(VerifiedEventArgs ev) => Sync(ev.Player);
-
-        private void StatusReceived(ReferenceHub hub, SSSUserStatusReport _)
-        {
-            if (ServerSpecificSettingsSync.GetUserVersion(hub) != ServerSpecificSettingsSync.Version)
-                Sync(Player.Get(hub));
-        }
-
-        private void Sync(Player player) => Safe.Run(() =>
-        {
-            if (settings != null && player != null && player.IsConnected && !player.IsHost)
-                ServerSpecificSettingsSync.SendToPlayer(player.ReferenceHub);
         });
 
         private void Left(LeftEventArgs ev)

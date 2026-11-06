@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.ScpProximityChat</AssemblyName>
     <RootNamespace>Brainless.ScpProximityChat</RootNamespace>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Brainless Project</Authors>
   </PropertyGroup>

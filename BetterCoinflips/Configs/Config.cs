@@ -15,7 +15,7 @@ namespace BetterCoinflips.Configs
         public bool Debug { get; set; } = false;
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
-        [Description("Balance migration marker. Revision 2: coins lean toward goodies and harmless pranks with a little gambling; nothing sends players to spectator by default (kicks, spectator swap, instant explosion and Tesla teleport off, damage effects leave 1 HP), and lethal effects are dropped from bad_effects. Only untouched stock values change; set 2 to keep your values.")]
+        [Description("Balance migration marker. Revision 2: coins lean toward goodies and harmless pranks with a little gambling; nothing sends players to spectator by default (kicks, spectator swap, instant explosion and Tesla teleport off, damage effects leave 1 HP), and lethal effects are dropped from bad_effects. Only untouched stock values change; set 2 to keep your values. Revision 3 removes the admin-only Stun Gun (7209) from custom_items.")]
         public int BalanceRevision { get; set; }
 
 
@@ -231,7 +231,6 @@ namespace BetterCoinflips.Configs
             7115,
             7117,
             7119,
-            7209,
         };
 
         [Description("Tails can give a cursed Brainless item. Proportional chance; skipped automatically when none of the listed items is installed.")]
@@ -390,8 +389,17 @@ namespace BetterCoinflips.Configs
         // stock default move to the current default; owner-edited values are kept.
         internal bool UpgradeBalance()
         {
-            if (BalanceRevision >= 2)
+            if (BalanceRevision >= 3)
                 return false;
+            // Revision 3: the Stun Gun (7209) is admin-only, so coins no longer hand it out.
+            if (BalanceRevision == 2)
+            {
+                CustomItems?.Remove(7209);
+                BalanceRevision = 3;
+                return true;
+            }
+
+            CustomItems?.Remove(7209);
             var stock = new Config();
             var properties = typeof(Config).GetProperties();
             var history = new Dictionary<string, int[]> { { "OneAmmoLogicerChance", new[] { 1 } }, { "EmptyHidChance", new[] { 5 } }, { "HpReductionChance", new[] { 20, 15 } }, { "WarheadChance", new[] { 10, 3 } }, { "ScpTpChance", new[] { 20, 12 } }, { "OneHpLeftChance", new[] { 15, 8 } }, { "TurnIntoScpChance", new[] { 30, 8 } }, { "InventoryResetChance", new[] { 20, 6 } }, { "ClassSwapChance", new[] { 10, 6 } }, { "InstantExplosionChance", new[] { 10, 4 } }, { "KickChance", new[] { 5, 0 } }, { "SpectSwapChance", new[] { 10, 3 } }, { "TeslaTpChance", new[] { 15, 6 } }, { "InventorySwapChance", new[] { 20, 12 } }, { "HandcuffChance", new[] { 10, 6 } }, { "LiveHeChance", new[] { 30, 15 } }, { "RandomBadEffectChance", new[] { 20, 15 } }, { "CustomItemChance", new[] { 30 } }, { "CustomRoleChance", new[] { 20 } } };
@@ -406,7 +414,7 @@ namespace BetterCoinflips.Configs
                 CursedCustomItems = stock.CursedCustomItems;
             if (BadEffects != null && BadEffects.SetEquals(OldBadEffects))
                 BadEffects.ExceptWith(LethalEffects);
-            BalanceRevision = 2;
+            BalanceRevision = 3;
             return true;
         }
     }

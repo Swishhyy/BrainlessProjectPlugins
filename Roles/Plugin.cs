@@ -32,7 +32,7 @@ namespace Brainless.Roles
         public override string Name => "BrainlessRoles";
         public override string Prefix => "brainless_roles";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 9, 1);
+        public override Version Version => new Version(0, 9, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Lower;
         public static Plugin Instance { get; private set; }
@@ -59,7 +59,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 8 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 9 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -342,7 +342,12 @@ namespace Brainless.Roles
         {
             string profile = active.TryGetValue(player, out var state) && player.Role == state.Role ? state.Definition.Id + " - " + state.Definition.Name + "\n" + state.Definition.Hint : "No Brainless custom role; native " + player.Role.Type;
             string note = assignmentNotes.TryGetValue(player, out var value) ? value : "No spawn assignment recorded.";
-            return player.Nickname + " (" + player.Id + "): " + profile + "\nBase: " + player.Role.Type + "; HP: " + player.Health.ToString("0") + "/" + player.MaxHealth.ToString("0") + "; shield: " + player.HumeShield.ToString("0") + "/" + player.MaxHumeShield.ToString("0") + "\n" + note;
+            // Speed: the profile's multiplier plus any native movement effects currently on the player.
+            string speed = state != null && player.Role == state.Role ? "; speed: x" + state.Definition.SpeedMultiplier.ToString("0.00") : "";
+            var boost = player.GetEffect(EffectType.MovementBoost);
+            var slow = player.GetEffect(EffectType.Slowness);
+            string effects = (boost?.IsEnabled == true ? " (Movement Boost " + boost.Intensity + "%)" : "") + (slow?.IsEnabled == true ? " (Slowness " + slow.Intensity + "%)" : "");
+            return player.Nickname + " (" + player.Id + "): " + profile + "\nBase: " + player.Role.Type + "; HP: " + player.Health.ToString("0") + "/" + player.MaxHealth.ToString("0") + "; shield: " + player.HumeShield.ToString("0") + "/" + player.MaxHumeShield.ToString("0") + speed + effects + "\n" + note;
         }
 
         internal bool SetForAdmin(Player player, string id, out string response)

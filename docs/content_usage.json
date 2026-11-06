@@ -25,8 +25,8 @@
   },
   "weapons": {
     "7206": "Shoot toward solid geometry for one reflected shot.",
-    "7207": "Fire normally; each bullet launches a grenade. No reload.",
-    "7209": "Shoot a target to knock them down with a fake death for a few seconds; it never kills.",
+    "7207": "Staff only: ci give 7207. Fire normally; each bullet launches a grenade. No reload.",
+    "7209": "Rare loot. 5 shots, no reload: shoot a target to knock them down with a fake death for a few seconds; it never kills.",
     "7210": "Shoot normally; every hit does double damage, but about 1 in 3 pulls jams.",
     "7211": "Shoot normally for huge damage; each shot knocks you back and drains stamina."
   },
