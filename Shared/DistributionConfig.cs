@@ -129,23 +129,66 @@ namespace Brainless.Internal
         internal string DescribeChances() => "Map loot (per matching source/zone):\n" + string.Join("\n", MapRules.Select(r => r.CustomId + ": " + r.ChancePercent.Value.ToString("0.######") + "%; " + string.Join(", ", r.SourceTypes))) + "\nStarting gear (per matching human spawn):\n" + string.Join("\n", PlayerRules.Select(r => r.CustomId + ": " + r.ChancePercent.Value.ToString("0.######") + "%; " + (r.Roles.Count == 0 ? "any human" : string.Join(", ", r.Roles)) + "; " + (r.ReplaceTypes.Count == 0 ? "extra item" : "replaces " + string.Join(", ", r.ReplaceTypes))));
         public static DistributionConfig Items() => new DistributionConfig
         {
+            MaxMapReplacements = 8,
+            MaxPlayerGrants = 6,
             MapRules = new List<MapLootRule>
             {
-                Map(7105, 2, ItemType.KeycardJanitor),
-                Map(7103, 2, ItemType.GrenadeFlash),
-                Map(7101, 3, ItemType.GrenadeFlash),
-                Map(7113, 2, ItemType.GrenadeHE),
-                Map(7102, 1, ItemType.GrenadeHE),
+                Map(7105, 2, ItemType.KeycardJanitor, 30),
+                Map(7103, 2, ItemType.GrenadeFlash, 25),
+                Map(7101, 3, ItemType.GrenadeFlash, 30),
+                Map(7113, 2, ItemType.GrenadeHE, 40),
+                Map(7102, 1, ItemType.GrenadeHE, 25),
             },
             PlayerRules = new List<PlayerLootRule>
             {
-                Add(7105, 2, RoleTypeId.ClassD),
-                Replace(7103, 2, ItemType.GrenadeFlash),
-                Replace(7101, 3, ItemType.GrenadeFlash),
-                Replace(7113, 2, ItemType.GrenadeHE),
-                Replace(7102, 1, ItemType.GrenadeHE),
+                Add(7105, 2, RoleTypeId.ClassD, 8),
+                Replace(7103, 2, ItemType.GrenadeFlash, 10),
+                Replace(7101, 3, ItemType.GrenadeFlash, 12),
+                Replace(7113, 2, ItemType.GrenadeHE, 15),
+                Replace(7102, 1, ItemType.GrenadeHE, 10),
             }
         };
+
+        // Items revision 13: the grenades and Door Jammer drop far more often. Raises
+        // (never lowers) each live chance and limit; a 0% rule stays switched off.
+        internal void RaiseUniqueLoot()
+        {
+            if (MapRules == null || PlayerRules == null || MapRules.Any(r => r == null) || PlayerRules.Any(r => r == null))
+                return;
+            PrepareChances();
+            var stock = Items();
+            var mapBefore = MapRules.ToDictionary(r => r, r => r.ChancePercent);
+            var playerBefore = PlayerRules.ToDictionary(r => r, r => r.ChancePercent);
+            foreach (var rule in MapRules)
+            {
+                double? target = stock.MapRules.FirstOrDefault(r => r.CustomId == rule.CustomId)?.ChancePercent;
+                if (target.HasValue && rule.ChancePercent > 0 && rule.ChancePercent < target)
+                    rule.ChancePercent = target;
+            }
+
+            foreach (var rule in PlayerRules)
+            {
+                double? target = stock.PlayerRules.FirstOrDefault(r => r.CustomId == rule.CustomId)?.ChancePercent;
+                if (target.HasValue && rule.ChancePercent > 0 && rule.ChancePercent < target)
+                    rule.ChancePercent = target;
+            }
+
+            // A heavily edited pool could pass 100% once raised: keep its old chances then.
+            try
+            {
+                Validate(_ => true);
+            }
+            catch (InvalidOperationException)
+            {
+                foreach (var pair in mapBefore)
+                    pair.Key.ChancePercent = pair.Value;
+                foreach (var pair in playerBefore)
+                    pair.Key.ChancePercent = pair.Value;
+            }
+
+            MaxMapReplacements = Math.Max(MaxMapReplacements, stock.MaxMapReplacements);
+            MaxPlayerGrants = Math.Max(MaxPlayerGrants, stock.MaxPlayerGrants);
+        }
         public static DistributionConfig Weapons() => new DistributionConfig
         {
             MapChancePercent = 20,
@@ -164,29 +207,32 @@ namespace Brainless.Internal
                 Replace(7209, 2, ItemType.GunCOM18)
             }
         };
-        private static MapLootRule Map(uint id, int weight, ItemType source) => new MapLootRule
+        private static MapLootRule Map(uint id, int weight, ItemType source, double? chance = null) => new MapLootRule
         {
             CustomId = id,
             Weight = weight,
+            ChancePercent = chance,
             SourceTypes = new List<ItemType>
             {
                 source
             }
         };
-        private static PlayerLootRule Replace(uint id, int weight, ItemType source) => new PlayerLootRule
+        private static PlayerLootRule Replace(uint id, int weight, ItemType source, double? chance = null) => new PlayerLootRule
         {
             CustomId = id,
             Weight = weight,
+            ChancePercent = chance,
             ReplaceTypes = new List<ItemType>
             {
                 source
             }
         };
-        private static PlayerLootRule Add(uint id, int weight, params RoleTypeId[] roles) => new PlayerLootRule
+        private static PlayerLootRule Add(uint id, int weight, RoleTypeId role, double? chance = null) => new PlayerLootRule
         {
             CustomId = id,
             Weight = weight,
-            Roles = roles.ToList()
+            ChancePercent = chance,
+            Roles = new List<RoleTypeId> { role }
         };
     }
 

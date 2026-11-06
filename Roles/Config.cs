@@ -67,17 +67,19 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain; revision 9 resets any Poisonous 106 slowdown to normal speed.")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain; revision 9 resets any Poisonous 106 slowdown to normal speed; revision 10 gives Boom Boom a bigger, harder death blast.")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
         [Description("Z04 bursts on confirmed deaths. Zero limits mean unlimited; separate death/LOS/damage controls are available.")]
         public ExplosiveZombieTuning ExplosiveZombie { get; set; } = new ExplosiveZombieTuning();
+        [Description("B04 Boom Boom's death blast.")]
         public ExplosiveZombieTuning ExplosiveScp173 { get; set; } = new ExplosiveZombieTuning
         {
             WarningSeconds = 1.5f,
-            Radius = 4,
-            HumanDamage = 100
+            Radius = 7,
+            HumanDamage = 175,
+            WarningRange = 14
         };
 
         [Description("Lockpick channel time for a level-one door. Higher requirements add lockpick_extra_seconds_per_level.")]
@@ -164,6 +166,7 @@ namespace Brainless.Roles
             UpgradePlaytestBalance();
             UpgradeHyperVigor();
             UpgradePoisonousSpeed();
+            UpgradeBoomBoom();
             var descriptions = Catalog.Create().ToDictionary(r => r.Id, r => r.Hint);
             Catalog.FillMissingChances(Roles, LegacyFamilyChance);
             foreach (var role in Roles)
@@ -494,6 +497,23 @@ namespace Brainless.Roles
             foreach (var role in Roles.Where(r => r.Id.Equals("L04", StringComparison.OrdinalIgnoreCase) && r.SpeedMultiplier < 1))
                 role.SpeedMultiplier = 1;
             RoleCatalogRevision = 9;
+        }
+
+        // Revision 10: Boom Boom's death blast 4 m / 100 -> 7 m / 175 (untouched stock values).
+        private void UpgradeBoomBoom()
+        {
+            if (RoleCatalogRevision >= 10)
+                return;
+            var blast = ExplosiveScp173;
+            if (blast != null && Math.Abs(blast.Radius - 4) < .001f && Math.Abs(blast.HumanDamage - 100) < .001f)
+            {
+                blast.Radius = 7;
+                blast.HumanDamage = 175;
+                if (Math.Abs(blast.WarningRange - 10) < .001f)
+                    blast.WarningRange = 14;
+            }
+
+            RoleCatalogRevision = 10;
         }
 
         private void UpgradeAnyHumanProfiles()

@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 9, 2);
+        public override Version Version => new Version(0, 10, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -529,7 +529,7 @@ namespace Brainless.Items
                 return;
             }
 
-            if (item.Id == 7102 && projectile is ExplosionGrenadeProjectile parent)
+            if (item.Id == 7102 && projectile is ExplosionGrenadeProjectile parent && !Config.Tuning.ClusterGrenade.NativeParentBlast)
                 parent.MaxRadius = Config.Tuning.ClusterGrenade.ParentRadius;
             thrown.Arm(projectile.Serial, new Payload { Item = item, Projectile = projectile, Source = new DamageSource(owner), Foam = Config.Tuning.ContainmentFoam, Gas = Config.Tuning.GasGrenade, Cluster = Config.Tuning.ClusterGrenade });
             if (projectile is TimeGrenadeProjectile timed)
@@ -549,9 +549,14 @@ namespace Brainless.Items
                 return;
             bool allowed = ev.IsAllowed;
             var targets = ev.TargetsToAffect.ToArray();
-            ev.IsAllowed = allowed && payload.Cluster.DamageEnvironment;
-            if (ev.IsAllowed)
-                ev.TargetsToAffect.Clear();
+            if (payload.Cluster.NativeParentBlast)
+                targets = Array.Empty<Player>();
+            else
+            {
+                ev.IsAllowed = allowed && payload.Cluster.DamageEnvironment;
+                if (ev.IsAllowed)
+                    ev.TargetsToAffect.Clear();
+            }
             // HE grenades reach this callback after native visual/target setup.
             thrown.Resolve(ev.Projectile.Serial, allowed, p => Cluster(ev.Position, p.Source, p.Cluster, targets), p => RetireSerial(ev.Projectile.Serial));
         });
@@ -678,6 +683,7 @@ namespace Brainless.Items
             FxAudio.Play(lifetime, position, seconds, kind, volume: audio.Volume, range: audio.Range, fullVolumeRange: audio.FullVolumeRange);
         }
 
+        // With NativeParentBlast the game already dealt the first blast; targets is empty.
         private void Cluster(Vector3 position, DamageSource source, ClusterTuning tuning, IEnumerable<Player> targets)
         {
             var blastBudget = new BlastBudget(tuning.SharedHumanDamageCap, tuning.SharedScpDamageCap);
@@ -700,7 +706,7 @@ namespace Brainless.Items
                 Vector3 separated = start + outward * .25f;
                 if (!Physics.Linecast(start, separated, InventorySystem.Items.ThrowableProjectiles.ExplosionGrenade.HitBlockerMask, QueryTriggerInteraction.Ignore))
                     start = separated;
-                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration, tuning.DamageEnvironment);
+                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration, tuning.DamageEnvironment, nativeScale: tuning.ChildNativeDamagePercent / 100f);
             }
         }
 

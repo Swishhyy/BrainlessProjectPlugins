@@ -51,6 +51,9 @@ namespace Brainless.Items
         // SCRAMBLE Goggles (revision 7); Echo Canister, Signal Jammer, Filter Inhaler and
         // Bio Grenade (revision 8).
         internal static readonly HashSet<uint> Retired = new HashSet<uint> { 7104, 7106, 7107, 7108, 7109, 7111, 7112, 7118, 7121 };
+        // The grenades and Door Jammer (revision 13 raised their per-round cap from 2).
+        internal static readonly HashSet<uint> UniqueLoot = new HashSet<uint> { 7101, 7102, 7103, 7105, 7113 };
+        internal const int UniqueRoundCap = 4;
         internal const string FoamDescription = "Covers the floor around it in SCP-173's sticky tantrum mess.";
         public int GrenadeBalanceRevision { get; set; }
         public int AudioBalanceRevision { get; set; }
@@ -60,6 +63,7 @@ namespace Brainless.Items
             {
                 Id = 7101,
                 Name = "Irritant Gas Grenade",
+                RoundCap = UniqueRoundCap,
                 Description = "Creates thick smoke to block vision.",
                 BaseType = ItemType.GrenadeFlash
             },
@@ -67,6 +71,7 @@ namespace Brainless.Items
             {
                 Id = 7102,
                 Name = "Cluster Grenade",
+                RoundCap = UniqueRoundCap,
                 Description = "Bursts into smaller grenades that scatter and explode.",
                 BaseType = ItemType.GrenadeHE
             },
@@ -74,6 +79,7 @@ namespace Brainless.Items
             {
                 Id = 7103,
                 Name = "Containment Foam Canister",
+                RoundCap = UniqueRoundCap,
                 Description = "Covers the floor around it in SCP-173's sticky tantrum mess.",
                 BaseType = ItemType.GrenadeFlash
             },
@@ -81,6 +87,7 @@ namespace Brainless.Items
             {
                 Id = 7105,
                 Name = "Door Jammer",
+                RoundCap = UniqueRoundCap,
                 Description = "Use this card on a closed door to jam it briefly.",
                 BaseType = ItemType.KeycardJanitor
             },
@@ -91,6 +98,7 @@ namespace Brainless.Items
         {
             Id = 7113,
             Name = "Impact Grenade",
+            RoundCap = UniqueRoundCap,
             BaseType = ItemType.GrenadeHE,
             Description = "Explodes when it hits a surface."
         };
@@ -154,7 +162,16 @@ namespace Brainless.Items
                 foreach (var spec in SupCatalog.CursedDefaults())
                     if (!Items.Any(i => i.Id == spec.Id))
                         Items.Add(spec);
-            CatalogRevision = Math.Max(12, CatalogRevision);
+            // Revision 13: unique items (grenades, Door Jammer) are found far more often.
+            if (CatalogRevision < 13)
+            {
+                Distribution?.RaiseUniqueLoot();
+                Tuning.Supply?.RaiseLimits();
+                foreach (var item in Items.Where(i => UniqueLoot.Contains(i.Id) && i.RoundCap > 0 && i.RoundCap < UniqueRoundCap))
+                    item.RoundCap = UniqueRoundCap;
+            }
+
+            CatalogRevision = Math.Max(13, CatalogRevision);
             // The Cursed Keycard now also counts lockers and generators.
             foreach (var card in Items.Where(i => i.Id == SupCatalog.CursedKeycard && i.Description == "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors."))
                 card.Description = SupCatalog.CursedDefaults().First(i => i.Id == SupCatalog.CursedKeycard).Description;

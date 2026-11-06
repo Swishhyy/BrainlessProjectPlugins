@@ -26,6 +26,13 @@ internal static class TuningTests
         var weapons = new WeaponTuning();
         var zombie = new ExplosiveZombieTuning();
         check(Valid(items) && Valid(weapons) && Valid(zombie), "all shipped tuning defaults validate");
+        check(items.ClusterGrenade.NativeParentBlast && items.ClusterGrenade.ChildNativeDamagePercent == 40, "the cluster's first blast is a stock HE grenade and each child deals 40% of one");
+        var supply = new SupplyTuning { SmallLobbyCapacity = 6, MediumLobbyCapacity = 10, LargeLobbyCapacity = 14, ClusterMinPlayers = 12, SmallLobbyClusters = 0, MediumLobbyClusters = 1, LargeLobbyClusters = 2, WorldLootCount = 2 };
+        supply.RaiseLimits();
+        check(supply.SmallLobbyCapacity == 10 && supply.MediumLobbyCapacity == 16 && supply.LargeLobbyCapacity == 22 && supply.ClusterMinPlayers == 6 && supply.SmallLobbyClusters == 1 && supply.MediumLobbyClusters == 2 && supply.LargeLobbyClusters == 3 && supply.WorldLootCount == 4, "items revision 13 raises the old supply limits for unique items");
+        var roomy = new SupplyTuning { LargeLobbyCapacity = 40, ClusterMinPlayers = 2 };
+        roomy.RaiseLimits();
+        check(roomy.LargeLobbyCapacity == 40 && roomy.ClusterMinPlayers == 2, "items revision 13 never tightens an owner's looser supply limits");
         check(items.ClusterGrenade.DamageEnvironment && items.DoorBrace.DurationSeconds == 25, "clusters enable native environment damage and Door Jammer lasts 25 seconds by default");
         var brace = new BraceTuning
         {

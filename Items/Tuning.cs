@@ -117,6 +117,15 @@ namespace Brainless.Items
     {
         public bool DamageEnvironment { get; set; } = true;
 
+        // The first blast is a stock HE grenade (native radius, damage and effects).
+        // Off: the custom Parent* values below are used instead.
+        public bool NativeParentBlast { get; set; } = true;
+
+        // Each child deals this percent of a stock HE grenade at the same distance.
+        // 0: children use the custom Radius/HumanDamage/ScpDamage falloff instead.
+        [Tune(0, 500)]
+        public float ChildNativeDamagePercent { get; set; } = 40;
+
         [Tune(.1, 60)]
         public float ParentRadius { get; set; } = 6;
 
@@ -205,13 +214,13 @@ namespace Brainless.Items
     public sealed class SupplyTuning
     {
         [Tune(0, 10000)]
-        public int SmallLobbyCapacity { get; set; } = 6;
+        public int SmallLobbyCapacity { get; set; } = 10;
 
         [Tune(0, 10000)]
-        public int MediumLobbyCapacity { get; set; } = 10;
+        public int MediumLobbyCapacity { get; set; } = 16;
 
         [Tune(0, 10000)]
-        public int LargeLobbyCapacity { get; set; } = 14;
+        public int LargeLobbyCapacity { get; set; } = 22;
 
         [Tune(0, 1000)]
         public int MediumLobbyPlayers { get; set; } = 12;
@@ -220,22 +229,36 @@ namespace Brainless.Items
         public int LargeLobbyPlayers { get; set; } = 24;
 
         [Tune(0, 1000)]
-        public int ClusterMinPlayers { get; set; } = 12;
+        public int ClusterMinPlayers { get; set; } = 6;
 
         [Tune(0, 1000)]
-        public int SmallLobbyClusters { get; set; }
+        public int SmallLobbyClusters { get; set; } = 1;
 
         [Tune(0, 1000)]
-        public int MediumLobbyClusters { get; set; } = 1;
+        public int MediumLobbyClusters { get; set; } = 2;
 
         [Tune(0, 1000)]
-        public int LargeLobbyClusters { get; set; } = 2;
+        public int LargeLobbyClusters { get; set; } = 3;
 
         [Tune(0, 100)]
-        public int WorldLootCount { get; set; } = 2;
+        public int WorldLootCount { get; set; } = 4;
 
         [System.ComponentModel.Description("Legacy setting; smoke-only grenades no longer require or create a filter.")]
         public bool PairGasWithFilter { get; set; }
+
+        // Items revision 13: more grenades and jammers per round. Raises only.
+        internal void RaiseLimits()
+        {
+            var stock = new SupplyTuning();
+            SmallLobbyCapacity = System.Math.Max(SmallLobbyCapacity, stock.SmallLobbyCapacity);
+            MediumLobbyCapacity = System.Math.Max(MediumLobbyCapacity, stock.MediumLobbyCapacity);
+            LargeLobbyCapacity = System.Math.Max(LargeLobbyCapacity, stock.LargeLobbyCapacity);
+            ClusterMinPlayers = System.Math.Min(ClusterMinPlayers, stock.ClusterMinPlayers);
+            SmallLobbyClusters = System.Math.Max(SmallLobbyClusters, stock.SmallLobbyClusters);
+            MediumLobbyClusters = System.Math.Max(MediumLobbyClusters, stock.MediumLobbyClusters);
+            LargeLobbyClusters = System.Math.Max(LargeLobbyClusters, stock.LargeLobbyClusters);
+            WorldLootCount = System.Math.Max(WorldLootCount, stock.WorldLootCount);
+        }
 
         internal int Capacity(int players) => players < MediumLobbyPlayers ? SmallLobbyCapacity : players < LargeLobbyPlayers ? MediumLobbyCapacity : LargeLobbyCapacity;
         internal int Clusters(int players) => players < MediumLobbyPlayers ? SmallLobbyClusters : players < LargeLobbyPlayers ? MediumLobbyClusters : LargeLobbyClusters;

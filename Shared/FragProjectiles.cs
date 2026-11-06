@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Exiled.API.Enums;
 using Exiled.API.Features;
 using Exiled.API.Features.Pickups.Projectiles;
@@ -16,9 +17,12 @@ namespace Brainless.Internal
         private readonly Dictionary<int, Frag> active = new Dictionary<int, Frag>();
         internal int Count => active.Count;
 
-        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false, Vector3? scale = null, bool stationary = false)
+        internal ExplosionGrenadeProjectile Launch(Vector3 position, Vector3 velocity, float fuse, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false, Vector3? scale = null, bool stationary = false, float nativeScale = 0)
         {
             var grenade = Projectile.Create<ExplosionGrenadeProjectile>(ProjectileType.FragGrenade);
+            // Native-scaled frags keep the stock HE radius and damage curve.
+            if (nativeScale > 0)
+                radius = grenade.MaxRadius;
             // Resize before the first spawn. Resizing a spawned pickup makes EXILED
             // unspawn and respawn it, which can drop an armed fuse.
             if (scale.HasValue)
@@ -28,7 +32,7 @@ namespace Brainless.Internal
             grenade.BurnDuration = 0;
             grenade.DeafenDuration = 0;
             grenade.ConcussDuration = 0;
-            Track(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration, damageEnvironment);
+            Track(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration, damageEnvironment, nativeScale);
             try
             {
                 grenade.Spawn(position, shouldBeActive: false, previousOwner: source.Owner ?? Server.Host);
@@ -57,11 +61,25 @@ namespace Brainless.Internal
             }
         }
 
-        internal void Track(ExplosionGrenadeProjectile grenade, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false)
+        internal void Track(ExplosionGrenadeProjectile grenade, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget = null, bool requireLineOfSight = true, bool affectOwner = true, int armorPenetration = 50, bool damageEnvironment = false, float nativeScale = 0)
         {
             grenade.MaxRadius = radius;
             grenade.BurnDuration = grenade.DeafenDuration = grenade.ConcussDuration = 0;
-            active[grenade.Serial] = new Frag(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration, damageEnvironment);
+            active[grenade.Serial] = new Frag(grenade, source, radius, humanPeak, scpPeak, budget, requireLineOfSight, affectOwner, armorPenetration, damageEnvironment, nativeScale);
+        }
+
+        private static readonly FieldInfo DamageCurve = typeof(InventorySystem.Items.ThrowableProjectiles.ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        // What a stock HE grenade would deal at this distance, from the prefab's own
+        // damage curve. Returns null when the curve can't be read.
+        internal static float? NativeDamage(ExplosionGrenadeProjectile grenade, float distance, bool scp)
+        {
+            if (grenade?.Base == null || !(DamageCurve?.GetValue(grenade.Base) is AnimationCurve curve))
+                return null;
+            float amount = curve.Evaluate(distance);
+            if (scp)
+                amount *= grenade.ScpDamageMultiplier;
+            return Math.Max(0, amount);
         }
 
         internal bool Exploding(ExplodingGrenadeEventArgs ev)
@@ -87,7 +105,9 @@ namespace Brainless.Internal
 
             foreach (var target in targets.Where(frag.Source.CanAffect))
             {
-                float amount = Rules.Falloff(Vector3.Distance(ev.Position, target.Position), frag.Radius, target.IsScp ? frag.ScpPeak : frag.HumanPeak);
+                float distance = Vector3.Distance(ev.Position, target.Position);
+                float? native = frag.NativeScale > 0 ? NativeDamage(frag.Projectile, distance, target.IsScp) : null;
+                float amount = native.HasValue ? native.Value * frag.NativeScale : Rules.Falloff(distance, frag.Radius, target.IsScp ? frag.ScpPeak : frag.HumanPeak);
                 if (amount <= 0 || (!frag.AffectOwner && target == frag.Source.Owner) || (frag.RequireLineOfSight && !ClearBlast(ev.Position, target)))
                     continue;
                 if (frag.Budget != null)
@@ -126,8 +146,10 @@ namespace Brainless.Internal
             internal readonly bool RequireLineOfSight, AffectOwner, DamageEnvironment;
             internal readonly float Expires;
             internal readonly int ArmorPenetration;
-            internal Frag(ExplosionGrenadeProjectile projectile, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget, bool requireLineOfSight, bool affectOwner, int armorPenetration, bool damageEnvironment)
+            internal readonly float NativeScale;
+            internal Frag(ExplosionGrenadeProjectile projectile, DamageSource source, float radius, float humanPeak, float scpPeak, BlastBudget budget, bool requireLineOfSight, bool affectOwner, int armorPenetration, bool damageEnvironment, float nativeScale)
             {
+                NativeScale = nativeScale;
                 Projectile = projectile;
                 Source = source;
                 Radius = radius;
