@@ -155,6 +155,9 @@ namespace Brainless.Items
                     if (!Items.Any(i => i.Id == spec.Id))
                         Items.Add(spec);
             CatalogRevision = Math.Max(12, CatalogRevision);
+            // The Cursed Keycard now also counts lockers and generators.
+            foreach (var card in Items.Where(i => i.Id == SupCatalog.CursedKeycard && i.Description == "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors."))
+                card.Description = SupCatalog.CursedDefaults().First(i => i.Id == SupCatalog.CursedKeycard).Description;
             if (Cursed == null)
                 throw new InvalidOperationException("cursed cannot be null.");
             if (Sup == null)

@@ -12,7 +12,7 @@
     "7119": "Equip and interact with an eligible door, or hold the tool key while looking at it.",
     "7120": "Hold the tool key to call a native mini wave for your faction.",
     "7122": "Eat the pill to detonate; usually fatal to the user.",
-    "7123": "Use it on any door except the Alpha Warhead. Each door it opens pings the SCPs; it crumbles after 5 doors.",
+    "7123": "Use it on doors, keycard lockers and generators (not the Alpha Warhead). Each one pings the SCPs; it crumbles after 5 uses.",
     "7124": "Use it like a normal SCP-500. 50% super heal, 50% nothing.",
     "7125": "Use it like normal adrenaline. Run during the rush, then hide before the crash.",
     "7126": "Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use.",

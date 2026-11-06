@@ -75,7 +75,7 @@ namespace Brainless.Items
                 Id = 7123,
                 Name = "Cursed Keycard",
                 BaseType = ItemType.KeycardO5,
-                Description = "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors.",
+                Description = "Opens every door, locker and generator except the Alpha Warhead, but each one tells the SCPs where you are. Crumbles after 5 uses.",
                 Charges = 5,
                 RoundCap = 2
             },

@@ -24,6 +24,8 @@ namespace Brainless.Items
             P.UsingItemCompleted += UsingCompleted;
             P.ActivatingWarheadPanel += WarheadPanel;
             P.ThrowingRequest += PullingPin;
+            P.InteractingLocker += CursedLocker;
+            P.UnlockingGenerator += CursedGenerator;
         }
 
         private void CursedUnsubscribe()
@@ -31,6 +33,8 @@ namespace Brainless.Items
             P.UsingItemCompleted -= UsingCompleted;
             P.ActivatingWarheadPanel -= WarheadPanel;
             P.ThrowingRequest -= PullingPin;
+            P.InteractingLocker -= CursedLocker;
+            P.UnlockingGenerator -= CursedGenerator;
             cursedFlashes.Clear();
         }
 
@@ -188,11 +192,41 @@ namespace Brainless.Items
             });
         }
 
-        // Cursed Keycard: every keycard door it opens pings the SCPs and spends a use.
+        // Cursed Keycard: every keycard door, locker or generator it opens pings the SCPs
+        // and spends one of its uses.
         private void CursedDoor(Player player, Item card, Door door)
         {
             if (!door.IsKeycardDoor || door.IsOpen)
                 return;
+            CursedAccess(player, card);
+        }
+
+        private Item HeldCursedKeycard(Player player)
+        {
+            var held = player?.CurrentItem;
+            return held != null && Find(held.Serial)?.Id == SupCatalog.CursedKeycard ? held : null;
+        }
+
+        // Keycard lockers (armory racks, pedestals): only a locked chamber being opened counts.
+        private void CursedLocker(InteractingLockerEventArgs ev) => Safe.Run(() =>
+        {
+            var card = HeldCursedKeycard(ev.Player);
+            var chamber = ev.InteractingChamber;
+            if (card == null || !ev.IsAllowed || chamber == null || chamber.IsOpen || System.Convert.ToInt64(chamber.RequiredPermissions) == 0)
+                return;
+            CursedAccess(ev.Player, card);
+        });
+
+        private void CursedGenerator(UnlockingGeneratorEventArgs ev) => Safe.Run(() =>
+        {
+            var card = HeldCursedKeycard(ev.Player);
+            if (card == null || !ev.IsAllowed || ev.Generator == null || ev.Generator.IsUnlocked)
+                return;
+            CursedAccess(ev.Player, card);
+        });
+
+        private void CursedAccess(Player player, Item card)
+        {
             string zone = player.Zone switch
             {
                 ZoneType.LightContainment => "Light Containment",

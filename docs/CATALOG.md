@@ -22,7 +22,7 @@ Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round eve
 | 7119 | Hacking Chip | Use this card to hack doors below level 3. | Equip and interact with an eligible door, or hold the tool key while looking at it. |
 | 7120 | Reinforcement Radio | Calls a native mini wave for your faction. | Hold the tool key to call a native mini wave for your faction. |
 | 7122 | SCP500-E Volatile Pills | Makes you explode. You have a small chance to survive. | Eat the pill to detonate; usually fatal to the user. |
-| 7123 | Cursed Keycard | Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors. | Use it on any door except the Alpha Warhead. Each door it opens pings the SCPs; it crumbles after 5 doors. |
+| 7123 | Cursed Keycard | Opens every door, locker and generator except the Alpha Warhead, but each one tells the SCPs where you are. Crumbles after 5 uses. | Use it on doors, keycard lockers and generators (not the Alpha Warhead). Each one pings the SCPs; it crumbles after 5 uses. |
 | 7124 | Cursed SCP-500 | 50/50: a super heal (full heal, cures, +50 AHP and regeneration) or nothing at all. | Use it like a normal SCP-500. 50% super heal, 50% nothing. |
 | 7125 | Cursed Adrenaline | +60% speed for 10 seconds, then you crash: frozen for 5 seconds and blinded for 3. | Use it like normal adrenaline. Run during the rush, then hide before the crash. |
 | 7126 | Monkey's Paw | Flip it to make a wish. You get what you wished for... with a twist. Single use. | Flip it like a coin to make a twisted wish (needs BetterCoinflips). Single use. |
