@@ -114,12 +114,12 @@ internal static class MetadataContracts
             string path = Path.Combine(root, dll);
             if (!File.Exists(path))
                 continue;
-            using var stream = File.OpenRead(path);
-            using var pe = new PEReader(stream);
-            var reader = pe.GetMetadataReader();
-            var plugin = reader.TypeDefinitions.Select(reader.GetTypeDefinition).Single(t => reader.GetString(t.Namespace) == ns && reader.GetString(t.Name) == "Plugin");
-            var names = plugin.GetMethods().Select(reader.GetMethodDefinition).Select(md => reader.GetString(md.Name)).ToArray();
-            check(!forbidden.Any(names.Contains), ns + " does not resend the settings menu on join or status reports");
+            using var syncStream = File.OpenRead(path);
+            using var syncPe = new PEReader(syncStream);
+            var syncReader = syncPe.GetMetadataReader();
+            var syncPlugin = syncReader.TypeDefinitions.Select(syncReader.GetTypeDefinition).Single(t => syncReader.GetString(t.Namespace) == ns && syncReader.GetString(t.Name) == "Plugin");
+            var syncNames = syncPlugin.GetMethods().Select(syncReader.GetMethodDefinition).Select(md => syncReader.GetString(md.Name)).ToArray();
+            check(!forbidden.Any(syncNames.Contains), ns + " does not resend the settings menu on join or status reports");
         }
 
         string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
