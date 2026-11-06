@@ -53,6 +53,7 @@ internal static class InfectionTests
     private static void Native(Action<bool, string> check)
     {
         var config = new Brainless.RoundEvents.Config(); config.Validate();
+        check(config.Vote.Enabled && config.Vote.DurationSeconds == 45 && config.Vote.TriggerSecondsLeft == 5, "a lobby event vote replaces the random automatic pick by default: 45 seconds, rolled with 5 seconds left on the lobby countdown");
         check(config.Infection.InfectedHealth == 150 && config.Infection.InfectedHumeShield == 0 && !config.AutomaticEvents && config.Infection.BlockReinforcements, "infection defaults use low-health skeletons, manual scheduling and no ordinary reinforcement waves");
         config.Infection.RespawnDelaySeconds = float.NaN;
         bool invalid = false; try { config.Validate(); } catch (InvalidOperationException) { invalid = true; }

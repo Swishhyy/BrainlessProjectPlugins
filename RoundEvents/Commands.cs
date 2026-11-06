@@ -12,7 +12,7 @@ namespace Brainless.RoundEvents
         {
             "bpevents"
         };
-        public string Description => "Project Brainless round events: list, status, infection/deathmatch/juggernaut next|start, stop, reload.";
+        public string Description => "Project Brainless round events: list, status, vote (lobby), infection/deathmatch/juggernaut next|start, stop, reload.";
 
         public bool Execute(ArraySegment<string> args, ICommandSender sender, out string response)
         {
@@ -52,6 +52,8 @@ namespace Brainless.RoundEvents
 
                 if (first == "reload")
                     return plugin.Reload(out response);
+                if (first == "vote")
+                    return plugin.StaffVote(out response);
             }
 
             if (args.Count == 2 && first == "infection")
@@ -73,8 +75,40 @@ namespace Brainless.RoundEvents
                     return plugin.StartArena(mode, out response);
             }
 
-            response = "bpevent list | status | infection|deathmatch|juggernaut next|start | stop | reload";
+            response = "bpevent list | status | vote | infection|deathmatch|juggernaut next|start | stop | reload";
             return false;
+        }
+    }
+
+    [CommandHandler(typeof(ClientCommandHandler))]
+    public sealed class VoteCommand : ICommand
+    {
+        public string Command => "vote";
+        public string[] Aliases => new[] { "eventvote" };
+        public string Description => "Event vote: .vote <number|name>, .vote optout to sit an event out, .vote optin to play.";
+
+        public bool Execute(ArraySegment<string> args, ICommandSender sender, out string response)
+        {
+            var plugin = Plugin.Instance;
+            var player = Exiled.API.Features.Player.Get(sender);
+            if (plugin == null || player == null || player.IsHost || string.IsNullOrEmpty(player.UserId))
+            {
+                response = "Use this from your ~ console while Round Events is enabled.";
+                return false;
+            }
+
+            string choice = args.Count > 0 ? args.Array[args.Offset].ToLowerInvariant() : "";
+            if (choice == "")
+            {
+                response = plugin.VoteStatus(player);
+                return true;
+            }
+
+            if (choice == "optout" || choice == "out" || choice == "sitout")
+                return plugin.SetSitOut(player, true, out response);
+            if (choice == "optin" || choice == "in")
+                return plugin.SetSitOut(player, false, out response);
+            return plugin.CastVote(player, choice, out response);
         }
     }
 }

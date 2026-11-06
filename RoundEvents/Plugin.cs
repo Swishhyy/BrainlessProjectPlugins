@@ -23,7 +23,7 @@ namespace Brainless.RoundEvents
         public override string Name => "Project Brainless Round Events";
         public override string Prefix => "project_brainless_round_events";
         public override string Author => "Project Brainless";
-        public override Version Version => new Version(0, 3, 1);
+        public override Version Version => new Version(0, 4, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Last;
         public static Plugin Instance { get; private set; }
@@ -54,6 +54,7 @@ namespace Brainless.RoundEvents
             S.EndingRound.Subscribe(arena.Ending, -1000);
             S.RoundStarted += RoundStarted;
             S.WaitingForPlayers += Cleanup;
+            S.WaitingForPlayers += LobbyReset;
             S.RestartingRound += Cleanup;
             S.RoundEnded += RoundEnded;
             S.RespawningTeam += Respawning;
@@ -67,14 +68,17 @@ namespace Brainless.RoundEvents
             P.Left += Left;
             Skeleton.Disguising += Disguising;
             Skeleton.TryUseBody += UsingBody;
+            StartVoteLoop();
             updates = PluginUpdates.Start(GetType().Assembly, "RoundEvents", Config.AutoUpdate);
             base.OnEnabled();
         }
 
         public override void OnDisabled()
         {
+            StopVoteLoop();
             S.RoundStarted -= RoundStarted;
             S.WaitingForPlayers -= Cleanup;
+            S.WaitingForPlayers -= LobbyReset;
             S.RestartingRound -= Cleanup;
             S.RoundEnded -= RoundEnded;
             S.RespawningTeam -= Respawning;
@@ -106,7 +110,7 @@ namespace Brainless.RoundEvents
         }
 
         private static bool Real(Player player) => player != null && player.IsConnected && !player.IsHost && !string.IsNullOrWhiteSpace(player.UserId);
-        private static bool Eligible(Player player) => Real(player) && player.IsAlive && !player.IsOverwatchEnabled && player.Role.Type != RoleTypeId.Tutorial;
+        private static bool Eligible(Player player) => Real(player) && player.IsAlive && !player.IsOverwatchEnabled && player.Role.Type != RoleTypeId.Tutorial && !SitsOut(player);
         private static bool Finite(Vector3 point) => !(float.IsNaN(point.x) || float.IsNaN(point.y) || float.IsNaN(point.z) || float.IsInfinity(point.x) || float.IsInfinity(point.y) || float.IsInfinity(point.z));
         private bool Infected(Player player) => Eligible(player) && player.Role.Type == RoleTypeId.Scp3114 && state.IsInfected(player.UserId, player.Role.Base);
         private int Humans => Player.List.Count(p => Eligible(p) && participants.Contains(p.UserId) && p.IsHuman);
@@ -139,7 +143,10 @@ namespace Brainless.RoundEvents
             bool previousHadEvent = eventThisRound;
             eventThisRound = false;
             int players = Player.List.Count(p => p.IsConnected && !p.IsHost);
-            if (queuedArena == ArenaMode.None && !nextInfection && Config.AutomaticEvents && !previousHadEvent && UnityEngine.Random.Range(0f, 100f) < Config.AutomaticEventChancePercent)
+            bool rolledInLobby = lobbyRolled;
+            voteActive = false;
+            EndVoteLock();
+            if (queuedArena == ArenaMode.None && !nextInfection && !rolledInLobby && Config.AutomaticEvents && !previousHadEvent && UnityEngine.Random.Range(0f, 100f) < Config.AutomaticEventChancePercent)
             {
                 var pool = new List<int>();
                 if (Config.Infection.Enabled && players >= Config.Infection.AutomaticMinimumPlayers)
@@ -158,6 +165,7 @@ namespace Brainless.RoundEvents
                 nextInfection = false;
                 lifetime.Later(Config.RoundStartDelaySeconds, () =>
                 {
+                    ParkSitOuts();
                     if (arena.Start(queuedArena, out string arenaResponse))
                         eventThisRound = true;
                     else
@@ -174,6 +182,7 @@ namespace Brainless.RoundEvents
             lifetime.Later(Config.RoundStartDelaySeconds, () =>
             {
                 scheduled = false;
+                ParkSitOuts();
                 if (!StartInfection(out string response))
                     Log.Info("[PB Round Events] " + response);
             });
@@ -338,6 +347,13 @@ namespace Brainless.RoundEvents
         {
             if (!state.Active || !ev.IsAllowed || ownedSpawns.Contains(ev.Player))
                 return;
+            // Sitting-out players stay spectators for the whole event (no late-join survivor).
+            if (SitsOut(ev.Player) && ev.NewRole != RoleTypeId.Spectator && ev.Reason != SpawnReason.ForceClass)
+            {
+                ev.IsAllowed = false;
+                return;
+            }
+
             if (ev.NewRole != RoleTypeId.Spectator && !ev.Player.IsAlive && ev.Reason != SpawnReason.ForceClass)
             {
                 bool lateJoin = ev.Reason == SpawnReason.LateJoin && Config.Infection.AllowLateJoinSurvivors && !participants.Contains(ev.Player.UserId);
@@ -542,7 +558,7 @@ namespace Brainless.RoundEvents
             eventThisRound |= started;
             return started;
         }
-        internal string Status() => arena.Status() + (nextArena != ArenaMode.None ? " Next round: " + nextArena + "." : "") + "\n" + $"Infection: {(state.Active ? "ACTIVE" : scheduled ? "starting" : "inactive")}; next round: {nextInfection}; humans: {Humans}; infected: {InfectedCount}; pending conversions: {state.PendingCount}.\nInfected HP: {Config.Infection.InfectedHealth}; shield: {Config.Infection.InfectedHumeShield}; automatic events: {Config.AutomaticEvents}.";
+        internal string Status() => (voteActive ? "Event vote running. " : "") + (sitOut.Count > 0 ? sitOut.Count + " player(s) sitting out the event. " : "") + arena.Status() + (nextArena != ArenaMode.None ? " Next round: " + nextArena + "." : "") + "\n" + $"Infection: {(state.Active ? "ACTIVE" : scheduled ? "starting" : "inactive")}; next round: {nextInfection}; humans: {Humans}; infected: {InfectedCount}; pending conversions: {state.PendingCount}.\nInfected HP: {Config.Infection.InfectedHealth}; shield: {Config.Infection.InfectedHumeShield}; automatic events: {Config.AutomaticEvents}.";
         internal void StopEvent()
         {
             nextInfection = false;
