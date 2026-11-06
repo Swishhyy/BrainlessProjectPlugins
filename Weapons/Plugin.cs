@@ -218,7 +218,7 @@ namespace Brainless.Weapons
                 Definition = definition,
                 InitialCapacity = definition.Spec.Magazine
             };
-            if (definition.Id == 7207)
+            if (HasFixedShots(definition.Id))
                 shots.Register(serial, definition.Spec.Magazine);
             return true;
         }
@@ -353,9 +353,10 @@ namespace Brainless.Weapons
                         if (Physics.Raycast(origin, direction, out var hit, .6f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
                             muzzle = hit.point - direction * .1f;
                         grenades.Launch(muzzle, direction * Config.LauncherSpeed, Config.LauncherFuse, source, Config.LauncherBlastRadius, Config.LauncherHumanDamage, Config.LauncherScpDamage, requireLineOfSight: Config.LauncherRequireLineOfSight, affectOwner: Config.LauncherAffectOwner, armorPenetration: Config.LauncherArmorPenetration, damageEnvironment: Config.LauncherDamageEnvironment);
-                        if (shots.Remaining(gun.Serial) == 0)
-                            lifetime.Later(.5f, () => DiscardEmptyLauncher(gun.Serial));
                     }
+
+                    if (shots.Remaining(gun.Serial) == 0)
+                        lifetime.Later(.5f, () => DiscardEmptyLauncher(gun.Serial));
                 });
             }
         });
@@ -375,7 +376,9 @@ namespace Brainless.Weapons
             player.Stamina = Mathf.Max(0, player.Stamina - Config.CursedShotgunStaminaCost);
         }
 
-        private static bool FixedAmmo(WeaponState state) => state != null && state.Definition.Id == 7207;
+        // The launcher and the Stun Gun have a fixed number of shots and cannot be reloaded.
+        internal static bool HasFixedShots(uint id) => id == 7207 || id == 7209;
+        private static bool FixedAmmo(WeaponState state) => state != null && HasFixedShots(state.Definition.Id);
         private void Exploding(ExplodingGrenadeEventArgs ev) => Safe.Run(() => grenades.Exploding(ev));
         private void Hurting(HurtingEventArgs ev) => Safe.Run(() =>
         {

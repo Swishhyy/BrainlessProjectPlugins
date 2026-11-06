@@ -139,14 +139,13 @@ namespace Brainless.Weapons
         {
             Id = 7209,
             Name = "Stun Gun",
-            Description = "Staff only. Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
+            Description = "Rare. 5 shots, no reload. Each hit deals 1 damage and knocks the target down with a fake death for a few seconds. Never kills.",
             BaseType = ItemType.GunCOM18,
-            Magazine = 6,
-            Reserve = 12,
+            Magazine = 5,
+            Reserve = 0,
             HumanDamage = 0,
             ScpDamage = 0,
-            RoundCap = 1,
-            AdminOnly = true
+            RoundCap = 1
         };
 
         private static WeaponSpec CreateLauncher() => new WeaponSpec
@@ -191,13 +190,27 @@ namespace Brainless.Weapons
                 Weapons.Add(CreateCursedPistol());
             if (CatalogRevision < 7 && !Weapons.Any(w => w.Id == CursedShotgunId))
                 Weapons.Add(CreateCursedShotgun());
-            // Revision 8: the Stun Gun, revision 9: the Grenade Launcher become admin-only
-            // and leave natural loot/starting gear.
+            // Revision 8: the Stun Gun becomes rare map loot with 5 shots and no reload;
+            // revision 9: the Grenade Launcher becomes admin-only.
             if (CatalogRevision < 8)
-                MakeAdminOnly(7209);
+                MakeRareStunGun();
             if (CatalogRevision < 9)
                 MakeAdminOnly(7207);
             CatalogRevision = Math.Max(9, CatalogRevision);
+        }
+
+        private void MakeRareStunGun()
+        {
+            foreach (var stun in Weapons.Where(w => w.Id == 7209))
+            {
+                stun.Magazine = 5;
+                stun.Reserve = 0;
+            }
+
+            foreach (var rule in Distribution?.MapRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<MapLootRule>())
+                rule.ChancePercent = 1;
+            foreach (var rule in Distribution?.PlayerRules?.Where(r => r.CustomId == 7209) ?? Enumerable.Empty<PlayerLootRule>())
+                rule.ChancePercent = 0;
         }
 
         private void MakeAdminOnly(uint id)
@@ -365,7 +378,7 @@ namespace Brainless.Weapons
                 return "The server did not add the weapon to the inventory; check the server log.";
             }
 
-            if (Id != 7207)
+            if (!Plugin.HasFixedShots(Id))
                 player.AddAmmo(firearm.AmmoType, (ushort)Math.Max(0, Spec.Reserve));
             if (displayMessage)
                 player.ShowHint($"<b>{Name}</b>\n{Description}", 6);

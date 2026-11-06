@@ -96,6 +96,17 @@ internal static class MetadataContracts
             check(catalog.GetMethods().Select(items.GetMethodDefinition).Any(md => items.GetString(md.Name) == "CursedDefaults"), "the compiled item catalog ships the cursed item definitions");
         }
 
+        string weaponsPath = Path.Combine(root, "Weapons/bin/Release/Brainless.Weapons.dll");
+        if (File.Exists(weaponsPath))
+        {
+            using var weaponsStream = File.OpenRead(weaponsPath);
+            using var weaponsPe = new PEReader(weaponsStream);
+            var weapons = weaponsPe.GetMetadataReader();
+            var weaponPlugin = weapons.TypeDefinitions.Select(weapons.GetTypeDefinition).Single(t => weapons.GetString(t.Namespace) == "Brainless.Weapons" && weapons.GetString(t.Name) == "Plugin");
+            var weaponMethods = weaponPlugin.GetMethods().Select(weapons.GetMethodDefinition).Select(md => weapons.GetString(md.Name)).ToArray();
+            check(new[] { "StunnedBlinkRequest", "StunnedBlink", "StunnedTantrum", "StunnedBreakneck", "PinStunned", "HasFixedShots" }.All(weaponMethods.Contains), "a stunned SCP-173 cannot blink, tantrum or breakneck, stunned players are pinned, and the Stun Gun has fixed shots");
+        }
+
         string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
         if (File.Exists(voicePath))
         {

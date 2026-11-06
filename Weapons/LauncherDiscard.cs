@@ -7,15 +7,17 @@ namespace Brainless.Weapons
     {
         private void DiscardEmptyLauncher(int serial)
         {
-            if (!Config.LauncherDiscardWhenEmpty || shots.Remaining(serial) > 0 || Find(serial)?.Definition.Id != 7207)
+            var id = Find(serial)?.Definition.Id;
+            if (!Config.LauncherDiscardWhenEmpty || shots.Remaining(serial) > 0 || id == null || !HasFixedShots(id.Value))
                 return;
+            string name = id == 7207 ? "grenade launcher" : "stun gun";
             foreach (var player in Player.List)
             {
                 var item = player.Items.FirstOrDefault(i => i.Serial == serial);
                 if (item != null)
                 {
                     player.RemoveItem(item);
-                    player.ShowHint("Empty grenade launcher discarded.", 3);
+                    player.ShowHint("Empty " + name + " discarded.", 3);
                 }
             }
 
