@@ -18,11 +18,8 @@ namespace Brainless.Coinflips.Commands.CoinUses.Set
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
             Exiled.API.Features.Player player = Exiled.API.Features.Player.Get(sender);
-            if (!sender.CheckPermission("bc.coinuses.set"))
-            {
-                response = "You do not have permission to use this command";
+            if (!Brainless.Internal.Perms.Require(sender, true, out response))
                 return false;
-            }
 
             if (arguments.Count == 1)
             {

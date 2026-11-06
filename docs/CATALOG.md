@@ -2,7 +2,7 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **28 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **44 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -39,7 +39,7 @@ Map loot uses the tier chance per matching pickup (a tier with nothing for that 
 | 7119 | Hacking Chip | Rare | Use this card to hack doors below level 3. | Equip and interact with an eligible door, or hold the tool key while looking at it. |
 | 7120 | Reinforcement Radio | Legendary | Calls a native mini wave for your faction. | Hold the tool key to call a native mini wave for your faction. |
 | 7122 | SCP500-E Volatile Pills | Rare | Makes you explode. You have a small chance to survive. | Eat the pill to detonate; usually fatal to the user. |
-| 7123 | Cursed Keycard | Epic | Opens every door, locker and generator except the Alpha Warhead, but each one tells the SCPs where you are. Crumbles after 5 uses. | Use it on doors, keycard lockers and generators (not the Alpha Warhead). Each one pings the SCPs; it crumbles after 5 uses. |
+| 7123 | Cursed Keycard | Legendary | Opens every door, locker and generator except the Alpha Warhead, but each one tells the SCPs where you are. Crumbles after 5 uses. | Use it on doors, keycard lockers and generators (not the Alpha Warhead). Each one pings the SCPs; it crumbles after 5 uses. |
 | 7124 | Cursed SCP-500 | Epic | 50/50: a super heal (full heal, cures, +50 AHP and regeneration) or nothing at all. | Use it like a normal SCP-500. 50% super heal, 50% nothing. |
 | 7125 | Cursed Adrenaline | Epic | +60% speed for 10 seconds, then you crash: frozen for 5 seconds and blinded for 3. | Use it like normal adrenaline. Run during the rush, then hide before the crash. |
 | 7126 | Monkey's Paw | Mythical | Flip it to make a wish. You get what you wished for... with a twist. Single use. | Flip it like a coin to make a twisted wish (needs BrainlessCoinflips). Single use. |
@@ -55,6 +55,22 @@ Map loot uses the tier chance per matching pickup (a tier with nothing for that 
 | 7136 | Teleport Grenade | Legendary | Teleports you to where it pops, if that spot is safe. No flash. | Throw it; you teleport to where it pops if the spot is safe. |
 | 7137 | Motion Tracker | Rare | Turn it on to track the nearest SCP for 30 seconds. 3 charges. | Turn it on like a radio (or press the tool key) to track the nearest SCP for 30 s. |
 | 7138 | Ammo Box | Common | Flip it to refill the reserve ammo for every gun you carry. Single use. | Flip it like a coin to refill your reserve ammo. |
+| 7139 | Painkillers-A Extended | Common | Heals 60 health slowly over 30 seconds. | Use it like normal painkillers. |
+| 7140 | Painkillers-B Stim | Common | Heals 25 health and makes you 10% faster for 15 seconds. | Use it like normal painkillers. |
+| 7141 | Painkillers-C Cure-all | Uncommon | Heals 20 health and cures poison, bleeding and burns. | Use it like normal painkillers to cure poison, bleeding and burns. |
+| 7142 | Painkillers-D Numbing | Uncommon | Gives 30 artificial health. | Use it like normal painkillers. |
+| 7143 | Medkit-A Field | Uncommon | Fully heals you and gives 20 artificial health. | Use it like a normal medkit. |
+| 7144 | Medkit-B Quick | Uncommon | Heals 65 health and gives a short burst of speed. | Use it like a normal medkit. |
+| 7145 | Medkit-C Regen | Rare | Heals 2 health per second for 45 seconds. | Use it like a normal medkit, then stay alive while it heals. |
+| 7146 | Medkit-D Combat | Rare | Heals 50 health and gives 15% more damage for 20 seconds. | Use it like a normal medkit before a fight. |
+| 7147 | Adrenaline-A Iron | Uncommon | Gives 40 artificial health instead of stamina. | Use it like a normal adrenaline shot. |
+| 7148 | Adrenaline-B Berserk | Rare | Gives 20% more damage for 15 seconds. | Use it like a normal adrenaline shot right before a fight. |
+| 7149 | Adrenaline-C Ghost | Rare | Silent footsteps and hidden from SCP-939 for 20 seconds. | Use it like a normal adrenaline shot to sneak past SCP-939. |
+| 7150 | Adrenaline-D Second | Epic | If you would die in the next 30 seconds, you survive at 1 health (once). | Use it like a normal adrenaline shot before something dangerous. |
+| 7151 | SCP-207-A Diet | Uncommon | Cola speed for 30 seconds with no health drain. | Drink it like a normal SCP-207. |
+| 7152 | SCP-207-B Cherry | Rare | Cola speed for 20 seconds and 30 health. | Drink it like a normal SCP-207. |
+| 7153 | SCP-207-C Frozen | Rare | No speed, but endless stamina for 40 seconds. | Drink it like a normal SCP-207. |
+| 7154 | SCP-207-D Lightning | Epic | Double cola speed for 15 seconds, then slowed for 10 seconds. | Drink it like a normal SCP-207, then expect a slow-down. |
 
 ## Weapons
 
@@ -235,7 +251,7 @@ Staff commands need four players. Automatic selection is off by default; when en
 | SCP swap | SCPs can trade SCPs (or take an unplayed one) shortly after round start. Custom variants stay with their SCP, so you take over e.g. Boom Boom. | F1 `.scpswap list`, `.scpswap 173`, then the other SCP answers `.scpswap yes`. Staff: `bpscpswap`. |
 | Staff force-class roles | A Remote Admin forceclass rolls a custom role for the new class with the normal chances. | Use forceclass as usual; owners set `force_class_custom_roles`. |
 | SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |
-| Rarity glow | Every item has a rarity, vanilla ones included. Uncommon and better pickups glow in their tier colour: green Uncommon, blue Rare, purple Epic, orange Legendary, red Mythical. Items in closed lockers light up once the locker opens; picking up a vanilla item shows its rarity. | Automatic; owners edit `glow` in the Items config. |
+| Rarity glow | Every item has a rarity, vanilla ones included. Custom items of Uncommon and better glow in their tier colour: green Uncommon, blue Rare, purple Epic, orange Legendary, red Mythical. Items in closed lockers light up once the locker opens; picking up a vanilla item shows its rarity. | Automatic; owners edit `glow` in the Items config. |
 | Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |
 | Automatic updates | Downloads verified updates for installed plugins. | Staff load downloaded updates with a full server restart. |
 

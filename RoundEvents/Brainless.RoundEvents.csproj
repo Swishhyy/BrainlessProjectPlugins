@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.RoundEvents</AssemblyName>
     <RootNamespace>Brainless.RoundEvents</RootNamespace>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Swishhyy</Authors>
   </PropertyGroup>

@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Swishhyy";
-        public override Version Version => new Version(0, 11, 2);
+        public override Version Version => new Version(0, 11, 3);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -45,7 +45,7 @@ namespace Brainless.Weapons
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 11;
+            bool migrateConfig = Config.CatalogRevision < 12;
             Config.Prepare();
             LoadIndividualWeapons(Config);
             Config.Prepare();
@@ -365,21 +365,34 @@ namespace Brainless.Weapons
                 });
             }
         });
-        // Pushes the shooter back (only if there is room behind them) and drains stamina.
+        // Pushes the shooter back in a few quick steps (each only if there is room behind
+        // them) and drains stamina. The wall check ignores players: it used to hit the
+        // shooter's own hitboxes, so the push never happened.
         private void ShotgunRecoil(Player player)
         {
             Vector3 back = -player.CameraTransform.forward;
             back.y = 0;
-            if (back.sqrMagnitude > .01f)
+            float distance = Config.CursedShotgunKnockback;
+            if (back.sqrMagnitude > .01f && distance > 0)
             {
                 back.Normalize();
-                float distance = Config.CursedShotgunKnockback;
-                if (distance > 0 && !Physics.Raycast(player.Position + Vector3.up * .3f, back, distance + .4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
-                    player.Position += back * distance;
+                const int steps = 4;
+                var life = player.Role.Base;
+                for (int i = 0; i < steps; i++)
+                    lifetime.Later(i * .03f, () =>
+                    {
+                        if (!player.IsConnected || !player.IsAlive || player.Role.Base != life)
+                            return;
+                        float step = distance / steps;
+                        if (!WallBehind(player.Position + Vector3.up * .3f, back, step + .45f))
+                            player.Position += back * step;
+                    });
             }
 
             player.Stamina = Mathf.Max(0, player.Stamina - Config.CursedShotgunStaminaCost);
         }
+
+        private static bool WallBehind(Vector3 origin, Vector3 direction, float distance) => Physics.RaycastAll(origin, direction, distance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).Any(hit => hit.collider.GetComponentInParent<ReferenceHub>() == null);
 
         // The launcher and the Stun Gun have a fixed number of shots and cannot be reloaded.
         internal static bool HasFixedShots(uint id) => id == 7207 || id == 7209;

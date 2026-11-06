@@ -66,8 +66,9 @@ namespace Brainless.Internal
         private static bool Authorize(ICommandSender sender, string permission, out string response)
         {
             response = null;
-            if (!sender.CheckPermission(permission))
-                response = "Permission denied: " + permission;
+            // PB.moderator (or PB.admin) hands out Brainless items; the old node still works.
+            if (!Perms.IsModerator(sender) && !sender.CheckPermission(permission))
+                response = "Missing permission " + Perms.Moderator + " (or " + Perms.Admin + ").";
             return response == null;
         }
 

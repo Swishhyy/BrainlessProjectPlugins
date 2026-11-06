@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.SlFixes</AssemblyName>
     <RootNamespace>Brainless.SlFixes</RootNamespace>
-    <Version>0.5.1</Version>
+    <Version>0.5.2</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Swishhyy</Authors>
   </PropertyGroup>

@@ -70,7 +70,7 @@ for block in audit_blocks:
 
 lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
-         'Current shipped content: **28 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **44 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Rarity', '', 'Every item, weapon and role has a rarity tier, and a higher tier is always stronger. Each loot spot or spawn rolls a tier first, then something of that tier. Per-round limits (human roles, SCP roles and items are counted separately; Items and Weapons share one count):', '',
          '| Tier | Chance per roll | Human roles | SCP roles | Items |', '| --- | --- | --- | --- | --- |',
@@ -80,13 +80,14 @@ lines = ['# Project Brainless — What We Have', '',
          '## Items', '', '| ID | Item | Rarity | What it does | How to use |', '| --- | --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     content_source = (root/folder/'Definition.cs').read_text()
-    if folder == 'Items': content_source += (root/folder/'SupCatalog.cs').read_text()
+    if folder == 'Items': content_source += (root/folder/'SupCatalog.cs').read_text() + (root/folder/'VariantItems.cs').read_text()
     entries = []
     for block in re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{([^{}]+)\}', content_source):
         fields = [re.search(pattern, block) for pattern in (r'\bId\s*=\s*(\d+)', r'\bName\s*=\s*"([^"]+)"', r'\bDescription\s*=\s*"([^"]+)"')]
         if all(fields): entries.append(tuple(field.group(1) for field in fields))
+    entries += re.findall(r'\bV\((\d{4}), "([^"]+)", ItemType\.\w+, "([^"]+)"\)', content_source)
     entries.sort(key=lambda e: int(e[0]))
-    assert len(entries) == (28 if folder == 'Items' else 5)
+    assert len(entries) == (44 if folder == 'Items' else 5)
     controls = usage[folder.lower()]
     assert set(controls) == {e[0] for e in entries}, f'Usage coverage missing for {folder}'
     if folder == 'Weapons':
@@ -141,7 +142,7 @@ lines += ['', 'Every spawn rolls a custom role by default (guarantee_roles). Mod
           '| SCP swap | SCPs can trade SCPs (or take an unplayed one) shortly after round start. Custom variants stay with their SCP, so you take over e.g. Boom Boom. | F1 `.scpswap list`, `.scpswap 173`, then the other SCP answers `.scpswap yes`. Staff: `bpscpswap`. |',
           '| Staff force-class roles | A Remote Admin forceclass rolls a custom role for the new class with the normal chances. | Use forceclass as usual; owners set `force_class_custom_roles`. |',
           '| SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |',
-          '| Rarity glow | Every item has a rarity, vanilla ones included. Uncommon and better pickups glow in their tier colour: green Uncommon, blue Rare, purple Epic, orange Legendary, red Mythical. Items in closed lockers light up once the locker opens; picking up a vanilla item shows its rarity. | Automatic; owners edit `glow` in the Items config. |',
+          '| Rarity glow | Every item has a rarity, vanilla ones included. Custom items of Uncommon and better glow in their tier colour: green Uncommon, blue Rare, purple Epic, orange Legendary, red Mythical. Items in closed lockers light up once the locker opens; picking up a vanilla item shows its rarity. | Automatic; owners edit `glow` in the Items config. |',
           '| Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |',
           '| Automatic updates | Downloads verified updates for installed plugins. | Staff load downloaded updates with a full server restart. |', '',
           '## SCP-914 crafting', '', 'Put the input in SCP-914 and run the listed setting. Recipes are chance-based and share natural supply limits.', '',
@@ -160,4 +161,4 @@ for body, setting, ident, name in recipes:
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
 assert len(roles) == 121
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 28 items, 5 weapons, 121 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 44 items, 5 weapons, 121 roles (with availability), 3 events and 10 recipes; all have usage instructions.')

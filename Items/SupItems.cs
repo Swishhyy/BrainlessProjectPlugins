@@ -30,6 +30,7 @@ namespace Brainless.Items
             Exiled.Events.Handlers.Scp939.ValidatingVisibility += Validating939;
             Exiled.Events.Handlers.Scp939.PlayingFootstep += Footstep939;
             Exiled.Events.Handlers.Player.Shooting += SupShooting;
+            VariantSubscribe();
         }
 
         private void SupUnsubscribe()
@@ -38,6 +39,7 @@ namespace Brainless.Items
             Exiled.Events.Handlers.Scp939.ValidatingVisibility -= Validating939;
             Exiled.Events.Handlers.Scp939.PlayingFootstep -= Footstep939;
             Exiled.Events.Handlers.Player.Shooting -= SupShooting;
+            VariantUnsubscribe();
         }
 
         private void SupShooting(ShootingEventArgs ev)
@@ -56,13 +58,13 @@ namespace Brainless.Items
         });
         private void Validating939(Exiled.Events.EventArgs.Scp939.ValidatingVisibilityEventArgs ev)
         {
-            if (Config.Sup.InvisibilityPills.HideFrom939 && IsStealthed(ev.Target))
+            if ((Config.Sup.InvisibilityPills.HideFrom939 && IsStealthed(ev.Target)) || IsGhosted(ev.Target))
                 ev.IsAllowed = false;
         }
 
         private void Footstep939(Exiled.Events.EventArgs.Scp939.PlayingFootstepEventArgs ev)
         {
-            if (Config.Sup.InvisibilityPills.Hide939Footsteps && IsStealthed(ev.Target))
+            if ((Config.Sup.InvisibilityPills.Hide939Footsteps && IsStealthed(ev.Target)) || IsGhosted(ev.Target))
                 ev.IsAllowed = false;
         }
 
@@ -102,6 +104,7 @@ namespace Brainless.Items
             radioCooldowns.Clear();
             radioCalls.Clear();
             trackers.Clear();
+            VariantReset();
             supTick = Time.time;
             roundStartedAt = Time.time;
         }
@@ -135,7 +138,7 @@ namespace Brainless.Items
             return true;
         }
 
-        internal static bool IsPill(uint id) => id == Items.Config.EnergyDrink || id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline || id == SupCatalog.CursedMedkit || id == SupCatalog.CursedHat || id == SupCatalog.CursedCola;
+        internal static bool IsPill(uint id) => VariantIds.Contains(id) || id == Items.Config.EnergyDrink || id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline || id == SupCatalog.CursedMedkit || id == SupCatalog.CursedHat || id == SupCatalog.CursedCola;
 
         private PillTuning Tuning(uint id) => id == 7114 ? Config.Sup.AdrenalinePills : id == 7115 ? Config.Sup.Anti096Pills : id == 7116 ? Config.Sup.ExpiredPills : id == 7117 ? Config.Sup.InvisibilityPills : id == 7122 ? Config.Sup.VolatilePills : null;
 
@@ -156,6 +159,8 @@ namespace Brainless.Items
             var tuning = Tuning(item.Id);
             if (tuning != null)
                 pillCooldowns[player.UserId + ":" + item.Id] = Time.time + tuning.CooldownSeconds;
+            if (VariantEffect(player, item.Id))
+                return;
             switch (item.Id)
             {
                 case 7114:

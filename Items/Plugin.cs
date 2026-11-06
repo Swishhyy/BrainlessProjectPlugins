@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Swishhyy";
-        public override Version Version => new Version(0, 12, 0);
+        public override Version Version => new Version(0, 13, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 15;
+            bool migrateConfig = Config.CatalogRevision < 16;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -231,7 +231,7 @@ namespace Brainless.Items
         internal bool CanIssueBatch(uint[] ids)
         {
             EnsureCapacity();
-            var ours = ids.Where(id => id >= 7101 && id <= 7140).ToArray();
+            var ours = ids.Where(id => id >= 7101 && id <= 7160).ToArray();
             if (budget.Total + ours.Length > budget.Capacity)
                 return false;
             return ours.GroupBy(id => id).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));

@@ -13,6 +13,11 @@ namespace Brainless.Internal.Updates
     internal sealed class PluginUpdates : IDisposable
     {
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
+        // One check at a time: the timed loop and a forced check (pbupdate) share it.
+        private readonly SemaphoreSlim checking = new SemaphoreSlim(1, 1);
+        private readonly Func<CancellationToken, Task<string>> runCheck;
+        internal string Name { get; }
+        internal bool RestartNeeded => client.RestartNeeded;
         private readonly ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
         private readonly string label;
         private readonly ReleaseClient client;
@@ -22,10 +27,23 @@ namespace Brainless.Internal.Updates
         private PluginUpdates(Assembly assembly, string id, string path, AutoUpdateConfig config)
         {
             label = "[" + assembly.GetName().Name + " updater] ";
+            Name = assembly.GetName().Name;
             var exiled = Exiled.Loader.Loader.Version;
             var game = new Version(GameCore.Version.Major, GameCore.Version.Minor, GameCore.Version.Revision);
             client = new ReleaseClient(() => config.ResolveToken(Environment.GetEnvironmentVariable));
             logger = Timing.RunCoroutine(WriteMessages());
+            runCheck = async token =>
+            {
+                await checking.WaitAsync(token).ConfigureAwait(false);
+                try
+                {
+                    return await client.CheckAndInstallAsync(id, assembly.GetName().Name, path, assembly.GetName().Version, exiled, game, config, token).ConfigureAwait(false);
+                }
+                finally
+                {
+                    checking.Release();
+                }
+            };
             Log.Info(label + "Enabled; release checks every " + Math.Max(5, config.CheckIntervalMinutes) + " minutes. New DLLs load after a full server restart.");
             worker = Task.Run(async () =>
             {
@@ -38,7 +56,7 @@ namespace Brainless.Internal.Updates
                         string status;
                         try
                         {
-                            status = await client.CheckAndInstallAsync(id, assembly.GetName().Name, path, assembly.GetName().Version, exiled, game, config, cancellation.Token).ConfigureAwait(false);
+                            status = await runCheck(cancellation.Token).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)when (cancellation.IsCancellationRequested)
                         {
@@ -67,6 +85,27 @@ namespace Brainless.Internal.Updates
                 {
                 }
             });
+        }
+
+        // Runs one check right now (used by pbupdate). Never throws; returns the status line.
+        internal async Task<string> CheckNowAsync()
+        {
+            try
+            {
+                return await runCheck(cancellation.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return "Update check cancelled.";
+            }
+            catch (UpdateException exception)
+            {
+                return exception.Message;
+            }
+            catch (Exception exception)
+            {
+                return UpdateDiagnostics.Failure(exception);
+            }
         }
 
         internal static IDisposable Start(Assembly assembly, string id, AutoUpdateConfig config)

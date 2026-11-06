@@ -14,11 +14,10 @@ namespace Brainless.Weapons
 
         public bool Execute(ArraySegment<string> args, ICommandSender sender, out string response)
         {
-            if (!sender.CheckPermission("brainless.weapons.configure"))
-            {
-                response = "Missing brainless.weapons.configure permission.";
+            // chances is PB.moderator; reload is PB.admin.
+            bool lookOnly = args.Count == 1 && args.Array[args.Offset].Equals("chances", StringComparison.OrdinalIgnoreCase);
+            if (!Brainless.Internal.Perms.Require(sender, !lookOnly, out response))
                 return false;
-            }
 
             if (args.Count != 1 || !(args.Array[args.Offset].Equals("reload", StringComparison.OrdinalIgnoreCase) || args.Array[args.Offset].Equals("chances", StringComparison.OrdinalIgnoreCase)))
             {

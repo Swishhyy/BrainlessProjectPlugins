@@ -137,6 +137,8 @@ namespace Brainless.Roles
                 ev.Player.ShowHint("Poison cured.", 2);
         }
 
+        internal bool CurePoisonExternal(Player player) => player != null && poisons.Remove(player);
+
         private void ForgetPoisons(Player source)
         {
             foreach (var pair in poisons.Where(p => p.Key == source || p.Value.Source.Owner == source).ToArray())

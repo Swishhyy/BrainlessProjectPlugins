@@ -21,11 +21,8 @@ namespace Brainless.Coinflips.Commands.CoinUses.Get
 
         protected override bool ExecuteParent(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
-            if (!((CommandSender)sender).CheckPermission("bc.coinuses.get"))
-            {
-                response = "You do not have permission to use this command";
+            if (!Brainless.Internal.Perms.Require(sender, false, out response))
                 return false;
-            }
 
             response = "Invalid subcommand. Available ones: player, serial";
             return false;

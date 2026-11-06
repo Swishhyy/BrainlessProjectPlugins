@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.Items</AssemblyName>
     <RootNamespace>Brainless.Items</RootNamespace>
-    <Version>0.12.0</Version>
+    <Version>0.13.0</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Swishhyy</Authors>
   </PropertyGroup>

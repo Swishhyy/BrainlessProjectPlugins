@@ -19,7 +19,7 @@ internal static class LootChanceConfigTests
     {
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
-        bool Supported(uint id) => id >= 7101 && id <= 7140 && id != 7110;
+        bool Supported(uint id) => id >= 7101 && id <= 7160 && id != 7110;
         var old = reader.Deserialize<ItemDistributionConfig>("map_chance_percent: 40\nmap_rules:\n- custom_id: 7101\n  source_types: [GrenadeFlash]\n  weight: 1\n- custom_id: 7104\n  source_types: [GrenadeFlash]\n  weight: 3\nplayer_rules: []\n");
         old.Validate(Supported);
         check(old.MapRules[0].ChancePercent == 10 && old.MapRules[1].ChancePercent == 30, "old map rules migrate their source-specific chance/weight ratios");

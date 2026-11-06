@@ -257,6 +257,12 @@ namespace Brainless.Coinflips.Configs
             7211,
         };
 
+        [Description("Relative chance of each cursed item on tails (unlisted items are 1, 0 never drops). The Cursed Shotgun is a quarter as likely as the others.")]
+        public Dictionary<uint, double> CursedCustomItemWeights { get; set; } = new()
+        {
+            { 7211, .25 },
+        };
+
         [Description("Give coin custom items even when their natural per-round supply is used up. Disabled items are never given.")]
         public bool CustomItemsIgnoreSupply { get; set; } = false;
 

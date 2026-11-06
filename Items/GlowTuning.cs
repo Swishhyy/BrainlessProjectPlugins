@@ -9,6 +9,9 @@ namespace Brainless.Items
     {
         public bool Enabled { get; set; } = true;
 
+        [Description("Also make vanilla items glow. Off by default: lighting every pickup on the map costs too much frame rate.")]
+        public bool GlowVanillaItems { get; set; }
+
         [Description("Lowest rarity that glows (Common, Uncommon, Rare, Epic, Legendary, Mythical).")]
         public Rarity MinimumRarity { get; set; } = Rarity.Uncommon;
 
@@ -33,7 +36,7 @@ namespace Brainless.Items
         [Description("Show the vanilla item's rarity when it is picked up.")]
         public bool PickupHint { get; set; } = true;
 
-        [Description("Rarity of each vanilla item (used for the glow and pickup hint only; spawn rates are the game's own). Unlisted items are Common.")]
+        [Description("Rarity of each vanilla item, shown when it is picked up (and its glow colour with glow_vanilla_items). Spawn rates are the game's own. Unlisted items are Common.")]
         public System.Collections.Generic.Dictionary<ItemType, Rarity> VanillaRarity { get; set; } = DefaultVanilla();
 
         internal static System.Collections.Generic.Dictionary<ItemType, Rarity> DefaultVanilla()

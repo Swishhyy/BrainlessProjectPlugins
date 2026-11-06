@@ -22,9 +22,12 @@ namespace Brainless.Coinflips.Types
         internal static bool HasRoles => RolesBridge.IsReady;
 
         // Gives one random listed item that can be issued right now; returns its name, or null.
-        internal static string GiveRandomItem(Player player, ICollection<uint> ids, bool ignoreSupply)
+        internal static string GiveRandomItem(Player player, ICollection<uint> ids, bool ignoreSupply, IDictionary<uint, double> weights = null)
         {
-            foreach (var item in Installed(ids).OrderBy(_ => Rd.Next()))
+            // Weighted shuffle: an item's chance of coming first follows its weight; the
+            // rest are tried in order if it cannot be given (supply used up, disabled).
+            double Weight(CustomItem item) => weights != null && weights.TryGetValue(item.Id, out double weight) ? weight : 1;
+            foreach (var item in Installed(ids).Where(i => Weight(i) > 0).OrderBy(i => -Math.Log(1 - Rd.NextDouble()) / Weight(i)))
             {
                 try
                 {
