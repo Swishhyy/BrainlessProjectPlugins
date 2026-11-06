@@ -45,6 +45,9 @@ namespace Brainless.Items
 
         [Description("Cursed items (7123-7126): trade-off strengths and rare natural loot.")]
         public CursedTuning Cursed { get; set; } = new CursedTuning();
+
+        [Description("Pickups glow in their rarity colour; every vanilla item has a rarity too.")]
+        public GlowTuning Glow { get; set; } = new GlowTuning();
         public bool IndividualItemFiles { get; set; }
         public ItemTuning Tuning { get; set; } = new ItemTuning();
         public ItemDistributionConfig Distribution { get; set; } = new ItemDistributionConfig();
@@ -230,6 +233,9 @@ namespace Brainless.Items
                 card.Description = SupCatalog.CursedDefaults().First(i => i.Id == SupCatalog.CursedKeycard).Description;
             if (Cursed == null)
                 throw new InvalidOperationException("cursed cannot be null.");
+            if (Glow == null || Glow.VanillaRarity == null)
+                throw new InvalidOperationException("glow and glow.vanilla_rarity cannot be null.");
+            Brainless.Internal.Tuning.Validate(Glow, "glow");
             if (Sup == null)
                 throw new InvalidOperationException("sup cannot be null.");
             Sup.Validate();

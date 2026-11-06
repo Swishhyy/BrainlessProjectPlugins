@@ -275,3 +275,45 @@ namespace Brainless.Internal
         }));
     }
 }
+
+namespace Brainless.Internal
+{
+    // Custom item and weapon rarities shared between plugin DLLs (Items reads the ones
+    // Weapons registers) through AppDomain data, for the glow and pickup tags.
+    internal static class CustomRarity
+    {
+        private const string Key = "Brainless.CustomRarity.v1";
+        private static readonly object Gate = new object();
+
+        private static System.Collections.Generic.Dictionary<uint, int> Store
+        {
+            get
+            {
+                var store = System.AppDomain.CurrentDomain.GetData(Key) as System.Collections.Generic.Dictionary<uint, int>;
+                if (store == null)
+                {
+                    store = new System.Collections.Generic.Dictionary<uint, int>();
+                    System.AppDomain.CurrentDomain.SetData(Key, store);
+                }
+
+                return store;
+            }
+        }
+
+        internal static void Register(uint id, Rarity rarity)
+        {
+            lock (Gate)
+                Store[id] = (int)rarity;
+        }
+
+        internal static bool TryGet(uint id, out Rarity rarity)
+        {
+            lock (Gate)
+            {
+                bool found = Store.TryGetValue(id, out int value);
+                rarity = (Rarity)value;
+                return found;
+            }
+        }
+    }
+}

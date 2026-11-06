@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Swishhyy";
-        public override Version Version => new Version(0, 11, 1);
+        public override Version Version => new Version(0, 12, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -71,6 +71,7 @@ namespace Brainless.Items
                 var item = new RegisteredItem(this, spec);
                 item.Register();
                 registered.Add(spec.Id, item);
+                CustomRarity.Register(spec.Id, spec.Rarity);
             }
 
             toolKey = new KeybindSetting(Config.ToolKeybindId, "Use custom item or nearby device", KeyCode.V, true, false, "Hold for tools, devices and specimens.", onChanged: KeyChanged);
@@ -78,6 +79,7 @@ namespace Brainless.Items
             SupSubscribe();
             CursedSubscribe();
             P.UsingItem += Using;
+            P.ItemAdded += GlowPickupHint;
             P.FlippingCoin += Coin;
             P.TogglingRadio += Radio;
             P.TogglingFlashlight += Flashlight;
@@ -118,6 +120,7 @@ namespace Brainless.Items
             SupUnsubscribe();
             CursedUnsubscribe();
             P.UsingItem -= Using;
+            P.ItemAdded -= GlowPickupHint;
             P.FlippingCoin -= Coin;
             P.TogglingRadio -= Radio;
             P.TogglingFlashlight -= Flashlight;
@@ -167,6 +170,7 @@ namespace Brainless.Items
                         puddle.ServerDestroy();
                 });
             puddles.Clear();
+            ClearGlows();
             devices.Clear();
             thrown.Clear();
         }
@@ -183,6 +187,7 @@ namespace Brainless.Items
             capacitySet = false;
             lifetime.Run(Tick());
             lifetime.Run(SupUpdates());
+            lifetime.Run(GlowLoop());
         }
 
         private void Ended(Exiled.Events.EventArgs.Server.RoundEndedEventArgs ev) => Reset();
