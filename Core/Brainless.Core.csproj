@@ -4,6 +4,6 @@
     <RootNamespace>Brainless.Core</RootNamespace>
     <Version>0.3.3</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Authors>Project Brainless</Authors>
+    <Authors>Swishhyy</Authors>
   </PropertyGroup>
 </Project>

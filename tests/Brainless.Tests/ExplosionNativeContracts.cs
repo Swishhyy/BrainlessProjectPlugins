@@ -31,7 +31,7 @@ internal static class ExplosionNativeContracts
             "Roles/Brainless.Roles.dll",
             "Items/Brainless.Items.dll",
             "Weapons/Brainless.Weapons.dll",
-            "BetterCoinflips/BetterCoinflips.dll"
+            "BrainlessCoinflips/Brainless.Coinflips.dll"
         }
 
         )

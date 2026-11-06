@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.ZombieOptOut</AssemblyName>
+    <RootNamespace>Brainless.ZombieOptOut</RootNamespace>
+    <Version>0.1.1</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Authors>Swishhyy</Authors>
+  </PropertyGroup>
+</Project>

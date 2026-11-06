@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        plugin: [Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents, ScpSwap, ZombieOptOut]
+        plugin: [Roles, Items, Weapons, BrainlessCoinflips, BrainlessScpProxChat, Core, SlFixes, RoundEvents, ScpSwap, BrainlessZombieOptOut]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

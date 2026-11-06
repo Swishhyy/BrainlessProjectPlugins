@@ -156,13 +156,13 @@ if (args.Length > 0)
         "Roles/Brainless.Roles.dll",
         "Items/Brainless.Items.dll",
         "Weapons/Brainless.Weapons.dll",
-        "BetterCoinflips/BetterCoinflips.dll",
-        "ScpProximityChat/Brainless.ScpProximityChat.dll",
+        "BrainlessCoinflips/Brainless.Coinflips.dll",
+        "BrainlessScpProxChat/Brainless.ScpProxChat.dll",
         "Core/Brainless.Core.dll",
         "SlFixes/Brainless.SlFixes.dll",
         "RoundEvents/Brainless.RoundEvents.dll",
         "ScpSwap/Brainless.ScpSwap.dll",
-        "ZombieOptOut/Brainless.ZombieOptOut.dll"
+        "BrainlessZombieOptOut/Brainless.ZombieOptOut.dll"
     };
     var ownAssemblies = names.Select(p => Path.GetFileNameWithoutExtension(p)).ToArray();
     foreach (string relative in names)
@@ -175,7 +175,7 @@ if (args.Length > 0)
         var references = reader.AssemblyReferences.Select(h => reader.GetString(reader.GetAssemblyReference(h).Name)).ToArray();
         Check(!references.Intersect(ownAssemblies).Any(), relative + " has no dependency on another suite DLL");
         Check(System.Linq.Enumerable.Contains(references, "Exiled.API"), relative + " references the real EXILED API");
-        if (folder == "ScpProximityChat")
+        if (folder == "BrainlessScpProxChat")
             Check(!references.Any(name => name.Contains("NAudio", StringComparison.OrdinalIgnoreCase) || name.Contains("SecretAPI", StringComparison.OrdinalIgnoreCase) || name.Contains("AudioPlayer", StringComparison.OrdinalIgnoreCase)), "SCP proximity chat has no external audio or settings DLL dependency");
     }
 

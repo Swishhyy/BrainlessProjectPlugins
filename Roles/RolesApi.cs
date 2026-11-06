@@ -6,7 +6,7 @@ using HarmonyLib;
 
 namespace Brainless.Roles
 {
-    // Entry points for other Brainless plugins (BetterCoinflips, ScpSwap). They call
+    // Entry points for other Brainless plugins (BrainlessCoinflips, ScpSwap). They call
     // these through reflection, so no plugin needs a hard Roles DLL reference.
     // Arguments are EXILED players and plain strings; everything runs on the main thread.
     public static class RolesApi

@@ -5,7 +5,7 @@ on:
       plugin:
         description: Plugins to publish (All uses one combined release)
         type: choice
-        options: [All, Roles, Items, Weapons, BetterCoinflips, ScpProximityChat, Core, SlFixes, RoundEvents, ScpSwap, ZombieOptOut]
+        options: [All, Roles, Items, Weapons, BrainlessCoinflips, BrainlessScpProxChat, Core, SlFixes, RoundEvents, ScpSwap, BrainlessZombieOptOut]
         default: All
       prerelease:
         description: Publish as a prerelease
@@ -13,7 +13,7 @@ on:
         default: false
   push:
     branches: [main, 'release/**']
-    tags: ['pb-*', 'roles-v*', 'items-v*', 'weapons-v*', 'bettercoinflips-v*', 'scpproximitychat-v*', 'core-v*', 'slfixes-v*', 'roundevents-v*']
+    tags: ['pb-*', 'roles-v*', 'items-v*', 'weapons-v*', 'brainlesscoinflips-v*', 'brainlessscpproxchat-v*', 'core-v*', 'slfixes-v*', 'roundevents-v*']
   release:
     types: [published]
 permissions:

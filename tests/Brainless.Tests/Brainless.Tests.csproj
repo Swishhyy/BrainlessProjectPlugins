@@ -33,8 +33,8 @@
     <Compile Include="../../Roles/LockpickRules.cs" Link="LockpickRules.cs" />
     <Compile Include="../../Roles/RoleLookup.cs" Link="RoleLookup.cs" />
     <Compile Include="../../Roles/RoleChances.cs" Link="RoleChances.cs" />
-    <Compile Include="../../ScpProximityChat/VoiceState.cs" Link="VoiceState.cs" />
-    <Compile Include="../../ScpProximityChat/VoiceAudio.cs" Link="VoiceAudio.cs" />
+    <Compile Include="../../BrainlessScpProxChat/VoiceState.cs" Link="VoiceState.cs" />
+    <Compile Include="../../BrainlessScpProxChat/VoiceAudio.cs" Link="VoiceAudio.cs" />
     <Compile Include="../../Shared/Updates/JsonContract.cs" Link="Updates/JsonContract.cs" />
     <Compile Include="../../Shared/Updates/UpdateModels.cs" Link="Updates/UpdateModels.cs" />
     <Compile Include="../../Shared/Updates/UpdateFiles.cs" Link="Updates/UpdateFiles.cs" />
@@ -57,10 +57,10 @@
     <Compile Include="../../Shared/ItemFiles.cs" Link="ItemFiles.cs" />
     <Compile Include="../../Items/SupTuning.cs" Link="SupTuning.cs" />
     <Compile Include="../../Shared/DistributionConfig.cs" Link="DistributionConfig.cs" />
-    <Compile Include="../../ScpProximityChat/Config.cs" Link="ScpChatConfig.cs" />
+    <Compile Include="../../BrainlessScpProxChat/Config.cs" Link="ScpChatConfig.cs" />
     <Compile Include="../../SlFixes/Config.cs" Link="FixesConfig.cs" />
     <Compile Include="../../ScpSwap/SwapRules.cs" Link="SwapRules.cs" />
-    <Compile Include="../../BetterCoinflips/Configs/Config.cs" Link="CoinConfig.cs" />
+    <Compile Include="../../BrainlessCoinflips/Configs/Config.cs" Link="CoinConfig.cs" />
     <Reference Include="Assembly-CSharp" HintPath="$(NativeConfigReferencesPath)/Assembly-CSharp.dll" Private="true" />
     <Reference Include="Exiled.API" HintPath="$(ReferencesPath)/Exiled.API.dll" Private="true" />
     <Reference Include="YamlDotNet" HintPath="$(ReferencesPath)/YamlDotNet.dll" Private="true" />

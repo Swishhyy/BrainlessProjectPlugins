@@ -22,7 +22,7 @@ namespace Brainless.RoundEvents
     {
         public override string Name => "Project Brainless Round Events";
         public override string Prefix => "project_brainless_round_events";
-        public override string Author => "Project Brainless";
+        public override string Author => "Swishhyy";
         public override Version Version => new Version(0, 4, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Last;

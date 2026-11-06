@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Brainless.Coinflips</AssemblyName>
+    <RootNamespace>Brainless.Coinflips</RootNamespace>
+    <Version>5.3.1</Version>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Authors>Swishhyy</Authors>
+  </PropertyGroup>
+</Project>
