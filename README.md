@@ -18,7 +18,7 @@ This README is the single overview of the project: what each plugin does, where 
 | `BrainlessScpProxChat` | `Brainless.ScpProxChat.dll` | 0.3.2 | `brainless_scp_proximity_chat` | Nearby SCP voice (SCP-939 from its mimic point), receive controls, HUD status |
 | `Core` | `Brainless.Core.dll` | 0.3.3 | `project_brainless_core` | XP/playtime storage, privacy, stats API (leaderboard + Discord bot), shared update service |
 | `SlFixes` | `Brainless.SlFixes.dll` | 0.5.1 | `project_brainless_sl_fixes` | Captive recruitment, guard escape, SCP-914 rough teleport/crafting, XP action tracking, end-of-round FF |
-| `RoundEvents` | `Brainless.RoundEvents.dll` | 0.4.0 | `project_brainless_round_events` | Infection, Deathmatch and Juggernaut events, lobby event vote and sit-out |
+| `RoundEvents` | `Brainless.RoundEvents.dll` | 0.4.1 | `project_brainless_round_events` | Infection, Deathmatch and Juggernaut events, lobby event vote and sit-out |
 | `ScpSwap` | `Brainless.ScpSwap.dll` | 0.1.1 | `brainless_scp_swap` | Round-start SCP swaps that keep Brainless SCP variants |
 | `BrainlessZombieOptOut` | `Brainless.ZombieOptOut.dll` | 0.1.1 | `brainless_zombie_opt_out` | Zombie opt-out/auto-fill and early-round SCP replacement (`.fill`), keeping Brainless roles |
 

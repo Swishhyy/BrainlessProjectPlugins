@@ -24,13 +24,15 @@ namespace Brainless.RoundEvents
         private readonly HashSet<string> sitOut = new HashSet<string>();
         private readonly List<Ballot> options = new List<Ballot>();
         private CoroutineHandle voteLoop;
-        private bool voteActive, lobbyRolled, lockedByVote;
+        private bool voteActive, lobbyRolled, lockedByVote, lobbyReady;
         private float voteEnds;
 
         internal static bool SitsOut(Player player) => player?.UserId != null && Instance != null && Instance.sitOut.Contains(player.UserId);
 
         private void StartVoteLoop()
         {
+            // A reload during a lobby that already exists can roll right away.
+            lobbyReady = !Round.IsStarted && TryLobbyTimer(out _);
             Timing.KillCoroutines(voteLoop);
             voteLoop = Timing.RunCoroutine(VoteLoop());
         }
@@ -44,6 +46,8 @@ namespace Brainless.RoundEvents
         // A new lobby: forget the last round's ballots and sit-outs.
         private void LobbyReset()
         {
+            // The lobby countdown only exists once the server is waiting for players.
+            lobbyReady = true;
             votes.Clear();
             sitOut.Clear();
             options.Clear();
@@ -89,8 +93,10 @@ namespace Brainless.RoundEvents
                 return;
             }
 
-            // Roll once per lobby, just before the countdown would start the round.
-            int timer = Round.LobbyWaitingTime;
+            // Roll once per lobby, just before the countdown would start the round. The
+            // countdown object does not exist during startup or a round restart.
+            if (!lobbyReady || !TryLobbyTimer(out int timer))
+                return;
             if (lobbyRolled || timer < 0 || timer > Config.Vote.TriggerSecondsLeft)
                 return;
             lobbyRolled = true;
@@ -108,6 +114,23 @@ namespace Brainless.RoundEvents
 
             StartVote(pool);
         }
+
+        private static bool TryLobbyTimer(out int timer)
+        {
+            try
+            {
+                timer = Round.LobbyWaitingTime;
+                return true;
+            }
+            catch (NullReferenceException)
+            {
+                timer = -1;
+                return false;
+            }
+        }
+
+        // A round restart tears the lobby down until the next WaitingForPlayers.
+        private void LobbyGone() => lobbyReady = false;
 
         private List<Ballot> EligibleBallots(bool automatic)
         {
