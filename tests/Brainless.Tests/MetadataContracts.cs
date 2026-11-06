@@ -107,6 +107,21 @@ internal static class MetadataContracts
             check(new[] { "StunnedBlinkRequest", "StunnedBlink", "StunnedTantrum", "StunnedBreakneck", "PinStunned", "HasFixedShots" }.All(weaponMethods.Contains), "a stunned SCP-173 cannot blink, tantrum or breakneck, stunned players are pinned, and the Stun Gun has fixed shots");
         }
 
+        // Only SCP voice may answer settings status reports (rate-limited); other plugins
+        // resending the whole menu on join/status multiplied traffic and lagged players out.
+        foreach (var (dll, ns, forbidden) in new[] { ("Roles/bin/Release/Brainless.Roles.dll", "Brainless.Roles", new[] { "HudStatusReceived", "HudVerified", "SyncHud" }), ("ZombieOptOut/bin/Release/Brainless.ZombieOptOut.dll", "Brainless.ZombieOptOut", new[] { "StatusReceived", "Verified", "Sync" }) })
+        {
+            string path = Path.Combine(root, dll);
+            if (!File.Exists(path))
+                continue;
+            using var stream = File.OpenRead(path);
+            using var pe = new PEReader(stream);
+            var reader = pe.GetMetadataReader();
+            var plugin = reader.TypeDefinitions.Select(reader.GetTypeDefinition).Single(t => reader.GetString(t.Namespace) == ns && reader.GetString(t.Name) == "Plugin");
+            var names = plugin.GetMethods().Select(reader.GetMethodDefinition).Select(md => reader.GetString(md.Name)).ToArray();
+            check(!forbidden.Any(names.Contains), ns + " does not resend the settings menu on join or status reports");
+        }
+
         string voicePath = Path.Combine(root, "ScpProximityChat/bin/Release/Brainless.ScpProximityChat.dll");
         if (File.Exists(voicePath))
         {

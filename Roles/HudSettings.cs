@@ -9,7 +9,9 @@ using P = Exiled.Events.Handlers.Player;
 namespace Brainless.Roles
 {
     // Server Specific Settings for the role HUD: a keybind that fades it in/out and a
-    // show/hide switch. Definitions are appended/removed by identity, like SCP voice.
+    // show/hide switch. Definitions are appended/removed by identity. The game sends the
+    // whole menu to joining players; resending it from several plugins on join/status
+    // multiplied traffic and lagged some players out, so only SCP voice resends (limited).
     public sealed partial class Plugin
     {
         private ServerSpecificSettingBase[] hudSettings;
@@ -32,8 +34,6 @@ namespace Brainless.Roles
             };
             ServerSpecificSettingsSync.DefinedSettings = existing.Concat(hudSettings).ToArray();
             ServerSpecificSettingsSync.ServerOnSettingValueReceived += HudSettingReceived;
-            ServerSpecificSettingsSync.ServerOnStatusReceived += HudStatusReceived;
-            P.Verified += HudVerified;
             ServerSpecificSettingsSync.SendToAll();
         }
 
@@ -42,8 +42,6 @@ namespace Brainless.Roles
             if (hudSettings == null)
                 return;
             ServerSpecificSettingsSync.ServerOnSettingValueReceived -= HudSettingReceived;
-            ServerSpecificSettingsSync.ServerOnStatusReceived -= HudStatusReceived;
-            P.Verified -= HudVerified;
             ServerSpecificSettingsSync.DefinedSettings = (ServerSpecificSettingsSync.DefinedSettings ?? Array.Empty<ServerSpecificSettingBase>()).Where(s => !hudSettings.Contains(s)).ToArray();
             ServerSpecificSettingsSync.SendToAll();
             hudSettings = null;
@@ -60,20 +58,6 @@ namespace Brainless.Roles
                 roleHud.KeyPressed(player, key.SyncIsPressed);
             else if (setting.SettingId == Config.HudSettingsIdBase + 2 && setting is SSTwoButtonsSetting shown)
                 roleHud.SetVisible(player, shown.SyncIsB);
-        });
-
-        private void HudVerified(VerifiedEventArgs ev) => SyncHud(ev.Player);
-
-        private void HudStatusReceived(ReferenceHub hub, SSSUserStatusReport _)
-        {
-            if (ServerSpecificSettingsSync.GetUserVersion(hub) != ServerSpecificSettingsSync.Version)
-                SyncHud(Player.Get(hub));
-        }
-
-        private void SyncHud(Player player) => Safe.Run(() =>
-        {
-            if (hudSettings != null && player != null && player.IsConnected && !player.IsHost)
-                ServerSpecificSettingsSync.SendToPlayer(player.ReferenceHub);
         });
     }
 }

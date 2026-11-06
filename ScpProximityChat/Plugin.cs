@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 0);
+        public override Version Version => new Version(0, 3, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 
@@ -63,7 +63,6 @@ namespace Brainless.ScpProximityChat
                 ServerSpecificSettingsSync.ServerOnSettingValueReceived += SettingReceived;
                 ServerSpecificSettingsSync.ServerOnStatusReceived += StatusReceived;
                 P.ReceivingVoiceMessage.Subscribe(Receiving, -1000);
-                P.Verified += Verified;
                 P.Left += Left;
                 P.ChangingRole += ChangingRole;
                 P.Died += Died;
@@ -91,7 +90,6 @@ namespace Brainless.ScpProximityChat
             updates = null;
             Timing.KillCoroutines(tracker);
             P.ReceivingVoiceMessage -= Receiving;
-            P.Verified -= Verified;
             P.Left -= Left;
             P.ChangingRole -= ChangingRole;
             P.Died -= Died;
@@ -101,6 +99,7 @@ namespace Brainless.ScpProximityChat
             ServerSpecificSettingsSync.ServerOnStatusReceived -= StatusReceived;
             Reset();
             states.Clear();
+            resends.Clear();
             if (settings != null)
             {
                 // Remove our exact definitions; never restore a stale snapshot over other plugins.
@@ -282,11 +281,21 @@ namespace Brainless.ScpProximityChat
                     Select(player, !state.Local, out _);
             }
         });
-        private void Verified(VerifiedEventArgs ev) => Sync(ev.Player);
+        // The game already sends the whole settings menu (every plugin's entries) to joining
+        // players. Resend only when a client reports a stale menu version, and at most once
+        // per 5 s / 3 times per connection: several plugins answering every status report
+        // with a full resend made the traffic grow each round trip and lagged players out.
+        private readonly Dictionary<ReferenceHub, (float last, int count)> resends = new Dictionary<ReferenceHub, (float last, int count)>();
+
         private void StatusReceived(ReferenceHub hub, SSSUserStatusReport _)
         {
-            if (ServerSpecificSettingsSync.GetUserVersion(hub) != ServerSpecificSettingsSync.Version)
-                Sync(Player.Get(hub));
+            if (hub == null || ServerSpecificSettingsSync.GetUserVersion(hub) == ServerSpecificSettingsSync.Version)
+                return;
+            resends.TryGetValue(hub, out var sent);
+            if (sent.count >= 3 || Time.realtimeSinceStartup - sent.last < 5)
+                return;
+            resends[hub] = (Time.realtimeSinceStartup, sent.count + 1);
+            Sync(Player.Get(hub));
         }
 
         private void Sync(Player player) => Guard(() =>
@@ -296,6 +305,8 @@ namespace Brainless.ScpProximityChat
         });
         private void Left(LeftEventArgs ev)
         {
+            if (ev.Player?.ReferenceHub != null)
+                resends.Remove(ev.Player.ReferenceHub);
             ForgetSpeaker(ev.Player);
             states.Remove(ev.Player);
         }

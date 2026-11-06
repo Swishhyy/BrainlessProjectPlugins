@@ -19,7 +19,8 @@ namespace Brainless.Roles
         private readonly Dictionary<Player, float> blockedSince = new Dictionary<Player, float>();
         // Per-viewer fade state for the show/hide switch and keybind.
         private readonly Dictionary<Player, View> views = new Dictionary<Player, View>();
-        private float nextRefresh, lastUpdate;
+        private readonly Dictionary<Player, float> nextRefresh = new Dictionary<Player, float>();
+        private float lastUpdate;
 
         private sealed class View
         {
@@ -58,25 +59,27 @@ namespace Brainless.Roles
             lastUpdate = Time.time;
             // Fades step every role tick (0.2s); a steady HUD only refreshes every 0.75s.
             float step = config.HudFadeSeconds <= 0 ? 1 : Math.Min(1, elapsed / config.HudFadeSeconds);
-            bool fading = false;
-            foreach (var view in views.Values)
+            // Only a player who is fading refreshes every tick; everyone else every 0.75 s.
+            var fading = new HashSet<Player>();
+            foreach (var pair in views)
             {
+                var view = pair.Value;
                 float target = view.Visible ? 1 : 0;
                 if (view.Alpha == target)
                     continue;
                 view.Alpha = view.Alpha < target ? Math.Min(target, view.Alpha + step) : Math.Max(target, view.Alpha - step);
-                fading = true;
+                fading.Add(pair.Key);
             }
 
-            if (!fading && Time.time < nextRefresh)
-                return;
-            nextRefresh = Time.time + .75f;
             foreach (var player in owned.Keys.Where(p => !p.IsConnected || !config.ShowRoleHud || Subject(p) == null).ToArray())
                 Forget(player);
             if (!config.ShowRoleHud)
                 return;
             foreach (var player in Player.List.Where(p => p.IsConnected && !p.IsHost))
             {
+                if (!fading.Contains(player) && nextRefresh.TryGetValue(player, out float due) && Time.time < due)
+                    continue;
+                nextRefresh[player] = Time.time + .75f;
                 var subject = Subject(player);
                 if (subject == null)
                     continue;
@@ -184,6 +187,7 @@ namespace Brainless.Roles
         {
             Forget(player);
             views.Remove(player);
+            nextRefresh.Remove(player);
         }
 
         internal void Forget(Player player)
@@ -201,7 +205,7 @@ namespace Brainless.Roles
             foreach (var player in owned.Keys.ToArray())
                 Forget(player);
             blockedSince.Clear();
-            nextRefresh = 0;
+            nextRefresh.Clear();
         }
 
         private static string Escape(string text) => (text ?? "").Replace("<", "＜").Replace(">", "＞");
