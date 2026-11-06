@@ -2,7 +2,7 @@
 
 [Command table](COMMANDS.md) · [Project overview and settings](../README.md)
 
-Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.
+Current shipped content: **22 items, 5 weapons, 104 role profiles and 3 round events**. Values below are defaults; server settings can differ.
 
 **Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.
 
@@ -67,71 +67,109 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | ID | Role | Rarity | What it does | How to use | Status | Custom kit | Min players |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | D01 | Athletic | Common | Runs for longer, but has less health. Starts with painkillers. | Sprint normally. | Enabled | — | 0 |
-| D02 | Janitor | Common | Carries a janitor keycard and flashlight. | Use the starting keycard/flashlight. | Enabled | — | 0 |
-| D03 | Child | Uncommon | A smaller Class-D with less health and a piece of candy. | Use the candy bag; smaller model is opt-in. | Enabled | — | 0 |
-| D04 | Thief | Rare | Starts with one random stolen item. | Use the random starting item. | Enabled | — | 0 |
-| D05 | Survivor | Uncommon | Carries a Zone Manager keycard and painkillers, but has less health. | Use the starting keycard/medicine. | Enabled | — | 0 |
-| D06 | Locksmith | Rare | Picks any keycard door. Higher access takes longer. | Interact with a denied keycard door and stay nearby; higher access takes longer. | Enabled | — | 0 |
-| S01 | Mad Scientist | Rare | An armed scientist with a revolver, a spare cylinder and a can of SCP-207. | Shoot with the revolver; drink SCP-207 for speed when you need it. | Enabled | — | 0 |
+| D03 | Child | Common | A smaller Class-D with less health and a piece of candy. | Use the candy bag; smaller model is opt-in. | Enabled | — | 0 |
+| D02 | Janitor | Uncommon | Carries a janitor keycard and flashlight. | Use the starting keycard/flashlight. | Enabled | — | 0 |
+| D04 | Thief | Uncommon | Starts with one random stolen item. | Use the random starting item. | Enabled | — | 0 |
+| D05 | Survivor | Rare | Carries a Zone Manager keycard and painkillers, but has less health. | Use the starting keycard/medicine. | Enabled | — | 0 |
+| D08 | Captured Insurgent | Rare | A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment. | Break out of the cells with the Class-D; you have no equipment. | Enabled | — | 0 |
+| D06 | Locksmith | Epic | Picks any keycard door. Higher access takes longer. | Interact with a denied keycard door and stay nearby; higher access takes longer. | Enabled | — | 0 |
+| D09 | Lucky Bastard | Mythical | Mythical luck: 120 health, a Zone Manager keycard, SCP-500, two extra coins and the Monkey's Paw. | Use the keycard and SCP-500; flip the Monkey's Paw for a twisted wish. | Enabled | 7126 | 0 |
 | S02 | Pharmacist | Common | Carries extra medkits and painkillers to share. | Use or share the starting medicine. | Enabled | — | 0 |
-| S03 | Head Scientist | Epic | Carries a head scientist keycard with improved research access. | Use the head scientist keycard for research access. | Enabled | — | 12 |
+| S06 | Anomaly Handler | Common | Carries an Irritant Gas Grenade to cover an escape. | Throw the gas grenade to cover an escape. | Enabled | 7101 | 0 |
 | S04 | Candy Man | Uncommon | Carries a bag of SCP-330 candy. | Open the SCP-330 bag and choose candy. | Enabled | — | 0 |
-| S05 | Auditor | Common | Carries a Zone Manager keycard for wider access and a radio. | Use the Zone Manager card for wider access; coordinate on the radio. | Enabled | — | 0 |
-| S06 | Anomaly Handler | Uncommon | Carries an Irritant Gas Grenade to cover an escape. | Throw the gas grenade to cover an escape. | Enabled | 7101 | 0 |
-| G01 | Guard Captain | Epic | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. | Use the Crossvec and upgraded keycard. | Enabled | — | 0 |
+| S05 | Auditor | Uncommon | Carries a Zone Manager keycard for wider access and a radio. | Use the Zone Manager card for wider access; coordinate on the radio. | Enabled | — | 0 |
+| S01 | Mad Scientist | Rare | An armed scientist with a revolver, a spare cylinder and a can of SCP-207. | Shoot with the revolver; drink SCP-207 for speed when you need it. | Enabled | — | 0 |
+| S03 | Head Scientist | Rare | Carries a head scientist keycard with improved research access. | Use the head scientist keycard for research access. | Enabled | — | 12 |
+| S07 | Containment Engineer | Epic | Starts just outside HCZ's Micro room with a containment engineer keycard. | Grab the Micro H.I.D. from the room next to you. | Enabled | — | 0 |
+| S09 | Site Director | Mythical | Runs the site: 120 health, a Facility Manager keycard, a COM-18, a radio and SCP-500. | Open almost anything with the Facility Manager keycard; call for help on the radio. | Enabled | — | 0 |
 | G02 | New Hire | Common | A lightly equipped guard with a pistol and extra flashbangs. | Use the pistol and flashbangs. | Enabled | — | 0 |
-| G03 | Trained Agent | Uncommon | A faster guard with combat armor. | Move normally; the speed bonus is automatic. | Enabled | — | 0 |
 | G04 | Coward | Common | Sprints for longer without armor. Wearing armor removes the bonus. | Sprint without armor. | Enabled | — | 0 |
+| G06 | Maintenance Liaison | Common | Carries a Door Jammer keycard, but less spare ammo. | Use the Door Jammer card on a closed door. | Enabled | 7105 | 0 |
 | G05 | Quartermaster | Uncommon | Carries an extra medkit and painkillers, but less spare ammo. | Use or share the extra medkit and painkillers. | Enabled | — | 0 |
-| G06 | Maintenance Liaison | Rare | Carries a Door Jammer keycard, but less spare ammo. | Use the Door Jammer card on a closed door. | Enabled | 7105 | 0 |
+| G03 | Trained Agent | Rare | A faster guard with combat armor. | Move normally; the speed bonus is automatic. | Enabled | — | 0 |
+| G01 | Guard Captain | Epic | Leads with a Crossvec, heavy armor and better access. Carries less spare ammo. | Use the Crossvec and upgraded keycard. | Enabled | — | 0 |
+| G08 | Riot Officer | Legendary | 130 health, a shotgun and heavy armor, but a little slower. | Hold chokepoints with the shotgun and heavy armor. | Enabled | — | 0 |
+| X02 | Big Boi | Uncommon | Any human. Wider, with 50% more health but slower. Medical items heal you more. | Use medical items for bonus healing; you are tougher but slower. | Enabled | — | 0 |
+| X01 | Resilient | Rare | Any human. The first time you drop to 25% health you get a burst of speed, extra damage and artificial health. | Keep fighting when you drop low; your last stand makes you faster and hit harder. | Enabled | — | 0 |
 | M01 | Field Medic | Common | Carries an extra medkit and adrenaline for the squad, but less spare ammo. | Heal the squad with the extra medkit; use adrenaline in a pinch. | Enabled | — | 0 |
+| M05 | Scout | Common | Trades the main gun for an FSP-9 and less health for much more speed. | Use your speed to flank and scout. | Enabled | — | 0 |
 | M03 | Containment Specialist | Uncommon | Carries containment foam that covers a wide area in SCP-173's sticky mess. | Throw the containment foam in a corridor to leave a wide sticky area. | Enabled | 7103 | 0 |
+| M06 | Agent | Uncommon | Carries an Irritant Gas Grenade and a flashbang. | Use the gas grenade for cover and the flashbang to clear rooms. | Enabled | 7101 | 0 |
+| M15 | Breacher | Uncommon | 110 health and two extra flashbangs for clearing rooms. | Throw the extra flashbangs before entering a room. | Enabled | — | 0 |
+| M07 | Personnel | Rare | Carries a shotgun and a Cluster Grenade. | Push close with the shotgun; throw the Cluster Grenade at groups. | Enabled | 7102 | 0 |
+| M16 | Radio Operator | Legendary | 110 health, an adrenaline shot and a Reinforcement Radio to call in backup. | Use the Reinforcement Radio to call in backup. | Enabled | 7120 | 0 |
+| M08 | Leader | Common | A Sergeant with 115 health, but no grenade. | Lead the squad; you have more health but no grenade. | Enabled | — | 0 |
+| M17 | Marksman | Uncommon | 110 health and twice the spare ammo. | Fight at range; you have twice the spare ammo. | Enabled | — | 0 |
+| M09 | Explosiphile | Rare | Carries a Cluster Grenade and an Impact Grenade, with a Crossvec as the main gun. | Throw the Cluster and Impact grenades; fight with the Crossvec. | Enabled | 7102, 7113 | 0 |
+| M18 | Combat Engineer | Rare | Trades the frag grenade for a Door Jammer and a Containment Foam Canister. | Jam doors behind you and foam corridors to slow SCPs. | Enabled | 7105, 7103 | 0 |
+| M10 | Swordsman | Epic | Fights with SCP-1509, with 200 health, more speed and an adrenaline shot to close the gap. | Close in and fight with SCP-1509. | Enabled | — | 0 |
+| M19 | Combat Medic | Common | Carries an extra medkit and painkillers, but less spare ammo. | Heal the squad with the extra medkit and painkillers. | Enabled | — | 0 |
+| M20 | Recon | Uncommon | Moves faster and sprints for longer. | Scout ahead; you move faster and sprint longer. | Enabled | — | 0 |
+| M21 | Grenadier | Rare | Trades the frag grenade for an Impact Grenade and a Cluster Grenade, with less spare ammo. | Throw the Impact and Cluster grenades. | Enabled | 7113, 7102 | 0 |
+| M22 | Heavy Gunner | Epic | 120 health, an FR-MG-0 and heavy armor, but slower. | Suppress with the FR-MG-0; you are slower but armored. | Enabled | — | 0 |
+| M23 | Anomaly Specialist | Epic | 110 health and two random SCP items. | Use the two random SCP items. | Enabled | — | 0 |
+| M12 | Blubber | Common | Carries far more spare ammo, but moves more slowly. | Keep firing; you carry far more spare ammo but move slowly. | Enabled | — | 0 |
+| M11 | General | Uncommon | A Captain with 110 health who trades the frag grenade for an Irritant Gas Grenade and a Cluster Grenade. | Throw the gas grenade for cover and the Cluster Grenade at groups. | Enabled | 7101, 7102 | 0 |
+| M13 | Juggernaut | Rare | A Captain with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled | — | 0 |
+| M14 | Squad Leader | Epic | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled | — | 0 |
+| M24 | Commander | Mythical | 150 health, a little faster, SCP-500, a keycard that opens every door except the Alpha Warhead and a Reinforcement Radio. | Lead the squad; use the all-access keycard, SCP-500 and the Reinforcement Radio. | Enabled | 7120 | 0 |
+| C13 | Smuggler | Epic | Smuggled two random SCP items in, but no armor and a little faster. | Use the two smuggled SCP items; you have no armor. | Enabled | — | 0 |
 | C02 | Courier | Common | A lightly armored runner with extra stamina and an adrenaline shot. | Sprint between objectives; use adrenaline to keep running. | Enabled | — | 0 |
+| C05 | Cowboy | Common | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | Enabled | — | 0 |
+| C08 | Scout | Common | Trades the AK for an FSP-9 and less health for much more speed. | Use your speed to flank and scout. | Enabled | — | 0 |
+| C12 | Sweet Tooth | Common | Carries a bag of SCP-330 candy. | Eat or share the SCP-330 candy. | Enabled | — | 0 |
 | C04 | Demolitionist | Uncommon | Carries a Cluster Grenade, but less spare ammo. | Throw the Cluster Grenade. | Enabled | 7102 | 12 |
+| C09 | Desperate | Uncommon | Spawns with a Jailbird instead of a gun. | Close the distance and swing the Jailbird. | Enabled | — | 0 |
+| C10 | Paranoid | Uncommon | Slower, but carries heavy armor and twice the spare ammo. May also carry SCP-1344 goggles. | Hold positions with heavy armor and extra ammo; check if you got SCP-1344. | Enabled | — | 0 |
+| C11 | SCP Handler | Rare | Carries one random SCP item. | Use your random SCP item. | Enabled | — | 0 |
+| C14 | Berserker | Epic | 130 health and a Jailbird. Every kill heals 40 health. | Close in with the Jailbird; kills heal you. | Enabled | — | 0 |
+| C06 | Juggernaut | Rare | A Repressor with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled | — | 0 |
+| C07 | Squad Leader | Epic | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled | — | 0 |
+| P03 | Tickler | Common | A faster SCP-049 with quicker attacks, but less health and shields. | Attack normally. | Enabled | — | 0 |
+| P06 | Mortician | Common | Every zombie it revives comes back as a random zombie variant. | Revive bodies; each zombie becomes a random variant. | Enabled | — | 0 |
 | P01 | Surgeon | Uncommon | Revives zombies faster and recovers shields sooner, but has less health. | Use SCP-049's normal revive control. | Enabled | — | 0 |
 | P02 | Brute | Rare | A tougher, slower SCP-049 with more health and shields. | Attack normally. | Enabled | — | 0 |
-| P03 | Tickler | Common | A faster SCP-049 with quicker attacks, but less health and shields. | Attack normally. | Enabled | — | 0 |
-| Z01 | Giant | Uncommon | A larger, tougher zombie that moves more slowly. | Attack normally. | Enabled | — | 0 |
+| P05 | Conductor | Rare | Has less health, but the zombies it revives get 25% more health and move 10% faster. | Revive often; your zombies come back stronger. | Enabled | — | 0 |
+| P04 | Plague Bearer | Epic | Humans who stay within 5 m are slowly poisoned. Medical supplies cure it. A little more health. | Stay close to humans; your aura poisons them. | Enabled | — | 0 |
+| P07 | Necromancer | Mythical | Mythical: 40% more health, more shield, faster revives and attacks, a little faster, and tougher zombies. | Revive and fight; you are tougher and faster at everything. | Enabled | — | 0 |
 | Z02 | Muncher | Common | Faster zombie with less health and weaker attacks. | Attack normally. | Enabled | — | 0 |
-| Z03 | Armored | Uncommon | A heavily built zombie with more health, but less speed. | Attack normally. | Enabled | — | 0 |
-| Z04 | Explosive | Rare | Explodes after death. Has less health than a normal zombie. | Automatic explosion after death. | Enabled | — | 0 |
+| Z06 | Sprinter | Common | A very fast zombie with much less health. | Chase down runners; you are fast but fragile. | Enabled | — | 0 |
+| Z01 | Giant | Uncommon | A larger, tougher zombie that moves more slowly. | Attack normally. | Enabled | — | 0 |
+| Z04 | Explosive | Uncommon | Explodes after death. Has less health than a normal zombie. | Automatic explosion after death. | Enabled | — | 0 |
+| Z03 | Armored | Rare | A heavily built zombie with more health, but less speed. | Attack normally. | Enabled | — | 0 |
+| Z07 | Spitter | Rare | Hits poison humans. Medical supplies cure it. | Hit humans to poison them. | Enabled | — | 0 |
 | Z05 | Doctor | Legendary | A weakened SCP-049 that can revive the dead. Low health, slower, and never has a hume shield. | Revive corpses with the normal SCP-049 controls; stay behind your zombies. | Event: 25% per round | — | 12 |
+| Z08 | Hulk | Legendary | A huge zombie with three times the health and harder hits, but slow. | Tank damage and hit hard; you are slow. | Enabled | — | 0 |
+| R02 | Ill Temperature | Common | Moves faster while calm. | Move normally while calm. | Enabled | — | 0 |
+| R03 | Shy Guy | Common | Enrages faster and moves a little faster while calm, but has less health. | Get looked at; you enrage faster. | Enabled | — | 0 |
+| R04 | Prowler | Uncommon | Much faster while calm, but has less health. | Roam quickly while calm. | Enabled | — | 0 |
+| R05 | Bulwark | Rare | 40% more health and shield, but slower. | Soak damage; you are slower but tougher. | Enabled | — | 0 |
+| R06 | Regenerator | Epic | Heals back to full health a few seconds after leaving combat. | Break off between fights to heal back to full. | Enabled | — | 0 |
+| R01 | Anger Issue | Legendary | Enrages immediately, with 1,400 health. Heals back up to 900 after a few seconds out of combat. | Use the normal rage control when targets are available. | Enabled | — | 0 |
+| R07 | Wrath | Mythical | Mythical: enrages instantly, 25% more health, faster, and every kill adds 5 seconds of rage. | Chain kills to keep your rage going. | Enabled | — | 0 |
 | L01 | Stalker | Common | Quieter footsteps, but less health. | Move normally; quieter footsteps are automatic. | Enabled | — | 0 |
+| L03 | Hyper | Common | Moves a little faster, but gains vigor more slowly. | Move normally; conserve vigor. | Enabled | — | 0 |
 | L02 | Wormhole | Uncommon | Gains vigor faster, but moves more slowly. | Use the normal stalk/atlas controls. | Enabled | — | 0 |
-| L03 | Hyper | Uncommon | Moves a little faster, but gains vigor more slowly. | Move normally; conserve vigor. | Enabled | — | 0 |
+| L05 | Gravedigger | Uncommon | Has less health, but heals 200 whenever a human dies in the pocket dimension. | Send humans to the pocket dimension; each death there heals you. | Enabled | — | 0 |
 | L04 | Poisonous | Rare | Touches poison humans, but has a weaker 200 hume shield and gains vigor more slowly. Medical supplies cure the poison. | Touch humans to poison them. | Enabled | — | 0 |
-| B01 | Raisian | Uncommon | Smaller and faster, but has half the normal health. | Move and blink normally. | Enabled | — | 0 |
-| B02 | Escape's | Rare | Kills refresh breakneck speed and its cooldown, but it has much less health. | Kill a human to refresh breakneck speed. | Enabled | — | 0 |
-| B03 | Cocoon | Common | Tougher and slower, with shields that recover more slowly. | Move and blink normally; allow more time for shields to recover. | Enabled | — | 0 |
+| L06 | Rust | Rare | Hits make humans bleed and have a 30% chance to destroy their armor. | Hit humans to make them bleed and break their armor. | Enabled | — | 0 |
+| L07 | Tar Pit | Epic | Leaves a sticky, slowing puddle behind it every few seconds while moving. | Walk the corridors to leave slowing tar behind you. | Enabled | — | 0 |
+| L08 | Glutton | Mythical | Mythical: huge, with 60% more health and more shield, and every catch heals 150. | Catch humans to heal; you are huge and tough. | Enabled | — | 0 |
+| B01 | Raisian | Common | Smaller and faster, but has half the normal health. | Move and blink normally. | Enabled | — | 0 |
+| B05 | Statue | Common | More health and shield, but a little slower. | Hold your ground; you are tougher but slower. | Enabled | — | 0 |
+| B02 | Escape's | Uncommon | Kills refresh breakneck speed and its cooldown, but it has much less health. | Kill a human to refresh breakneck speed. | Enabled | — | 0 |
+| B03 | Cocoon | Uncommon | Tougher and slower, with shields that recover more slowly. | Move and blink normally; allow more time for shields to recover. | Enabled | — | 0 |
+| B06 | Blinker | Rare | Breakneck Speeds recharges twice as fast. | Use Breakneck Speeds often; it recharges twice as fast. | Enabled | — | 0 |
+| B07 | Tantrum | Rare | Its tantrum recharges much faster, and it has a little more health. | Place tantrums often; they recharge much faster. | Enabled | — | 0 |
 | B04 | Boom Boom | Epic | Immune to explosions. Explodes after death. | Automatic explosion after death. | Enabled | — | 0 |
+| B08 | Ghost | Mythical | Mythical: silent, faster, with 20% more health and shield. Kills refresh Breakneck Speeds. | Sneak up silently; kills refresh Breakneck Speeds. | Enabled | — | 0 |
 | H01 | Ambusher | Common | Quieter footsteps and faster movement, but less health. | Move normally; quieter footsteps also work while sprinting. | Enabled | — | 0 |
+| H03 | Mimic | Common | Reuses mimic sounds much faster, but has less health. | Use mimic sound controls; they recharge quickly. | Enabled | — | 0 |
+| H05 | Runt | Common | Smaller and faster, but has much less health. | Hunt fast; you are small and fragile. | Enabled | — | 0 |
 | H02 | Alpha | Uncommon | Larger and tougher, but slower. | Attack normally. | Enabled | — | 0 |
-| H03 | Mimic | Uncommon | Reuses mimic sounds much faster, but has less health. | Use mimic sound controls; they recharge quickly. | Enabled | — | 0 |
 | H04 | Venomous | Rare | Claws and amnestic clouds poison humans. Medical supplies cure it. | Claw humans or place an amnestic cloud. | Enabled | — | 0 |
-| R01 | Anger Issue | Epic | Enrages immediately, with 1,400 health. Heals back up to 900 after a few seconds out of combat. | Use the normal rage control when targets are available. | Enabled | — | 0 |
-| R02 | Ill Temperature | Uncommon | Moves faster while calm. | Move normally while calm. | Enabled | — | 0 |
-| C05 | Cowboy | Uncommon | Carries a fully supplied revolver, light armor, stims and painkillers. | Shoot the revolver; use the stims and painkillers normally. | Enabled | — | 0 |
-| S07 | Containment Engineer | Rare | Starts just outside HCZ's Micro room with a containment engineer keycard. | Grab the Micro H.I.D. from the room next to you. | Enabled | — | 0 |
-| D08 | Captured Insurgent | Epic | A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment. | Break out of the cells with the Class-D; you have no equipment. | Enabled | — | 0 |
-| C06 | Juggernaut | Epic | A Repressor with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled | — | 0 |
-| C07 | Squad Leader | Legendary | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled | — | 0 |
-| C08 | Scout | Uncommon | Trades the AK for an FSP-9 and less health for much more speed. | Use your speed to flank and scout. | Enabled | — | 0 |
-| C09 | Desperate | Common | Spawns with a Jailbird instead of a gun. | Close the distance and swing the Jailbird. | Enabled | — | 0 |
-| C10 | Paranoid | Rare | Slower, but carries heavy armor and twice the spare ammo. May also carry SCP-1344 goggles. | Hold positions with heavy armor and extra ammo; check if you got SCP-1344. | Enabled | — | 0 |
-| C11 | SCP Handler | Rare | Carries one random SCP item. | Use your random SCP item. | Enabled | — | 0 |
-| C12 | Sweet Tooth | Common | Carries a bag of SCP-330 candy. | Eat or share the SCP-330 candy. | Enabled | — | 0 |
-| M05 | Scout | Common | Trades the main gun for an FSP-9 and less health for much more speed. | Use your speed to flank and scout. | Enabled | — | 0 |
-| M06 | Agent | Uncommon | Carries an Irritant Gas Grenade and a flashbang. | Use the gas grenade for cover and the flashbang to clear rooms. | Enabled | 7101 | 0 |
-| M07 | Personnel | Rare | Carries a shotgun and a Cluster Grenade. | Push close with the shotgun; throw the Cluster Grenade at groups. | Enabled | 7102 | 0 |
-| M08 | Leader | Uncommon | A Sergeant with 115 health, but no grenade. | Lead the squad; you have more health but no grenade. | Enabled | — | 0 |
-| M09 | Explosiphile | Rare | Carries a Cluster Grenade and an Impact Grenade, with a Crossvec as the main gun. | Throw the Cluster and Impact grenades; fight with the Crossvec. | Enabled | 7102, 7113 | 0 |
-| M10 | Swordsman | Epic | Fights with SCP-1509, with 200 health, more speed and an adrenaline shot to close the gap. | Close in and fight with SCP-1509. | Enabled | — | 0 |
-| M11 | General | Rare | A Captain with 110 health who trades the frag grenade for an Irritant Gas Grenade and a Cluster Grenade. | Throw the gas grenade for cover and the Cluster Grenade at groups. | Enabled | 7101, 7102 | 0 |
-| M12 | Blubber | Uncommon | Carries far more spare ammo, but moves more slowly. | Keep firing; you carry far more spare ammo but move slowly. | Enabled | — | 0 |
-| M13 | Juggernaut | Epic | A Captain with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled | — | 0 |
-| M14 | Squad Leader | Legendary | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled | — | 0 |
-| X01 | Resilient | Uncommon | Any human. The first time you drop to 25% health you get a burst of speed, extra damage and artificial health. | Keep fighting when you drop low; your last stand makes you faster and hit harder. | Enabled | — | 0 |
-| X02 | Big Boi | Rare | Any human. Wider, with 50% more health but slower. Medical items heal you more. | Use medical items for bonus healing; you are tougher but slower. | Enabled | — | 0 |
+| H06 | Hunter | Rare | Hits 20% harder and moves a little faster, but has less health. | Strike hard; your hits deal more damage. | Enabled | — | 0 |
+| H07 | Matriarch | Legendary | Large and tough with poison clouds, but a little slower. Medical supplies cure the poison. | Use amnestic clouds to poison humans; you are big and tough. | Enabled | — | 0 |
 
 About 87% of spawns roll a custom role by default (the tier chances added up); the rest keep the plain role. Model sizes apply when allow_model_scaling is enabled. The extreme Muncher preset is optional. SCP-106/173/939/096 profiles have editable traits under `brainless_roles.roles`. Chances above are shipped defaults; `bproles [playerID]` shows the live values and blocked reasons.
 

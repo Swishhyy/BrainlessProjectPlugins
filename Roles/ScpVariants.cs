@@ -44,7 +44,7 @@ namespace Brainless.Roles
 
         private void PoisonedByAttack(HurtEventArgs ev)
         {
-            if (ev.HandlerOutput != DamageHandlerBase.HandlerOutput.Damaged || ev.Amount <= 0 || !ev.Player.IsHuman || (ev.DamageHandler.Type != DamageType.Scp106 && ev.DamageHandler.Type != DamageType.Scp939))
+            if (ev.HandlerOutput != DamageHandlerBase.HandlerOutput.Damaged || ev.Amount <= 0 || !ev.Player.IsHuman || (ev.DamageHandler.Type != DamageType.Scp106 && ev.DamageHandler.Type != DamageType.Scp939 && ev.DamageHandler.Type != DamageType.Scp0492))
                 return;
             var traits = Traits(ev.Attacker);
             if (traits != null)

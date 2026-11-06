@@ -117,23 +117,47 @@ namespace Brainless.Roles
         }
 
         // Revision 11 rarity tiers for the shipped roles.
+        // Rarity tiers by strength: within a class, a higher tier is always the stronger
+        // role. Revision 12 (re)assigns these and adds the revision 12 roles.
         internal static readonly Dictionary<string, Rarity> DefaultRarities = new Dictionary<string, Rarity>(StringComparer.OrdinalIgnoreCase)
         {
-            ["D01"] = Rarity.Common, ["D02"] = Rarity.Common, ["D03"] = Rarity.Uncommon, ["D05"] = Rarity.Uncommon, ["D04"] = Rarity.Rare, ["D06"] = Rarity.Rare, ["D08"] = Rarity.Epic,
-            ["X01"] = Rarity.Uncommon, ["X02"] = Rarity.Rare,
-            ["S02"] = Rarity.Common, ["S05"] = Rarity.Common, ["S04"] = Rarity.Uncommon, ["S06"] = Rarity.Uncommon, ["S01"] = Rarity.Rare, ["S07"] = Rarity.Rare, ["S03"] = Rarity.Epic,
-            ["G02"] = Rarity.Common, ["G04"] = Rarity.Common, ["G03"] = Rarity.Uncommon, ["G05"] = Rarity.Uncommon, ["G06"] = Rarity.Rare, ["G01"] = Rarity.Epic,
-            ["M01"] = Rarity.Common, ["M03"] = Rarity.Uncommon, ["M05"] = Rarity.Common, ["M06"] = Rarity.Uncommon, ["M07"] = Rarity.Rare,
-            ["M08"] = Rarity.Uncommon, ["M09"] = Rarity.Rare, ["M10"] = Rarity.Epic, ["M12"] = Rarity.Uncommon, ["M11"] = Rarity.Rare, ["M13"] = Rarity.Epic, ["M14"] = Rarity.Legendary,
-            ["C02"] = Rarity.Common, ["C09"] = Rarity.Common, ["C12"] = Rarity.Common, ["C04"] = Rarity.Uncommon, ["C05"] = Rarity.Uncommon, ["C08"] = Rarity.Uncommon, ["C10"] = Rarity.Rare, ["C11"] = Rarity.Rare,
-            ["C06"] = Rarity.Epic, ["C07"] = Rarity.Legendary,
-            ["P03"] = Rarity.Common, ["P01"] = Rarity.Uncommon, ["P02"] = Rarity.Rare,
-            ["Z02"] = Rarity.Common, ["Z01"] = Rarity.Uncommon, ["Z03"] = Rarity.Uncommon, ["Z04"] = Rarity.Rare, ["Z05"] = Rarity.Legendary,
-            ["R02"] = Rarity.Uncommon, ["R01"] = Rarity.Epic,
-            ["L01"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L03"] = Rarity.Uncommon, ["L04"] = Rarity.Rare,
-            ["B03"] = Rarity.Common, ["B01"] = Rarity.Uncommon, ["B02"] = Rarity.Rare, ["B04"] = Rarity.Epic,
-            ["H01"] = Rarity.Common, ["H02"] = Rarity.Uncommon, ["H03"] = Rarity.Uncommon, ["H04"] = Rarity.Rare,
+            // Class-D
+            ["D01"] = Rarity.Common, ["D03"] = Rarity.Common, ["D02"] = Rarity.Uncommon, ["D04"] = Rarity.Uncommon, ["D05"] = Rarity.Rare, ["D08"] = Rarity.Rare, ["D06"] = Rarity.Epic, ["D09"] = Rarity.Mythical,
+            // Any human
+            ["X02"] = Rarity.Uncommon, ["X01"] = Rarity.Rare,
+            // Scientist
+            ["S02"] = Rarity.Common, ["S06"] = Rarity.Common, ["S04"] = Rarity.Uncommon, ["S05"] = Rarity.Uncommon, ["S01"] = Rarity.Rare, ["S03"] = Rarity.Rare, ["S07"] = Rarity.Epic, ["S09"] = Rarity.Mythical,
+            // Facility Guard
+            ["G02"] = Rarity.Common, ["G04"] = Rarity.Common, ["G06"] = Rarity.Common, ["G05"] = Rarity.Uncommon, ["G03"] = Rarity.Rare, ["G01"] = Rarity.Epic, ["G08"] = Rarity.Legendary,
+            // MTF (every rank)
+            ["M01"] = Rarity.Common, ["M03"] = Rarity.Uncommon,
+            // Private
+            ["M05"] = Rarity.Common, ["M06"] = Rarity.Uncommon, ["M15"] = Rarity.Uncommon, ["M07"] = Rarity.Rare, ["M16"] = Rarity.Legendary,
+            // Sergeant
+            ["M08"] = Rarity.Common, ["M17"] = Rarity.Uncommon, ["M09"] = Rarity.Rare, ["M18"] = Rarity.Rare, ["M10"] = Rarity.Epic,
+            // Specialist
+            ["M19"] = Rarity.Common, ["M20"] = Rarity.Uncommon, ["M21"] = Rarity.Rare, ["M22"] = Rarity.Epic, ["M23"] = Rarity.Epic,
+            // Captain
+            ["M12"] = Rarity.Common, ["M11"] = Rarity.Uncommon, ["M13"] = Rarity.Rare, ["M14"] = Rarity.Epic, ["M24"] = Rarity.Mythical,
+            // Chaos (every rank)
+            ["C02"] = Rarity.Common, ["C05"] = Rarity.Common, ["C12"] = Rarity.Common, ["C04"] = Rarity.Uncommon, ["C09"] = Rarity.Uncommon, ["C11"] = Rarity.Rare,
+            // Chaos rank-specific
+            ["C08"] = Rarity.Common, ["C10"] = Rarity.Uncommon, ["C13"] = Rarity.Epic, ["C14"] = Rarity.Epic, ["C06"] = Rarity.Rare, ["C07"] = Rarity.Epic,
+            // SCP-049
+            ["P03"] = Rarity.Common, ["P06"] = Rarity.Common, ["P01"] = Rarity.Uncommon, ["P02"] = Rarity.Rare, ["P05"] = Rarity.Rare, ["P04"] = Rarity.Epic, ["P07"] = Rarity.Mythical,
+            // SCP-049-2
+            ["Z02"] = Rarity.Common, ["Z06"] = Rarity.Common, ["Z01"] = Rarity.Uncommon, ["Z04"] = Rarity.Uncommon, ["Z03"] = Rarity.Rare, ["Z07"] = Rarity.Rare, ["Z08"] = Rarity.Legendary, ["Z05"] = Rarity.Legendary,
+            // SCP-096
+            ["R02"] = Rarity.Common, ["R03"] = Rarity.Common, ["R04"] = Rarity.Uncommon, ["R05"] = Rarity.Rare, ["R06"] = Rarity.Epic, ["R01"] = Rarity.Legendary, ["R07"] = Rarity.Mythical,
+            // SCP-106
+            ["L01"] = Rarity.Common, ["L03"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L05"] = Rarity.Uncommon, ["L04"] = Rarity.Rare, ["L06"] = Rarity.Rare, ["L07"] = Rarity.Epic, ["L08"] = Rarity.Mythical,
+            // SCP-173
+            ["B01"] = Rarity.Common, ["B05"] = Rarity.Common, ["B02"] = Rarity.Uncommon, ["B03"] = Rarity.Uncommon, ["B06"] = Rarity.Rare, ["B07"] = Rarity.Rare, ["B04"] = Rarity.Epic, ["B08"] = Rarity.Mythical,
+            // SCP-939
+            ["H01"] = Rarity.Common, ["H03"] = Rarity.Common, ["H05"] = Rarity.Common, ["H02"] = Rarity.Uncommon, ["H04"] = Rarity.Rare, ["H06"] = Rarity.Rare, ["H07"] = Rarity.Legendary,
         };
+
+        internal static readonly HashSet<string> RevisionTwelveRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "D09", "S09", "G08", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "C13", "C14", "P04", "P05", "P06", "P07", "Z06", "Z07", "Z08", "R03", "R04", "R05", "R06", "R07", "L05", "L06", "L07", "L08", "B05", "B06", "B07", "B08", "H05", "H06", "H07" };
 
         internal static Rarity DefaultRarity(string id) => id != null && DefaultRarities.TryGetValue(id, out var rarity) ? rarity : Rarity.Common;
 
@@ -526,6 +550,176 @@ namespace Brainless.Roles
             r.SpeedMultiplier = .85f;
             r.WidthScale = 1.15f;
             list.Add(r);
+            // Revision 12 roles: every class gets at least seven. Higher rarity = stronger.
+            RoleDefinition N(string id, string name, RoleTypeId baseRole, string hint, params RoleTypeId[] only)
+            {
+                var role = R(id, name, baseRole, hint);
+                role.ChancePercent = 10;
+                role.MatchRoles.AddRange(only);
+                list.Add(role);
+                return role;
+            }
+
+            r = N("D09", "Lucky Bastard", RoleTypeId.ClassD, "Mythical luck: 120 health, a Zone Manager keycard, SCP-500, two extra coins and the Monkey's Paw.");
+            r.Health = 120;
+            r.SpeedMultiplier = 1.05f;
+            r.MaxPerRound = 1;
+            r.Add.AddRange(new[] { ItemType.KeycardZoneManager, ItemType.SCP500, ItemType.Coin, ItemType.Coin });
+            r.CustomItems.Add(7126);
+            r = N("S09", "Site Director", RoleTypeId.Scientist, "Runs the site: 120 health, a Facility Manager keycard, a COM-18, a radio and SCP-500.");
+            r.Health = 120;
+            r.MaxPerRound = 1;
+            r.FillAmmoToLimit = true;
+            r.Remove.Add(ItemType.KeycardScientist);
+            r.Add.AddRange(new[] { ItemType.KeycardFacilityManager, ItemType.GunCOM18, ItemType.Radio, ItemType.SCP500 });
+            r = N("G08", "Riot Officer", RoleTypeId.FacilityGuard, "130 health, a shotgun and heavy armor, but a little slower.");
+            r.Health = 130;
+            r.SpeedMultiplier = .95f;
+            r.MaxPerRound = 1;
+            r.FillAmmoToLimit = true;
+            r.Remove.AddRange(new[] { ItemType.GunFSP9, ItemType.ArmorLight });
+            r.Add.AddRange(new[] { ItemType.GunShotgun, ItemType.ArmorHeavy });
+            r = N("M15", "Breacher", RoleTypeId.NtfPrivate, "110 health and two extra flashbangs for clearing rooms.", RoleTypeId.NtfPrivate);
+            r.Health = 110;
+            r.Add.AddRange(new[] { ItemType.GrenadeFlash, ItemType.GrenadeFlash });
+            r = N("M16", "Radio Operator", RoleTypeId.NtfPrivate, "110 health, an adrenaline shot and a Reinforcement Radio to call in backup.", RoleTypeId.NtfPrivate);
+            r.Health = 110;
+            r.MaxPerRound = 1;
+            r.Add.Add(ItemType.Adrenaline);
+            r.CustomItems.Add(7120);
+            r = N("M17", "Marksman", RoleTypeId.NtfSergeant, "110 health and twice the spare ammo.", RoleTypeId.NtfSergeant);
+            r.Health = 110;
+            r.ReserveMultiplier = 2;
+            r = N("M18", "Combat Engineer", RoleTypeId.NtfSergeant, "Trades the frag grenade for a Door Jammer and a Containment Foam Canister.", RoleTypeId.NtfSergeant);
+            r.Remove.Add(ItemType.GrenadeHE);
+            r.CustomItems.AddRange(new uint[] { 7105, 7103 });
+            r = N("M19", "Combat Medic", RoleTypeId.NtfSpecialist, "Carries an extra medkit and painkillers, but less spare ammo.", RoleTypeId.NtfSpecialist);
+            r.Add.AddRange(new[] { ItemType.Medkit, ItemType.Painkillers });
+            r.ReserveMultiplier = .75f;
+            r = N("M20", "Recon", RoleTypeId.NtfSpecialist, "Moves faster and sprints for longer.", RoleTypeId.NtfSpecialist);
+            r.SpeedMultiplier = 1.15f;
+            r.SprintDurationMultiplier = 1.2f;
+            r = N("M21", "Grenadier", RoleTypeId.NtfSpecialist, "Trades the frag grenade for an Impact Grenade and a Cluster Grenade, with less spare ammo.", RoleTypeId.NtfSpecialist);
+            r.Remove.Add(ItemType.GrenadeHE);
+            r.CustomItems.AddRange(new uint[] { 7113, 7102 });
+            r.ReserveMultiplier = .75f;
+            r = N("M22", "Heavy Gunner", RoleTypeId.NtfSpecialist, "120 health, an FR-MG-0 and heavy armor, but slower.", RoleTypeId.NtfSpecialist);
+            r.Health = 120;
+            r.SpeedMultiplier = .9f;
+            r.FillAmmoToLimit = true;
+            r.Remove.AddRange(new[] { ItemType.GunE11SR, ItemType.GunCrossvec, ItemType.ArmorCombat, ItemType.ArmorLight });
+            r.Add.AddRange(new[] { ItemType.GunFRMG0, ItemType.ArmorHeavy });
+            r = N("M23", "Anomaly Specialist", RoleTypeId.NtfSpecialist, "110 health and two random SCP items.", RoleTypeId.NtfSpecialist);
+            r.Health = 110;
+            r.Traits.RandomScpItems = 2;
+            r = N("M24", "Commander", RoleTypeId.NtfCaptain, "150 health, a little faster, SCP-500, a keycard that opens every door except the Alpha Warhead and a Reinforcement Radio.", RoleTypeId.NtfCaptain);
+            r.Health = 150;
+            r.SpeedMultiplier = 1.05f;
+            r.MaxPerRound = 1;
+            r.Remove.AddRange(new[] { ItemType.KeycardMTFCaptain, ItemType.Radio, ItemType.GrenadeHE });
+            r.Add.Add(ItemType.SCP500);
+            r.CustomItems.Add(7120);
+            r = N("C13", "Smuggler", RoleTypeId.ChaosConscript, "Smuggled two random SCP items in, but no armor and a little faster.", RoleTypeId.ChaosConscript);
+            r.SpeedMultiplier = 1.05f;
+            r.Remove.AddRange(new[] { ItemType.ArmorLight, ItemType.ArmorCombat });
+            r.Traits.RandomScpItems = 2;
+            r = N("C14", "Berserker", RoleTypeId.ChaosMarauder, "130 health and a Jailbird. Every kill heals 40 health.", RoleTypeId.ChaosMarauder);
+            r.Health = 130;
+            r.Add.Add(ItemType.Jailbird);
+            r.Traits.HealOnKill = 40;
+            r = N("P04", "Plague Bearer", RoleTypeId.Scp049, "Humans who stay within 5 m are slowly poisoned. Medical supplies cure it. A little more health.");
+            r.HealthMultiplier = 1.1f;
+            r.Traits.PoisonAuraRadius = 5;
+            r.Traits.PoisonDamagePerSecond = 3;
+            r.Traits.PoisonDurationSeconds = 3;
+            r = N("P05", "Conductor", RoleTypeId.Scp049, "Has less health, but the zombies it revives get 25% more health and move 10% faster.");
+            r.HealthMultiplier = .85f;
+            r.Traits.RevivedZombieHealthMultiplier = 1.25f;
+            r.Traits.RevivedZombieSpeedPercent = 10;
+            r = N("P06", "Mortician", RoleTypeId.Scp049, "Every zombie it revives comes back as a random zombie variant.");
+            r.Traits.RandomZombieVariant = true;
+            r = N("P07", "Necromancer", RoleTypeId.Scp049, "Mythical: 40% more health, more shield, faster revives and attacks, a little faster, and tougher zombies.");
+            r.HealthMultiplier = 1.4f;
+            r.ShieldMultiplier = 1.25f;
+            r.SpeedMultiplier = 1.05f;
+            r.Traits.RecallDurationMultiplier = .6f;
+            r.Traits.AttackCooldownMultiplier = .85f;
+            r.Traits.RevivedZombieHealthMultiplier = 1.15f;
+            r = N("Z06", "Sprinter", RoleTypeId.Scp0492, "A very fast zombie with much less health.");
+            r.HealthMultiplier = .6f;
+            r.SpeedMultiplier = 1.3f;
+            r = N("Z07", "Spitter", RoleTypeId.Scp0492, "Hits poison humans. Medical supplies cure it.");
+            r.HealthMultiplier = .9f;
+            r.Traits.PoisonDamagePerSecond = 3;
+            r.Traits.PoisonDurationSeconds = 5;
+            r = N("Z08", "Hulk", RoleTypeId.Scp0492, "A huge zombie with three times the health and harder hits, but slow.");
+            r.HealthMultiplier = 3;
+            r.SpeedMultiplier = .8f;
+            r.Scale = 1.25f;
+            r.Traits.AttackDamageMultiplier = 1.25f;
+            r = N("R03", "Shy Guy", RoleTypeId.Scp096, "Enrages faster and moves a little faster while calm, but has less health.");
+            r.HealthMultiplier = .9f;
+            r.Traits.RageWindupSeconds = 3;
+            r.Traits.CalmSpeedMultiplier = 1.1f;
+            r = N("R04", "Prowler", RoleTypeId.Scp096, "Much faster while calm, but has less health.");
+            r.HealthMultiplier = .85f;
+            r.Traits.CalmSpeedMultiplier = 1.35f;
+            r = N("R05", "Bulwark", RoleTypeId.Scp096, "40% more health and shield, but slower.");
+            r.HealthMultiplier = 1.4f;
+            r.ShieldMultiplier = 1.4f;
+            r.SpeedMultiplier = .92f;
+            r = N("R06", "Regenerator", RoleTypeId.Scp096, "Heals back to full health a few seconds after leaving combat.");
+            r.Traits.HealthRegenPerSecond = 15;
+            r.Traits.HealthRegenDelaySeconds = 6;
+            r = N("R07", "Wrath", RoleTypeId.Scp096, "Mythical: enrages instantly, 25% more health, faster, and every kill adds 5 seconds of rage.");
+            r.HealthMultiplier = 1.25f;
+            r.SpeedMultiplier = 1.15f;
+            r.Traits.RageWindupSeconds = 0;
+            r.Traits.RageExtendOnKillSeconds = 5;
+            r = N("L05", "Gravedigger", RoleTypeId.Scp106, "Has less health, but heals 200 whenever a human dies in the pocket dimension.");
+            r.HealthMultiplier = .85f;
+            r.Traits.PocketDeathHeal = 200;
+            r = N("L06", "Rust", RoleTypeId.Scp106, "Hits make humans bleed and have a 30% chance to destroy their armor.");
+            r.Traits.BleedOnHitSeconds = 8;
+            r.Traits.ArmorBreakChancePercent = 30;
+            r = N("L07", "Tar Pit", RoleTypeId.Scp106, "Leaves a sticky, slowing puddle behind it every few seconds while moving.");
+            r.Traits.TarTrailSeconds = 6;
+            r = N("L08", "Glutton", RoleTypeId.Scp106, "Mythical: huge, with 60% more health and more shield, and every catch heals 150.");
+            r.Scale = 1.2f;
+            r.HealthMultiplier = 1.6f;
+            r.ShieldMultiplier = 1.2f;
+            r.Traits.HealOnHit = 150;
+            r = N("B05", "Statue", RoleTypeId.Scp173, "More health and shield, but a little slower.");
+            r.HealthMultiplier = 1.25f;
+            r.ShieldMultiplier = 1.15f;
+            r.SpeedMultiplier = .9f;
+            r = N("B06", "Blinker", RoleTypeId.Scp173, "Breakneck Speeds recharges twice as fast.");
+            r.Traits.BreakneckCooldownMultiplier = .5f;
+            r = N("B07", "Tantrum", RoleTypeId.Scp173, "Its tantrum recharges much faster, and it has a little more health.");
+            r.HealthMultiplier = 1.1f;
+            r.Traits.TantrumCooldownMultiplier = .4f;
+            r = N("B08", "Ghost", RoleTypeId.Scp173, "Mythical: silent, faster, with 20% more health and shield. Kills refresh Breakneck Speeds.");
+            r.HealthMultiplier = 1.2f;
+            r.ShieldMultiplier = 1.2f;
+            r.SpeedMultiplier = 1.15f;
+            r.Traits.QuietFootstepStacks = 8;
+            r.Traits.RefreshBreakneckOnKill = true;
+            r = N("H05", "Runt", RoleTypeId.Scp939, "Smaller and faster, but has much less health.");
+            r.Scale = .85f;
+            r.SpeedMultiplier = 1.15f;
+            r.HealthMultiplier = .7f;
+            r = N("H06", "Hunter", RoleTypeId.Scp939, "Hits 20% harder and moves a little faster, but has less health.");
+            r.HealthMultiplier = .85f;
+            r.SpeedMultiplier = 1.08f;
+            r.Traits.AttackDamageMultiplier = 1.2f;
+            r = N("H07", "Matriarch", RoleTypeId.Scp939, "Large and tough with poison clouds, but a little slower. Medical supplies cure the poison.");
+            r.Scale = 1.15f;
+            r.HealthMultiplier = 1.4f;
+            r.ShieldMultiplier = 1.3f;
+            r.SpeedMultiplier = .9f;
+            r.Traits.PoisonDamagePerSecond = 3;
+            r.Traits.PoisonDurationSeconds = 4;
+            r.Traits.PoisonInCloud = true;
             FillMissingChances(list, DefaultFamilyChance);
             foreach (var role in list)
                 role.Rarity = DefaultRarity(role.Id);

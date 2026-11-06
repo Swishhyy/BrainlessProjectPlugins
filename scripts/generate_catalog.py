@@ -7,8 +7,8 @@ from collections import defaultdict
 
 root = pathlib.Path(__file__).resolve().parents[1]
 source = (root/'Roles/RoleDefinition.cs').read_text()
-roles = re.findall(r'R\(\s*"([A-Z]\d\d)",\s*"([^"]+)",\s*RoleTypeId\.(\w+),\s*"([^"]+)"\)', source)
-blocks = source.split('r = R(')[1:]
+roles = re.findall(r'\b[RN]\(\s*"([A-Z]\d\d)",\s*"([^"]+)",\s*RoleTypeId\.(\w+),\s*"([^"]+)"(?:,\s*RoleTypeId\.\w+)*\)', source)
+blocks = re.split(r'r = [RN]\(', source)[1:]
 weights = {}
 groups = {}
 totals = defaultdict(int)
@@ -53,12 +53,12 @@ usage = json.loads((root/'docs/content_usage.json').read_text())
 assert set(usage['roles']) == {r[0] for r in roles}, 'Every role needs short usage instructions.'
 
 # Per-role availability (chance, gate, required equipment, population) for the role table.
-audit_blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )R\("[A-Z]\d\d")', source)[1:]
-assert len(audit_blocks) == 66
-known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
+audit_blocks = re.split(r'(?m)(?=^[ \t]*(?:var r = |r = )[RN]\("[A-Z]\d\d")', source)[1:]
+assert len(audit_blocks) == 104
+known_ids = set(re.findall(r'Id\s*=\s*(\d{4})', (root/'Items/Definition.cs').read_text()+(root/'Items/SupCatalog.cs').read_text()+(root/'Weapons/Definition.cs').read_text()))
 availability = {}
 for block in audit_blocks:
-    role_id = re.search(r'R\("([A-Z]\d\d)"', block).group(1)
+    role_id = re.search(r'[RN]\("([A-Z]\d\d)"', block).group(1)
     equipment = re.findall(r'\b(7[12]\d\d)\b', block)
     assert set(equipment) <= known_ids, f'{role_id} references unknown equipment'
     gate = 'Enabled'
@@ -70,7 +70,7 @@ for block in audit_blocks:
 
 lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
-         'Current shipped content: **22 items, 5 weapons, 66 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **22 items, 5 weapons, 104 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Rarity', '', 'Every item, weapon and role has a rarity tier. Each loot pickup or spawn rolls a tier first, then something of that tier. Defaults (items and roles have separate per-round counts; Items and Weapons share theirs):', '',
          '| Tier | Chance per roll | Max per round |', '| --- | --- | --- |',
@@ -97,6 +97,13 @@ for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
 lines += ['', 'Ricochet requires experimental weapons to be enabled. Give equipment with `ci give <ID> [playerID]`; use `ci list registered` to see what is enabled.', '',
           '## Roles', '', 'Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` shows percentages and blocked reasons.', '',
           '| ID | Role | Rarity | What it does | How to use | Status | Custom kit | Min players |', '| --- | --- | --- | --- | --- | --- | --- | --- |']
+tier_order = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Mythical']
+class_order = ['ClassD', 'Scientist', 'FacilityGuard', 'NtfPrivate', 'NtfSergeant', 'NtfSpecialist', 'NtfCaptain', 'ChaosConscript', 'ChaosRifleman', 'ChaosMarauder', 'ChaosRepressor', 'Scp049', 'Scp0492', 'Scp096', 'Scp106', 'Scp173', 'Scp939']
+def class_key(role):
+    role_id, _, base, _ = role
+    if role_id.startswith('X'): return 2.5
+    return class_order.index(base) if base in class_order else len(class_order)
+roles.sort(key=lambda r: (class_key(r), tier_order.index(role_rarity[r[0]]), r[0]))
 for role_id, name, base, hint in roles:
     if role_id == 'Z02': hint = 'Faster zombie with less health and weaker attacks.'
     chance, status, kit, minimum = availability[role_id]
@@ -145,6 +152,6 @@ for body, setting, ident, name in recipes:
     setting = {'OneToOne':'1:1','VeryFine':'Very Fine'}.get(setting, setting)
     lines.append(f'| {bodies.get(body, body)} | {setting} | {name} ({ident}) |')
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
-assert len(roles) == 66
+assert len(roles) == 104
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 22 items, 5 weapons, 66 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 22 items, 5 weapons, 104 roles (with availability), 3 events and 10 recipes; all have usage instructions.')

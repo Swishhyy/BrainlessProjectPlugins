@@ -56,6 +56,61 @@ namespace Brainless.Roles
         [Description("Regen stops at this much health. 0 means it can heal to full.")]
         [Tune(0, 100000)]
         public float HealthRegenMax { get; set; }
+
+        [Description("Humans within this many metres are poisoned (uses poison_damage_per_second/duration). 0 disables.")]
+        [Tune(0, 30)]
+        public float PoisonAuraRadius { get; set; }
+
+        [Description("Health regained for each kill.")]
+        [Tune(0, 10000)]
+        public float HealOnKill { get; set; }
+
+        [Description("Health regained each time this role's attack damages a human.")]
+        [Tune(0, 10000)]
+        public float HealOnHit { get; set; }
+
+        [Description("SCP-106: health regained whenever a human dies in the pocket dimension.")]
+        [Tune(0, 10000)]
+        public float PocketDeathHeal { get; set; }
+
+        [Description("Attack hits make humans bleed for this many seconds. 0 disables.")]
+        [Tune(0, 120)]
+        public float BleedOnHitSeconds { get; set; }
+
+        [Description("Chance per attack hit to destroy the victim's armor.")]
+        [Tune(0, 100)]
+        public float ArmorBreakChancePercent { get; set; }
+
+        [Description("Leaves a slowing SCP-173 tantrum puddle every this many seconds while moving. 0 disables.")]
+        [Tune(0, 120)]
+        public float TarTrailSeconds { get; set; }
+
+        [Description("SCP-173: Breakneck Speeds cooldown multiplier.")]
+        [Tune(.05, 5)]
+        public float BreakneckCooldownMultiplier { get; set; } = 1;
+
+        [Description("SCP-173: tantrum cooldown multiplier.")]
+        [Tune(.05, 5)]
+        public float TantrumCooldownMultiplier { get; set; } = 1;
+
+        [Description("SCP-096: seconds of rage added per kill while enraged.")]
+        [Tune(0, 60)]
+        public float RageExtendOnKillSeconds { get; set; }
+
+        [Description("SCP-049: zombies this role revives get this health multiplier on top of their own.")]
+        [Tune(.1, 10)]
+        public float RevivedZombieHealthMultiplier { get; set; } = 1;
+
+        [Description("SCP-049: zombies this role revives move this many percent faster.")]
+        [Tune(0, 100)]
+        public byte RevivedZombieSpeedPercent { get; set; }
+
+        [Description("SCP-049: each zombie this role revives becomes a random zombie variant (Common to Rare).")]
+        public bool RandomZombieVariant { get; set; }
+
+        [Description("Extra random SCP items in the starting kit.")]
+        [Tune(0, 4)]
+        public int RandomScpItems { get; set; }
     }
 
     internal static class ScpTraitRules

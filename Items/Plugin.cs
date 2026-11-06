@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 12;
+            bool migrateConfig = Config.CatalogRevision < 14;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();

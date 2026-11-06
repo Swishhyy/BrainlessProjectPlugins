@@ -63,7 +63,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 9 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 12 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -93,6 +93,7 @@ namespace Brainless.Roles
             Exiled.Events.Handlers.Map.ExplodingGrenade += BurstExploding;
             P.Hurting += Hurting;
             SubscribeVariants();
+            SubscribeAbilities();
             P.InteractingDoor += LockpickDoor;
             P.Left += Left;
             S.WaitingForPlayers += Reset;
@@ -118,6 +119,7 @@ namespace Brainless.Roles
             Exiled.Events.Handlers.Map.ExplodingGrenade -= BurstExploding;
             P.Hurting -= Hurting;
             UnsubscribeVariants();
+            UnsubscribeAbilities();
             P.InteractingDoor -= LockpickDoor;
             P.Left -= Left;
             S.WaitingForPlayers -= Reset;
@@ -132,6 +134,7 @@ namespace Brainless.Roles
             bursts.Clear();
             pendingBursts.Clear();
             poisons.Clear();
+            ClearAbilities();
             lifetime.Clear();
             lockpicking?.Clear();
             lockpicking = null;
@@ -164,6 +167,7 @@ namespace Brainless.Roles
             badges.Clear();
             rerollOffers.Clear();
             rerollUsed.Clear();
+            ClearAbilities();
             doctorRolled = false;
             rogueAlertQueued = false;
             waveCount = 0;
@@ -208,7 +212,11 @@ namespace Brainless.Roles
             lifetime.Later(.25f, () =>
             {
                 if (ev.Player.IsConnected && ev.Player.IsAlive && generation == Generation(ev.Player))
+                {
                     Assign(ev.Player);
+                    if (ev.Player.IsAlive && generation == Generation(ev.Player))
+                        BoostRevived(ev.Player);
+                }
             });
         }
 
@@ -245,6 +253,8 @@ namespace Brainless.Roles
                 }
             }
 
+            if (player.Role.Type == RoleTypeId.Scp0492 && RandomZombie(player))
+                return;
             if (Config.UseRarity)
             {
                 AssignByRarity(player);
@@ -442,8 +452,9 @@ namespace Brainless.Roles
                     extra++;
                 if (definition.Id == "S04" || definition.Id == "C12")
                     extra++;
-                if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "C10" || definition.Id == "C11")
+                if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "M24" || definition.Id == "C10" || definition.Id == "C11")
                     extra++;
+                extra += definition.Traits.RandomScpItems;
                 if (definition.InventorySlots(player.Items.Count, removed, extra) > 8)
                     return "insufficient inventory space for the complete role kit";
             }
@@ -597,12 +608,14 @@ namespace Brainless.Roles
                         Candy(player, 1);
                     if (definition.Id == "S04" || definition.Id == "C12")
                         Candy(player, Config.CandyManCandyCount);
-                    if (definition.Id == "C07" || definition.Id == "M14")
+                    if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "M24")
                         GiveSquadCard(player);
                     if (definition.Id == "C10" && random.NextDouble() < .3)
                         player.AddItem(ItemType.SCP1344);
                     if (definition.Id == "C11")
                         player.AddItem(Catalog.ScpItems[random.Next(Catalog.ScpItems.Length)]);
+                    if (definition.Traits.RandomScpItems > 0)
+                        GiveRandomScpItems(player, definition.Traits.RandomScpItems);
                     if (definition.Id == "G02")
                     {
                         player.ClearAmmo();
@@ -826,6 +839,7 @@ namespace Brainless.Roles
                 Safe.Run(() => lockpicking?.Update());
                 Safe.Run(() => roleHud?.Update());
                 Safe.Run(() => bursts.Prune());
+                Safe.Run(UpdatePoisonAuras);
                 Safe.Run(UpdatePoisons);
             }
         }
@@ -866,6 +880,8 @@ namespace Brainless.Roles
             RegenerateHealth(player, state);
             if (state.Definition.Traits.RefreshBreakneckOnKill)
                 ClearRefreshedCooldown(player, state);
+            ScaleBreakneckCooldown(player, state);
+            LeaveTar(player, state);
         }
 
         // Out-of-combat health regen (e.g. Anger Issue): heals once the SCP has taken no
@@ -1033,6 +1049,9 @@ namespace Brainless.Roles
             internal string PreviousUniqueRole;
             internal bool ShieldOverridden, BreakneckKill, ResilientActive;
             internal float LastHurt = float.NegativeInfinity;
+            internal float LastBreakneckCooldown, NextTar;
+            internal Vector3? TarAnchor;
+            internal List<Hazards.TantrumEnvironmentalHazard> Tar = new List<Hazards.TantrumEnvironmentalHazard>();
             internal Vector3 Scale;
             internal string Info;
             internal MovementLayer Movement = new MovementLayer();

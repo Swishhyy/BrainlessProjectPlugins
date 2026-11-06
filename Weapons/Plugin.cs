@@ -45,6 +45,7 @@ namespace Brainless.Weapons
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
+            bool migrateConfig = Config.CatalogRevision < 10;
             Config.Prepare();
             LoadIndividualWeapons(Config);
             Config.Prepare();
@@ -82,6 +83,8 @@ namespace Brainless.Weapons
             AdminItems.Enable("brainless.weapons.commands");
             distribution = new NaturalDistribution("Weapons", lifetime, () => Config.Distribution, NaturalContent, () => Config.WorldLoot ? Config.Tuning.Supply.WorldLootCount : 0, () => Config.Debug);
             base.OnEnabled();
+            if (migrateConfig)
+                ConfigMigration.Save(this);
             updates = Brainless.Internal.Updates.PluginUpdates.Start(GetType().Assembly, "Weapons", Config.AutoUpdate);
         }
 
