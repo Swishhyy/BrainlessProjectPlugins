@@ -24,6 +24,8 @@ namespace Brainless.Items
             P.UsingItemCompleted += UsingCompleted;
             P.ActivatingWarheadPanel += WarheadPanel;
             P.ThrowingRequest += PullingPin;
+            P.InteractingLocker += CursedLocker;
+            P.UnlockingGenerator += CursedGenerator;
         }
 
         private void CursedUnsubscribe()
@@ -31,6 +33,8 @@ namespace Brainless.Items
             P.UsingItemCompleted -= UsingCompleted;
             P.ActivatingWarheadPanel -= WarheadPanel;
             P.ThrowingRequest -= PullingPin;
+            P.InteractingLocker -= CursedLocker;
+            P.UnlockingGenerator -= CursedGenerator;
             cursedFlashes.Clear();
         }
 
@@ -96,13 +100,17 @@ namespace Brainless.Items
                 return;
             cursedFlashes.Remove(ev.Projectile.Serial);
             var cfg = Config.Cursed;
-            foreach (var target in Player.List.Where(p => p.IsAlive && p != thrower && (p.Position - ev.Position).sqrMagnitude <= cfg.FlashbangRadius * cfg.FlashbangRadius && World.ClearLine(ev.Position + Vector3.up * .2f, p.CameraTransform.position)))
-                target.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangBlindSeconds);
-            if (thrower.IsConnected && thrower.IsAlive)
+            Vector3 position = ev.Position;
+            // Applied one tick after the native flashbang has finished its own processing,
+            // never from inside the explosion callback, and only to living humans (like a
+            // normal flashbang). The thrower gets a plain blind, not a second native flash.
+            lifetime.Later(0, () =>
             {
-                thrower.EnableEffect(EffectType.Flashed, 1, 2);
-                thrower.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangSelfBlindSeconds);
-            }
+                foreach (var target in Player.List.Where(p => p != thrower && p.IsConnected && p.IsAlive && p.IsHuman && (p.Position - position).sqrMagnitude <= cfg.FlashbangRadius * cfg.FlashbangRadius && World.ClearLine(position + Vector3.up * .2f, p.CameraTransform.position)).ToArray())
+                    target.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangBlindSeconds);
+                if (thrower.IsConnected && thrower.IsAlive && thrower.IsHuman)
+                    thrower.EnableEffect(EffectType.Blinded, 1, cfg.FlashbangSelfBlindSeconds);
+            });
         }
 
         // Start of use: block early (cooldown, no 096 target...) so the pill isn't wasted.
@@ -188,11 +196,41 @@ namespace Brainless.Items
             });
         }
 
-        // Cursed Keycard: every keycard door it opens pings the SCPs and spends a use.
+        // Cursed Keycard: every keycard door, locker or generator it opens pings the SCPs
+        // and spends one of its uses.
         private void CursedDoor(Player player, Item card, Door door)
         {
             if (!door.IsKeycardDoor || door.IsOpen)
                 return;
+            CursedAccess(player, card);
+        }
+
+        private Item HeldCursedKeycard(Player player)
+        {
+            var held = player?.CurrentItem;
+            return held != null && Find(held.Serial)?.Id == SupCatalog.CursedKeycard ? held : null;
+        }
+
+        // Keycard lockers (armory racks, pedestals): only a locked chamber being opened counts.
+        private void CursedLocker(InteractingLockerEventArgs ev) => Safe.Run(() =>
+        {
+            var card = HeldCursedKeycard(ev.Player);
+            var chamber = ev.InteractingChamber;
+            if (card == null || !ev.IsAllowed || chamber == null || chamber.IsOpen || System.Convert.ToInt64(chamber.RequiredPermissions) == 0)
+                return;
+            CursedAccess(ev.Player, card);
+        });
+
+        private void CursedGenerator(UnlockingGeneratorEventArgs ev) => Safe.Run(() =>
+        {
+            var card = HeldCursedKeycard(ev.Player);
+            if (card == null || !ev.IsAllowed || ev.Generator == null || ev.Generator.IsUnlocked)
+                return;
+            CursedAccess(ev.Player, card);
+        });
+
+        private void CursedAccess(Player player, Item card)
+        {
             string zone = player.Zone switch
             {
                 ZoneType.LightContainment => "Light Containment",
@@ -230,7 +268,7 @@ namespace Brainless.Items
                 void Add(uint id, params ItemType[] sources)
                 {
                     if (registered.TryGetValue(id, out var item))
-                        entries.Add(new CursedLoot.Entry { Id = id, Sources = sources, Spawn = position => item.TrySpawn(position, true, out var pickup) == null ? pickup : null });
+                        entries.Add(new CursedLoot.Entry { Id = id, Sources = sources, Rarity = item.Spec.Rarity, Spawn = position => item.TrySpawn(position, true, out var pickup) == null ? pickup : null });
                 }
 
                 Add(SupCatalog.CursedKeycard, KeycardSources);
@@ -243,7 +281,7 @@ namespace Brainless.Items
                 Add(SupCatalog.CursedHat, ItemType.SCP268);
                 Add(SupCatalog.CursedCola, ItemType.SCP207);
                 Add(SupCatalog.CursedLantern, ItemType.SCP2176);
-                int placed = CursedLoot.Run(entries, Config.Cursed.LootChancePercent, Config.Cursed.LootMaxPerItem, cursedRandom);
+                int placed = CursedLoot.Run(entries, Config.Cursed.LootChancePercent, Config.Cursed.LootMaxPerItem, cursedRandom, Config.Distribution.UseRarity ? Config.Distribution.Rarity : null);
                 if (Config.Debug)
                     Log.Debug("Cursed loot placed: " + placed);
             });

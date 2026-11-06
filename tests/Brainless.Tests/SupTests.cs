@@ -48,7 +48,7 @@ internal static class SupTests
         fixes.Validate();
         check(fixes.Recipes.Count == 9, "deliberately removed recipes remain removed after the one-time migration");
         var items = new ItemDistributionConfig(); items.UpgradeSup(); items.UpgradeSup();
-        check(items.MapRules.Count(r => r.CustomId >= 7114) == 7 && !items.MapRules.Any(r => r.CustomId == 7118 || r.CustomId == 7121) && items.MapRules.Single(r => r.CustomId == 7119).SourceTypes.Contains(ItemType.KeycardJanitor), "natural SUP loot migration adds the seven remaining items once with compatible native bodies");
+        check(items.MapRules.Count(r => r.CustomId >= 7114 && r.CustomId <= 7122) == 7 && items.MapRules.Count(r => r.CustomId >= 7133) == 6 && !items.MapRules.Any(r => r.CustomId == 7118 || r.CustomId == 7121) && items.MapRules.Single(r => r.CustomId == 7119).SourceTypes.Contains(ItemType.KeycardJanitor), "natural SUP loot migration adds the seven remaining items once with compatible native bodies");
         var weapons = new WeaponDistributionConfig(); weapons.UpgradeSupWeapons(); weapons.UpgradeSupWeapons();
         check(weapons.MapRules.Count(r => r.CustomId == 7207) == 1 && weapons.PlayerRules.Count(r => r.CustomId == 7207) == 1 && !weapons.MapRules.Any(r => r.CustomId == 7208), "the launcher pool migrates without duplicate rolls and the railgun is gone");
         var emptyLoot = new ItemDistributionConfig { MapRules = new System.Collections.Generic.List<MapLootRule>(), PlayerRules = new System.Collections.Generic.List<PlayerLootRule>() };

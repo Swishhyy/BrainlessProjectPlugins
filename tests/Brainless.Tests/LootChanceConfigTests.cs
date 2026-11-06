@@ -19,7 +19,7 @@ internal static class LootChanceConfigTests
     {
         var reader = new DeserializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
         var writer = new SerializerBuilder().WithNamingConvention(UnderscoredNamingConvention.Instance).Build();
-        bool Supported(uint id) => id >= 7101 && id <= 7122 && id != 7110;
+        bool Supported(uint id) => id >= 7101 && id <= 7140 && id != 7110;
         var old = reader.Deserialize<ItemDistributionConfig>("map_chance_percent: 40\nmap_rules:\n- custom_id: 7101\n  source_types: [GrenadeFlash]\n  weight: 1\n- custom_id: 7104\n  source_types: [GrenadeFlash]\n  weight: 3\nplayer_rules: []\n");
         old.Validate(Supported);
         check(old.MapRules[0].ChancePercent == 10 && old.MapRules[1].ChancePercent == 30, "old map rules migrate their source-specific chance/weight ratios");
@@ -30,7 +30,30 @@ internal static class LootChanceConfigTests
         check(again.MapRules.Single().ChancePercent == 12.5, "item chance_percent survives real YAML serialization");
         var holder = reader.Deserialize<Holder>("distribution:\n  map_chance_percent: 0\n  player_chance_percent: 0\n");
         holder.Distribution.Validate(Supported);
-        check(holder.Distribution.MapRules.All(r => r.ChancePercent == 0) && holder.Distribution.PlayerRules.All(r => r.ChancePercent == 0), "partial old nested YAML retains a zero distribution budget rather than activating inherited defaults");
+        var stockChance = DistributionConfig.Items();
+        bool Shipped(uint id) => stockChance.MapRules.Any(r => r.CustomId == id && r.ChancePercent.HasValue);
+        check(holder.Distribution.MapRules.Where(r => !Shipped(r.CustomId)).All(r => r.ChancePercent == 0) && holder.Distribution.PlayerRules.Where(r => !Shipped(r.CustomId)).All(r => r.ChancePercent == 0), "partial old nested YAML retains a zero budget for rules without their own percentage");
+        // Items revision 13: unique loot is raised to the new chances, but a 0% rule stays off.
+        var oldStock = new ItemDistributionConfig { MaxMapReplacements = 3, MaxPlayerGrants = 3 };
+        foreach (var rule in oldStock.MapRules) rule.ChancePercent = null;
+        foreach (var rule in oldStock.PlayerRules) rule.ChancePercent = null;
+        oldStock.MapRules.Single(r => r.CustomId == 7101).ChancePercent = 0;
+        oldStock.PrepareChances();
+        check(oldStock.MapRules.Single(r => r.CustomId == 7102).ChancePercent < 10 && oldStock.MapRules.Single(r => r.CustomId == 7113).ChancePercent < 20, "the old stock cluster/impact chances were low");
+        oldStock.RaiseUniqueLoot();
+        oldStock.Validate(Supported);
+        check(oldStock.MapRules.Single(r => r.CustomId == 7102).ChancePercent == 25 && oldStock.MapRules.Single(r => r.CustomId == 7113).ChancePercent == 40 && oldStock.PlayerRules.Single(r => r.CustomId == 7113).ChancePercent == 15, "revision 13 raises cluster and impact grenade chances");
+        check(oldStock.MapRules.Single(r => r.CustomId == 7101).ChancePercent == 0 && oldStock.MaxMapReplacements == 8 && oldStock.MaxPlayerGrants == 6, "revision 13 keeps a disabled 0% rule off and raises the map and starting-gear limits");
+        var generous = new ItemDistributionConfig();
+        generous.MapRules.Single(r => r.CustomId == 7113).ChancePercent = 70;
+        generous.RaiseUniqueLoot();
+        check(generous.MapRules.Single(r => r.CustomId == 7113).ChancePercent == 70, "revision 13 never lowers a chance an owner already raised");
+        var crowded = new ItemDistributionConfig();
+        crowded.MapRules.Single(r => r.CustomId == 7113).ChancePercent = 5;
+        crowded.MapRules.Single(r => r.CustomId == 7102).ChancePercent = 1;
+        crowded.MapRules.Add(new MapLootRule { CustomId = 7114, ChancePercent = 90, SourceTypes = new List<ItemType> { ItemType.GrenadeHE } });
+        crowded.RaiseUniqueLoot();
+        check(crowded.MapRules.Single(r => r.CustomId == 7113).ChancePercent == 5 && crowded.MapRules.Single(r => r.CustomId == 7102).ChancePercent == 1, "revision 13 leaves a pool alone when raising it would pass 100%");
         var player = reader.Deserialize<ItemDistributionConfig>("map_rules: []\nplayer_chance_percent: 30\nplayer_rules:\n- custom_id: 7108\n  weight: 1\n  roles: [ClassD]\n- custom_id: 7109\n  weight: 2\n  roles: [ClassD]\n"); player.Validate(Supported);
         check(player.PlayerRules[0].ChancePercent == 10 && player.PlayerRules[1].ChancePercent == 20, "starting-gear percentages migrate independently of map loot");
         var scoped = new ItemDistributionConfig { PlayerRules = new List<PlayerLootRule>(), MapRules = new List<MapLootRule> {

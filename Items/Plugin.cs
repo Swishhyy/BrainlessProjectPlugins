@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 9, 0);
+        public override Version Version => new Version(0, 11, 0);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -55,7 +55,7 @@ namespace Brainless.Items
         private NaturalDistribution distribution;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.CatalogRevision < 12;
+            bool migrateConfig = Config.CatalogRevision < 15;
             Config.Prepare();
             LoadIndividualItems(Config);
             Config.Prepare();
@@ -225,7 +225,7 @@ namespace Brainless.Items
         internal bool CanIssueBatch(uint[] ids)
         {
             EnsureCapacity();
-            var ours = ids.Where(id => id >= 7101 && id <= 7122).ToArray();
+            var ours = ids.Where(id => id >= 7101 && id <= 7140).ToArray();
             if (budget.Total + ours.Length > budget.Capacity)
                 return false;
             return ours.GroupBy(id => id).All(g => registered.TryGetValue(g.Key, out var item) && CanIssue(item.Spec, g.Count()));
@@ -252,7 +252,7 @@ namespace Brainless.Items
         private RegisteredItem Find(int serial) => registered.Values.FirstOrDefault(i => i.TrackedSerials.Contains(serial));
         private IEnumerable<NaturalContent> NaturalContent()
         {
-            return registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, RequiredSlots = 1, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
+            return registered.Values.Select(item => new NaturalContent { Id = item.Id, Name = item.Name, Body = item.Type, Rarity = item.Spec.Rarity, RequiredSlots = 1, CanIssue = () => CanIssue(item.Spec, 1), Give = p => item.TryGive(p, false, false), AdoptItem = item.AdoptItem, AdoptPickup = item.AdoptPickup, Spawn = position => item.Spawn(position) });
         }
 
         private void KeyChanged(Player player, SettingBase setting) => Safe.Run(() =>
@@ -529,7 +529,7 @@ namespace Brainless.Items
                 return;
             }
 
-            if (item.Id == 7102 && projectile is ExplosionGrenadeProjectile parent)
+            if (item.Id == 7102 && projectile is ExplosionGrenadeProjectile parent && !Config.Tuning.ClusterGrenade.NativeParentBlast)
                 parent.MaxRadius = Config.Tuning.ClusterGrenade.ParentRadius;
             thrown.Arm(projectile.Serial, new Payload { Item = item, Projectile = projectile, Source = new DamageSource(owner), Foam = Config.Tuning.ContainmentFoam, Gas = Config.Tuning.GasGrenade, Cluster = Config.Tuning.ClusterGrenade });
             if (projectile is TimeGrenadeProjectile timed)
@@ -549,9 +549,14 @@ namespace Brainless.Items
                 return;
             bool allowed = ev.IsAllowed;
             var targets = ev.TargetsToAffect.ToArray();
-            ev.IsAllowed = allowed && payload.Cluster.DamageEnvironment;
-            if (ev.IsAllowed)
-                ev.TargetsToAffect.Clear();
+            if (payload.Cluster.NativeParentBlast)
+                targets = Array.Empty<Player>();
+            else
+            {
+                ev.IsAllowed = allowed && payload.Cluster.DamageEnvironment;
+                if (ev.IsAllowed)
+                    ev.TargetsToAffect.Clear();
+            }
             // HE grenades reach this callback after native visual/target setup.
             thrown.Resolve(ev.Projectile.Serial, allowed, p => Cluster(ev.Position, p.Source, p.Cluster, targets), p => RetireSerial(ev.Projectile.Serial));
         });
@@ -588,7 +593,12 @@ namespace Brainless.Items
                         Log.Info($"[Smoke 7101] Serial {payload.Projectile.Serial}: {payload.Gas.SmokeEmitters} full-size native emitters for {payload.Gas.DurationSeconds}s.");
                     break;
                 case 7103:
-                    SpreadTantrum(position, payload.Foam);
+                    // Spawn the puddles one tick later, outside the native grenade callback.
+                    var foam = payload.Foam;
+                    lifetime.Later(0, () => SpreadTantrum(position, foam));
+                    break;
+                default:
+                    DetonateGeneral(payload, position);
                     break;
             }
         }
@@ -596,9 +606,15 @@ namespace Brainless.Items
         // Containment foam leaves SCP-173's native tantrum mess across a wide area:
         // by default one puddle scaled to the radius; with single_puddle off, a grid
         // of normal puddles on solid floor with a clear line back to the blast.
+        // A tantrum hazard that spawns on top of a player crashed the server, so puddles
+        // never spawn where anyone (alive) is standing. They can still walk into one later,
+        // exactly like SCP-173's own tantrum.
+        private static bool PlayerInside(Vector3 floor, float radius) => Player.List.Any(p => p.IsAlive && Math.Abs(p.Position.y - floor.y) < 2.5f && new Vector2(p.Position.x - floor.x, p.Position.z - floor.z).sqrMagnitude <= radius * radius);
+
         private void SpreadTantrum(Vector3 position, FoamTuning tuning)
         {
-            if (tuning.SinglePuddle)
+            float clearance = Math.Max(1.5f, TantrumHazard.TantrumPrefab.MaxDistance + .75f);
+            if (tuning.SinglePuddle && !PlayerInside(Ground(position), tuning.Radius + .75f))
             {
                 PlaceScaledTantrum(Ground(position), tuning);
                 return;
@@ -625,7 +641,7 @@ namespace Brainless.Items
                 if (!World.ClearLine(center + Vector3.up * .5f, probe))
                     continue;
                 Vector3 floor = Ground(probe);
-                if (Math.Abs(floor.y - center.y) > 1.5f)
+                if (Math.Abs(floor.y - center.y) > 1.5f || PlayerInside(floor, clearance))
                     continue;
                 SpawnTantrum(floor, tuning.DurationSeconds, 1, null);
                 placed++;
@@ -670,6 +686,7 @@ namespace Brainless.Items
             FxAudio.Play(lifetime, position, seconds, kind, volume: audio.Volume, range: audio.Range, fullVolumeRange: audio.FullVolumeRange);
         }
 
+        // With NativeParentBlast the game already dealt the first blast; targets is empty.
         private void Cluster(Vector3 position, DamageSource source, ClusterTuning tuning, IEnumerable<Player> targets)
         {
             var blastBudget = new BlastBudget(tuning.SharedHumanDamageCap, tuning.SharedScpDamageCap);
@@ -692,7 +709,7 @@ namespace Brainless.Items
                 Vector3 separated = start + outward * .25f;
                 if (!Physics.Linecast(start, separated, InventorySystem.Items.ThrowableProjectiles.ExplosionGrenade.HitBlockerMask, QueryTriggerInteraction.Ignore))
                     start = separated;
-                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration, tuning.DamageEnvironment);
+                fragments.Launch(start, outward * tuning.HorizontalSpeed + Vector3.up * tuning.UpwardSpeed, tuning.ChildFuseSeconds + i * tuning.ChildFuseStaggerSeconds, source, tuning.Radius, tuning.HumanDamage, tuning.ScpDamage, blastBudget, tuning.RequireLineOfSight, tuning.AffectOwner, tuning.ArmorPenetration, tuning.DamageEnvironment, nativeScale: tuning.ChildNativeDamagePercent / 100f);
             }
         }
 
@@ -723,6 +740,7 @@ namespace Brainless.Items
         {
             fragments.Prune();
             NativeSmoke.Prune();
+            UpdateTrackers();
             foreach (var pair in channels.ToArray())
             {
                 var p = pair.Key;

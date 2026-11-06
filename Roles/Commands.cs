@@ -106,12 +106,36 @@ namespace Brainless.Roles
                 return false;
             }
 
-            response = "Availability for " + (player == null ? "the current server" : player.Nickname + " (" + player.Id + ")") + ". Percentages are per matching new spawn; blocked shares keep the normal role. Z05 uses a separate event roll. READY is not guaranteed.\n" + string.Join("\n", plugin.Config.Roles.Select(role =>
+            response = "Availability for " + (player == null ? "the current server" : player.Nickname + " (" + player.Id + ")") + ". " + (plugin.Config.UseRarity ? "Each spawn rolls a rarity tier, then a role of that tier (weights split a tier); an empty or full tier falls to the next one down." : "Percentages are per matching new spawn; blocked shares keep the normal role.") + " Z05 uses a separate event roll. READY is not guaranteed.\n" + string.Join("\n", plugin.Config.Roles.Select(role =>
             {
                 string reason = plugin.Availability(role, player);
-                return role.Id + ": " + role.Name + " - " + role.ChancePercent.Value.ToString("0.######") + "% - " + (reason == null ? "READY" : "BLOCKED: " + reason);
+                string chance = plugin.Config.UseRarity ? role.Rarity + " (weight " + role.ChancePercent.Value.ToString("0.######") + ")" : role.ChancePercent.Value.ToString("0.######") + "%";
+                return role.Id + ": " + role.Name + " - " + chance + " - " + (reason == null ? "READY" : "BLOCKED: " + reason);
             }));
+            if (plugin.Config.UseRarity)
+                response += "\n" + plugin.RarityStatus();
             return true;
+        }
+    }
+
+    [CommandHandler(typeof(ClientCommandHandler))]
+    public sealed class RerollCommand : ICommand
+    {
+        public string Command => "scpreroll";
+        public string[] Aliases => new[] { "reroll" };
+        public string Description => "Reroll your custom role once, if you were offered a reroll when you spawned.";
+
+        public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
+        {
+            var plugin = Plugin.Instance;
+            var player = Player.Get(sender);
+            if (plugin == null || !plugin.Config.IsEnabled || !RoleCommands.Valid(player))
+            {
+                response = "Use this from your ~ player console while Brainless Roles is enabled.";
+                return false;
+            }
+
+            return plugin.Reroll(player, out response);
         }
     }
 }

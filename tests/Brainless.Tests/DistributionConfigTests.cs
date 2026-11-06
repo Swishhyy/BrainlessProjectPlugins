@@ -52,11 +52,11 @@ internal static class DistributionConfigTests
         check(oldUpdater.Token == "" && oldUpdater.ResolveToken(_ => "old-environment-test-token") == "old-environment-test-token" && oldUpdater.ReleasesToScan == 10, "old updater YAML retains its environment token and configured scan count");
         bool Valid(DistributionConfig value, bool weapon = false)
         {
-            try { value.Validate(id => weapon ? id >= 7201 && id <= 7209 : id >= 7101 && id <= 7122 && id != 7110); return true; }
+            try { value.Validate(id => weapon ? id >= 7201 && id <= 7209 : id >= 7101 && id <= 7140 && id != 7110); return true; }
             catch (InvalidOperationException) { return false; }
         }
         var items = reader.Deserialize<ItemDistributionConfig>("map_chance_percent: 60\n");
-        check(items.MapChancePercent == 60 && items.MaxMapReplacements == 3 && items.PlayerChancePercent == 30, "partial item YAML keeps provider-specific numeric defaults");
+        check(items.MapChancePercent == 60 && items.MaxMapReplacements == 8 && items.MaxPlayerGrants == 6 && items.PlayerChancePercent == 30, "partial item YAML keeps provider-specific numeric defaults");
         check(items.MapRules.Any(r => r.CustomId == 7101) && items.PlayerRules.Any(r => r.CustomId == 7105) && Valid(items), "partial item YAML retains its natural loot and spawn pools");
         var weapons = reader.Deserialize<WeaponDistributionConfig>("map_chance_percent: 55\n");
         check(weapons.MapChancePercent == 55 && weapons.MaxMapReplacements == 1 && weapons.MaxPlayerGrants == 1 && weapons.PlayerChancePercent == 15 && weapons.PlayerDelaySeconds == 1,

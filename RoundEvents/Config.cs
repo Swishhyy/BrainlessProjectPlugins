@@ -25,6 +25,9 @@ namespace Brainless.RoundEvents
 
         [Tune(0, 15)]
         public float RoundStartDelaySeconds { get; set; } = 1.5f;
+
+        [Description("Lobby event vote: when the automatic roll hits, the lobby pauses and players vote with .vote (or pick No event). Players can sit an event out with .vote optout.")]
+        public VoteTuning Vote { get; set; } = new VoteTuning();
         public InfectionTuning Infection { get; set; } = new InfectionTuning();
 
         [Description("Chaos holds the facility, MTF raids it. Teams respawn in waves; first to the kill target wins.")]
@@ -215,5 +218,19 @@ namespace Brainless.RoundEvents
 
         [Description("Lock the Light Containment checkpoints and elevators for the whole event.")]
         public bool LockLightContainment { get; set; } = true;
+    }
+
+    public sealed class VoteTuning
+    {
+        [Description("Off = the automatic roll picks a random event like before (no vote).")]
+        public bool Enabled { get; set; } = true;
+
+        [Description("Seconds the lobby pauses for the vote; it ends early once everyone has voted or opted out.")]
+        [Tune(5, 300)]
+        public float DurationSeconds { get; set; } = 45;
+
+        [Description("The automatic roll happens when the lobby countdown has this many seconds left.")]
+        [Tune(1, 60)]
+        public int TriggerSecondsLeft { get; set; } = 5;
     }
 }

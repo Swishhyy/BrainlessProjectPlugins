@@ -15,7 +15,7 @@ namespace BetterCoinflips.Configs
         public bool Debug { get; set; } = false;
         public Brainless.Internal.Updates.AutoUpdateConfig AutoUpdate { get; set; } = new Brainless.Internal.Updates.AutoUpdateConfig();
 
-        [Description("Balance migration marker. Revision 2: coins lean toward goodies and harmless pranks with a little gambling; nothing sends players to spectator by default (kicks, spectator swap, instant explosion and Tesla teleport off, damage effects leave 1 HP), and lethal effects are dropped from bad_effects. Only untouched stock values change; set 2 to keep your values. Revision 3 removes the admin-only Stun Gun (7209) from custom_items.")]
+        [Description("Balance migration marker. Revision 2: coins lean toward goodies and harmless pranks with a little gambling; nothing sends players to spectator by default (kicks, spectator swap, instant explosion and Tesla teleport off, damage effects leave 1 HP), and lethal effects are dropped from bad_effects. Only untouched stock values change; set 2 to keep your values. Revision 3 removes the admin-only Stun Gun (7209) from custom_items. Revision 4 stops coins replacing SCP-500 pedestal spawns.")]
         public int BalanceRevision { get; set; }
 
 
@@ -23,13 +23,10 @@ namespace BetterCoinflips.Configs
         public int DefaultCoinsAmount { get; set; } = 4;
 
         [Description("The ItemType of the item to be replaced with a coin and the amount to be replaced, the item is supposed to be something found in SCP pedestals.")]
-        public Dictionary<ItemType, int> ItemToReplace { get; set; } = new()
-        {
-            {
-                ItemType.SCP500,
-                2
-            }
-        };
+        public Dictionary<ItemType, int> ItemToReplace { get; set; } = new();
+
+        [Description("SCP-914 on Very Fine doubles ordinary coins (1 -> 2, 2 -> 4, ...), in the intake or in a player's inventory.")]
+        public bool Scp914DoublesCoins { get; set; } = true;
 
         [Description("The boundaries of the random range of throws each coin will have before it breaks. The upper bound is exclusive.")]
         public List<int> MinMaxDefaultCoins { get; set; } = new()
@@ -389,24 +386,34 @@ namespace BetterCoinflips.Configs
         // stock default move to the current default; owner-edited values are kept.
         internal bool UpgradeBalance()
         {
-            if (BalanceRevision >= 3)
+            if (BalanceRevision >= 4)
                 return false;
+            if (BalanceRevision < 3)
+                UpgradeToThree();
+            // Revision 4: coins no longer take over SCP-500 spawns (stock value only).
+            if (ItemToReplace != null && ItemToReplace.Count == 1 && ItemToReplace.TryGetValue(ItemType.SCP500, out int replaced) && replaced == 2)
+                ItemToReplace.Clear();
+            BalanceRevision = 4;
+            return true;
+        }
+
+        private void UpgradeToThree()
+        {
             // Revision 3: the Stun Gun (7209) is admin-only, so coins no longer hand it out.
+            CustomItems?.Remove(7209);
             if (BalanceRevision == 2)
             {
-                CustomItems?.Remove(7209);
                 BalanceRevision = 3;
-                return true;
+                return;
             }
 
-            CustomItems?.Remove(7209);
             var stock = new Config();
             var properties = typeof(Config).GetProperties();
             var history = new Dictionary<string, int[]> { { "OneAmmoLogicerChance", new[] { 1 } }, { "EmptyHidChance", new[] { 5 } }, { "HpReductionChance", new[] { 20, 15 } }, { "WarheadChance", new[] { 10, 3 } }, { "ScpTpChance", new[] { 20, 12 } }, { "OneHpLeftChance", new[] { 15, 8 } }, { "TurnIntoScpChance", new[] { 30, 8 } }, { "InventoryResetChance", new[] { 20, 6 } }, { "ClassSwapChance", new[] { 10, 6 } }, { "InstantExplosionChance", new[] { 10, 4 } }, { "KickChance", new[] { 5, 0 } }, { "SpectSwapChance", new[] { 10, 3 } }, { "TeslaTpChance", new[] { 15, 6 } }, { "InventorySwapChance", new[] { 20, 12 } }, { "HandcuffChance", new[] { 10, 6 } }, { "LiveHeChance", new[] { 30, 15 } }, { "RandomBadEffectChance", new[] { 20, 15 } }, { "CustomItemChance", new[] { 30 } }, { "CustomRoleChance", new[] { 20 } } };
             foreach (var pair in history)
             {
                 var property = System.Array.Find(properties, p => p.Name == pair.Key);
-                if (System.Array.IndexOf(pair.Value, (int)property.GetValue(this)) >= 0)
+                if (property != null && System.Array.IndexOf(pair.Value, (int)property.GetValue(this)) >= 0)
                     property.SetValue(this, property.GetValue(stock));
             }
 
@@ -415,7 +422,6 @@ namespace BetterCoinflips.Configs
             if (BadEffects != null && BadEffects.SetEquals(OldBadEffects))
                 BadEffects.ExceptWith(LethalEffects);
             BalanceRevision = 3;
-            return true;
         }
     }
 

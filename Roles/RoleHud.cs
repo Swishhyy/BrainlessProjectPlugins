@@ -123,7 +123,7 @@ namespace Brainless.Roles
                 if (role == null && spectating)
                     text.Append(" <size=12><color=#AAAAAA" + a + ">no subclass</color></size>");
                 if (role != null)
-                    text.Append(" <size=12><color=#AAAAAA" + a + ">[").Append(Escape(SingleLine(role.Id))).Append("]</color></size>");
+                    text.Append(" <size=12><color=" + Brainless.Internal.RarityRules.Color(role.Rarity) + a + ">").Append(role.Rarity).Append("</color> <color=#AAAAAA" + a + ">[").Append(Escape(SingleLine(role.Id))).Append("]</color></size>");
                 text.Append("</nobr></size></voffset>");
                 if (role != null && config.RoleHudShowDescription)
                 {

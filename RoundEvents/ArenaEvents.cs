@@ -73,7 +73,8 @@ namespace Brainless.RoundEvents
 
         private float Limit => Mode == ArenaMode.Deathmatch ? Config.Deathmatch.TimeLimitSeconds : Config.Juggernaut.TimeLimitSeconds;
         private static string Clock(float seconds) => $"{(int)seconds / 60}:{(int)seconds % 60:00}";
-        private static bool Real(Player player) => player != null && player.IsConnected && !player.IsHost && !string.IsNullOrWhiteSpace(player.UserId) && !player.IsOverwatchEnabled;
+        // Players sitting the event out (.vote optout) are never part of it.
+        private static bool Real(Player player) => player != null && player.IsConnected && !player.IsHost && !string.IsNullOrWhiteSpace(player.UserId) && !player.IsOverwatchEnabled && !Plugin.SitsOut(player);
 
         internal bool Start(ArenaMode mode, out string response)
         {
@@ -304,7 +305,16 @@ namespace Brainless.RoundEvents
 
         internal void ChangingRole(ChangingRoleEventArgs ev)
         {
-            if (!Active || !ev.IsAllowed || owned.Contains(ev.Player) || !Real(ev.Player))
+            if (!Active || !ev.IsAllowed || owned.Contains(ev.Player))
+                return;
+            // Sitting-out players stay spectators for the whole event.
+            if (Plugin.SitsOut(ev.Player) && ev.NewRole != RoleTypeId.Spectator)
+            {
+                ev.IsAllowed = false;
+                return;
+            }
+
+            if (!Real(ev.Player))
                 return;
             // Native waves, late joins, escapes and SCP-049 revives cannot add players
             // outside the event; they wait for the next arena wave instead.

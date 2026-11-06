@@ -230,6 +230,28 @@ namespace BetterCoinflips
             return true;
         }
 
+        // SCP-914 Very Fine doubles ordinary coins. Each coin is processed on its own, so a
+        // stack of 2 becomes 4.
+        public void OnUpgradingPickup(Exiled.Events.EventArgs.Scp914.UpgradingPickupEventArgs ev) => Safe.Run(() =>
+        {
+            if (!ev.IsAllowed || !Config.Scp914DoublesCoins || ev.KnobSetting != Scp914.Scp914KnobSetting.VeryFine || ev.Pickup?.Base == null || ev.Pickup.Type != ItemType.Coin || CustomItem.Registered.Any(i => i.Check(ev.Pickup)))
+                return;
+            ev.IsAllowed = false;
+            ev.Pickup.Position = ev.OutputPosition;
+            Pickup.CreateAndSpawn(ItemType.Coin, ev.OutputPosition + UnityEngine.Vector3.right * .1f, null, ev.Pickup.PreviousOwner);
+        });
+
+        public void OnUpgradingInventoryItem(Exiled.Events.EventArgs.Scp914.UpgradingInventoryItemEventArgs ev) => Safe.Run(() =>
+        {
+            if (!ev.IsAllowed || !Config.Scp914DoublesCoins || ev.KnobSetting != Scp914.Scp914KnobSetting.VeryFine || ev.Item == null || ev.Item.Type != ItemType.Coin || ev.Player == null || CustomItem.Registered.Any(i => i.Check(ev.Item)))
+                return;
+            ev.IsAllowed = false;
+            if (ev.Player.Items.Count < 8)
+                ev.Player.AddItem(ItemType.Coin);
+            else
+                Pickup.CreateAndSpawn(ItemType.Coin, ev.Player.Position, null, ev.Player);
+        });
+
         public void OnSpawningItem(SpawningItemEventArgs ev)
         {
             if (ev.IsAllowed && ev.Pickup.Type == ItemType.Coin && !CustomItem.Registered.Any(i => i.Check(ev.Pickup)) && RemoveDefault())

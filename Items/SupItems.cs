@@ -101,12 +101,15 @@ namespace Brainless.Items
             pillCooldowns.Clear();
             radioCooldowns.Clear();
             radioCalls.Clear();
+            trackers.Clear();
             supTick = Time.time;
             roundStartedAt = Time.time;
         }
 
         private bool ActivateSup(Player player, Item held, RegisteredItem item, bool hold)
         {
+            if (ActivateGeneral(player, held, item))
+                return true;
             if ((item.Id < 7114 || item.Id > 7122) && !IsPill(item.Id))
                 return false;
             if (item.Id == 7119)
@@ -132,7 +135,7 @@ namespace Brainless.Items
             return true;
         }
 
-        internal static bool IsPill(uint id) => id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline || id == SupCatalog.CursedMedkit || id == SupCatalog.CursedHat || id == SupCatalog.CursedCola;
+        internal static bool IsPill(uint id) => id == Items.Config.EnergyDrink || id == 7114 || id == 7115 || id == 7116 || id == 7117 || id == 7122 || id == SupCatalog.CursedScp500 || id == SupCatalog.CursedAdrenaline || id == SupCatalog.CursedMedkit || id == SupCatalog.CursedHat || id == SupCatalog.CursedCola;
 
         private PillTuning Tuning(uint id) => id == 7114 ? Config.Sup.AdrenalinePills : id == 7115 ? Config.Sup.Anti096Pills : id == 7116 ? Config.Sup.ExpiredPills : id == 7117 ? Config.Sup.InvisibilityPills : id == 7122 ? Config.Sup.VolatilePills : null;
 
@@ -191,6 +194,9 @@ namespace Brainless.Items
                     break;
                 case 7122:
                     Volatile(player);
+                    break;
+                case Items.Config.EnergyDrink:
+                    EnergyDrinkEffect(player);
                     break;
                 case SupCatalog.CursedScp500:
                     CursedScp500(player);

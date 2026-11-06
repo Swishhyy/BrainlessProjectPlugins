@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using CommandSystem;
 using Exiled.Permissions.Extensions;
 
@@ -33,7 +34,7 @@ namespace Brainless.Weapons
 
             if (args.Array[args.Offset].Equals("chances", StringComparison.OrdinalIgnoreCase))
             {
-                response = Plugin.Instance.Config.Distribution.DescribeChances();
+                response = Plugin.Instance.Config.Distribution.DescribeChances(id => Plugin.Instance.Config.Weapons.FirstOrDefault(w => w.Id == id)?.Rarity ?? Brainless.Internal.Rarity.Common, Brainless.Internal.RarityLedger.Describe(Brainless.Internal.NaturalDistribution.Scope, Brainless.Internal.NaturalDistribution.RoundKey, Plugin.Instance.Config.Distribution.Rarity, new System.Random()));
                 return true;
             }
 

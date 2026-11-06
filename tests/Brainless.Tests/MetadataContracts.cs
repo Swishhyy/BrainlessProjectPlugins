@@ -91,7 +91,7 @@ internal static class MetadataContracts
             var items = itemsPe.GetMetadataReader();
             var itemPlugin = items.TypeDefinitions.Select(items.GetTypeDefinition).Single(t => items.GetString(t.Namespace) == "Brainless.Items" && items.GetString(t.Name) == "Plugin");
             var methods = itemPlugin.GetMethods().Select(items.GetMethodDefinition).Select(md => items.GetString(md.Name)).ToArray();
-            check(methods.Contains("UsingCompleted") && methods.Contains("PillUsing") && methods.Contains("CursedLootRound") && methods.Contains("WarheadPanel"), "pills use the native use animation and cursed items have their door, warhead and loot hooks");
+            check(methods.Contains("UsingCompleted") && methods.Contains("PillUsing") && methods.Contains("CursedLootRound") && methods.Contains("WarheadPanel") && methods.Contains("CursedLocker") && methods.Contains("CursedGenerator"), "pills use the native use animation and the cursed keycard counts doors, lockers and generators");
             var catalog = items.TypeDefinitions.Select(items.GetTypeDefinition).Single(t => items.GetString(t.Namespace) == "Brainless.Items" && items.GetString(t.Name) == "SupCatalog");
             check(catalog.GetMethods().Select(items.GetMethodDefinition).Any(md => items.GetString(md.Name) == "CursedDefaults"), "the compiled item catalog ships the cursed item definitions");
         }
