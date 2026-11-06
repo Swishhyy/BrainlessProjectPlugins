@@ -38,6 +38,7 @@ internal static class ConfigBackupTests
         }
 
         var coins = new Brainless.Coinflips.Configs.Config();
+        check(coins.CursedCustomItemWeights.TryGetValue(7211, out double shotgun) && shotgun == .25 && coins.CursedCustomItems.Contains(7211), "the Cursed Shotgun is a quarter as likely as other cursed items on coin tails");
         check(coins.Scp914DoublesCoins && coins.Scp914CoinMaxPerPlayer == 20 && coins.Scp914CoinMaxPerRound == 80 && coins.Scp914CoinWorldCap == 150, "SCP-914 coin doubling is capped per player (20), per round (80) and by the coins in the world (150)");
 #endif
     }

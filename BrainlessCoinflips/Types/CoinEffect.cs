@@ -109,7 +109,7 @@ namespace Brainless.Coinflips.Types
             CoinFlipEffect effect = null;
             effect = new CoinFlipEffect(Translations.SmallDamageMessage, player =>
             {
-                string name = BrainlessContent.GiveRandomItem(player, Config.CursedCustomItems, Config.CustomItemsIgnoreSupply);
+                string name = BrainlessContent.GiveRandomItem(player, Config.CursedCustomItems, Config.CustomItemsIgnoreSupply, Config.CursedCustomItemWeights);
                 if (name == null)
                     Sting(player, 15);
                 else
