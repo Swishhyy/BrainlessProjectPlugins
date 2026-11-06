@@ -28,7 +28,7 @@ namespace Brainless.Weapons
         public override string Name => "BrainlessWeapons";
         public override string Prefix => "brainless_weapons";
         public override string Author => "Swishhyy";
-        public override Version Version => new Version(0, 11, 1);
+        public override Version Version => new Version(0, 11, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -61,6 +61,7 @@ namespace Brainless.Weapons
                 var weapon = new RegisteredWeapon(this, spec);
                 weapon.Register();
                 registered.Add(spec.Id, weapon);
+                CustomRarity.Register(spec.Id, spec.Rarity);
             }
 
             P.Shooting += Shooting;

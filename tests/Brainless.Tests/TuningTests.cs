@@ -26,6 +26,11 @@ internal static class TuningTests
         var weapons = new WeaponTuning();
         var zombie = new ExplosiveZombieTuning();
         check(Valid(items) && Valid(weapons) && Valid(zombie), "all shipped tuning defaults validate");
+        var glow = new GlowTuning();
+        var vanilla = GlowTuning.DefaultVanilla();
+        check(vanilla.Count == 57, "every vanilla item named in the default rarity table exists in this game version (" + vanilla.Count + "/57)");
+        check(vanilla[ItemType.Coin] == Rarity.Common && vanilla[ItemType.Medkit] == Rarity.Uncommon && vanilla[ItemType.GrenadeHE] == Rarity.Rare && vanilla[ItemType.Jailbird] == Rarity.Epic && vanilla[ItemType.MicroHID] == Rarity.Legendary, "vanilla items get the approved rarities");
+        check(glow.Enabled && glow.MinimumRarity == Rarity.Uncommon && glow.MaxLights == 150 && glow.PickupHint && Valid(glow), "Uncommon and up glow by default, capped at 150 lights");
         check(items.ClusterGrenade.NativeParentBlast && items.ClusterGrenade.ChildNativeDamagePercent == 40, "the cluster's first blast is a stock HE grenade and each child deals 40% of one");
         var supply = new SupplyTuning { SmallLobbyCapacity = 6, MediumLobbyCapacity = 10, LargeLobbyCapacity = 14, ClusterMinPlayers = 12, SmallLobbyClusters = 0, MediumLobbyClusters = 1, LargeLobbyClusters = 2, WorldLootCount = 2 };
         supply.RaiseLimits();
