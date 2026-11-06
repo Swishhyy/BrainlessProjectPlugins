@@ -8,6 +8,7 @@ namespace Brainless.Core
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; }
+        [Description("Updates every installed Brainless plugin. Paste one read-only GitHub token here; the other plugins need none.")]
         public AutoUpdateConfig AutoUpdate { get; set; } = new AutoUpdateConfig();
         public string DataDirectory { get; set; } = "";
         public int SaveIntervalSeconds { get; set; } = 30;

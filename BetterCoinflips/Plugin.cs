@@ -9,7 +9,7 @@ namespace BetterCoinflips
     public class Plugin : Plugin<Config, Configs.Translations>
     {
         public override Version RequiredExiledVersion => new(9, 15, 3);
-        public override Version Version => new(5, 3, 0);
+        public override Version Version => new(5, 3, 1);
         public override string Author => "Miki_hero";
         public override string Name => "BetterCoinflips";
 
@@ -22,6 +22,7 @@ namespace BetterCoinflips
         public override void OnEnabled()
         {
             Instance = this;
+            Brainless.Internal.ConfigMigration.Tidy();
             if (Config.UpgradeBalance())
                 Brainless.Internal.ConfigMigration.Save(this);
             RegisterEvents();

@@ -28,6 +28,15 @@ namespace BetterCoinflips.Configs
         [Description("SCP-914 on Very Fine doubles ordinary coins (1 -> 2, 2 -> 4, ...), in the intake or in a player's inventory.")]
         public bool Scp914DoublesCoins { get; set; } = true;
 
+        [Description("Most extra coins one player can get from SCP-914 doubling per round.")]
+        public int Scp914CoinMaxPerPlayer { get; set; } = 20;
+
+        [Description("Most extra coins SCP-914 doubling can create per round, for everyone together.")]
+        public int Scp914CoinMaxPerRound { get; set; } = 80;
+
+        [Description("No more doubling once this many coins exist (on the floor and in inventories). Keeps the server from filling up with coins.")]
+        public int Scp914CoinWorldCap { get; set; } = 150;
+
         [Description("The boundaries of the random range of throws each coin will have before it breaks. The upper bound is exclusive.")]
         public List<int> MinMaxDefaultCoins { get; set; } = new()
         {

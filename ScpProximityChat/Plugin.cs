@@ -24,7 +24,7 @@ namespace Brainless.ScpProximityChat
         public override string Name => "BrainlessScpProximityChat";
         public override string Prefix => "brainless_scp_proximity_chat";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 3, 1);
+        public override Version Version => new Version(0, 3, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 
@@ -72,6 +72,7 @@ namespace Brainless.ScpProximityChat
                 tracker = Timing.RunCoroutine(TrackSpeakers());
                 ServerSpecificSettingsSync.SendToAll();
                 updates = PluginUpdates.Start(typeof(Plugin).Assembly, "ScpProximityChat", Config.AutoUpdate);
+                Brainless.Internal.ConfigMigration.Tidy();
                 if (migrateConfig)
                     Brainless.Internal.ConfigMigration.Save(this);
                 base.OnEnabled();

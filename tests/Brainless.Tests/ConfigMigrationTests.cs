@@ -29,7 +29,7 @@ internal static class ConfigMigrationTests
             string path = Path.Combine(directory, "config.yml");
             File.WriteAllText(path, current);
             check(ConfigDocument.Replace(path, current, next) && File.ReadAllText(path) == next && File.ReadAllText(path + ".before-brainless-migration") == current, "config migration atomically saves the new fields with an exact previous-file backup");
-            check(ConfigDocument.Replace(path, next, section) && File.ReadAllText(path + ".before-brainless-migration") == current && Array.FindAll(Directory.GetFiles(directory), p => p.StartsWith(path + ".before-brainless-migration.", StringComparison.Ordinal)).Length == 1, "later plugin migrations cannot overwrite the original configuration backup");
+            check(ConfigDocument.Replace(path, next, section) && File.ReadAllText(path + ".before-brainless-migration") == current && Array.FindAll(Directory.GetFiles(directory), p => p.StartsWith(path + ".before-brainless-migration.", StringComparison.Ordinal)).Length == 0, "later plugin migrations on the same boot keep the original backup without adding numbered copies");
             File.WriteAllText(path, "owner edited this");
             check(!ConfigDocument.Replace(path, current, next) && File.ReadAllText(path) == "owner edited this" && Directory.GetFiles(directory, "*.migration-*").Length == 0, "a concurrent owner edit wins over migration and the unused staging file is removed");
         }

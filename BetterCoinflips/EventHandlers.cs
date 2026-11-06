@@ -33,6 +33,8 @@ namespace BetterCoinflips
             CoinUses.Clear();
             cooldowns.Clear();
             remainingDefaultCoins = Config.DefaultCoinsAmount;
+            doubledByPlayer.Clear();
+            doubledThisRound = 0;
             remainingReplacements = Config.ItemToReplace == null ? new Dictionary<ItemType, int>() : new Dictionary<ItemType, int>(Config.ItemToReplace);
         }
 
@@ -231,25 +233,60 @@ namespace BetterCoinflips
         }
 
         // SCP-914 Very Fine doubles ordinary coins. Each coin is processed on its own, so a
-        // stack of 2 becomes 4.
+        // stack of 2 becomes 4. Capped per player, per round and by the coins in the world;
+        // past a cap the coin just comes out unchanged.
+        private readonly Dictionary<string, int> doubledByPlayer = new Dictionary<string, int>();
+        private int doubledThisRound;
+
+        private string DoublingBlocked(Player player)
+        {
+            if (doubledThisRound >= Config.Scp914CoinMaxPerRound)
+                return "SCP-914 has made enough coins this round.";
+            if (player?.UserId != null && doubledByPlayer.TryGetValue(player.UserId, out int mine) && mine >= Config.Scp914CoinMaxPerPlayer)
+                return "SCP-914 won't double any more of your coins this round.";
+            int coins = Pickup.List.Count(p => p != null && p.Type == ItemType.Coin) + Player.List.Sum(p => p.Items.Count(i => i.Type == ItemType.Coin));
+            if (coins >= Config.Scp914CoinWorldCap)
+                return "There are already too many coins in the facility.";
+            return null;
+        }
+
+        private void CountDoubled(Player player)
+        {
+            doubledThisRound++;
+            if (player?.UserId != null)
+                doubledByPlayer[player.UserId] = (doubledByPlayer.TryGetValue(player.UserId, out int mine) ? mine : 0) + 1;
+        }
+
         public void OnUpgradingPickup(Exiled.Events.EventArgs.Scp914.UpgradingPickupEventArgs ev) => Safe.Run(() =>
         {
             if (!ev.IsAllowed || !Config.Scp914DoublesCoins || ev.KnobSetting != Scp914.Scp914KnobSetting.VeryFine || ev.Pickup?.Base == null || ev.Pickup.Type != ItemType.Coin || CustomItem.Registered.Any(i => i.Check(ev.Pickup)))
                 return;
+            var owner = ev.Pickup.PreviousOwner;
+            if (DoublingBlocked(owner) != null)
+                return;
             ev.IsAllowed = false;
             ev.Pickup.Position = ev.OutputPosition;
-            Pickup.CreateAndSpawn(ItemType.Coin, ev.OutputPosition + UnityEngine.Vector3.right * .1f, null, ev.Pickup.PreviousOwner);
+            Pickup.CreateAndSpawn(ItemType.Coin, ev.OutputPosition + UnityEngine.Vector3.right * .1f, null, owner);
+            CountDoubled(owner);
         });
 
         public void OnUpgradingInventoryItem(Exiled.Events.EventArgs.Scp914.UpgradingInventoryItemEventArgs ev) => Safe.Run(() =>
         {
             if (!ev.IsAllowed || !Config.Scp914DoublesCoins || ev.KnobSetting != Scp914.Scp914KnobSetting.VeryFine || ev.Item == null || ev.Item.Type != ItemType.Coin || ev.Player == null || CustomItem.Registered.Any(i => i.Check(ev.Item)))
                 return;
+            string blocked = DoublingBlocked(ev.Player);
+            if (blocked != null)
+            {
+                ev.Player.ShowHint(blocked, 3);
+                return;
+            }
+
             ev.IsAllowed = false;
             if (ev.Player.Items.Count < 8)
                 ev.Player.AddItem(ItemType.Coin);
             else
                 Pickup.CreateAndSpawn(ItemType.Coin, ev.Player.Position, null, ev.Player);
+            CountDoubled(ev.Player);
         });
 
         public void OnSpawningItem(SpawningItemEventArgs ev)

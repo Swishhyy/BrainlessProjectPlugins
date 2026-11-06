@@ -33,7 +33,7 @@ namespace Brainless.Items
         public override string Name => "BrainlessItems";
         public override string Prefix => "brainless_items";
         public override string Author => "Brainless Project";
-        public override Version Version => new Version(0, 11, 0);
+        public override Version Version => new Version(0, 11, 1);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public override PluginPriority Priority => PluginPriority.Low;
         public static Plugin Instance { get; private set; }
@@ -101,6 +101,7 @@ namespace Brainless.Items
             NativeSmoke.Enable();
             distribution = new NaturalDistribution("Items", lifetime, () => Config.Distribution, NaturalContent, () => Config.WorldLoot ? Config.Tuning.Supply.WorldLootCount : 0, () => Config.Debug);
             Instance = this;
+            ConfigMigration.Tidy();
             if (migrateConfig)
                 ConfigMigration.Save(this);
             base.OnEnabled();
