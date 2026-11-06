@@ -11,6 +11,7 @@ namespace Brainless.Roles
         [Tune(.1, 5)]
         public float AttackCooldownMultiplier { get; set; } = 1;
 
+        [Description("Multiplies the damage this role deals (SCP attacks for SCPs, any damage for humans).")]
         [Tune(0, 5)]
         public float AttackDamageMultiplier { get; set; } = 1;
 
@@ -107,6 +108,9 @@ namespace Brainless.Roles
 
         [Description("SCP-049: each zombie this role revives becomes a random zombie variant (Common to Rare).")]
         public bool RandomZombieVariant { get; set; }
+
+        [Description("Once per life, a killing blow leaves the player at 1 health with 3 seconds of invulnerability and a speed burst.")]
+        public bool SecondWind { get; set; }
 
         [Description("Extra random SCP items in the starting kit.")]
         [Tune(0, 4)]

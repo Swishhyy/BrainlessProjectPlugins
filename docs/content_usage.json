@@ -77,7 +77,7 @@
     "R02": "Move normally while calm.",
     "C05": "Shoot the revolver; use the stims and painkillers normally.",
     "S07": "Grab the Micro H.I.D. from the room next to you.",
-    "D08": "Break out of the cells with the Class-D; you have no equipment.",
+    "D08": "Escape the cells with the smuggled COM-15; you are Chaos.",
     "C06": "Soak damage at the front; you are slower.",
     "C07": "Open almost any door with your keycard; use SCP-1853 before a fight.",
     "C08": "Use your speed to flank and scout.",
@@ -134,7 +134,17 @@
     "B08": "Sneak up silently; kills refresh Breakneck Speeds.",
     "H05": "Hunt fast; you are small and fragile.",
     "H06": "Strike hard; your hits deal more damage.",
-    "H07": "Use amnestic clouds to poison humans; you are big and tough."
+    "H07": "Use amnestic clouds to poison humans; you are big and tough.",
+    "G09": "Lead security with the E-11 and Captain keycard; SCP-500 for emergencies.",
+    "M25": "Push with the squad; use SCP-500, SCP-1853 and adrenaline.",
+    "C15": "Lead the raid with the Logicer; the keycard opens every door except the Alpha Warhead.",
+    "Z09": "Hit humans to poison them and heal yourself.",
+    "H08": "Stalk silently and use amnestic clouds; you hit harder and take more punishment.",
+    "X03": "Fight carefully; you heal slowly out of combat and carry SCP-500.",
+    "X04": "Use your speed to get away.",
+    "X05": "Break off from fights to heal up.",
+    "X06": "Hit first; you deal more damage but break easily.",
+    "X07": "Fight on; your first killing blow leaves you at 1 HP and invulnerable for 3 seconds."
   },
   "events": {
     "infection": "`bpevent infection next` or `bpevent infection start`",

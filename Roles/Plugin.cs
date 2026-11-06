@@ -63,7 +63,7 @@ namespace Brainless.Roles
         private IDisposable updates;
         public override void OnEnabled()
         {
-            bool migrateConfig = Config.RoleCatalogRevision < 12 || Config.RoleHudLayoutRevision < 2;
+            bool migrateConfig = Config.RoleCatalogRevision < 13 || Config.RoleHudLayoutRevision < 2;
             Config.Prepare();
             foreach (var role in Config.Roles)
             {
@@ -452,7 +452,7 @@ namespace Brainless.Roles
                     extra++;
                 if (definition.Id == "S04" || definition.Id == "C12")
                     extra++;
-                if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "M24" || definition.Id == "C10" || definition.Id == "C11")
+                if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "M24" || definition.Id == "C15" || definition.Id == "C10" || definition.Id == "C11")
                     extra++;
                 extra += definition.Traits.RandomScpItems;
                 if (definition.InventorySlots(player.Items.Count, removed, extra) > 8)
@@ -608,8 +608,15 @@ namespace Brainless.Roles
                         Candy(player, 1);
                     if (definition.Id == "S04" || definition.Id == "C12")
                         Candy(player, Config.CandyManCandyCount);
-                    if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "M24")
+                    if (definition.Id == "C07" || definition.Id == "M14" || definition.Id == "M24" || definition.Id == "C15")
                         GiveSquadCard(player);
+                    // Cowboy is shared with MTF: an MTF cowboy carries his own faction's card.
+                    if (definition.Id == "C05" && player.Role.Team == Team.FoundationForces)
+                    {
+                        foreach (var card in player.Items.Where(i => i.Type == ItemType.KeycardChaosInsurgency).ToArray())
+                            player.RemoveItem(card);
+                        player.AddItem(player.Role.Type == RoleTypeId.NtfCaptain ? ItemType.KeycardMTFCaptain : ItemType.KeycardMTFOperative);
+                    }
                     if (definition.Id == "C10" && random.NextDouble() < .3)
                         player.AddItem(ItemType.SCP1344);
                     if (definition.Id == "C11")
@@ -631,7 +638,8 @@ namespace Brainless.Roles
                             player.SetAmmo(gun.AmmoType, player.GetAmmoLimit(gun.AmmoType));
                         }
 
-                    if (player.Role.Type == RoleTypeId.FacilityGuard)
+                    // Head of Security keeps its MTF Captain keycard instead of a badge.
+                    if (player.Role.Type == RoleTypeId.FacilityGuard && definition.Id != "G09")
                         GiveBadge(player, definition.Id);
                     if (!admin)
                         issued[definition.Id] = Count(definition.Id) + 1;
@@ -932,11 +940,14 @@ namespace Brainless.Roles
         {
             if (ev.IsAllowed && ev.Amount > 0)
                 lockpicking?.Cancel(ev.Player, "you took damage");
-            if (ev.IsAllowed && ev.Amount > 0 && active.TryGetValue(ev.Player, out var hurt))
+            active.TryGetValue(ev.Player, out var hurt);
+            if (ev.IsAllowed && ev.Amount > 0 && hurt != null)
                 hurt.LastHurt = Time.time;
             if (Traits(ev.Player)?.ExplosionImmune == true && ev.DamageHandler.Type == DamageType.Explosion)
                 ev.IsAllowed = false;
-            if (ev.IsAllowed && ev.Amount > 0 && IsScpAttack(ev.DamageHandler.Type))
+            if (ev.IsAllowed && hurt != null && ev.Player.Role == hurt.Role && Time.time < hurt.InvulnerableUntil)
+                ev.IsAllowed = false;
+            if (ev.IsAllowed && ev.Amount > 0 && (IsScpAttack(ev.DamageHandler.Type) || (ev.Attacker != null && ev.Attacker != ev.Player && ev.Attacker.IsHuman)))
                 ev.Amount *= Traits(ev.Attacker)?.AttackDamageMultiplier ?? 1;
             if (ev.IsAllowed && ev.Amount > 0 && ev.Attacker != null && ev.Attacker != ev.Player && active.TryGetValue(ev.Attacker, out var attacker) && attacker.ResilientActive && ev.Attacker.Role == attacker.Role)
                 ev.Amount *= Config.Resilient.DamageMultiplier;
@@ -966,6 +977,25 @@ namespace Brainless.Roles
 
         private void Dying(DyingEventArgs ev) => Safe.Run(() =>
         {
+            // Second Wind (X07): the first killing blow of a life is survived at 1 HP.
+            if (ev.IsAllowed && active.TryGetValue(ev.Player, out var wind) && ev.Player.Role == wind.Role && wind.Definition.Traits.SecondWind && !wind.SecondWindUsed)
+            {
+                wind.SecondWindUsed = true;
+                wind.InvulnerableUntil = Time.time + 3;
+                ev.IsAllowed = false;
+                var survivor = ev.Player;
+                lifetime.Later(0, () =>
+                {
+                    if (!survivor.IsAlive)
+                        return;
+                    survivor.Health = Math.Max(1, survivor.Health);
+                    survivor.EnableEffect(EffectType.MovementBoost, 30, 3, false);
+                    survivor.ShowHint("<b><color=#FFA726>SECOND WIND</color></b>\nYou cheated death. 3 seconds of invulnerability!", 4);
+                });
+                survivor.Health = 1;
+                return;
+            }
+
             pendingBursts.Forget(ev.Player);
             string profile = RoleId(ev.Player);
             if (!ev.IsAllowed || (profile != "Z04" && profile != "B04"))
@@ -1049,7 +1079,8 @@ namespace Brainless.Roles
             internal string PreviousUniqueRole;
             internal bool ShieldOverridden, BreakneckKill, ResilientActive;
             internal float LastHurt = float.NegativeInfinity;
-            internal float LastBreakneckCooldown, NextTar;
+            internal float LastBreakneckCooldown, NextTar, InvulnerableUntil;
+            internal bool SecondWindUsed;
             internal Vector3? TarAnchor;
             internal List<Hazards.TantrumEnvironmentalHazard> Tar = new List<Hazards.TantrumEnvironmentalHazard>();
             internal Vector3 Scale;
