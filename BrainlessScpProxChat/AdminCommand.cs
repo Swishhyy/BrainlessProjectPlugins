@@ -16,11 +16,9 @@ namespace Brainless.ScpProxChat
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
-            if (!sender.CheckPermission("brainless.scpchat.configure"))
-            {
-                response = "Missing brainless.scpchat.configure.";
+            bool lookOnly = arguments.Count == 0 || (arguments.Count == 1 && string.Equals(arguments.Array[arguments.Offset], "status", StringComparison.OrdinalIgnoreCase));
+            if (!Brainless.Internal.Perms.Require(sender, !lookOnly, out response))
                 return false;
-            }
 
             var plugin = Plugin.Instance;
             if (plugin == null)

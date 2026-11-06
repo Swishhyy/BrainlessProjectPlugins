@@ -34,8 +34,13 @@ namespace Brainless.Internal.Updates
             UseProxy = false,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         };
+        // True after a check when a newer DLL is on disk (just installed or already
+        // pending), so a server restart would load it.
+        internal bool RestartNeeded { get; private set; }
+
         internal async Task<string> CheckAndInstallAsync(string id, string assemblyName, string targetPath, Version runningVersion, Version exiled, Version game, AutoUpdateConfig config, CancellationToken cancellation)
         {
+            RestartNeeded = false;
             int scan = Math.Max(1, Math.Min(30, config.ReleasesToScan));
             GithubRelease[] releases = await GetReleasesAsync(scan, cancellation).ConfigureAwait(false);
             string incompatible = null;
@@ -80,13 +85,17 @@ namespace Brainless.Internal.Updates
                     if (disk.Name != assemblyName)
                         throw new UpdateException("The installed DLL changed identity; refusing the update.");
                     if (UpdatePolicy.Normalize(disk.Version) >= version)
+                    {
+                        RestartNeeded = true;
                         return "Version " + disk.Version.ToString(3) + " is on disk; it takes effect on the next full server restart.";
+                    }
                 }
 
                 byte[] bytes = await DownloadAssetAsync(dll, UpdatePolicy.MaxDllBytes, cancellation).ConfigureAwait(false);
                 InstallOutcome outcome = UpdateFiles.Install(targetPath, assemblyName, version, entry.Sha256, bytes, cancellation);
                 if (outcome == InstallOutcome.Busy)
                     return "Another server process is updating this DLL; this plugin will retry later.";
+                RestartNeeded = true;
                 return outcome == InstallOutcome.Installed ? "Downloaded and verified v" + version.ToString(3) + ". Previous DLL saved as .previous. The update takes effect on the next full server restart." : "A newer DLL is already on disk and will load on the next full server restart.";
             }
 

@@ -16,8 +16,9 @@ namespace Brainless.RoundEvents
 
         public bool Execute(ArraySegment<string> args, ICommandSender sender, out string response)
         {
-            response = "Permission denied: projectbrainless.events required.";
-            if (!sender.CheckPermission("projectbrainless.events"))
+            string requested = args.Count > 0 ? args.Array[args.Offset].ToLowerInvariant() : "status";
+            bool lookOnly = args.Count <= 1 && (requested == "status" || requested == "list");
+            if (!Brainless.Internal.Perms.Require(sender, !lookOnly, out response))
                 return false;
             var plugin = Plugin.Instance;
             if (plugin == null)

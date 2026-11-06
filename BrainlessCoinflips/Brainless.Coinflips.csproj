@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.Coinflips</AssemblyName>
     <RootNamespace>Brainless.Coinflips</RootNamespace>
-    <Version>5.3.1</Version>
+    <Version>5.3.2</Version>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Authors>Swishhyy</Authors>
   </PropertyGroup>

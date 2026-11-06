@@ -13,11 +13,9 @@ namespace Brainless.SlFixes
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
-            if (!sender.CheckPermission("projectbrainless.fixes"))
-            {
-                response = "Missing projectbrainless.fixes permission.";
+            bool lookOnly = arguments.Count == 0 || (arguments.Count == 1 && arguments.Array[arguments.Offset].Equals("status", StringComparison.OrdinalIgnoreCase));
+            if (!Brainless.Internal.Perms.Require(sender, !lookOnly, out response))
                 return false;
-            }
 
             if (Plugin.Instance == null)
             {

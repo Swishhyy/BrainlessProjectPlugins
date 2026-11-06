@@ -15,11 +15,8 @@ namespace Brainless.Coinflips.Commands.CoinUses.Get
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
-            if (!((CommandSender)sender).CheckPermission("bc.coinuses.get"))
-            {
-                response = "You do not have permission to use this command";
+            if (!Brainless.Internal.Perms.Require(sender, false, out response))
                 return false;
-            }
 
             if (arguments.Count == 0)
             {

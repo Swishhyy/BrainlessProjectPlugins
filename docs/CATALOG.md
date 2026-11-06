@@ -235,7 +235,7 @@ Staff commands need four players. Automatic selection is off by default; when en
 | SCP swap | SCPs can trade SCPs (or take an unplayed one) shortly after round start. Custom variants stay with their SCP, so you take over e.g. Boom Boom. | F1 `.scpswap list`, `.scpswap 173`, then the other SCP answers `.scpswap yes`. Staff: `bpscpswap`. |
 | Staff force-class roles | A Remote Admin forceclass rolls a custom role for the new class with the normal chances. | Use forceclass as usual; owners set `force_class_custom_roles`. |
 | SCP-914 Rough teleport | Teleports a player to a random valid position. | Stand in SCP-914 and run Rough. |
-| Rarity glow | Every item has a rarity, vanilla ones included. Uncommon and better pickups glow in their tier colour: green Uncommon, blue Rare, purple Epic, orange Legendary, red Mythical. Items in closed lockers light up once the locker opens; picking up a vanilla item shows its rarity. | Automatic; owners edit `glow` in the Items config. |
+| Rarity glow | Every item has a rarity, vanilla ones included. Custom items of Uncommon and better glow in their tier colour: green Uncommon, blue Rare, purple Epic, orange Legendary, red Mythical. Items in closed lockers light up once the locker opens; picking up a vanilla item shows its rarity. | Automatic; owners edit `glow` in the Items config. |
 | Custom loot | Replaces some map pickups and gives occasional starting gear. | Automatic; owner controls per-entry percentages. |
 | Automatic updates | Downloads verified updates for installed plugins. | Staff load downloaded updates with a full server restart. |
 

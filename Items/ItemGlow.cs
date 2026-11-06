@@ -13,7 +13,7 @@ using LightToy = Exiled.API.Features.Toys.Light;
 
 namespace Brainless.Items
 {
-    // Pickups glow in their rarity colour (custom and vanilla items alike). Lights are
+    // Custom item pickups glow in their rarity colour (vanilla items too if enabled). Lights are
     // separate toys the plugin moves and destroys itself, so a picked-up or destroyed item
     // never leaves a light behind on clients. Items in closed lockers stay dark.
     public sealed partial class Plugin
@@ -58,7 +58,10 @@ namespace Brainless.Items
                                 hidden.Add(item.Info.Serial);
 
             var seen = new HashSet<ushort>();
-            foreach (var pickup in Pickup.List.ToArray())
+            // Only custom items glow by default: looking up their own serials is far
+            // cheaper than scanning every pickup on the map.
+            var candidates = settings.GlowVanillaItems ? Pickup.List.ToArray() : CustomItem.Registered.SelectMany(c => c.TrackedSerials).Distinct().Select(serial => Pickup.Get((ushort)serial)).Where(p => p != null).ToArray();
+            foreach (var pickup in candidates)
             {
                 if (pickup?.Base == null || !pickup.IsSpawned || hidden.Contains(pickup.Serial))
                     continue;

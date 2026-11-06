@@ -12,9 +12,10 @@ namespace Brainless.Roles
         {
             plugin = Plugin.Instance;
             response = null;
-            if (!sender.CheckPermission("brainless.roles"))
-                response = "Missing brainless.roles permission.";
-            else if (plugin == null || !plugin.Config.IsEnabled)
+            // Inspecting and testing roles is PB.moderator; reloading config is PB.admin.
+            if (!Brainless.Internal.Perms.Require(sender, false, out response))
+                return false;
+            if (plugin == null || !plugin.Config.IsEnabled)
                 response = "Brainless Roles is not enabled.";
             return response == null;
         }
@@ -39,7 +40,7 @@ namespace Brainless.Roles
                 return false;
             string[] args = arguments.ToArray();
             if (args.Length == 1 && args[0].Equals("reload", StringComparison.OrdinalIgnoreCase))
-                return plugin.ReloadTuning(out response);
+                return Brainless.Internal.Perms.Require(sender, true, out response) && plugin.ReloadTuning(out response);
             if (args.Length >= 1 && args.Length <= 2 && args[0].Equals("hud", StringComparison.OrdinalIgnoreCase))
             {
                 Player who = RoleCommands.Target(args.Length == 2 ? args[1] : null, sender);

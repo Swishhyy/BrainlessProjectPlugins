@@ -16,7 +16,7 @@ namespace Brainless.ScpSwap
         public override string Name => "BrainlessScpSwap";
         public override string Prefix => "brainless_scp_swap";
         public override string Author => "Swishhyy";
-        public override Version Version => new Version(0, 1, 1);
+        public override Version Version => new Version(0, 1, 2);
         public override Version RequiredExiledVersion => new Version(9, 15, 3);
         public static Plugin Instance { get; private set; }
 

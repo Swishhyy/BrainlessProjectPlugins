@@ -39,11 +39,8 @@ namespace Brainless.Core
                 return false;
             }
 
-            if (arguments.Count == 1 && !sender.CheckPermission("projectbrainless.stats"))
-            {
-                response = "Inspecting another player requires projectbrainless.stats.";
+            if (arguments.Count == 1 && !Brainless.Internal.Perms.Require(sender, false, out response))
                 return false;
-            }
 
             var target = arguments.Count == 0 ? Player.Get(sender) : Player.Get(arguments.Array[arguments.Offset]);
             if (target == null || !target.IsConnected || target.IsHost)
@@ -118,11 +115,9 @@ namespace Brainless.Core
 
         public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
         {
-            if (!sender.CheckPermission("projectbrainless.core"))
-            {
-                response = "Missing projectbrainless.core permission.";
+            bool lookOnly = arguments.Count == 0 || (arguments.Count == 1 && arguments.Array[arguments.Offset].Equals("status", StringComparison.OrdinalIgnoreCase));
+            if (!Brainless.Internal.Perms.Require(sender, !lookOnly, out response))
                 return false;
-            }
 
             var plugin = Plugin.Instance;
             if (plugin == null)

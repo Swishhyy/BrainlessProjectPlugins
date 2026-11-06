@@ -20,6 +20,30 @@ namespace Brainless.Core
             }
         }
 
+        private static PluginUpdates core;
+
+        // Core's own updater (it does not register with itself).
+        internal static void SetCore(IDisposable updater)
+        {
+            lock (gate)
+                core = updater as PluginUpdates;
+        }
+
+        // Every running updater, Core's first, for a forced check (pbupdate).
+        internal static PluginUpdates[] Updaters()
+        {
+            lock (gate)
+            {
+                var list = new List<PluginUpdates>();
+                if (core != null)
+                    list.Add(core);
+                foreach (var lease in registrations.Values)
+                    if (lease.Updater is PluginUpdates updater)
+                        list.Add(updater);
+                return list.ToArray();
+            }
+        }
+
         internal static void Enable()
         {
             lock (gate)
@@ -64,6 +88,7 @@ namespace Brainless.Core
             lock (gate)
             {
                 enabled = false;
+                core = null;
                 leases = new List<Lease>(registrations.Values).ToArray();
                 registrations.Clear();
             }
@@ -76,6 +101,7 @@ namespace Brainless.Core
         {
             private readonly Assembly assembly;
             private readonly IDisposable updater;
+            internal IDisposable Updater => updater;
             private int disposed;
             internal Lease(Assembly assembly, IDisposable updater)
             {

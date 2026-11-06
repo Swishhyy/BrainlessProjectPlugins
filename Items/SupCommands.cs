@@ -43,11 +43,8 @@ namespace Brainless.Items
 
             if (!(args.At(0) == "give" || args.At(0) == "gitem") || args.Count < 2 || args.Count > 3)
                 return false;
-            if (!sender.CheckPermission("customitems.give") && !sender.CheckPermission("sci.admin"))
-            {
-                response = "Permission denied: customitems.give or sci.admin required.";
+            if (!Brainless.Internal.Perms.Require(sender, false, out response))
                 return false;
-            }
 
             if (!uint.TryParse(args.At(1), out uint id))
             {

@@ -67,11 +67,8 @@ namespace Brainless.ScpSwap
                 return false;
             }
 
-            if (!sender.CheckPermission("brainless.scpswap"))
-            {
-                response = "You need the brainless.scpswap permission.";
+            if (!Brainless.Internal.Perms.Require(sender, false, out response))
                 return false;
-            }
 
             if (arguments.Count != 2 || !(Player.Get(arguments.At(0)) is Player first))
             {

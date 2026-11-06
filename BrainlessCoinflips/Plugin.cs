@@ -9,7 +9,7 @@ namespace Brainless.Coinflips
     public class Plugin : Plugin<Config, Configs.Translations>
     {
         public override Version RequiredExiledVersion => new(9, 15, 3);
-        public override Version Version => new(5, 3, 1);
+        public override Version Version => new(5, 3, 2);
         public override string Author => "Swishhyy";
         public override string Name => "BrainlessCoinflips";
         public override string Prefix => "brainless_coinflips";

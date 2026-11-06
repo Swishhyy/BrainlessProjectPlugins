@@ -8,47 +8,51 @@
 | --- | --- | --- |
 | `ci list registered` | Lists enabled items/weapons and IDs | `customitems.list.registered` |
 | `ci info <ID>` | Shows equipment details | `customitems.info` |
-| `ci give <ID> [playerID]` | Gives equipment; ignores natural supply/population caps | `customitems.give` |
-| `ci spawn <ID> <playerID>` | Drops equipment at a player | `customitems.spawn` |
-| `ci spawn <ID> <x> <y> <z>` | Drops equipment at coordinates | `customitems.spawn` |
+| `ci give <ID> [playerID]` | Gives equipment; ignores natural supply/population caps | `PB.moderator` |
+| `ci spawn <ID> <playerID>` | Drops equipment at a player | `PB.moderator` |
+| `ci spawn <ID> <x> <y> <z>` | Drops equipment at coordinates | `PB.moderator` |
 | `ci list insideinventories` | Shows tracked equipment and holders | `customitems.list.insideinventories` |
-| `bprole [playerID]` | Inspects role/stats; alias `myrole` | `brainless.roles` |
-| `bprole all` | Inspects everyone’s roles | `brainless.roles` |
-| `bproles [playerID]` | Lists roles with their rarity, blocked reasons and this round's tier counts | `brainless.roles` |
-| `bprole set <roleID> [playerID]` | Assigns a custom profile for testing | `brainless.roles` |
-| `bprole hud [playerID]` | Explains what the role panel shows for a player (or who they are spectating) and why | `brainless.roles` |
-| `bprole reload` | Applies role config edits | `brainless.roles` |
-| `bpscpchat status` | Shows active speech gain and range | `brainless.scpchat.configure` |
-| `bpscpchat volume <0-20>` | Changes speech volume immediately; default 10 | `brainless.scpchat.configure` |
-| `bpscpchat reload` | Applies saved voice settings to active speakers | `brainless.scpchat.configure` |
-| `bpitems chances` | Shows map/starting-gear item percentages | `brainless.items.configure` |
-| `bpitems reload` | Applies item config edits | `brainless.items.configure` |
-| `bpweapons chances` | Shows map/starting-gear weapon percentages | `brainless.weapons.configure` |
-| `bpweapons reload` | Applies weapon config edits | `brainless.weapons.configure` |
-| `bpevent list` | Lists implemented events | `projectbrainless.events` |
-| `bpevent status` | Shows event state and counts | `projectbrainless.events` |
-| `bpevent infection next` | Queues Infection for next round | `projectbrainless.events` |
-| `bpevent infection start` | Starts Infection in the running round | `projectbrainless.events` |
-| `bpevent deathmatch next` / `start` | Queues or starts Deathmatch (Chaos holds the facility, MTF raids) | `projectbrainless.events` |
-| `bpevent juggernaut next` / `start` | Queues or starts Juggernaut | `projectbrainless.events` |
-| `bpevent stop` | Stops rules and pending conversions; current roles remain | `projectbrainless.events` |
-| `bpevent vote` | Starts a lobby event vote now (staff player minimums) | `projectbrainless.events` |
-| `bpevent reload` | Reloads inactive/unscheduled event settings | `projectbrainless.events` |
-| `pbcore status` / `pbcore save` | Checks services / saves stats | `projectbrainless.core` |
-| `pbfixes status` / `pbfixes reload` | Checks Fixes / applies its config | `projectbrainless.fixes` |
-| `pbxp <playerID>` | Inspects another player’s stats | `projectbrainless.stats` |
-| `bpscpswap <playerID> <playerID>` | Swaps two SCPs any time (variants follow the swap mode) | `brainless.scpswap` |
-| `bpscpswap <playerID> <scp173\|scp096\|…>` | Moves an SCP to that SCP, swapping with whoever plays it | `brainless.scpswap` |
-| `getserial [playerID]` | Shows the held item’s serial | `bc.getserial` |
-| `coinuses get player [playerID]` | Checks held coin uses | `bc.coinuses.get` |
-| `coinuses get serial <serial>` | Checks a coin by serial | `bc.coinuses.get` |
-| `coinuses set player <uses>` | Sets your held coin’s uses | `bc.coinuses.set` |
-| `coinuses set player <playerID> <uses>` | Sets another player’s coin uses | `bc.coinuses.set` |
-| `coinuses set serial <serial> <uses>` | Sets uses by serial | `bc.coinuses.set` |
+| `bprole [playerID]` | Inspects role/stats; alias `myrole` | `PB.moderator` |
+| `bprole all` | Inspects everyone’s roles | `PB.moderator` |
+| `bproles [playerID]` | Lists roles with their rarity, blocked reasons and this round's tier counts | `PB.moderator` |
+| `bprole set <roleID> [playerID]` | Assigns a custom profile for testing | `PB.moderator` |
+| `bprole hud [playerID]` | Explains what the role panel shows for a player (or who they are spectating) and why | `PB.moderator` |
+| `bprole reload` | Applies role config edits | `PB.admin` |
+| `bpscpchat status` | Shows active speech gain and range | `PB.moderator` |
+| `bpscpchat volume <0-20>` | Changes speech volume immediately; default 10 | `PB.admin` |
+| `bpscpchat reload` | Applies saved voice settings to active speakers | `PB.admin` |
+| `bpitems chances` | Shows map/starting-gear item percentages | `PB.moderator` |
+| `bpitems reload` | Applies item config edits | `PB.admin` |
+| `bpweapons chances` | Shows map/starting-gear weapon percentages | `PB.moderator` |
+| `bpweapons reload` | Applies weapon config edits | `PB.admin` |
+| `bpevent list` | Lists implemented events | `PB.moderator` |
+| `bpevent status` | Shows event state and counts | `PB.moderator` |
+| `bpevent infection next` | Queues Infection for next round | `PB.admin` |
+| `bpevent infection start` | Starts Infection in the running round | `PB.admin` |
+| `bpevent deathmatch next` / `start` | Queues or starts Deathmatch (Chaos holds the facility, MTF raids) | `PB.admin` |
+| `bpevent juggernaut next` / `start` | Queues or starts Juggernaut | `PB.admin` |
+| `bpevent stop` | Stops rules and pending conversions; current roles remain | `PB.admin` |
+| `bpevent vote` | Starts a lobby event vote now (staff player minimums) | `PB.admin` |
+| `bpevent reload` | Reloads inactive/unscheduled event settings | `PB.admin` |
+| `pbcore status` | Checks services | `PB.moderator` |
+| `pbcore save` | Saves stats now | `PB.admin` |
+| `pbupdate` | Checks every Brainless plugin for updates now, installs them and restarts the server when the round ends | `PB.admin` |
+| `pbupdate now` | Same, but restarts after a 15 s warning (also when run in the lobby) | `PB.admin` |
+| `pbfixes status` | Checks Fixes | `PB.moderator` |
+| `pbfixes reload` | Applies the Fixes config | `PB.admin` |
+| `pbxp <playerID>` | Inspects another player’s stats | `PB.moderator` |
+| `bpscpswap <playerID> <playerID>` | Swaps two SCPs any time (variants follow the swap mode) | `PB.moderator` |
+| `bpscpswap <playerID> <scp173\|scp096\|…>` | Moves an SCP to that SCP, swapping with whoever plays it | `PB.moderator` |
+| `getserial [playerID]` | Shows the held item’s serial | `PB.moderator` |
+| `coinuses get player [playerID]` | Checks held coin uses | `PB.moderator` |
+| `coinuses get serial <serial>` | Checks a coin by serial | `PB.moderator` |
+| `coinuses set player <uses>` | Sets your held coin’s uses | `PB.admin` |
+| `coinuses set player <playerID> <uses>` | Sets another player’s coin uses | `PB.admin` |
+| `coinuses set serial <serial> <uses>` | Sets uses by serial | `PB.admin` |
 | `sci itemlist` / `sci help` | Legacy SUP list/help | Remote Admin access |
-| `sci give <ID> [playerID]` | Legacy grant; supports mapped old IDs | `customitems.give` or `sci.admin` |
+| `sci give <ID> [playerID]` | Legacy grant; supports mapped old IDs | `PB.moderator` |
 
-Add nodes to the staff group’s **EXILED/plugin permissions in CedMod**. `customitems.*` covers the equipment administration rows. No extra bypass permission is needed for admin grants. Disabled content and invalid recipients remain blocked.
+**Two permissions cover every Brainless command.** Give staff groups `PB.admin` (everything) or `PB.moderator` (look-only commands plus SCP swap, `bprole set` and handing out custom items). `PB.admin` includes everything `PB.moderator` can do. Only EXILED's own read-only `ci list`/`ci info` still use their `customitems.*` nodes. Disabled content and invalid recipients remain blocked.
 
 **F1 player console:** include the leading dot. These need no staff permission.
 
