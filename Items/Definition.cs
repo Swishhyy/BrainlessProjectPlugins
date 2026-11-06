@@ -67,12 +67,17 @@ namespace Brainless.Items
             switch (id)
             {
                 case 7101: case 7105: case 7113: case 7116: case 7133: case 7138:
+                case 7139: case 7140:
                     return Rarity.Common;
                 case 7102: case 7103: case 7114: case 7115: case 7134: case 7135:
+                case 7141: case 7142: case 7143: case 7144: case 7147: case 7151:
                     return Rarity.Uncommon;
                 case 7117: case 7119: case 7122: case 7137:
+                case 7145: case 7146: case 7148: case 7149: case 7152: case 7153:
                     return Rarity.Rare;
-                case 7120: case 7130: case 7136:
+                case 7150: case 7154:
+                    return Rarity.Epic;
+                case 7120: case 7123: case 7130: case 7136:
                     return Rarity.Legendary;
                 case 7126:
                     return Rarity.Mythical;
@@ -118,7 +123,7 @@ namespace Brainless.Items
                 BaseType = ItemType.KeycardJanitor
             },
             CreateImpact(),
-        }.Concat(SupCatalog.Defaults()).Concat(SupCatalog.CursedDefaults()).Concat(GeneralDefaults()).ToList();
+        }.Concat(SupCatalog.Defaults()).Concat(SupCatalog.CursedDefaults()).Concat(GeneralDefaults()).Concat(Plugin.VariantDefaults()).ToList();
 
         // Revision 15: general-purpose items.
         internal const uint EnergyDrink = 7133, HealingGrenade = 7134, DecoyCorpse = 7135, TeleportGrenade = 7136, MotionTracker = 7137, AmmoBox = 7138;
@@ -227,7 +232,23 @@ namespace Brainless.Items
                 Distribution?.Rarity?.UpgradeLimits();
             }
 
-            CatalogRevision = Math.Max(15, CatalogRevision);
+            // Revision 16: item variants (Painkillers, Medkit, Adrenaline, SCP-207 A-D), and
+            // the Cursed Keycard becomes Legendary.
+            if (CatalogRevision < 16)
+            {
+                foreach (var spec in Plugin.VariantDefaults())
+                    if (!Items.Any(i => i.Id == spec.Id))
+                    {
+                        spec.Rarity = DefaultRarity(spec.Id);
+                        Items.Add(spec);
+                    }
+
+                foreach (var card in Items.Where(i => i.Id == SupCatalog.CursedKeycard && i.Rarity == Rarity.Epic))
+                    card.Rarity = Rarity.Legendary;
+                Distribution?.UpgradeGeneral();
+            }
+
+            CatalogRevision = Math.Max(16, CatalogRevision);
             // The Cursed Keycard now also counts lockers and generators.
             foreach (var card in Items.Where(i => i.Id == SupCatalog.CursedKeycard && i.Description == "Opens every door except the Alpha Warhead, but each door tells the SCPs where you are. Crumbles after 5 doors."))
                 card.Description = SupCatalog.CursedDefaults().First(i => i.Id == SupCatalog.CursedKeycard).Description;
@@ -244,11 +265,11 @@ namespace Brainless.Items
             if (Distribution == null)
                 throw new InvalidOperationException("distribution cannot be null.");
             Distribution.EnsureEntries(Items.Select(i => new KeyValuePair<uint, ItemType>(i.Id, i.BaseType)));
-            Distribution.Validate(id => id >= 7101 && id <= 7140 && id != 7110 && !Retired.Contains(id));
+            Distribution.Validate(id => id >= 7101 && id <= 7160 && id != 7110 && !Retired.Contains(id));
             if (Tuning.Supply.MediumLobbyPlayers >= Tuning.Supply.LargeLobbyPlayers)
                 throw new InvalidOperationException("The large-lobby threshold must exceed the medium-lobby threshold.");
-            if (Items.Any(i => i.Id < 7101 || i.Id > 7140 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
-                throw new InvalidOperationException("Item IDs must be 7101-7140 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
+            if (Items.Any(i => i.Id < 7101 || i.Id > 7160 || i.Charges < 1 || i.Charges > 1000 || i.RoundCap < 0 || float.IsNaN(i.Weight) || float.IsInfinity(i.Weight) || i.Weight < 0))
+                throw new InvalidOperationException("Item IDs must be 7101-7160 (7110 retired), charges 1-1000, and caps/weight nonnegative.");
             if (Items.Select(i => i.Id).Distinct().Count() != Items.Count || Items.Any(i => string.IsNullOrWhiteSpace(i.Name)) || Items.Select(i => i.Name).Distinct().Count() != Items.Count)
                 throw new InvalidOperationException("Item IDs/names must be nonempty and unique.");
             foreach (var expected in SupCatalog.Defaults().Concat(SupCatalog.CursedDefaults()))

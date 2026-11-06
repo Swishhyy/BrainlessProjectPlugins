@@ -70,7 +70,7 @@ for block in audit_blocks:
 
 lines = ['# Project Brainless — What We Have', '',
          '[Command table](COMMANDS.md) · [Project overview and settings](../README.md)', '',
-         'Current shipped content: **28 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
+         'Current shipped content: **44 items, 5 weapons, 121 role profiles and 3 round events**. Values below are defaults; server settings can differ.', '',
          '**Tool key:** Settings → Server Specific → Use custom item or nearby device (default **V**). Hold for timed actions; tap for instant actions. Grenades use normal throw controls.', '',
          '## Rarity', '', 'Every item, weapon and role has a rarity tier, and a higher tier is always stronger. Each loot spot or spawn rolls a tier first, then something of that tier. Per-round limits (human roles, SCP roles and items are counted separately; Items and Weapons share one count):', '',
          '| Tier | Chance per roll | Human roles | SCP roles | Items |', '| --- | --- | --- | --- | --- |',
@@ -80,13 +80,14 @@ lines = ['# Project Brainless — What We Have', '',
          '## Items', '', '| ID | Item | Rarity | What it does | How to use |', '| --- | --- | --- | --- | --- |']
 for folder, label in [('Items', 'Items'), ('Weapons', 'Weapons')]:
     content_source = (root/folder/'Definition.cs').read_text()
-    if folder == 'Items': content_source += (root/folder/'SupCatalog.cs').read_text()
+    if folder == 'Items': content_source += (root/folder/'SupCatalog.cs').read_text() + (root/folder/'VariantItems.cs').read_text()
     entries = []
     for block in re.findall(r'new (?:ItemSpec|WeaponSpec)\s*\{([^{}]+)\}', content_source):
         fields = [re.search(pattern, block) for pattern in (r'\bId\s*=\s*(\d+)', r'\bName\s*=\s*"([^"]+)"', r'\bDescription\s*=\s*"([^"]+)"')]
         if all(fields): entries.append(tuple(field.group(1) for field in fields))
+    entries += re.findall(r'\bV\((\d{4}), "([^"]+)", ItemType\.\w+, "([^"]+)"\)', content_source)
     entries.sort(key=lambda e: int(e[0]))
-    assert len(entries) == (28 if folder == 'Items' else 5)
+    assert len(entries) == (44 if folder == 'Items' else 5)
     controls = usage[folder.lower()]
     assert set(controls) == {e[0] for e in entries}, f'Usage coverage missing for {folder}'
     if folder == 'Weapons':
@@ -160,4 +161,4 @@ for body, setting, ident, name in recipes:
 lines += ['', 'For equipment that will not give: check its ID, enabled state, inventory space and whether the target is alive. For a role that will not roll: read its `bproles` reason.', '']
 assert len(roles) == 121
 (root/'docs/CATALOG.md').write_text('\n'.join(lines))
-print('Content page written: 28 items, 5 weapons, 121 roles (with availability), 3 events and 10 recipes; all have usage instructions.')
+print('Content page written: 44 items, 5 weapons, 121 roles (with availability), 3 events and 10 recipes; all have usage instructions.')

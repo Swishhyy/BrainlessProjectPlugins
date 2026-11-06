@@ -195,6 +195,10 @@ namespace Brainless.Internal
                 Map(7135, 1, ItemType.Coin, 10),
                 Map(7138, 1, ItemType.Coin, 10),
                 Map(7137, 1, ItemType.Radio, 8),
+                Map(7139, 1, ItemType.Painkillers, 5), Map(7140, 1, ItemType.Painkillers, 5), Map(7141, 1, ItemType.Painkillers, 5), Map(7142, 1, ItemType.Painkillers, 5),
+                Map(7143, 1, ItemType.Medkit, 5), Map(7144, 1, ItemType.Medkit, 5), Map(7145, 1, ItemType.Medkit, 5), Map(7146, 1, ItemType.Medkit, 5),
+                Map(7147, 1, ItemType.Adrenaline, 5), Map(7148, 1, ItemType.Adrenaline, 5), Map(7149, 1, ItemType.Adrenaline, 5), Map(7150, 1, ItemType.Adrenaline, 5),
+                Map(7151, 1, ItemType.SCP207, 5), Map(7152, 1, ItemType.SCP207, 5), Map(7153, 1, ItemType.SCP207, 5), Map(7154, 1, ItemType.SCP207, 5),
             },
             PlayerRules = new List<PlayerLootRule>
             {
@@ -338,7 +342,7 @@ namespace Brainless.Internal
         internal void UpgradeGeneral()
         {
             var stock = Items();
-            foreach (var rule in stock.MapRules.Where(r => r.CustomId >= 7133 && r.CustomId <= 7138))
+            foreach (var rule in stock.MapRules.Where(r => r.CustomId >= 7133 && r.CustomId <= 7154))
                 if (MapRules != null && MapRules.Count > 0 && !MapRules.Any(r => r.CustomId == rule.CustomId))
                     MapRules.Add(rule);
                 else if (MapRules != null)
@@ -349,7 +353,7 @@ namespace Brainless.Internal
                         existing.SourceTypes = rule.SourceTypes;
                     }
 
-            foreach (var rule in stock.PlayerRules.Where(r => r.CustomId >= 7133 && r.CustomId <= 7138))
+            foreach (var rule in stock.PlayerRules.Where(r => r.CustomId >= 7133 && r.CustomId <= 7154))
                 if (PlayerRules != null && PlayerRules.Count > 0 && !PlayerRules.Any(r => r.CustomId == rule.CustomId))
                     PlayerRules.Add(rule);
         }

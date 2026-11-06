@@ -16,6 +16,9 @@ namespace Brainless.Roles
         // Current custom profile ID (e.g. "B04"), or null for a native role.
         public static string ProfileId(Player player) => Plugin.Instance?.RoleId(player);
 
+        // Cures a Roles SCP poison (Venomous, Poisonous, Spitter...). Items' Cure-all calls this.
+        public static bool CurePoison(Player player) => Plugin.Instance != null && Plugin.Instance.CurePoisonExternal(player);
+
         // Current custom profile name (e.g. "Boom Boom"), or null for a native role.
         public static string ProfileName(Player player) => Plugin.Instance?.ProfileName(player);
 
