@@ -74,6 +74,9 @@ namespace Brainless.Roles
         [Tune(0, 10000)]
         public float PocketDeathHeal { get; set; }
 
+        [Description("SCP-106: every human death in the pocket dimension refills vigor to full.")]
+        public bool PocketDeathVigor { get; set; }
+
         [Description("Attack hits make humans bleed for this many seconds. 0 disables.")]
         [Tune(0, 120)]
         public float BleedOnHitSeconds { get; set; }

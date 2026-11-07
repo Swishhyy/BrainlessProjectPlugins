@@ -78,11 +78,13 @@ internal static class RoleChanceTests
         old079.Prepare();
         check(old079.RoleCatalogRevision == 15 && Catalog.RevisionFourteenRoles.All(id => old079.Roles.Any(r => r.Id == id && r.BaseRole == PlayerRoles.RoleTypeId.Scp079)) && old079.Roles.Single(r => r.Id == "K07").Traits.StartTier == 2 && old079.Roles.Single(r => r.Id == "K06").Traits.StartTier == 3, "revision 14 adds the seven SCP-079 roles once");
         var retier = new Config { RoleCatalogRevision = 14 };
-        retier.Roles.Single(r => r.Id == "L05").Rarity = Brainless.Internal.Rarity.Uncommon;
+        var oldDigger = retier.Roles.Single(r => r.Id == "L05");
+        oldDigger.Rarity = Brainless.Internal.Rarity.Uncommon; oldDigger.Traits.PocketDeathHeal = 200; oldDigger.Traits.PocketDeathVigor = false; oldDigger.Hint = Catalog.OldGravediggerHint;
         retier.Roles.Single(r => r.Id == "C09").Rarity = Brainless.Internal.Rarity.Uncommon;
         retier.Roles.Single(r => r.Id == "C14").Rarity = Brainless.Internal.Rarity.Epic;
         retier.Prepare();
-        check(retier.RoleCatalogRevision == 15 && retier.Roles.Single(r => r.Id == "L05").Rarity == Brainless.Internal.Rarity.Legendary && retier.Roles.Single(r => r.Id == "C09").Rarity == Brainless.Internal.Rarity.Epic && retier.Roles.Single(r => r.Id == "C14").Rarity == Brainless.Internal.Rarity.Legendary, "revision 15 moves Gravedigger to Legendary, Desperate to Epic and Berserker to Legendary");
+        check(retier.RoleCatalogRevision == 15 && oldDigger.Rarity == Brainless.Internal.Rarity.Rare && oldDigger.Traits.PocketDeathHeal == 0 && oldDigger.Traits.PocketDeathVigor && oldDigger.Hint == Catalog.GravediggerHint && retier.Roles.Single(r => r.Id == "C09").Rarity == Brainless.Internal.Rarity.Epic && retier.Roles.Single(r => r.Id == "C14").Rarity == Brainless.Internal.Rarity.Legendary, "revision 15 turns Gravedigger into a Rare vigor-refill role, Desperate Epic and Berserker Legendary");
+        check(new Config().Roles.Single(r => r.Id == "L05").Traits.PocketDeathHeal == 0 && new Config().Roles.Single(r => r.Id == "L08").Traits.HealOnHit == 150, "Gravedigger no longer heals, so only Glutton heals off pocket-dimension victims");
         var legacyPools = new Config { UseRarity = false };
         legacyPools.Prepare();
         decimal LegacyPool(PlayerRoles.RoleTypeId native) => legacyPools.Roles.Where(r => r.Id != "Z05" && Catalog.MatchesNative(r, native)).Sum(r => (decimal)r.ChancePercent.Value);

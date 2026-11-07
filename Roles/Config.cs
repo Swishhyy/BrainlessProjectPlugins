@@ -67,7 +67,7 @@ namespace Brainless.Roles
         public bool AllowExperimentalRoles { get; set; }
         public bool AllowModelScaling { get; set; } = true;
 
-        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain; revision 9 resets any Poisonous 106 slowdown to normal speed; revision 10 gives Boom Boom a bigger, harder death blast; revision 11/12 assign rarity tiers by strength and add the revision 12 roles; revision 13 adds a Mythical per class and more any-human roles, and shares the MTF/Chaos every-rank roles; revision 14 adds SCP-079 roles; revision 15 re-tiers Gravedigger (Legendary), Desperate (Epic) and Berserker (Legendary).")]
+        [Description("Catalog migration marker. Revision 1 adds SCP variants; revision 2 adds Cowboy, Rogues and Containment Engineer; revision 3 replaces kits that used removed items, enables the Doctor and raises each role group to an 80% total once; revision 4 removes retired profiles, adds rank-specific MTF/Chaos roles and resets MTF/Chaos percentages to the new defaults; revision 5 adds Resilient and Big Boi; revision 6 and 7 apply playtest balance to untouched stock values; revision 7 also removes Rogue Guard and Rogue Scientist; revision 8 raises Hyper's vigor gain; revision 9 resets any Poisonous 106 slowdown to normal speed; revision 10 gives Boom Boom a bigger, harder death blast; revision 11/12 assign rarity tiers by strength and add the revision 12 roles; revision 13 adds a Mythical per class and more any-human roles, and shares the MTF/Chaos every-rank roles; revision 14 adds SCP-079 roles; revision 15 turns Gravedigger's healing into a vigor refill (Rare) and re-tiers Desperate (Epic) and Berserker (Legendary).")]
         public int RoleCatalogRevision { get; set; }
         public bool GiveClassDCoins { get; set; } = true;
 
@@ -607,9 +607,9 @@ namespace Brainless.Roles
         }
 
         // Revision 14: SCP-079 roles.
-        // Revision 15: Gravedigger (too strong for Uncommon) becomes Legendary, Desperate
-        // (Jailbird) becomes Epic and Berserker moves up to Legendary above it. Only roles
-        // still at their earlier stock tier change.
+        // Revision 15: Gravedigger no longer heals (too close to Glutton): pocket-dimension
+        // deaths refill its vigor instead, and it becomes Rare. Desperate (Jailbird) becomes
+        // Epic and Berserker moves up to Legendary above it. Only stock values change.
         private void UpgradeRetiers()
         {
             if (RoleCatalogRevision >= 15)
@@ -620,7 +620,15 @@ namespace Brainless.Roles
                     role.Rarity = to;
             }
 
-            Move("L05", Rarity.Uncommon, Rarity.Legendary);
+            Move("L05", Rarity.Uncommon, Rarity.Rare);
+            foreach (var gravedigger in Roles.Where(r => r.Id.Equals("L05", StringComparison.OrdinalIgnoreCase) && Math.Abs(r.Traits.PocketDeathHeal - 200) < .001f))
+            {
+                gravedigger.Traits.PocketDeathHeal = 0;
+                gravedigger.Traits.PocketDeathVigor = true;
+                if (gravedigger.Hint == Catalog.OldGravediggerHint)
+                    gravedigger.Hint = Catalog.GravediggerHint;
+            }
+
             Move("C09", Rarity.Uncommon, Rarity.Epic);
             Move("C14", Rarity.Epic, Rarity.Legendary);
             RoleCatalogRevision = 15;

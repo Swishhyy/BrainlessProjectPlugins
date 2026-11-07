@@ -91,11 +91,19 @@ namespace Brainless.Roles
             if (ev.DamageHandler.Type == DamageType.PocketDimension)
                 foreach (var pair in active.ToArray())
                 {
-                    float heal = pair.Value.Definition.Traits.PocketDeathHeal;
-                    if (heal > 0 && pair.Key.IsAlive && pair.Key.Role == pair.Value.Role)
+                    var digger = pair.Value.Definition.Traits;
+                    if (!pair.Key.IsAlive || pair.Key.Role != pair.Value.Role)
+                        continue;
+                    if (digger.PocketDeathHeal > 0)
                     {
-                        pair.Key.Heal(heal);
-                        pair.Key.ShowHint("A victim died in your pocket dimension: +" + heal.ToString("0") + " HP", 3);
+                        pair.Key.Heal(digger.PocketDeathHeal);
+                        pair.Key.ShowHint("A victim died in your pocket dimension: +" + digger.PocketDeathHeal.ToString("0") + " HP", 3);
+                    }
+
+                    if (digger.PocketDeathVigor && pair.Key.Role is Exiled.API.Features.Roles.Scp106Role larry)
+                    {
+                        larry.Vigor = 1;
+                        pair.Key.ShowHint("A victim died in your pocket dimension: vigor refilled", 3);
                     }
                 }
         });

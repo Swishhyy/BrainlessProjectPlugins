@@ -152,7 +152,7 @@ namespace Brainless.Roles
             // SCP-096
             ["R02"] = Rarity.Common, ["R03"] = Rarity.Common, ["R04"] = Rarity.Uncommon, ["R05"] = Rarity.Rare, ["R06"] = Rarity.Epic, ["R01"] = Rarity.Legendary, ["R07"] = Rarity.Mythical,
             // SCP-106
-            ["L01"] = Rarity.Common, ["L03"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L05"] = Rarity.Legendary, ["L04"] = Rarity.Rare, ["L06"] = Rarity.Rare, ["L07"] = Rarity.Epic, ["L08"] = Rarity.Mythical,
+            ["L01"] = Rarity.Common, ["L03"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L05"] = Rarity.Rare, ["L04"] = Rarity.Rare, ["L06"] = Rarity.Rare, ["L07"] = Rarity.Epic, ["L08"] = Rarity.Mythical,
             // SCP-173
             ["B01"] = Rarity.Common, ["B05"] = Rarity.Common, ["B02"] = Rarity.Uncommon, ["B03"] = Rarity.Uncommon, ["B06"] = Rarity.Rare, ["B07"] = Rarity.Rare, ["B04"] = Rarity.Epic, ["B08"] = Rarity.Mythical,
             // SCP-939
@@ -166,6 +166,8 @@ namespace Brainless.Roles
         internal static readonly RoleTypeId[] FactionRanks = { RoleTypeId.NtfPrivate, RoleTypeId.NtfSergeant, RoleTypeId.NtfSpecialist, RoleTypeId.NtfCaptain, RoleTypeId.ChaosConscript, RoleTypeId.ChaosRifleman, RoleTypeId.ChaosMarauder, RoleTypeId.ChaosRepressor };
         internal static readonly HashSet<string> RevisionThirteenRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "G09", "M25", "C15", "Z09", "H08", "X03", "X04", "X05", "X06", "X07" };
         internal static readonly HashSet<string> RevisionFourteenRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "K01", "K02", "K03", "K04", "K05", "K06", "K07" };
+        internal const string GravediggerHint = "Has less health, but every death in the pocket dimension refills its vigor.";
+        internal const string OldGravediggerHint = "Has less health, but heals 200 whenever a human dies in the pocket dimension.";
         internal const string CapturedHint = "A captured Chaos Insurgency conscript held in the Class-D cells, with a smuggled COM-15 (one magazine) and painkillers.";
         internal const string OldCapturedHint = "A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment.";
         internal static readonly HashSet<string> RevisionTwelveRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "D09", "S09", "G08", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "C13", "C14", "P04", "P05", "P06", "P07", "Z06", "Z07", "Z08", "R03", "R04", "R05", "R06", "R07", "L05", "L06", "L07", "L08", "B05", "B06", "B07", "B08", "H05", "H06", "H07" };
@@ -688,9 +690,9 @@ namespace Brainless.Roles
             r.SpeedMultiplier = 1.15f;
             r.Traits.RageWindupSeconds = 0;
             r.Traits.RageExtendOnKillSeconds = 5;
-            r = N("L05", "Gravedigger", RoleTypeId.Scp106, "Has less health, but heals 200 whenever a human dies in the pocket dimension.");
+            r = N("L05", "Gravedigger", RoleTypeId.Scp106, "Has less health, but every death in the pocket dimension refills its vigor.");
             r.HealthMultiplier = .85f;
-            r.Traits.PocketDeathHeal = 200;
+            r.Traits.PocketDeathVigor = true;
             r = N("L06", "Rust", RoleTypeId.Scp106, "Hits make humans bleed and have a 30% chance to destroy their armor.");
             r.Traits.BleedOnHitSeconds = 8;
             r.Traits.ArmorBreakChancePercent = 30;

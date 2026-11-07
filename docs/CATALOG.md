@@ -184,9 +184,9 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | L03 | Hyper | Common | Moves a little faster, but gains vigor more slowly. | Move normally; conserve vigor. | Enabled | — | 0 |
 | L02 | Wormhole | Uncommon | Gains vigor faster, but moves more slowly. | Use the normal stalk/atlas controls. | Enabled | — | 0 |
 | L04 | Poisonous | Rare | Touches poison humans, but has a weaker 200 hume shield and gains vigor more slowly. Medical supplies cure the poison. | Touch humans to poison them. | Enabled | — | 0 |
+| L05 | Gravedigger | Rare | Has less health, but every death in the pocket dimension refills its vigor. | Send humans to the pocket dimension; each death there refills your vigor for more stalking. | Enabled | — | 0 |
 | L06 | Rust | Rare | Hits make humans bleed and have a 30% chance to destroy their armor. | Hit humans to make them bleed and break their armor. | Enabled | — | 0 |
 | L07 | Tar Pit | Epic | Leaves a sticky, slowing puddle behind it every few seconds while moving. | Walk the corridors to leave slowing tar behind you. | Enabled | — | 0 |
-| L05 | Gravedigger | Legendary | Has less health, but heals 200 whenever a human dies in the pocket dimension. | Send humans to the pocket dimension; each death there heals you. | Enabled | — | 0 |
 | L08 | Glutton | Mythical | Mythical: huge, with 60% more health and more shield, and every catch heals 150. | Catch humans to heal; you are huge and tough. | Enabled | — | 0 |
 | B01 | Raisian | Common | Smaller and faster, but has half the normal health. | Move and blink normally. | Enabled | — | 0 |
 | B05 | Statue | Common | More health and shield, but a little slower. | Hold your ground; you are tougher but slower. | Enabled | — | 0 |
