@@ -11,7 +11,7 @@ This README is the single overview of the project: what each plugin does, where 
 
 | Folder | DLL | Version | Config section | Purpose |
 | --- | --- | --- | --- | --- |
-| `Roles` | `Brainless.Roles.dll` | 0.10.2 | `brainless_roles` | 121 role profiles (7+ per class including SCP-079, a Mythical in each) with rarity tiers, `.scpreroll`, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
+| `Roles` | `Brainless.Roles.dll` | 0.10.3 | `brainless_roles` | 121 role profiles (7+ per class including SCP-079, a Mythical in each) with rarity tiers, `.scpreroll`, SCP variants, lockpicking, role HUD, `RolesApi` for other plugins |
 | `Items` | `Brainless.Items.dll` | 0.13.0 | `brainless_items` | 44 custom grenades, tools, consumables (incl. Painkillers/Medkit/Adrenaline/SCP-207 variants) and cursed items (IDs 71xx), floor loot |
 | `Weapons` | `Brainless.Weapons.dll` | 0.11.4 | `brainless_weapons` | Grenade Launcher (staff only), Stun Gun (rare, 5 shots), Cursed Pistol, Cursed Shotgun, opt-in Ricochet Pistol (IDs 72xx) |
 | `BrainlessCoinflips` | `Brainless.Coinflips.dll` | 5.3.2 | `brainless_coinflips` | Random outcomes from ordinary coin flips, including Brainless items/roles |

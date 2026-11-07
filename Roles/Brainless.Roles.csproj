@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Brainless.Roles</AssemblyName>
     <RootNamespace>Brainless.Roles</RootNamespace>
-    <Version>0.10.2</Version>
+    <Version>0.10.3</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Swishhyy</Authors>
   </PropertyGroup>

@@ -142,9 +142,9 @@ namespace Brainless.Roles
             // Captain
             ["M12"] = Rarity.Common, ["M11"] = Rarity.Uncommon, ["M13"] = Rarity.Rare, ["M14"] = Rarity.Epic, ["M24"] = Rarity.Mythical,
             // Shared by MTF and Chaos (every rank)
-            ["C02"] = Rarity.Common, ["C05"] = Rarity.Common, ["C12"] = Rarity.Common, ["C04"] = Rarity.Uncommon, ["C09"] = Rarity.Uncommon, ["C11"] = Rarity.Rare,
+            ["C02"] = Rarity.Common, ["C05"] = Rarity.Common, ["C12"] = Rarity.Common, ["C04"] = Rarity.Uncommon, ["C09"] = Rarity.Epic, ["C11"] = Rarity.Rare,
             // Chaos rank-specific
-            ["C08"] = Rarity.Common, ["C10"] = Rarity.Uncommon, ["C13"] = Rarity.Epic, ["C14"] = Rarity.Epic, ["C06"] = Rarity.Rare, ["C07"] = Rarity.Epic,
+            ["C08"] = Rarity.Common, ["C10"] = Rarity.Uncommon, ["C13"] = Rarity.Epic, ["C14"] = Rarity.Legendary, ["C06"] = Rarity.Rare, ["C07"] = Rarity.Epic,
             // SCP-049
             ["P03"] = Rarity.Common, ["P06"] = Rarity.Common, ["P01"] = Rarity.Uncommon, ["P02"] = Rarity.Rare, ["P05"] = Rarity.Rare, ["P04"] = Rarity.Epic, ["P07"] = Rarity.Mythical,
             // SCP-049-2
@@ -152,7 +152,7 @@ namespace Brainless.Roles
             // SCP-096
             ["R02"] = Rarity.Common, ["R03"] = Rarity.Common, ["R04"] = Rarity.Uncommon, ["R05"] = Rarity.Rare, ["R06"] = Rarity.Epic, ["R01"] = Rarity.Legendary, ["R07"] = Rarity.Mythical,
             // SCP-106
-            ["L01"] = Rarity.Common, ["L03"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L05"] = Rarity.Uncommon, ["L04"] = Rarity.Rare, ["L06"] = Rarity.Rare, ["L07"] = Rarity.Epic, ["L08"] = Rarity.Mythical,
+            ["L01"] = Rarity.Common, ["L03"] = Rarity.Common, ["L02"] = Rarity.Uncommon, ["L05"] = Rarity.Legendary, ["L04"] = Rarity.Rare, ["L06"] = Rarity.Rare, ["L07"] = Rarity.Epic, ["L08"] = Rarity.Mythical,
             // SCP-173
             ["B01"] = Rarity.Common, ["B05"] = Rarity.Common, ["B02"] = Rarity.Uncommon, ["B03"] = Rarity.Uncommon, ["B06"] = Rarity.Rare, ["B07"] = Rarity.Rare, ["B04"] = Rarity.Epic, ["B08"] = Rarity.Mythical,
             // SCP-939

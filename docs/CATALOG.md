@@ -126,9 +126,9 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | C12 | Sweet Tooth | Common | Carries a bag of SCP-330 candy. | Eat or share the SCP-330 candy. | Enabled | — | 0 |
 | M01 | Field Medic | Common | Carries an extra medkit and adrenaline for the squad, but less spare ammo. | Heal the squad with the extra medkit; use adrenaline in a pinch. | Enabled | — | 0 |
 | C04 | Demolitionist | Uncommon | Carries a Cluster Grenade, but less spare ammo. | Throw the Cluster Grenade. | Enabled | 7102 | 12 |
-| C09 | Desperate | Uncommon | Spawns with a Jailbird instead of a gun. | Close the distance and swing the Jailbird. | Enabled | — | 0 |
 | M03 | Containment Specialist | Uncommon | Carries containment foam that covers a wide area in SCP-173's sticky mess. | Throw the containment foam in a corridor to leave a wide sticky area. | Enabled | 7103 | 0 |
 | C11 | SCP Handler | Rare | Carries one random SCP item. | Use your random SCP item. | Enabled | — | 0 |
+| C09 | Desperate | Epic | Spawns with a Jailbird instead of a gun. | Close the distance and swing the Jailbird. | Enabled | — | 0 |
 | M25 | Nine-Tailed Elite | Mythical | Mythical: 160 health, 10% faster, full ammo, SCP-500, SCP-1853 and adrenaline. | Push with the squad; use SCP-500, SCP-1853 and adrenaline. | Enabled | — | 0 |
 | M05 | Scout | Common | Trades the main gun for an FSP-9 and less health for much more speed. | Use your speed to flank and scout. | Enabled | — | 0 |
 | M06 | Agent | Uncommon | Carries an Irritant Gas Grenade and a flashbang. | Use the gas grenade for cover and the flashbang to clear rooms. | Enabled | 7101 | 0 |
@@ -154,7 +154,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | C13 | Smuggler | Epic | Smuggled two random SCP items in, but no armor and a little faster. | Use the two smuggled SCP items; you have no armor. | Enabled | — | 0 |
 | C08 | Scout | Common | Trades the AK for an FSP-9 and less health for much more speed. | Use your speed to flank and scout. | Enabled | — | 0 |
 | C10 | Paranoid | Uncommon | Slower, but carries heavy armor and twice the spare ammo. May also carry SCP-1344 goggles. | Hold positions with heavy armor and extra ammo; check if you got SCP-1344. | Enabled | — | 0 |
-| C14 | Berserker | Epic | 130 health and a Jailbird. Every kill heals 40 health. | Close in with the Jailbird; kills heal you. | Enabled | — | 0 |
+| C14 | Berserker | Legendary | 130 health and a Jailbird. Every kill heals 40 health. | Close in with the Jailbird; kills heal you. | Enabled | — | 0 |
 | C06 | Juggernaut | Rare | A Repressor with 200 health, but slower. | Soak damage at the front; you are slower. | Enabled | — | 0 |
 | C07 | Squad Leader | Epic | Carries a keycard that opens every door except the Alpha Warhead, a COM-15, heavy armor and SCP-1853. | Open almost any door with your keycard; use SCP-1853 before a fight. | Enabled | — | 0 |
 | P03 | Tickler | Common | A faster SCP-049 with quicker attacks, but less health and shields. | Attack normally. | Enabled | — | 0 |
@@ -183,10 +183,10 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | L01 | Stalker | Common | Quieter footsteps, but less health. | Move normally; quieter footsteps are automatic. | Enabled | — | 0 |
 | L03 | Hyper | Common | Moves a little faster, but gains vigor more slowly. | Move normally; conserve vigor. | Enabled | — | 0 |
 | L02 | Wormhole | Uncommon | Gains vigor faster, but moves more slowly. | Use the normal stalk/atlas controls. | Enabled | — | 0 |
-| L05 | Gravedigger | Uncommon | Has less health, but heals 200 whenever a human dies in the pocket dimension. | Send humans to the pocket dimension; each death there heals you. | Enabled | — | 0 |
 | L04 | Poisonous | Rare | Touches poison humans, but has a weaker 200 hume shield and gains vigor more slowly. Medical supplies cure the poison. | Touch humans to poison them. | Enabled | — | 0 |
 | L06 | Rust | Rare | Hits make humans bleed and have a 30% chance to destroy their armor. | Hit humans to make them bleed and break their armor. | Enabled | — | 0 |
 | L07 | Tar Pit | Epic | Leaves a sticky, slowing puddle behind it every few seconds while moving. | Walk the corridors to leave slowing tar behind you. | Enabled | — | 0 |
+| L05 | Gravedigger | Legendary | Has less health, but heals 200 whenever a human dies in the pocket dimension. | Send humans to the pocket dimension; each death there heals you. | Enabled | — | 0 |
 | L08 | Glutton | Mythical | Mythical: huge, with 60% more health and more shield, and every catch heals 150. | Catch humans to heal; you are huge and tough. | Enabled | — | 0 |
 | B01 | Raisian | Common | Smaller and faster, but has half the normal health. | Move and blink normally. | Enabled | — | 0 |
 | B05 | Statue | Common | More health and shield, but a little slower. | Hold your ground; you are tougher but slower. | Enabled | — | 0 |

@@ -86,7 +86,7 @@ internal static class RarityTests
         var oldRoles = new Brainless.Roles.Config { RoleCatalogRevision = 10 };
         foreach (var role in oldRoles.Roles) role.Rarity = Rarity.Common;
         oldRoles.Prepare();
-        check(oldRoles.RoleCatalogRevision == 14 && oldRoles.Roles.Single(r => r.Id == "B04").Rarity == Rarity.Epic && oldRoles.Roles.Single(r => r.Id == "R01").Rarity == Rarity.Legendary && oldRoles.Roles.Single(r => r.Id == "P07").Rarity == Rarity.Mythical && oldRoles.Roles.Count == 121, "revision 12 gives an existing role list its strength-based rarity tiers and the new roles once");
+        check(oldRoles.RoleCatalogRevision == 15 && oldRoles.Roles.Single(r => r.Id == "B04").Rarity == Rarity.Epic && oldRoles.Roles.Single(r => r.Id == "R01").Rarity == Rarity.Legendary && oldRoles.Roles.Single(r => r.Id == "P07").Rarity == Rarity.Mythical && oldRoles.Roles.Count == 121, "revision 12 gives an existing role list its strength-based rarity tiers and the new roles once");
         var edited = new Brainless.Roles.Config { RoleCatalogRevision = 13 };
         edited.Roles.Single(r => r.Id == "B04").Rarity = Rarity.Mythical;
         edited.Prepare();
