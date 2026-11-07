@@ -90,33 +90,51 @@ namespace Brainless.Items
                     {
                         if (owner == null || !owner.IsConnected || !owner.IsAlive || !owner.IsHuman || owner.IsCuffed)
                             return;
-                        var safe = TeleportSpot(position);
-                        if (!safe.HasValue)
+                        string why = TeleportSpot(position, owner, out var safe);
+                        if (why != null)
                         {
-                            owner.ShowHint("Teleport failed: no safe floor there.", 3);
+                            owner.ShowHint("Teleport failed: " + why, 3);
                             return;
                         }
 
-                        owner.Position = safe.Value;
+                        owner.Position = safe;
                         owner.ShowHint("Teleported!", 2);
                     });
                     break;
             }
         }
 
-        // A floor with head room, inside a real room, away from the pocket dimension.
-        private Vector3? TeleportSpot(Vector3 position)
+        // Where a teleport may land, or why not. Out-of-map spots (on top of the map, above
+        // ceilings, inside geometry, past walls) fail at least one check:
+        //  - solid floor right under the pop, inside a real room (not the pocket dimension);
+        //  - a ceiling overhead everywhere except Surface (open sky in the facility = above it);
+        //  - the whole body fits (capsule clear of world geometry);
+        //  - the thrower can see the spot (no going over walls, through doors or gaps).
+        private string TeleportSpot(Vector3 position, Player owner, out Vector3 destination)
         {
+            destination = default;
             Vector3 floor = Ground(position + Vector3.up * .3f);
-            if (Math.Abs(floor.y - position.y) > 2.5f)
-                return null;
+            if (Math.Abs(floor.y - position.y) > 2.5f || !SolidBelow(position + Vector3.up * .3f))
+                return "no floor there.";
             var room = Room.Get(floor);
-            if (room == null || room.Type == RoomType.Pocket)
-                return null;
-            if (Physics.Raycast(floor + Vector3.up * .1f, Vector3.up, 2, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
-                return null;
-            return floor + Vector3.up * 1.1f;
+            if (room == null || room.Type == RoomType.Pocket || room.Type == RoomType.Unknown)
+                return "that's not a real room.";
+            if (room.Zone != ZoneType.Surface && !HitsGeometry(floor + Vector3.up * .1f, Vector3.up, 40))
+                return "that spot is outside the facility.";
+            if (Physics.OverlapCapsule(floor + Vector3.up * .45f, floor + Vector3.up * 1.75f, .35f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).Any(IsWorld))
+                return "not enough room there.";
+            Vector3 eye = owner.CameraTransform.position;
+            Vector3 target = floor + Vector3.up * 1.2f;
+            if (HitsGeometry(eye, target - eye, Vector3.Distance(eye, target)))
+                return "you can't see that spot.";
+            destination = floor + Vector3.up * 1.1f;
+            return null;
         }
+
+        // Geometry only: players, pickups and admin toys don't count as walls or floors.
+        private static bool IsWorld(Collider collider) => collider != null && collider.GetComponentInParent<ReferenceHub>() == null && collider.GetComponentInParent<InventorySystem.Items.Pickups.ItemPickupBase>() == null && collider.GetComponentInParent<AdminToys.AdminToyBase>() == null;
+        private static bool HitsGeometry(Vector3 origin, Vector3 direction, float distance) => Physics.RaycastAll(origin, direction, distance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).Any(hit => IsWorld(hit.collider));
+        private static bool SolidBelow(Vector3 point) => HitsGeometry(point + Vector3.up, Vector3.down, 4);
 
         private void UpdateTrackers()
         {
