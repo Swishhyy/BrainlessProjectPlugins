@@ -168,6 +168,8 @@ namespace Brainless.Roles
         internal static readonly HashSet<string> RevisionFourteenRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "K01", "K02", "K03", "K04", "K05", "K06", "K07" };
         internal const string GravediggerHint = "Has less health, but every death in the pocket dimension refills its vigor.";
         internal const string OldGravediggerHint = "Has less health, but heals 200 whenever a human dies in the pocket dimension.";
+        internal const string OldGhostHint = "Mythical: silent, faster, with 20% more health and shield. Kills refresh Breakneck Speeds.";
+        internal const string GhostHint = "Mythical: faster, with 20% more health and shield. Breakneck Speeds recharges 40% faster and kills refresh it.";
         internal const string CapturedHint = "A captured Chaos Insurgency conscript held in the Class-D cells, with a smuggled COM-15 (one magazine) and painkillers.";
         internal const string OldCapturedHint = "A captured Chaos Insurgency conscript held in the Class-D cells, with no equipment.";
         internal static readonly HashSet<string> RevisionTwelveRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "D09", "S09", "G08", "M15", "M16", "M17", "M18", "M19", "M20", "M21", "M22", "M23", "M24", "C13", "C14", "P04", "P05", "P06", "P07", "Z06", "Z07", "Z08", "R03", "R04", "R05", "R06", "R07", "L05", "L06", "L07", "L08", "B05", "B06", "B07", "B08", "H05", "H06", "H07" };
@@ -354,10 +356,10 @@ namespace Brainless.Roles
             list.Add(r);
             r = R("L01", "Stalker", RoleTypeId.Scp106, "Quieter footsteps, but less health.");
             r.HealthMultiplier = .8f;
-            r.Traits.QuietFootstepStacks = 8;
+            r.Traits.QuietFootstepStacks = 9;
             list.Add(r);
             r = R("L02", "Wormhole", RoleTypeId.Scp106, "Gains vigor faster, but moves more slowly.");
-            r.SpeedMultiplier = .9f;
+            r.SpeedMultiplier = .85f;
             r.Traits.VigorGainMultiplier = 1.5f;
             list.Add(r);
             r = R("L03", "Hyper", RoleTypeId.Scp106, "Moves a little faster, but gains vigor more slowly.");
@@ -396,7 +398,7 @@ namespace Brainless.Roles
             r = R("H01", "Ambusher", RoleTypeId.Scp939, "Quieter footsteps and faster movement, but less health.");
             r.HealthMultiplier = .8f;
             r.SpeedMultiplier = 1.1f;
-            r.Traits.QuietFootstepStacks = 8;
+            r.Traits.QuietFootstepStacks = 9;
             list.Add(r);
             r = R("H02", "Alpha", RoleTypeId.Scp939, "Larger and tougher, but slower.");
             r.Scale = 1.1f;
@@ -712,11 +714,11 @@ namespace Brainless.Roles
             r = N("B07", "Tantrum", RoleTypeId.Scp173, "Its tantrum recharges much faster, and it has a little more health.");
             r.HealthMultiplier = 1.1f;
             r.Traits.TantrumCooldownMultiplier = .4f;
-            r = N("B08", "Ghost", RoleTypeId.Scp173, "Mythical: silent, faster, with 20% more health and shield. Kills refresh Breakneck Speeds.");
+            r = N("B08", "Ghost", RoleTypeId.Scp173, "Mythical: faster, with 20% more health and shield. Breakneck Speeds recharges 40% faster and kills refresh it.");
             r.HealthMultiplier = 1.2f;
             r.ShieldMultiplier = 1.2f;
             r.SpeedMultiplier = 1.15f;
-            r.Traits.QuietFootstepStacks = 8;
+            r.Traits.BreakneckCooldownMultiplier = .6f;
             r.Traits.RefreshBreakneckOnKill = true;
             r = N("H05", "Runt", RoleTypeId.Scp939, "Smaller and faster, but has much less health.");
             r.Scale = .85f;
@@ -766,7 +768,7 @@ namespace Brainless.Roles
             r.ShieldMultiplier = 1.5f;
             r.SpeedMultiplier = 1.1f;
             r.Traits.AttackDamageMultiplier = 1.25f;
-            r.Traits.QuietFootstepStacks = 8;
+            r.Traits.QuietFootstepStacks = 10;
             r.Traits.PoisonDamagePerSecond = 3;
             r.Traits.PoisonDurationSeconds = 4;
             r.Traits.PoisonInCloud = true;

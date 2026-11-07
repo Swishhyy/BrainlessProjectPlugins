@@ -84,6 +84,15 @@ internal static class RoleChanceTests
         retier.Roles.Single(r => r.Id == "C14").Rarity = Brainless.Internal.Rarity.Epic;
         retier.Prepare();
         check(retier.RoleCatalogRevision == 15 && oldDigger.Rarity == Brainless.Internal.Rarity.Rare && oldDigger.Traits.PocketDeathHeal == 0 && oldDigger.Traits.PocketDeathVigor && oldDigger.Hint == Catalog.GravediggerHint && retier.Roles.Single(r => r.Id == "C09").Rarity == Brainless.Internal.Rarity.Epic && retier.Roles.Single(r => r.Id == "C14").Rarity == Brainless.Internal.Rarity.Legendary, "revision 15 turns Gravedigger into a Rare vigor-refill role, Desperate Epic and Berserker Legendary");
+        var fixes = new Config { RoleCatalogRevision = 14 };
+        var ghost = fixes.Roles.Single(r => r.Id == "B08"); ghost.Traits.QuietFootstepStacks = 8; ghost.Traits.BreakneckCooldownMultiplier = 1; ghost.Hint = Catalog.OldGhostHint;
+        fixes.Roles.Single(r => r.Id == "H08").Traits.QuietFootstepStacks = 8;
+        fixes.Roles.Single(r => r.Id == "L01").Traits.QuietFootstepStacks = 8;
+        fixes.Roles.Single(r => r.Id == "H01").Traits.QuietFootstepStacks = 8;
+        fixes.Roles.Single(r => r.Id == "L02").SpeedMultiplier = .9f;
+        fixes.Prepare();
+        check(ghost.Traits.QuietFootstepStacks == 0 && Math.Abs(ghost.Traits.BreakneckCooldownMultiplier - .6f) < .001f && ghost.Hint == Catalog.GhostHint && fixes.Roles.Single(r => r.Id == "H08").Traits.QuietFootstepStacks == 10 && fixes.Roles.Single(r => r.Id == "L01").Traits.QuietFootstepStacks == 9 && fixes.Roles.Single(r => r.Id == "H01").Traits.QuietFootstepStacks == 9 && Math.Abs(fixes.Roles.Single(r => r.Id == "L02").SpeedMultiplier - .85f) < .001f, "revision 15 fixes Ghost, Apex, Stalker, Ambusher and Wormhole stock values");
+        check(new Config().Roles.Single(r => r.Id == "B08").Hint == Catalog.GhostHint, "Ghost's default hint matches the migration target");
         check(new Config().Roles.Single(r => r.Id == "L05").Traits.PocketDeathHeal == 0 && new Config().Roles.Single(r => r.Id == "L08").Traits.HealOnHit == 150, "Gravedigger no longer heals, so only Glutton heals off pocket-dimension victims");
         var legacyPools = new Config { UseRarity = false };
         legacyPools.Prepare();

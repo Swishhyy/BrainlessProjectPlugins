@@ -195,7 +195,7 @@ Traits apply automatically. Use `bprole set <ID> [playerID]` to test; `bproles` 
 | B06 | Blinker | Rare | Breakneck Speeds recharges twice as fast. | Use Breakneck Speeds often; it recharges twice as fast. | Enabled | — | 0 |
 | B07 | Tantrum | Rare | Its tantrum recharges much faster, and it has a little more health. | Place tantrums often; they recharge much faster. | Enabled | — | 0 |
 | B04 | Boom Boom | Epic | Immune to explosions. Explodes after death. | Automatic explosion after death. | Enabled | — | 0 |
-| B08 | Ghost | Mythical | Mythical: silent, faster, with 20% more health and shield. Kills refresh Breakneck Speeds. | Sneak up silently; kills refresh Breakneck Speeds. | Enabled | — | 0 |
+| B08 | Ghost | Mythical | Mythical: faster, with 20% more health and shield. Breakneck Speeds recharges 40% faster and kills refresh it. | Use Breakneck Speeds often; it recharges faster and kills refresh it. | Enabled | — | 0 |
 | H01 | Ambusher | Common | Quieter footsteps and faster movement, but less health. | Move normally; quieter footsteps also work while sprinting. | Enabled | — | 0 |
 | H03 | Mimic | Common | Reuses mimic sounds much faster, but has less health. | Use mimic sound controls; they recharge quickly. | Enabled | — | 0 |
 | H05 | Runt | Common | Smaller and faster, but has much less health. | Hunt fast; you are small and fragile. | Enabled | — | 0 |

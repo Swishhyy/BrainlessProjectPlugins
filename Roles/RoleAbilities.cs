@@ -202,23 +202,38 @@ namespace Brainless.Roles
             state.LastBreakneckCooldown = cooldown;
         }
 
-        // Tar Pit: drops a short-lived tantrum puddle where it stood a few seconds ago,
-        // never on top of anyone (a tantrum spawned on a player crashed the server).
+        // Tar Pit: while moving, drops a short-lived tantrum puddle right behind SCP-106
+        // (opposite its movement), past the puddle's reach so it never lands on anyone, him
+        // included (a tantrum spawned on a player crashed the server). A spot behind a wall,
+        // off the floor or too close to a player is skipped and tried again next tick.
         private void LeaveTar(Player player, ActiveRole state)
         {
             float interval = state.Definition.Traits.TarTrailSeconds;
-            if (interval <= 0 || Time.time < state.NextTar)
+            if (interval <= 0 || TantrumHazard.TantrumPrefab == null)
                 return;
-            state.NextTar = Time.time + interval;
-            var previous = state.TarAnchor;
+            Vector3 now = player.Position;
+            Vector3? last = state.TarAnchor;
+            state.TarAnchor = now;
+            if (Time.time < state.NextTar || !last.HasValue)
+                return;
             bool hidden = player.Role is Exiled.API.Features.Roles.Scp106Role ghost && (ghost.IsSubmerged || ghost.IsStalking);
-            state.TarAnchor = hidden || player.CurrentRoom?.Type == RoomType.Pocket ? (Vector3?)null : TarFloor(player.Position);
-            if (!previous.HasValue || TantrumHazard.TantrumPrefab == null)
+            if (hidden || player.CurrentRoom?.Type == RoomType.Pocket)
+                return;
+            Vector3 move = now - last.Value;
+            move.y = 0;
+            if (move.sqrMagnitude < .01f)
                 return;
             float clearance = Math.Max(1.5f, TantrumHazard.TantrumPrefab.MaxDistance + .75f);
-            Vector3 floor = previous.Value;
+            Vector3 behind = now - move.normalized * (clearance + .3f);
+            if (Physics.RaycastAll(now + Vector3.up * .5f, behind - now, Vector3.Distance(now, behind), Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore).Any(hit => hit.collider.GetComponentInParent<ReferenceHub>() == null))
+                return;
+            var spot = TarFloor(behind);
+            if (!spot.HasValue || Math.Abs(spot.Value.y - now.y) > 2)
+                return;
+            Vector3 floor = spot.Value;
             if (Player.List.Any(p => p.IsAlive && Math.Abs(p.Position.y - floor.y) < 2.5f && new Vector2(p.Position.x - floor.x, p.Position.z - floor.z).sqrMagnitude <= clearance * clearance))
                 return;
+            state.NextTar = Time.time + interval;
             tarPuddles.RemoveAll(p => p == null || !p.IsActive);
             state.Tar.RemoveAll(p => p == null || !p.IsActive);
             if (state.Tar.Count >= TarMaxPerPlayer)

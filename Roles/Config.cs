@@ -630,6 +630,41 @@ namespace Brainless.Roles
             }
 
             Move("C09", Rarity.Uncommon, Rarity.Epic);
+            // Role fixes (stock values only): SCP-173's own footstep audio ignores silent
+            // walk, so Ghost trades "silent" for a 40% faster Breakneck recharge; Apex goes
+            // fully silent and Stalker/Ambusher 90% quieter (80% was still clearly audible);
+            // Wormhole slows to 85% so the trade-off is noticeable.
+            foreach (var role in Roles)
+            {
+                var traits = role.Traits;
+                switch (role.Id.ToUpperInvariant())
+                {
+                    case "B08":
+                        if (traits.QuietFootstepStacks == 8 && Math.Abs(traits.BreakneckCooldownMultiplier - 1) < .001f)
+                        {
+                            traits.QuietFootstepStacks = 0;
+                            traits.BreakneckCooldownMultiplier = .6f;
+                        }
+
+                        if (role.Hint == Catalog.OldGhostHint)
+                            role.Hint = Catalog.GhostHint;
+                        break;
+                    case "H08":
+                        if (traits.QuietFootstepStacks == 8)
+                            traits.QuietFootstepStacks = 10;
+                        break;
+                    case "L01":
+                    case "H01":
+                        if (traits.QuietFootstepStacks == 8)
+                            traits.QuietFootstepStacks = 9;
+                        break;
+                    case "L02":
+                        if (Math.Abs(role.SpeedMultiplier - .9f) < .001f)
+                            role.SpeedMultiplier = .85f;
+                        break;
+                }
+            }
+
             Move("C14", Rarity.Epic, Rarity.Legendary);
             RoleCatalogRevision = 15;
         }
